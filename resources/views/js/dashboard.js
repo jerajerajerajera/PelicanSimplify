@@ -1335,7 +1335,7 @@
           }
           if (['advanced', 'software', 'connection'].includes(key) && (key !== 'software' || this.server?.minecraft)) {
             this.advanced = await load(() => (key === 'connection' ? wire.connectionData() : wire.advancedData()));
-            this.requestedSubdomain = this.advanced.requested_subdomain || '';
+            this.requestedSubdomain = this.advanced.requested_subdomain || this.advanced.suggested_subdomain || '';
             if (key === 'connection' && this.server && this.advanced.address) this.server.address = this.advanced.address;
           }
           if (['settings', 'performance'].includes(key)) this.fillSettings();
@@ -1647,7 +1647,7 @@
         if (this.modal !== 'connection') return;
         try {
           this.advanced = await wire.connectionData();
-          this.requestedSubdomain = this.advanced.requested_subdomain || '';
+          this.requestedSubdomain = this.advanced.requested_subdomain || this.advanced.suggested_subdomain || '';
           if (this.server && this.advanced.address) this.server.address = this.advanced.address;
         } catch {}
       },

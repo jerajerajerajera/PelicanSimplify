@@ -324,7 +324,7 @@ final class Dashboard extends Page
     public function connectionData(): array
     {
         $s=$this->server();Access::permission($s,P::StartupRead);
-        if(\Simplify\Panel\Services\Subdomains::active())return ['subdomains'=>true,'requested_subdomain'=>($state=\Simplify\Panel\Services\Subdomains::state($s))['name'],'subdomain'=>$state,'address'=>\Simplify\Panel\Services\Subdomains::address($s)];
+        if(\Simplify\Panel\Services\Subdomains::active())return ['subdomains'=>true,'requested_subdomain'=>($state=\Simplify\Panel\Services\Subdomains::state($s))['name'],'suggested_subdomain'=>$state['name']===''?\Simplify\Panel\Services\Subdomains::suggest((string)$s->name,$s->uuid):'','subdomain'=>$state,'address'=>\Simplify\Panel\Services\Subdomains::address($s)];
         return ['requested_subdomain'=>Extensions::web()?Extensions::webAdapter()->metadata($s)['requested_subdomain']??'':''];
     }
     #[Renderless]

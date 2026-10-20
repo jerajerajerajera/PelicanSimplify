@@ -58,6 +58,15 @@ final class Subdomains
     }
     public static function active(): bool { return FeatureSettings::enabled('subdomains')&&self::missing()===[]; }
 
+    /** A free subdomain from a server name: "Oak Survival" becomes "oak-survival", or "oak-survival-2" when taken. */
+    public static function suggest(string $serverName,?string $uuid=null): string
+    {
+        $ascii=class_exists(\Illuminate\Support\Str::class)?\Illuminate\Support\Str::ascii($serverName):$serverName;
+        $base=trim(substr(trim((string)preg_replace('/[^a-z0-9]+/','-',strtolower($ascii)),'-'),0,57),'-');
+        if($base==='')return '';
+        for($i=1;$i<20;$i++){$name=$i===1?$base:$base.'-'.$i;if(self::check($name,$uuid)===null)return $name;}
+        return '';
+    }
     /** null when $name may be used by this server, otherwise the reason. */
     public static function check(string $name,?string $uuid=null): ?string
     {

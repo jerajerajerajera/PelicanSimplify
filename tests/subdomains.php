@@ -99,6 +99,10 @@ $cf->fail=true;Server::$all[$a]=new Server($a,25566);D::request(Server::$all[$a]
 check(D::state(Server::$all[$a])['status']==='error'&&str_contains(D::state(Server::$all[$a])['message'],'unavailable'),'a Cloudflare failure is shown and kept for retry');
 $cf->fail=false;D::tick();check(D::state(Server::$all[$a])['status']==='active','the retry command connects it once Cloudflare answers');
 
+check(D::suggest('Oak Survival')==='oak-survival'&&D::suggest('  --Big__World!! ')==='big-world','a server name becomes a DNS-safe suggestion');
+check(D::suggest('Ash')==='ash-2'&&D::suggest('Ash',$a)==='ash','a taken suggestion gets a number, its own name does not');
+check(D::suggest('www')==='www-2'&&D::suggest('!!!')==='','reserved names are skipped and names without letters suggest nothing');
+check(strlen(D::suggest(str_repeat('a',80)))<=63,'suggestions fit a DNS label');
 check(CloudflareDns::diff([],[])===[],'nothing to do for a server without a subdomain');
 echo "All subdomain checks passed.\n";
 }
