@@ -1,7 +1,7 @@
 # Changes
 
-## 0.5.0-rc.1 (beta channel) — release candidate for 0.5.0
-The first release candidate for 0.5.0: the 0.4.1 betas bundled, plus one small fix. If no problems turn up, 0.5.0 becomes the next stable release. Changes since stable 0.4.0:
+## 0.4.1-rc.1 (beta channel) — release candidate for 0.4.1
+The first release candidate for 0.4.1: the 0.4.1 betas bundled, plus one small fix. If no problems turn up, 0.4.1 becomes the next stable release. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support:** loads on Pelican 1.0.0-rc.1 as well as 1.0.0-beta38 (plugin.json declares "^1.0.0-beta38"), system checks accept rc.1, and server addresses respect rc.1's "hide port" allocation setting. (beta.1)
 - **Pages from other plugins:** admin pages that other Pelican plugins add are listed under "External" in Admin tools and host mode; their server pages appear on Simplify's server page under "External" and open in the middle block, styled to match. Simplify settings → General → "Pages from other plugins" chooses which ones show. Tested with Tickets and Legal Pages. (beta.4, beta.5, beta.7)
 - **Known conflicts:** conflicts.json (bundled, refreshed hourly from GitHub) lists plugins that clash with Simplify; while one is enabled Simplify switches its own dashboard off and explains why. The list currently starts empty. (beta.4, beta.6)
