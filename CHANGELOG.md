@@ -1,12 +1,13 @@
 # Changes
 
 ## 0.5.0-rc.1 (beta channel) — release candidate for 0.5.0
-The first release candidate for 0.5.0: the 0.4.1 betas bundled, with no new changes of its own. If no problems turn up, 0.5.0 becomes the next stable release. Changes since stable 0.4.0:
+The first release candidate for 0.5.0: the 0.4.1 betas bundled, plus one small fix. If no problems turn up, 0.5.0 becomes the next stable release. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support:** loads on Pelican 1.0.0-rc.1 as well as 1.0.0-beta38 (plugin.json declares "^1.0.0-beta38"), system checks accept rc.1, and server addresses respect rc.1's "hide port" allocation setting. (beta.1)
 - **Pages from other plugins:** admin pages that other Pelican plugins add are listed under "External" in Admin tools and host mode; their server pages appear on Simplify's server page under "External" and open in the middle block, styled to match. Simplify settings → General → "Pages from other plugins" chooses which ones show. Tested with Tickets and Legal Pages. (beta.4, beta.5, beta.7)
 - **Known conflicts:** conflicts.json (bundled, refreshed hourly from GitHub) lists plugins that clash with Simplify; while one is enabled Simplify switches its own dashboard off and explains why. The list currently starts empty. (beta.4, beta.6)
 - **Interface scaling:** designed for 1440p, Simplify scales down in proportion on smaller windows (about 80% on 1080p); phones keep their own layout. (beta.3)
 - **Overview:** the create buttons always sit first in the toolbar, also with the node filter shown. (beta.2)
+- Fixed in this rc: a skipped layout animation on the server page no longer leaves an error in the browser console (seen with newer Chrome versions).
 
 ## 0.4.1-beta.7 (beta channel)
 - Simplify settings → General → "Pages from other plugins": a checkbox per page that other plugins add to the admin panel or to servers. Unticked pages are hidden from Simplify's External sections; they stay available in Pelican's own panel.

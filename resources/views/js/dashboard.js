@@ -1284,6 +1284,9 @@
           change();
           await this.$nextTick();
         });
+        // A skipped transition rejects these too (newer Chromium); the change itself already ran.
+        transition.ready.catch(() => {});
+        transition.finished.catch(() => {});
         try { await transition.updateCallbackDone; } catch {}
       },
       /** Colour banner: inline style for a chosen colour, {} for the accent-based one, null for image banners. */
