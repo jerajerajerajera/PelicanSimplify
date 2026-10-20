@@ -1,5 +1,27 @@
 # Changes
 
+## 0.4.6 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+A cleaner repository. Nothing changes in how Simplify works.
+- The shell installers are gone (INSTALL-PELICAN-SIMPLIFY.sh, ROLLBACK-PELICAN-SIMPLIFY.sh, RESET-PLUGINS.sh and their PHP helpers). Install and update through Pelican's plugin import or Simplify's plugin manager. Coming from the standalone creator: disable and delete it under Admin → Plugins first; the setup check now says so.
+- The open points of the "other games" creator proposal moved to the roadmap.
+- A manual "Delete branches" workflow removes branches that are no longer needed; main, beta and snapshot are always kept.
+
+## 0.4.5 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which scans the whole repository, not only the plugin. Nothing changes in how Simplify works.
+- The panel check of the shell installer (check-panel.php) uses Laravel's File and Process helpers; preflight.php and the tests write errors with fprintf.
+- The dependency and banner tests read committed fixtures under tests/fixtures instead of writing and deleting temporary files.
+- tests/hub-check.py now scans every PHP file in the repository, like the Hub.
+
+## 0.4.4 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which refuses plugins with direct file or process calls. Nothing changes in how Simplify works.
+- The setup check's write test and the updater's temporary download use Laravel's File helpers; the Minecraft status ping sends its packet with stream_socket_sendto.
+- The dashboard's copy and rename actions are now called copyText and renameServer.
+- Repository archives (what the Hub syncs) now hold only the plugin, like the release zip: tests, build scripts, installers and documentation are left out through .gitattributes. They stay in the repository.
+
+## 0.4.3 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+- Simplify is published on the Pelican Hub: plugin.json's update_url now points at the Hub (https://hub.pelican.dev/plugins/pelican-simplify/update.json), as the Hub requires, so Pelican's own updater gets Simplify from the Hub.
+- Simplify's plugin manager keeps all three channels: it also reads the stable, beta and snapshot builds on GitHub, and offers the newest of the Hub release and your channel. Until the Hub has a release, the stable build on GitHub is used.
+
 ## 0.4.2 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 Everything from 0.4.1-rc.2 and the 0.4.2 betas, now stable for both Pelican releases. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support** (PHP 8.4), next to 1.0.0-beta38, including rc.1's "hide port" allocation setting. (0.4.1)

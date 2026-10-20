@@ -1,0 +1,27 @@
+name: Release
+# A stable version on main (plugin.json without "-") becomes GitHub Release v<version> with its zip,
+# marked as latest. Runs on every push to main and does nothing when the tag already exists.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish the stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(python3 -c "import json; print(json.load(open('plugin.json'))['version'])")
+          if [[ "$version" == *-* ]]; then echo "$version is not a stable version."; exit 0; fi
+          if gh release view "v$version" >/dev/null 2>&1; then echo "Release v$version already exists."; exit 0; fi
+          zip="dist/pelican-simplify-v$version.zip"
+          test -f "$zip" || { echo "$zip is missing; run scripts/build-package.py."; exit 1; }
+          # Release notes: this version's section of the CHANGELOG.
+          awk -v head="## $version " 'index($0, head) == 1 {on = 1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          title=$(grep -m1 "^## $version " CHANGELOG.md | sed 's/^## //')
+          gh release create "v$version" "$zip" --target "$GITHUB_SHA" --title "PelicanSimplify ${title:-$version}" --notes-file notes.md --latest
