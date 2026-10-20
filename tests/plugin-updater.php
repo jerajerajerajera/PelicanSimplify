@@ -9,12 +9,15 @@ namespace Illuminate\Support\Facades {
   public static function deleteDirectory($dir) { foreach (array_keys(self::$fs) as $k) if (str_starts_with($k, $dir.'/')) unset(self::$fs[$k]); return true; }
   public static function ensureDirectoryExists($dir) {}
   public static function isDirectory($dir) { foreach (self::$fs as $k => $v) if (str_starts_with($k, $dir.'/')) return true; return false; }
+  public static function glob($pattern) { return array_values(array_filter(array_keys(self::$fs), fn ($k) => fnmatch($pattern, $k))); }
   public static function copyDirectory($from, $to) { foreach (self::$fs as $k => $v) if (str_starts_with($k, $from.'/')) self::$fs[$to.substr($k, strlen($from))] = $v; return true; }
  }
  class Cache {
   public static function lock(...$a) { return new class { public function get() { return true; } public function release() {} }; }
   public static function remember($k, $t, $c) { return $c(); }
   public static function forget($k) {}
+  public static array $put = [];
+  public static function put($k, $v, $t = null) { self::$put[$k] = $v; }
  }
  class Http {
   public static string $body = 'zip';
@@ -23,8 +26,10 @@ namespace Illuminate\Support\Facades {
   public function connectTimeout($s) { return $this; }
   public function withHeaders($h) { return $this; }
   public function throw() { return $this; }
-  public function get($url) { return $this; }
-  public function json() { return self::$json; }
+  public static array $byUrl = [];
+  private ?string $url = null;
+  public function get($url) { $this->url = $url; return $this; }
+  public function json() { if (self::$byUrl === []) return self::$json; if (!isset(self::$byUrl[$this->url])) throw new \RuntimeException('404'); return self::$byUrl[$this->url]; }
   public function body() { return self::$body; }
  }
  class Process {
@@ -49,9 +54,15 @@ namespace App\Services\Helpers {
   private function extract($id) { self::$extracts++; \Illuminate\Support\Facades\File::deleteDirectory('/plugins/'.$id); \Illuminate\Support\Facades\File::$fs['/plugins/'.$id.'/plugin.json'] = json_encode(['id' => $id, 'version' => '2.0']); \Illuminate\Support\Facades\File::$fs['/plugins/'.$id.'/code.php'] = 'new'; }
  }
 }
+namespace Simplify\Panel\Services {
+ class FeatureSettings { public static array $on = []; public static function enabled($k) { return in_array($k, self::$on, true); } }
+}
+namespace Simplify\Panel\Jobs {
+ class ChangePlugin { public static array $dispatched = []; public static function dispatchAfterResponse(...$a) { self::$dispatched[] = $a; } }
+}
 namespace App\Models {
  class Plugin {
-  public string $id = 'demo'; public string $name = 'Demo'; public string $version = '1.0'; public ?string $update_url = 'https://example.test/update.json';
+  public string $id = 'demo'; public string $name = 'Demo'; public string $version = '1.0'; public ?string $update_url = 'https://example.test/update.json'; public ?object $status = null;
   public function getDownloadUrlForUpdate() { return 'https://example.test/demo.zip'; }
   public static function refreshRows() {}
  }
@@ -67,6 +78,7 @@ namespace {
  function report($e) {}
  function cache() { return new class { public function forget($k) {} }; }
  function config($k) { return '1.0.0-beta38'; }
+ function now() { return new class { public int $timestamp = 1; }; }
  function check($ok, $m) { if (!$ok) throw new \RuntimeException($m); echo "PASS $m\n"; }
  $reset = function () { File::$fs = ['/plugins/demo/plugin.json' => json_encode(['id' => 'demo', 'version' => '1.0', 'meta' => ['status' => 'enabled']]), '/plugins/demo/code.php' => 'old']; \App\Services\Helpers\PluginService::$extracts = 0; Process::$runs = []; };
 
@@ -83,4 +95,39 @@ namespace {
  $reset(); Http::$json = ['1.0.0-beta38' => ['version' => '2.0', 'download_url' => 'https://example.test/demo.zip', 'sha256' => hash('sha256', 'zip')]]; Process::$installOk = false;
  $r = U::update(new \App\Models\Plugin);
  check(!$r['ok'] && File::$fs['/plugins/demo/code.php'] === 'old' && File::json('/plugins/demo/plugin.json')['version'] === '1.0', 'failed install restores the previous version');
+
+ // Import over an existing installation (rc.1 keeps meta, beta38 drops it): the install status comes back and a reinstall starts.
+ $reset(); File::$fs['/plugins/other/plugin.json'] = json_encode(['id' => 'other', 'meta' => ['status' => 'not_installed']]);
+ $states = U::installStates();
+ check(array_keys($states) === ['demo'], 'only installed plugins have an install state');
+ (new \App\Services\Helpers\PluginService)->downloadPluginFromFile(null, 'demo');
+ check(U::afterImport('demo', $states, 7) && File::json('/plugins/demo/plugin.json')['meta']['status'] === 'enabled' && File::json('/plugins/demo/plugin.json')['version'] === '2.0', 'import over an installed plugin restores its status');
+ check(\Simplify\Panel\Jobs\ChangePlugin::$dispatched === [['demo', 'reinstall', 7]], 'import over an installed plugin installs it again');
+ \Simplify\Panel\Jobs\ChangePlugin::$dispatched = [];
+ check(!U::afterImport('other', $states) && \Simplify\Panel\Jobs\ChangePlugin::$dispatched === [], 'a new or never installed plugin is only imported');
+ $disabled = new \App\Models\Plugin; $disabled->status = (object) ['value' => 'disabled']; Process::$runs = []; Process::$installOk = true;
+ check(U::change($disabled, 'reinstall')['ok'] && (bool) preg_grep('/simplify:plugin-install demo$/', Process::$runs), 'a reinstall keeps a disabled plugin disabled');
+ $enabled = new \App\Models\Plugin; $enabled->status = (object) ['value' => 'enabled']; Process::$runs = [];
+ check(U::change($enabled, 'reinstall')['ok'] && (bool) preg_grep('/simplify:plugin-install demo --enable/', Process::$runs), 'a reinstall keeps an enabled plugin enabled');
+
+ // Update channels: stable on main, beta and snapshot on their own branch; you get the newest of your channel or a more stable one.
+ $raw = 'https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';
+ check(U::channelUrls($raw.'main/update.json', 'stable') === [], 'stable reads update.json only');
+ check(U::channelUrls($raw.'main/update.json', 'beta') === [$raw.'beta/update-beta.json'], 'beta reads the beta branch');
+ check(U::channelUrls($raw.'main/update.json', 'snapshot') === [$raw.'beta/update-beta.json', $raw.'snapshot/update-snapshot.json'], 'snapshot also reads beta');
+ check(U::channelUrls('https://example.test/simplify/update.json', 'beta') === ['https://example.test/simplify/update-beta.json'], 'other hosts use sibling files');
+ $simplify = new \App\Models\Plugin; $simplify->id = 'pelican-simplify'; $simplify->update_url = $raw.'main/update.json';
+ $at = fn (string $v) => ['1.0.0-beta38' => ['version' => $v]];
+ Http::$byUrl = [$raw.'main/update.json' => $at('0.4.2'), $raw.'beta/update-beta.json' => $at('0.4.3-beta.1'), $raw.'snapshot/update-snapshot.json' => $at('0.4.3-snapshot.4')];
+ $latest = function (array $on) use ($simplify) { \Simplify\Panel\Services\FeatureSettings::$on = $on; return U::latestVersion($simplify); };
+ check($latest([]) === '0.4.2', 'stable channel gets the stable release');
+ check($latest(['simplify_beta']) === '0.4.3-beta.1', 'beta channel gets the beta');
+ check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.3-beta.1', 'snapshot channel gets a beta that is newer than the snapshot');
+ Http::$byUrl[$raw.'snapshot/update-snapshot.json'] = $at('0.4.4-snapshot.1');
+ check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.4-snapshot.1', 'snapshot channel gets the newest snapshot');
+ Http::$byUrl[$raw.'main/update.json'] = $at('0.4.4');
+ check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.4', 'a newer stable release wins on every channel');
+ unset(Http::$byUrl[$raw.'beta/update-beta.json']);
+ check($latest(['simplify_beta']) === '0.4.4', 'a missing channel file falls back to stable');
+ Http::$byUrl = [];
 }

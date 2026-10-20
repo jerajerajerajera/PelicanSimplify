@@ -45,33 +45,48 @@ final class PluginUpdater
     private static function entry(Plugin $plugin, bool $fresh = false): ?array
     {
         $url = (string) $plugin->update_url;
-        $read = static fn (string $from, array $headers = []) => Http::timeout(5)->connectTimeout(2)->withHeaders($headers)->get($from)->throw()->json();
+        $entry = self::read($url, $plugin, $fresh);
+        // Simplify on the beta or snapshot channel: the newest of the stable build and the builds of the chosen channel and every more stable one.
+        if ($plugin->id === 'pelican-simplify' && str_ends_with($url, '/update.json')) {
+            foreach (self::channelUrls($url, self::channel()) as $channelUrl) {
+                $candidate = self::read($channelUrl, $plugin, $fresh);
+                if ($candidate && is_string($candidate['version'] ?? null) && (!$entry || version_compare($candidate['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $candidate;
+            }
+        }
+        return $entry;
+    }
+
+    /**
+     * Update files of the beta and snapshot channels. The stable update.json lives on main (what Pelican and the Hub read);
+     * beta and snapshot builds have their own branch. An update_url that is not a raw GitHub file uses sibling files.
+     */
+    public static function channelUrls(string $stableUrl, string $channel): array
+    {
+        $channels = ['beta' => ['beta'], 'snapshot' => ['beta', 'snapshot']][$channel] ?? [];
+        return array_map(function (string $name) use ($stableUrl): string {
+            if (preg_match('#^(https://raw\.githubusercontent\.com/[^/]+/[^/]+/)[^/]+/update\.json$#', $stableUrl, $m)) return $m[1].$name.'/update-'.$name.'.json';
+            return substr($stableUrl, 0, -strlen('update.json')).'update-'.$name.'.json';
+        }, $channels);
+    }
+
+    /** One update file's entry for this panel, or null when it cannot be read. */
+    private static function read(string $url, Plugin $plugin, bool $fresh): ?array
+    {
+        $get = static fn (string $from, array $headers = []) => Http::timeout(5)->connectTimeout(2)->withHeaders($headers)->get($from)->throw()->json();
         $data = null;
         if ($fresh && preg_match('#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$#', $url, $m)) {
             try {
-                $data = $read("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']);
+                $data = $get("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']);
             } catch (\Throwable) {
                 $data = null;
             }
         }
         try {
-            $data = is_array($data) ? $data : $read($url);
+            $data = is_array($data) ? $data : $get($url);
         } catch (\Throwable) {
             return null;
         }
-        $entry = self::pick($data, $plugin);
-        // Simplify on the beta channel: the newer of the stable and the beta build for this Pelican version.
-        if ($plugin->id === 'pelican-simplify' && self::channel() === 'beta' && str_ends_with($url, '/update.json')) {
-            $betaUrl = substr($url, 0, -strlen('update.json')).'update-beta.json';
-            $beta = null;
-            if ($fresh && preg_match('#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$#', $betaUrl, $m)) {
-                try { $beta = $read("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']); } catch (\Throwable) { $beta = null; }
-            }
-            try { $beta = is_array($beta) ? $beta : $read($betaUrl); } catch (\Throwable) { $beta = null; }
-            $betaEntry = is_array($beta) ? self::pick($beta, $plugin) : null;
-            if ($betaEntry && is_string($betaEntry['version'] ?? null) && (!$entry || version_compare($betaEntry['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $betaEntry;
-        }
-        return $entry;
+        return self::pick($data, $plugin);
     }
 
     /** The entry for this Pelican version in one update file. */
@@ -83,10 +98,10 @@ final class PluginUpdater
         return is_array($entry) ? $entry : null;
     }
 
-    /** "stable" or "beta": which Simplify releases this panel follows. */
+    /** "stable", "beta" or "snapshot": which Simplify releases this panel follows. */
     public static function channel(): string
     {
-        return FeatureSettings::enabled('simplify_beta') ? 'beta' : 'stable';
+        return FeatureSettings::enabled('simplify_snapshot') ? 'snapshot' : (FeatureSettings::enabled('simplify_beta') ? 'beta' : 'stable');
     }
 
     public static function panelVersion(): string
@@ -221,13 +236,49 @@ final class PluginUpdater
         return $binary = 'php';
     }
 
-    /** Installs or uninstalls a plugin in a fresh process and always reports the outcome as a notification. */
+    /** Install status (plugin.json meta) of every plugin folder, read before an import may replace one of them. */
+    public static function installStates(): array
+    {
+        $states = [];
+        foreach (File::glob(plugin_path('*/plugin.json')) ?: [] as $path) {
+            try {
+                $meta = File::json($path)['meta'] ?? null;
+            } catch (\Throwable) {
+                continue;
+            }
+            if (is_array($meta) && ($meta['status'] ?? 'not_installed') !== 'not_installed') $states[basename(dirname($path))] = $meta;
+        }
+        return $states;
+    }
+
+    /**
+     * After importing over an existing installation the plugin is installed again, like Pelican 1.0.0-rc.1 does,
+     * so new migrations and assets apply. Beta38 drops the install status with the old plugin.json; it is put
+     * back first. Returns true when a reinstall was started.
+     */
+    public static function afterImport(string $id, array $states, ?int $userId = null): bool
+    {
+        $meta = $states[$id] ?? null;
+        if (!is_array($meta)) return false;
+        $path = plugin_path($id).'/plugin.json';
+        $manifest = File::json($path);
+        $manifest['meta'] = [...(is_array($manifest['meta'] ?? null) ? $manifest['meta'] : []), ...$meta, 'status_message' => null];
+        File::put($path, json_encode($manifest, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        Plugin::refreshRows();
+        Cache::put('simplify.plugin-queued.'.$id, now()->timestamp, 1800);
+        \Simplify\Panel\Jobs\ChangePlugin::dispatchAfterResponse($id, 'reinstall', $userId);
+        return true;
+    }
+
+    /** Installs, reinstalls or uninstalls a plugin in a fresh process and always reports the outcome as a notification. */
     public static function change(Plugin $plugin, string $action, ?int $userId = null): array
     {
-        $label = $action === 'install' ? 'installed' : 'uninstalled';
+        $label = ['install' => 'installed', 'reinstall' => 'installed again'][$action] ?? 'uninstalled';
         try {
-            if ($action === 'install') {
-                $run = Process::path(base_path())->timeout(1100)->run([self::php(), 'artisan', 'simplify:plugin-install', $plugin->id, '--enable']);
+            if ($action === 'install' || $action === 'reinstall') {
+                // A reinstall keeps the plugin enabled or disabled as it was; an errored one is enabled again.
+                $enable = $action === 'install' || $plugin->status->value !== 'disabled';
+                $run = Process::path(base_path())->timeout(1100)->run(array_values(array_filter([self::php(), 'artisan', 'simplify:plugin-install', $plugin->id, $enable ? '--enable' : null])));
                 if (!$run->successful()) throw new \RuntimeException(self::output($run) ?: 'The plugin could not be installed.');
             } else {
                 app(\App\Services\Helpers\PluginService::class)->uninstallPlugin($plugin);
@@ -238,11 +289,11 @@ final class PluginUpdater
         } catch (\Throwable $exception) {
             report($exception);
             // Pelican enables a plugin before its code is known to load; a broken one would stop the whole panel.
-            if ($action === 'install') self::quarantine($plugin->id, $exception->getMessage());
+            if ($action !== 'uninstall') self::quarantine($plugin->id, $exception->getMessage());
             $result = ['ok' => false, 'message' => $plugin->name.' could not be '.$label.': '.$exception->getMessage()];
         }
         \Illuminate\Support\Facades\Cache::forget('simplify.plugin-queued.'.$plugin->id);
-        self::notify($result, $userId, $action === 'install' ? ['Plugin installed', 'Plugin install failed'] : ['Plugin uninstalled', 'Plugin uninstall failed']);
+        self::notify($result, $userId, $action === 'uninstall' ? ['Plugin uninstalled', 'Plugin uninstall failed'] : ['Plugin installed', 'Plugin install failed']);
         return $result;
     }
 

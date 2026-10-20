@@ -415,7 +415,7 @@
     });
     // Changed means: the values differ from the last saved state. Switching tabs, focusing or clicking
     // around never counts, and putting a value back hides the bar again.
-    const controls = () => [...scope.querySelectorAll('input, select, textarea, [role="switch"]')].filter((el) =>
+    const controls = () => [...scope.querySelectorAll('input, select, textarea, [role="switch"], button[role="combobox"]')].filter((el) =>
       !el.closest('.ps-savebar, .fi-modal, [role="dialog"], [role="tablist"]')
       && (!within || el.closest(within))
       && !el.matches('input[type="search"], input[type="file"], .fi-sc-tabs > input')
@@ -430,7 +430,9 @@
       const anchor = wrapper?.querySelector('[id]')?.id || wrapper?.querySelector('label')?.textContent?.trim();
       return anchor ? 'field:' + anchor + option : 'index:' + index;
     };
+    // Filament 5.10 (Pelican rc.1) renders a select as a button that shows the chosen option, without an input.
     const valueOf = (el) => (el.getAttribute('role') === 'switch' ? el.getAttribute('aria-checked')
+      : el.getAttribute('role') === 'combobox' && el.tagName === 'BUTTON' ? el.textContent.trim()
       : ['checkbox', 'radio'].includes(el.type) ? String(el.checked) : el.value);
     const snapshot = () => new Map(controls().map((el, index) => [keyOf(el, index), valueOf(el)]));
     let baseline = null;
@@ -450,6 +452,8 @@
       setTimeout(check, 30);
     };
     ['input', 'change', 'click'].forEach((type) => scope.addEventListener(type, later, true));
+    // Select options can open outside the form; picking one is a change of its select.
+    document.addEventListener('click', (event) => { if (event.target.closest?.('[role="option"]')) setTimeout(check, 30); }, true);
     // Values that settle after the page loads (switches, pickers) must not count: while nothing is
     // changed, the state just before each press or key is the saved state.
     const settle = (event) => {

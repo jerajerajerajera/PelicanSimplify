@@ -1,52 +1,43 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 20 October 2026.
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 20 October 2026 (0.4.2).
 
 ## The project in short
 
 PelicanSimplify is a plugin for the [Pelican](https://github.com/pelican-dev/panel) game server panel. It replaces the server overview, the server pages and server creation with a simpler, more modern interface. Everything still runs on Pelican and Wings, and the original panel stays available through Legacy links.
 
-- **Repository:** `jerajerajerajera/PelicanSimplify` (public, MIT). Work happens on `main`; the working branch so far was `claude/simplify-plugin-beta-review-vcj589` (kept equal to `main`).
+- **Repository:** `jerajerajerajera/PelicanSimplify` (public, MIT). `main` holds stable releases; development happens on `snapshot` and `beta` (see below), through feature branches and PRs.
 - **Owner:** designs everything and tests on their own panel. Talks in **Dutch** and prefers clear, short answers in Dutch. Code, commits, CHANGELOG and README are in English.
 - **Stack:** Pelican 1.0.0-beta38 (Filament 5.7, Livewire 4, Laravel 13, PHP 8.3) and Pelican 1.0.0-rc.1 (Filament 5.10, PHP 8.4). Frontend: Blade + Alpine.js, plain CSS (no build step for the plugin).
 
 ## Versions and update channels
 
-| | Stable channel (`update.json`) | Beta channel (`update-beta.json`) |
-|---|---|---|
-| Pelican 1.0.0-beta38 | **0.4.0** | **0.4.1-beta.7** |
-| Pelican 1.0.0-rc.1 | — (none yet) | **0.4.1-beta.7** |
+Three channels, each on its own branch (decided 20 October 2026):
 
-- **0.4.0** is the first stable release, published as a GitHub Release (tag `v0.4.0`, zip attached).
-- **Download links:**
-  - Stable: `https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.0/pelican-simplify-v0.4.0.zip`. The build script updates this README link on each stable release.
-  - Beta: `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/dist/pelican-simplify-beta-latest.zip`.
-- **Channel choice:** Simplify settings → Plugin manager → "Get Simplify beta versions" (default off). Pelican's own updater always reads `update.json`, which is stable.
-- **Next step:** test 0.4.1-beta on a real rc.1 panel. Rc.1 needs PHP 8.4, which was not available in the cloud test environment. Then release **0.4.1** as stable for both Pelican versions.
+| Channel | Branch | Update file | Versions | Latest zip |
+|---|---|---|---|---|
+| Stable | `main` | `update.json` (also read by Pelican's own updater and the Pelican Hub) | `0.4.2` | `dist/pelican-simplify-latest.zip` + GitHub Release |
+| Beta | `beta` | `update-beta.json` | `0.4.3-beta.N`, `0.4.3-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
+| Snapshot | `snapshot` | `update-snapshot.json` | `0.4.3-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
+
+- **Current:** stable 0.4.2 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
+- **Channel choice:** Simplify settings → Plugin manager → "Simplify versions": Stable (default), Beta or Snapshot. Stored as the `simplify_beta` and `simplify_snapshot` switches. A panel gets the newest of its channel and every more stable one (`PluginUpdater::channelUrls`).
+- **Bridge for old betas:** installations up to 0.4.2-beta.7 read `main/update-beta.json`. A stable build writes that file too, so they move to the stable release, whose code then reads the beta branch.
+- Version order (PHP `version_compare`): `0.4.3-snapshot.N < 0.4.3-beta.N < 0.4.3-rc.N < 0.4.3`.
 
 ## How a release is made
 
-1. Bump the version in `plugin.json`, `package.json` and `package-lock.json` (lines 3 and 9).
-   - Beta versions look like `0.4.1-beta.N`.
-   - A version without `-` is stable.
-2. Add an entry at the top of `CHANGELOG.md` (`## 0.4.1-beta.N (beta channel)` + bullets).
-3. `python3 scripts/build-package.py`. It builds `dist/pelican-simplify-v<version>.zip` and:
-   - always writes `update-beta.json` and `dist/pelican-simplify-beta-latest.zip`;
-   - for stable versions, also writes `update.json` and `dist/pelican-simplify-latest.zip`, and updates the README install link;
-   - removes zips that are no longer on any channel;
-   - refreshes `SHA256SUMS`.
-   - Supported Pelican versions are listed in `SUPPORTED_PANELS` in that script.
-4. Run all checks, and **check every exit code** (a hidden failure once went out with a release):
-   - `python3 tests/package-layout.py`
-   - `bash tests/run.sh` (PHP/JS unit tests; files load individually with stubs, so new classes need a `class_exists` guard or a `require` in the test)
-   - `PW_CHROMIUM=/opt/pw-browsers/chromium node tests/theme-browser.js` (browser tests with Playwright)
-   - Chain them with `&&` so a failure stops the push.
-5. Commit with the attribution lines the session asks for. Push to the working branch **and** to `main`.
-6. Stable releases only: the owner creates the GitHub Release by hand.
-   - Releases → Draft a new release → tag `v<version>` on `main`.
-   - Attach the zip and mark it as **latest**, not pre-release.
-   - Pushing tags from the cloud environment is refused (403).
-7. Never open a pull request unless the owner asks.
+1. Work on a feature branch and open a PR into `snapshot`.
+2. Bump the version in `plugin.json`, `package.json` and `package-lock.json` (lines 3 and 9).
+   - The version decides the channel: `-snapshot.N`, `-beta.N`/`-rc.N`, or none for stable.
+3. Add an entry at the top of `CHANGELOG.md`.
+4. `python3 scripts/build-package.py`. It builds `dist/pelican-simplify-v<version>.zip` and writes the channel's update file with download links on the channel's branch, updates the latest zip, removes zips this branch no longer serves and refreshes `SHA256SUMS`. A stable build also writes `update-beta.json`, `dist/pelican-simplify-latest.zip` and the README install link. Supported Pelican versions are in `SUPPORTED_PANELS`.
+5. Run all checks and **check every exit code**, chained with `&&`:
+   - `python3 tests/package-layout.py && bash tests/run.sh && PHP_BIN=php8.4 bash tests/run.sh && PW_CHROMIUM=/opt/pw-browsers/chromium node tests/theme-browser.js`
+6. Commit with the attribution lines the session asks for and push to the channel's branch (via a PR, with the owner's approval).
+7. **Promote:** PR `snapshot` → `beta` for a beta (version `-beta.1`), PR `beta` → `main` for stable. After a stable release, merge `main` back into `beta` and `snapshot` and continue with the next `-snapshot.1`.
+8. Stable releases only: the owner creates the GitHub Release by hand (tag `v<version>` on `main`, zip attached, marked latest). Pushing tags from the cloud environment is refused (403).
 
 ## Architecture (main files)
 
@@ -102,15 +93,13 @@ PelicanSimplify is a plugin for the [Pelican](https://github.com/pelican-dev/pan
 
 ## Open items and ideas
 
-- **Rc.1 test + 0.4.1 stable.**
 - **Plugin support, next steps:**
   - App-panel pages from plugins in the account menu (for example Legal Pages).
   - Widgets from plugins as tiles.
   - Check overlap with the official plugins `minecraft-modrinth`, `subdomains` and `user-creatable-servers`.
 - **Optional:** a manual "interface size" choice next to the automatic scaling.
 - **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): better phone experience, Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
-- **Pelican Hub:** publish once 0.4.1 is stable. Submission requirements still need to be checked on `hub.pelican.dev`.
-- **When importing a plugin over an existing installation:** rc.1 runs the install again; Simplify's own plugin manager does not do that yet.
+- **Pelican Hub:** it reads the repository, so `main` must stay stable-only.
 
 ## Notes on the owner's own panel
 
@@ -124,3 +113,5 @@ PelicanSimplify is a plugin for the [Pelican](https://github.com/pelican-dev/pan
 ## Test environment (for whoever continues in the cloud)
 
 The earlier sessions used a local Pelican beta38 test installation with fake Wings, Playwright scripts and demo data for screenshots. That environment lived in a temporary folder and is gone in a new session. The automated tests in `tests/` do work anywhere. For a new test installation, set up Pelican beta38 (or rc.1 with PHP 8.4), copy the plugin in and install it with `php artisan p:plugin:install pelican-simplify`.
+
+**Pelican rc.1 in the cloud (worked on 20 October 2026):** PHP 8.4 comes from the ondrej/php PPA (add its key from keyserver.ubuntu.com by hand; `add-apt-repository` is broken there). Clone `pelican-dev/panel` at tag `v1.0.0-rc.1` with git (GitHub downloads are blocked, so `composer install` falls back to git sources and takes a few minutes), run composer with `php8.4`, set `'version' => '1.0.0-rc.1'` in `config/app.php` (a git checkout says "canary"), use SQLite and `QUEUE_CONNECTION=database`, run `yarn install`, then `php8.4 artisan migrate` and `p:plugin:install pelican-simplify`. Create the first admin with `User::withoutEvents()`, because Simplify only lets administrators create accounts.

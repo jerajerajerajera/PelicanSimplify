@@ -42,7 +42,8 @@ final class FeatureSettings
             'people_manager'=>['Let Simplify manage people & roles','One People & roles page replaces Pelican\'s Users and Roles pages: invite people (they choose their own password), assign roles, and give each role Simplify permissions plus optional admin access. Built on Pelican\'s own roles. Off uses Pelican\'s pages.',false,'Add-ons'],
             'plugin_manager'=>['Let Simplify manage plugins','Simplify\'s plugin page replaces Pelican\'s, with import, install, removal and safe updates with automatic rollback. Off uses Pelican\'s own plugin page and stops automatic updates.',true,'Add-ons'],
             'auto_update_plugins'=>['Install plugin updates automatically','Install new plugin versions within about a minute of their release, safely: a backup is kept, the new version is installed and checked, and the previous version is restored if anything fails. Results appear in the notifications.',true,'Automation'],
-            'simplify_beta'=>['Get Simplify beta versions','Off: only stable Simplify releases. On: also beta releases, as soon as they are published. Either way you only get builds made for your Pelican version. Turning it off keeps your current version until a newer stable release is out.',false,'Plugin updates'],
+            'simplify_beta'=>['Get Simplify beta versions','Beta versions test the next stable release with all its new features.',false,'Plugin updates'],
+            'simplify_snapshot'=>['Get Simplify snapshot versions','Snapshots are development builds with the latest changes, published often. They include beta versions.',false,'Plugin updates'],
             'host_health'=>['Host health','Show host CPU, memory and storage availability on the overview.',true,'Server features'],
             'restrict_access'=>['Administrator managed access','Restrict account creation, server sharing and additional schedules to administrators.',true,'Access and visibility'],
         ];

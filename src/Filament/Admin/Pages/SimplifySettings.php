@@ -163,7 +163,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -216,6 +216,9 @@ class SimplifySettings extends Page implements HasForms
             \Filament\Schemas\Components\Grid::make(5)->schema($limitFields),
         ];
     }
+
+    /** Which Simplify releases the plugin manager offers; stored as the simplify_beta and simplify_snapshot switches. */
+    private const UPDATE_CHANNELS = ['stable' => 'Stable', 'beta' => 'Beta', 'snapshot' => 'Snapshot'];
 
     private static function featureToggle(string $key): Toggle
     {
@@ -321,7 +324,8 @@ class SimplifySettings extends Page implements HasForms
                 ]),
             ],
             'Plugin manager' => [
-                Section::make('Plugin updates')->description('Applies to every installed plugin with a published update, Simplify included. Updates can also be started by hand from Admin tools → Plugins. Needs the plugin manager add-on.')->schema([self::featureToggle('auto_update_plugins'), self::featureToggle('simplify_beta')]),
+                Section::make('Plugin updates')->description('Applies to every installed plugin with a published update, Simplify included. Updates can also be started by hand from Admin tools → Plugins. Needs the plugin manager add-on.')->schema([self::featureToggle('auto_update_plugins'), Select::make('update_channel')->label('Simplify versions')->options(self::UPDATE_CHANNELS)->selectablePlaceholder(false)->required()
+                    ->helperText('Stable: only stable releases. Beta: also beta versions, which test the next stable release with all its new features. Snapshot: also development builds with the latest changes, published often. You always get the newest build of your choice or a more stable one, made for your Pelican version. Switching back keeps your current version until a newer one is out.')]),
             ],
             'Automatic subdomains' => [
                 Section::make('Addresses')->columns(2)->description('A server named "oak" gets oak.<domain>: a CNAME to the game address and, for Minecraft, an SRV record with its port, so Java players can leave the port out. Both are DNS only (not proxied), because Cloudflare\'s proxy does not carry game traffic.')->schema([
@@ -411,7 +415,12 @@ class SimplifySettings extends Page implements HasForms
         }
         if(\Simplify\Panel\Services\Extensions::webInstalled())app('simplify.web')->saveOptions($state['web']??[]);
         app(CreatorAccess::class)->reset();
-        \Simplify\Panel\Services\FeatureSettings::save($state['features']??[],true);
+        $features = $state['features'] ?? [];
+        if (isset($state['update_channel'], self::UPDATE_CHANNELS[$state['update_channel']])) {
+            $features['simplify_beta'] = $state['update_channel'] !== 'stable';
+            $features['simplify_snapshot'] = $state['update_channel'] === 'snapshot';
+        }
+        \Simplify\Panel\Services\FeatureSettings::save($features,true);
         $this->rerunSetup = false;
         Notification::make()->title('PelicanSimplify settings saved')->success()->send();
         if ($firstSetup) {

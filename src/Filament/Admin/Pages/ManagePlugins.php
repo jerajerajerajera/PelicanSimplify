@@ -109,7 +109,14 @@ final class ManagePlugins extends Page
     {
         $import = fn (callable $download) => function (array $data) use ($download): void {
             try {
-                $download(app(\App\Services\Helpers\PluginService::class), $data);
+                $states = PluginUpdater::installStates();
+                $id = $download(app(\App\Services\Helpers\PluginService::class), $data);
+                // Importing over an installed plugin is an update: it is installed again in the background.
+                if (is_string($id) && PluginUpdater::afterImport($id, $states, (int) user()->id)) {
+                    $this->busy = true;
+                    Notification::make()->title('Plugin imported')->body('It replaces the installed version and is installed again in the background. You get a notification when it is done.')->success()->send();
+                    return;
+                }
                 Notification::make()->title('Plugin imported')->body('Install it from the list to start using it.')->success()->send();
             } catch (\Throwable $exception) {
                 report($exception);
