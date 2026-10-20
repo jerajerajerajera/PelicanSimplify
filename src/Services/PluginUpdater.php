@@ -221,13 +221,49 @@ final class PluginUpdater
         return $binary = 'php';
     }
 
-    /** Installs or uninstalls a plugin in a fresh process and always reports the outcome as a notification. */
+    /** Install status (plugin.json meta) of every plugin folder, read before an import may replace one of them. */
+    public static function installStates(): array
+    {
+        $states = [];
+        foreach (File::glob(plugin_path('*/plugin.json')) ?: [] as $path) {
+            try {
+                $meta = File::json($path)['meta'] ?? null;
+            } catch (\Throwable) {
+                continue;
+            }
+            if (is_array($meta) && ($meta['status'] ?? 'not_installed') !== 'not_installed') $states[basename(dirname($path))] = $meta;
+        }
+        return $states;
+    }
+
+    /**
+     * After importing over an existing installation the plugin is installed again, like Pelican 1.0.0-rc.1 does,
+     * so new migrations and assets apply. Beta38 drops the install status with the old plugin.json; it is put
+     * back first. Returns true when a reinstall was started.
+     */
+    public static function afterImport(string $id, array $states, ?int $userId = null): bool
+    {
+        $meta = $states[$id] ?? null;
+        if (!is_array($meta)) return false;
+        $path = plugin_path($id).'/plugin.json';
+        $manifest = File::json($path);
+        $manifest['meta'] = [...(is_array($manifest['meta'] ?? null) ? $manifest['meta'] : []), ...$meta, 'status_message' => null];
+        File::put($path, json_encode($manifest, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        Plugin::refreshRows();
+        Cache::put('simplify.plugin-queued.'.$id, now()->timestamp, 1800);
+        \Simplify\Panel\Jobs\ChangePlugin::dispatchAfterResponse($id, 'reinstall', $userId);
+        return true;
+    }
+
+    /** Installs, reinstalls or uninstalls a plugin in a fresh process and always reports the outcome as a notification. */
     public static function change(Plugin $plugin, string $action, ?int $userId = null): array
     {
-        $label = $action === 'install' ? 'installed' : 'uninstalled';
+        $label = ['install' => 'installed', 'reinstall' => 'installed again'][$action] ?? 'uninstalled';
         try {
-            if ($action === 'install') {
-                $run = Process::path(base_path())->timeout(1100)->run([self::php(), 'artisan', 'simplify:plugin-install', $plugin->id, '--enable']);
+            if ($action === 'install' || $action === 'reinstall') {
+                // A reinstall keeps the plugin enabled or disabled as it was; an errored one is enabled again.
+                $enable = $action === 'install' || $plugin->status->value !== 'disabled';
+                $run = Process::path(base_path())->timeout(1100)->run(array_values(array_filter([self::php(), 'artisan', 'simplify:plugin-install', $plugin->id, $enable ? '--enable' : null])));
                 if (!$run->successful()) throw new \RuntimeException(self::output($run) ?: 'The plugin could not be installed.');
             } else {
                 app(\App\Services\Helpers\PluginService::class)->uninstallPlugin($plugin);
@@ -238,11 +274,11 @@ final class PluginUpdater
         } catch (\Throwable $exception) {
             report($exception);
             // Pelican enables a plugin before its code is known to load; a broken one would stop the whole panel.
-            if ($action === 'install') self::quarantine($plugin->id, $exception->getMessage());
+            if ($action !== 'uninstall') self::quarantine($plugin->id, $exception->getMessage());
             $result = ['ok' => false, 'message' => $plugin->name.' could not be '.$label.': '.$exception->getMessage()];
         }
         \Illuminate\Support\Facades\Cache::forget('simplify.plugin-queued.'.$plugin->id);
-        self::notify($result, $userId, $action === 'install' ? ['Plugin installed', 'Plugin install failed'] : ['Plugin uninstalled', 'Plugin uninstall failed']);
+        self::notify($result, $userId, $action === 'uninstall' ? ['Plugin uninstalled', 'Plugin uninstall failed'] : ['Plugin installed', 'Plugin install failed']);
         return $result;
     }
 
