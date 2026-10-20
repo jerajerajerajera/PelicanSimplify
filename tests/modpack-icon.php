@@ -23,5 +23,5 @@ assert_ok(str_contains($creator,"if (!\$offered && \$get('icon_source') === 'upl
 $card=file_get_contents(__DIR__.'/../resources/views/filament/admin/card-radio.blade.php');
 assert_ok(str_contains($card,'data:image/png;base64,{{ $modpackIcon }}'),'The wizard previews the downloaded modpack icon');
 echo "PASS modpack icon becomes a 64 x 64 PNG, https only, failures ignored, preselected in the wizard with upload as alternative, shipped icons kept\n";
-function assert_ok(bool $ok,string $message):void{if(!$ok){fwrite(STDERR,"FAIL $message\n");exit(1);}}
+function assert_ok(bool $ok,string $message):void{if(!$ok){fprintf(STDERR,"FAIL %s\n",$message);exit(1);}}
 }

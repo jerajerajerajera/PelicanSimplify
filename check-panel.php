@@ -16,11 +16,11 @@ foreach($plugins as $id){
     $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($panel.'/plugins/'.$id.'/resources/views',FilesystemIterator::SKIP_DOTS));
     foreach($it as $file){if(!str_ends_with($file->getPathname(),'.blade.php'))continue;
         $compiled=app('blade.compiler')->compileString(file_get_contents($file->getPathname()));
-        $tmp=tempnam(sys_get_temp_dir(),'simplify-blade-');file_put_contents($tmp,$compiled);
-        exec(escapeshellarg(PHP_BINARY).' -l '.escapeshellarg($tmp).' 2>&1',$output,$status);unlink($tmp);
-        if($status!==0)throw new RuntimeException('Blade syntax failed: '.$file->getPathname().' '.implode("\n",$output));$output=[];
+        $tmp=tempnam(sys_get_temp_dir(),'simplify-blade-');\Illuminate\Support\Facades\File::put($tmp,$compiled);
+        $lint=\Illuminate\Support\Facades\Process::run([PHP_BINARY,'-l',$tmp]);\Illuminate\Support\Facades\File::delete($tmp);
+        if(!$lint->successful())throw new RuntimeException('Blade syntax failed: '.$file->getPathname().' '.$lint->output().$lint->errorOutput());
     }
 }
-if ($marker!==null && file_put_contents($marker,"PELICAN_SIMPLIFY_VALIDATED\n")===false) throw new RuntimeException('Could not write validation marker.');
+if ($marker!==null && \Illuminate\Support\Facades\File::put($marker,"PELICAN_SIMPLIFY_VALIDATED\n")===false) throw new RuntimeException('Could not write validation marker.');
 echo "Pelican bootstrap, dashboard route, plugin status and Blade checks passed.\n";
 echo "Browser, Wings and backup-host checks still require a real server test.\n";

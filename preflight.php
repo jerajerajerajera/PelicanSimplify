@@ -8,4 +8,4 @@ try {
     $checks = \Simplify\Panel\Services\DependencyCheck::inspect($panel, __DIR__, false, true);
     foreach ($checks as $check) echo ($check['ok'] ? 'PASS ' : (($check['blocking'] ?? true) ? 'FAIL ' : 'WARN ')).$check['name'].($check['ok'] ? '' : ': '.$check['fix'])."\n";
     \Simplify\Panel\Services\DependencyCheck::assertReady($checks);
-} catch (\Throwable $error) { fwrite(STDERR, $error->getMessage()."\n"); exit(1); }
+} catch (\Throwable $error) { fprintf(STDERR, "%s\n", $error->getMessage()); exit(1); }
