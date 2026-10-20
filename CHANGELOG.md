@@ -1,5 +1,8 @@
 # Changes
 
+## 0.4.2-beta.2 (beta channel)
+- Fixed: opening the panel's home page (`/`) on Pelican 1.0.0-beta38 and 1.0.0-rc.1 showed Pelican's own server list instead of the Simplify dashboard, and that list missed the "Go to Simplify Panel" button. Simplify looked for the list under the wrong route name; it now asks Pelican for it, so `/` goes straight to Simplify. Pelican's list stays reachable with `?simplify_legacy=1`.
+
 ## 0.4.2-beta.1 (beta channel)
 - **Automatic subdomains (add-on, off by default):** a server can get its own address, such as oak.example.com, chosen in the creator or in the server's Network section. Simplify creates a DNS-only CNAME to your game address in Cloudflare, plus an SRV record for Minecraft so Java players can leave out the port, and removes them when the server is deleted. Set the domain, game address and forwarded port range under Simplify settings → Automatic subdomains; the Cloudflare token (DNS edit only) and zone ID are read from the panel's .env (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID) and never stored or shown. Records Simplify did not create are never changed. Cloudflare is called after the page has responded, and `simplify:subdomains` (every five minutes) retries failures and follows port changes.
 - The subdomain starts as the server name made DNS-safe ("Oak Survival" becomes oak-survival, with a number when taken), in the creator and in the Network section; it follows the name until you type your own.
