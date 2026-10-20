@@ -37,7 +37,7 @@ Three channels, each on its own branch (decided 20 October 2026):
    - `python3 tests/package-layout.py && bash tests/run.sh && PHP_BIN=php8.4 bash tests/run.sh && PW_CHROMIUM=/opt/pw-browsers/chromium node tests/theme-browser.js`
 6. Commit with the attribution lines the session asks for and push to the channel's branch (via a PR, with the owner's approval).
 7. **Promote:** PR `snapshot` → `beta` for a beta (version `-beta.1`), PR `beta` → `main` for stable. After a stable release, merge `main` back into `beta` and `snapshot` and continue with the next `-snapshot.1`.
-8. Stable releases only: the owner creates the GitHub Release by hand (tag `v<version>` on `main`, zip attached, marked latest). Pushing tags from the cloud environment is refused (403).
+8. Stable releases only: the `Release` workflow (`.github/workflows/release.yml`) creates GitHub Release `v<version>` with the zip and the CHANGELOG section, marked latest, as soon as the stable version is on `main`. It skips versions that already have a release and can be started by hand under Actions. (Pushing tags from the cloud environment is refused, so this is how releases are made.)
 
 ## Architecture (main files)
 
