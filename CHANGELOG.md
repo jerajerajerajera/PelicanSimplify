@@ -1,5 +1,8 @@
 # Changes
 
+## 0.4.2-beta.4 (beta channel)
+- New modded Minecraft servers get the modpack's icon as their server icon (server-icon.png, shown in the multiplayer list). It is downloaded after installation and scaled to 64 × 64. An icon you upload in the creator still wins, and a pack that ships its own server-icon.png keeps it.
+
 ## 0.4.2-beta.3 (beta channel)
 - Fixed: new Minecraft servers stopped on their first start with the Minecraft EULA message, although the EULA was accepted in the creator. The creator never passed that acceptance on, so `eula.txt` was not written; it is now written together with the other settings once the installation finishes.
 - When a server's console shows the EULA message, the Simplify dashboard now asks once to accept it (with a link to minecraft.net/eula). Accepting writes `eula=true` to `eula.txt` and starts the server. This also fixes servers created with earlier versions, and needs the file update and start permissions.
