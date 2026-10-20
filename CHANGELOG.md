@@ -1,5 +1,14 @@
 # Changes
 
+## 0.4.7-snapshot.1 (snapshot channel)
+Phone layout for the server overview, the first part of the phone experience on the roadmap. Wider screens do not change.
+- The page scrolls as a whole on phones: every server is reachable without scrolling inside a box, and nothing is cut off.
+- Game and node filters share one swipeable row with touch-sized chips.
+- Host health is a one-line summary (status, CPU and RAM) above the servers; tapping it still opens the node details.
+- Servers are compact rows with their status, CPU and RAM and one large power button: start when offline, otherwise stop (with the usual confirmation).
+- A tab bar at the bottom: Servers, New (choose Minecraft or another game) and Menu (the panel menu, now opening above the tab bar).
+- Browser tests check the phone overview at 360, 390 and 430 px.
+
 ## 0.4.6 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 A cleaner repository. Nothing changes in how Simplify works.
 - The shell installers are gone (INSTALL-PELICAN-SIMPLIFY.sh, ROLLBACK-PELICAN-SIMPLIFY.sh, RESET-PLUGINS.sh and their PHP helpers). Install and update through Pelican's plugin import or Simplify's plugin manager. Coming from the standalone creator: disable and delete it under Admin → Plugins first; the setup check now says so.
