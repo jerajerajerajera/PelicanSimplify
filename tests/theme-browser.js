@@ -272,6 +272,50 @@ const { start } = require('./browser-harness');
     await desktop.close();
     console.log('PASS phone overview: page scroll, one filter row, compact rows, tab bar');
 
+    // 14. Phone server page: four tabs that fit, More lists the other sections, the console fills the screen
+    // and quick commands fill the command bar.
+    for (const width of [360, 390, 430]) {
+      const phone = await open('/?mode=server&theme=dark', { width, height: 800 });
+      await data(phone, (d) => { d.connected = true; });
+      const layout = await phone.evaluate(() => {
+        const tabs = [...document.querySelectorAll('.ps-phone-sections .ps-phone-section')].filter((b) => b.offsetParent);
+        const bar = document.querySelector('.ps-phone-sections').getBoundingClientRect();
+        const consoleBox = document.querySelector('.ps-console').getBoundingClientRect();
+        const power = [...document.querySelectorAll('.ps-power-tile .ps-btn')].map((b) => b.offsetHeight);
+        return {
+          tabs: tabs.map((b) => b.textContent.trim()), fit: tabs.every((b) => b.scrollWidth <= b.clientWidth && b.getBoundingClientRect().right <= bar.right + 1),
+          small: tabs.filter((b) => b.offsetHeight < 44).length, grid: !!document.querySelector('.ps-widget-grid').offsetParent,
+          consoleHeight: Math.round(consoleBox.height), power, fits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      assert.deepEqual(layout.tabs, ['Console', 'Players', 'Files', 'More'], width + ': four tabs');
+      assert.ok(layout.fit && layout.fits, width + ': tabs fit on one row without clipping');
+      assert.equal(layout.small, 0, width + ': tabs are touch-sized');
+      assert.equal(layout.grid, false, width + ': the section grid makes way for the tabs');
+      assert.ok(layout.consoleHeight >= 600, width + ': console fills the screen (' + layout.consoleHeight + ' px)');
+      assert.ok(layout.power.length === 4 && layout.power.every((h) => h >= 48), width + ': large power buttons');
+      if (width === 390) {
+        await phone.click('.ps-quick-command >> text=say …');
+        assert.equal(await data(phone, (d) => d.command), 'say ');
+        await phone.waitForFunction(() => document.activeElement === document.querySelector('.ps-command input')); // quick command focuses the command bar
+        await phone.click('.ps-phone-more > .ps-phone-section');
+        await phone.waitForSelector('#ps-phone-more-menu .ps-menu-item:visible');
+        const more = await phone.locator('#ps-phone-more-menu .ps-menu-item:visible').allInnerTexts();
+        assert.ok(more.includes('Game settings') && !more.includes('Files'), 'More lists the other sections: ' + more);
+        await phone.click('#ps-phone-more-menu .ps-menu-item >> text=Game settings');
+        await phone.waitForSelector('.ps-tabs');
+        assert.equal(await phone.getAttribute('.ps-phone-more > .ps-phone-section', 'aria-current'), 'page', 'More shows the open section');
+        if (process.env.SCREENSHOT_DIR) await phone.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-server.png' });
+        await phone.click('.ps-phone-section >> text=Console');
+        await phone.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
+      }
+      await phone.close();
+    }
+    const desk = await open('/?mode=server&theme=dark');
+    assert.deepEqual(await desk.evaluate(() => [!!document.querySelector('.ps-phone-sections').offsetParent, !!document.querySelector('.ps-quick-commands').offsetParent, !!document.querySelector('.ps-widget-grid').offsetParent]), [false, false, true], 'desktop keeps its section menu');
+    await desk.close();
+    console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

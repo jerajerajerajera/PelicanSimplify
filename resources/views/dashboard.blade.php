@@ -633,6 +633,28 @@
                             </button>
                         </template>
                     </nav>
+                    {{-- Phones: four tabs that always fit. Console and the two most used sections, the rest under More. --}}
+                    <nav class="ps-phone-sections" aria-label="Server sections" x-on:click.outside="phoneMore=false" x-on:keydown.escape.stop="phoneMore=false">
+                        <button type="button" class="ps-phone-section" :aria-current="docked() ? null : 'page'" x-on:click="phoneMore=false; docked() ? close() : $refs.output.closest('.ps-console').scrollIntoView({behavior: 'smooth', block: 'start'})">Console</button>
+                        <template x-for="widget in widgets.filter((w) => PHONE_SECTIONS.includes(w.key))" :key="widget.key">
+                            <button type="button" class="ps-phone-section" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)" x-text="widget.key==='players' ? 'Players' : widgetTitle(widget)"></button>
+                        </template>
+                        <div class="ps-phone-more">
+                            <button type="button" class="ps-phone-section" aria-controls="ps-phone-more-menu" :aria-expanded="phoneMore" :aria-current="phoneMoreActive() ? 'page' : null" x-on:click="phoneMore=!phoneMore">More<svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                            <div id="ps-phone-more-menu" class="ps-dropdown is-end ps-phone-more-menu" x-show="phoneMore" x-cloak x-transition.opacity>
+                                <template x-for="widget in widgets.filter((w) => !PHONE_SECTIONS.includes(w.key))" :key="widget.key">
+                                    <button type="button" class="ps-menu-item" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)">
+                                        <svg aria-hidden="true"><use :href="'#ps-'+widget.icon"/></svg><span x-text="widgetTitle(widget)"></span>
+                                    </button>
+                                </template>
+                                <template x-for="page in server?.external_pages || []" :key="page.key">
+                                    <button type="button" class="ps-menu-item" x-on:click="phoneMore=false; openExternal(page)">
+                                        <svg aria-hidden="true"><use href="#ps-plugins"/></svg><span x-text="page.label"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </nav>
                 </div>
                 <div class="ps-live-column">
                     <aside class="ps-console" x-show="server">
@@ -644,6 +666,11 @@
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
+                        <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands">
+                            <template x-for="quick in QUICK_COMMANDS" :key="quick">
+                                <button type="button" class="ps-quick-command" :disabled="!connected || !server?.permissions['control.console']" x-on:click="useQuickCommand(quick)" x-text="quick.endsWith(' ') ? quick+'…' : quick"></button>
+                            </template>
+                        </div>
                         <form class="ps-command" x-on:submit.prevent="sendCommand()">
                             <span aria-hidden="true">›</span>
                             <input x-model="command" placeholder="Type a command…" :disabled="!connected || !server?.permissions['control.console']" x-on:keydown.up.prevent="historyBack()" x-on:keydown.down.prevent="historyForward()" aria-label="Console command">

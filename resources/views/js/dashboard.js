@@ -7,6 +7,9 @@
   const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen'];
   const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
+  // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
+  const PHONE_SECTIONS = ['players', 'files'];
+  const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
   const accentInk = (color) => {
     if (window.SimplifyTheme?.accentInk) return window.SimplifyTheme.accentInk(color);
     const [r, g, b] = color.slice(1).match(/../g).map((v) => {
@@ -68,6 +71,9 @@
       // Shell
       accountMenu: false,
       createMenu: false,
+      phoneMore: false,
+      PHONE_SECTIONS,
+      QUICK_COMMANDS,
       navMenu: false,
       theme: 'system',
       themeDark: false,
@@ -1468,6 +1474,19 @@
         this.history = [cmd, ...this.history].slice(0, 50);
         this.historyIndex = -1;
         this.command = '';
+      },
+      /** Puts a quick command in the command bar (a trailing space means: type the rest), ready to send. */
+      useQuickCommand(text) {
+        if (!this.connected || !this.server?.permissions['control.console']) return;
+        this.command = text;
+        this.$nextTick(() => {
+          const input = this.$root.querySelector('.ps-command input');
+          input?.focus();
+          input?.setSelectionRange(text.length, text.length);
+        });
+      },
+      phoneMoreActive() {
+        return (!!this.modal && this.widgets.some((w) => w.key === this.modal && !PHONE_SECTIONS.includes(w.key))) || this.modal === 'external';
       },
       historyBack() {
         this.historyIndex = Math.min(this.historyIndex + 1, this.history.length - 1);

@@ -1111,3 +1111,47 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-tab-create-menu { position: absolute; top: auto; bottom: calc(100% + 10px); left: 50%; width: 220px; transform: translateX(-50%); }
   .ps-tab-create-menu .ps-menu-item { min-height: 44px; font-size: 14px; }
 }
+
+/* Phone layout (server page): compact server card, large power buttons, four tabs that always fit
+   (Console, Players, Files, More) and a console that fills the screen with quick commands above the
+   command bar. */
+.ps-phone-sections, .ps-quick-commands { display: none; }
+@media (max-width: 600px) {
+  .ps .ps-server-info { gap: 10px 14px; margin-bottom: 12px; padding: 14px; }
+  .ps .ps-info-icon { width: 44px; height: 44px; }
+  .ps .ps-software-icon { width: 30px; height: 30px; }
+  .ps .ps-software-icon img { width: 26px; height: 26px; }
+  .ps .ps-game-title h2 { font-size: 21px; }
+  .ps .ps-info-content > .ps-motd-preview { display: none; }
+  .ps .ps-info-details { gap: 6px 14px; }
+  .ps .ps-info-details dt { font-size: 11px; }
+  .ps .ps-statusbar-power .ps-btn { width: 40px; height: 40px; }
+
+  .ps .ps-server-workspace { gap: 12px; }
+  .ps .ps-server-workspace .ps-power-tile { padding: 8px; }
+  .ps .ps-server-workspace .ps-power-tile .ps-btn { min-height: 52px; font-size: 12px; }
+
+  .ps .ps-server-workspace .ps-widget-grid { display: none; }
+  .ps .ps-phone-sections { grid-area: nav; position: relative; z-index: 2; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+  .ps-phone-sections > *, .ps-phone-more > .ps-phone-section { flex: 1 1 0; min-width: 0; }
+  .ps-phone-more { position: relative; display: flex; }
+  .ps-phone-section { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 0 6px; overflow: hidden; border: 0; border-radius: 10px; background: none; color: var(--ps-muted); font: 600 13px/1.2 var(--ps-font); text-overflow: ellipsis; white-space: nowrap; }
+  .ps-phone-section svg { flex: none; width: 14px; height: 14px; transform: rotate(90deg); }
+  .ps-phone-section[aria-current="page"] { background: var(--ps-raised); color: var(--ps-ink); box-shadow: inset 0 -2px 0 var(--ps-accent); }
+  .ps-phone-section:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; }
+  .ps-phone-more-menu { top: calc(100% + 8px); width: min(260px, calc(100vw - 28px)); max-height: 60dvh; overflow-y: auto; }
+  .ps-phone-more-menu .ps-menu-item { min-height: 44px; font-size: 14px; }
+  .ps-phone-more-menu .ps-menu-item[aria-current="page"] { background: var(--ps-raised); }
+
+  .ps .ps-server-workspace .ps-console { height: max(380px, calc(100dvh - 140px)); min-height: 0; scroll-margin-top: 72px; }
+  .ps .ps-server-workspace.has-dock .ps-console { height: 200px; }
+  .ps .ps-quick-commands { display: flex; flex: none; gap: 6px; padding: 8px 12px 0; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--ps-console-line); }
+  .ps .ps-quick-commands::-webkit-scrollbar { display: none; }
+  .ps .ps-quick-commands { background: var(--ps-console-raised); }
+  .ps .ps-quick-commands:not([style*="none"]) + .ps-command { border-top: 0; }
+  .ps .ps-server-workspace.has-dock .ps-quick-commands { display: none; }
+  .ps-quick-command { flex: none; min-height: 36px; padding: 0 12px; border: 1px solid var(--ps-console-line); border-radius: var(--ps-radius-pill); background: var(--ps-console-raised); color: var(--ps-console-ink); font: 12px var(--ps-mono); white-space: nowrap; }
+  .ps-quick-command:disabled { opacity: .45; }
+  .ps .ps-command input { height: 44px; font-size: 16px; }
+  .ps .ps-command button { min-width: 44px; height: 44px; }
+}

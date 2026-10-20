@@ -1,5 +1,12 @@
 # Changes
 
+## 0.4.7-snapshot.2 (snapshot channel)
+Phone layout for the server page, the second part of the phone experience. Wider screens do not change.
+- A more compact server card, larger power buttons and 40 px buttons in the status bar that stays at the top while scrolling.
+- Four tabs that always fit: Console, Players, Files and More. More lists every other section (game settings, plugins or mods, backups, schedules, software, network, performance, website, activity, advanced and pages from other plugins).
+- The console fills the screen, with a 44 px command bar and quick commands above it for Minecraft servers (list, say, time set day, weather clear, save-all). A quick command is put in the command bar to send with ↵, so nothing runs by accident.
+- Browser tests check the phone server page at 360, 390 and 430 px.
+
 ## 0.4.7-snapshot.1 (snapshot channel)
 Phone layout for the server overview, the first part of the phone experience on the roadmap. Wider screens do not change.
 - The page scrolls as a whole on phones: every server is reachable without scrolling inside a box, and nothing is cut off.
