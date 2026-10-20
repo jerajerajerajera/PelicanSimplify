@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.2-beta.3 (beta channel)
+- Fixed: new Minecraft servers stopped on their first start with the Minecraft EULA message, although the EULA was accepted in the creator. The creator never passed that acceptance on, so `eula.txt` was not written; it is now written together with the other settings once the installation finishes.
+- When a server's console shows the EULA message, the Simplify dashboard now asks once to accept it (with a link to minecraft.net/eula). Accepting writes `eula=true` to `eula.txt` and starts the server. This also fixes servers created with earlier versions, and needs the file update and start permissions.
+
 ## 0.4.2-beta.2 (beta channel)
 - Fixed: opening the panel's home page (`/`) on Pelican 1.0.0-beta38 and 1.0.0-rc.1 showed Pelican's own server list instead of the Simplify dashboard, and that list missed the "Go to Simplify Panel" button. Simplify looked for the list under the wrong route name; it now asks Pelican for it, so `/` goes straight to Simplify. Pelican's list stays reachable with `?simplify_legacy=1`.
 
