@@ -1,5 +1,22 @@
 # Changes
 
+## 0.4.2 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+Everything from 0.4.1-rc.2 and the 0.4.2 betas, now stable for both Pelican releases. Changes since stable 0.4.0:
+- **Pelican 1.0.0-rc.1 support** (PHP 8.4), next to 1.0.0-beta38, including rc.1's "hide port" allocation setting. (0.4.1)
+- **Pages from other plugins** under "External" in Admin tools, host mode and the server page, with a choice per page; plugins on the **known conflicts** list switch the Simplify dashboard off. (0.4.1)
+- **Interface scaling** for screens smaller than 1440p. (0.4.1)
+- **Automatic subdomains (add-on, Cloudflare):** a server can get its own address with a DNS-only CNAME and, for Minecraft, an SRV record. (beta.1)
+- The panel's home page opens the Simplify dashboard straight away. (beta.2)
+- The Minecraft EULA is accepted from the creator, and the dashboard asks once when a server stops on it. (beta.3)
+- Modded servers get the modpack's icon as server icon, preselected in the creator. (beta.4, beta.6)
+- Website switch on the title card with the companion website plugin. (beta.5)
+- New MOTD editor in the server settings and the creator, and the creator's RAM, CPU and disk cards on the Performance page, which now also saves unlimited (0) and exact megabytes. (beta.7)
+
+New in this release:
+- **Three update channels:** Simplify settings → Plugin manager → "Simplify versions" offers Stable, Beta and Snapshot (replacing "Get Simplify beta versions"; a panel that had it on is on Beta). Beta versions test the next stable release with all its new features; snapshots are development builds with the latest changes. You always get the newest build of your choice or a more stable one. Stable releases stay on `main` (update.json, also what Pelican and the Pelican Hub read); betas come from the `beta` branch (update-beta.json) and snapshots from the `snapshot` branch (update-snapshot.json).
+- Importing a plugin zip over an installed plugin from Simplify's Plugins page now installs it again in the background (migrations, seeder, assets) and keeps it enabled or disabled, as Pelican 1.0.0-rc.1 does. On beta38, where the import dropped the install status, Simplify puts it back.
+- Fixed on Pelican 1.0.0-rc.1: changing a dropdown in Simplify settings (such as the font of the panel name) did not show the save bar. Filament 5.10 draws these dropdowns without a form field; the save bar now sees them.
+
 ## 0.4.2-beta.7 (beta channel)
 - New MOTD editor, on the server's settings page and in the creator's Server properties step. You type the two MOTD lines straight into a Minecraft server-list row, in their real colours: select text and pick a colour or bold, italic, underline, strikethrough or obfuscated (the buttons show what the selection already has and switch it on or off); without a selection the choice applies to what you type next. "Show codes" shows and edits the exact text with § codes (& works too).
 - Fixed: the MOTD editor wrote a reset (§r) after every coloured selection, which wiped the colour of the rest of the line; a colour picked after bold removed the bold (in Minecraft a colour code clears formatting); and repeated clicks stacked codes, giving double colours. The codes are now generated from the text and its styles, so they are always minimal and in the right order. An MOTD you do not edit is left exactly as it is.

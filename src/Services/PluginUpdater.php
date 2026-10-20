@@ -45,33 +45,48 @@ final class PluginUpdater
     private static function entry(Plugin $plugin, bool $fresh = false): ?array
     {
         $url = (string) $plugin->update_url;
-        $read = static fn (string $from, array $headers = []) => Http::timeout(5)->connectTimeout(2)->withHeaders($headers)->get($from)->throw()->json();
+        $entry = self::read($url, $plugin, $fresh);
+        // Simplify on the beta or snapshot channel: the newest of the stable build and the builds of the chosen channel and every more stable one.
+        if ($plugin->id === 'pelican-simplify' && str_ends_with($url, '/update.json')) {
+            foreach (self::channelUrls($url, self::channel()) as $channelUrl) {
+                $candidate = self::read($channelUrl, $plugin, $fresh);
+                if ($candidate && is_string($candidate['version'] ?? null) && (!$entry || version_compare($candidate['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $candidate;
+            }
+        }
+        return $entry;
+    }
+
+    /**
+     * Update files of the beta and snapshot channels. The stable update.json lives on main (what Pelican and the Hub read);
+     * beta and snapshot builds have their own branch. An update_url that is not a raw GitHub file uses sibling files.
+     */
+    public static function channelUrls(string $stableUrl, string $channel): array
+    {
+        $channels = ['beta' => ['beta'], 'snapshot' => ['beta', 'snapshot']][$channel] ?? [];
+        return array_map(function (string $name) use ($stableUrl): string {
+            if (preg_match('#^(https://raw\.githubusercontent\.com/[^/]+/[^/]+/)[^/]+/update\.json$#', $stableUrl, $m)) return $m[1].$name.'/update-'.$name.'.json';
+            return substr($stableUrl, 0, -strlen('update.json')).'update-'.$name.'.json';
+        }, $channels);
+    }
+
+    /** One update file's entry for this panel, or null when it cannot be read. */
+    private static function read(string $url, Plugin $plugin, bool $fresh): ?array
+    {
+        $get = static fn (string $from, array $headers = []) => Http::timeout(5)->connectTimeout(2)->withHeaders($headers)->get($from)->throw()->json();
         $data = null;
         if ($fresh && preg_match('#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$#', $url, $m)) {
             try {
-                $data = $read("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']);
+                $data = $get("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']);
             } catch (\Throwable) {
                 $data = null;
             }
         }
         try {
-            $data = is_array($data) ? $data : $read($url);
+            $data = is_array($data) ? $data : $get($url);
         } catch (\Throwable) {
             return null;
         }
-        $entry = self::pick($data, $plugin);
-        // Simplify on the beta channel: the newer of the stable and the beta build for this Pelican version.
-        if ($plugin->id === 'pelican-simplify' && self::channel() === 'beta' && str_ends_with($url, '/update.json')) {
-            $betaUrl = substr($url, 0, -strlen('update.json')).'update-beta.json';
-            $beta = null;
-            if ($fresh && preg_match('#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$#', $betaUrl, $m)) {
-                try { $beta = $read("https://api.github.com/repos/{$m[1]}/{$m[2]}/contents/{$m[4]}?ref={$m[3]}", ['Accept' => 'application/vnd.github.raw+json']); } catch (\Throwable) { $beta = null; }
-            }
-            try { $beta = is_array($beta) ? $beta : $read($betaUrl); } catch (\Throwable) { $beta = null; }
-            $betaEntry = is_array($beta) ? self::pick($beta, $plugin) : null;
-            if ($betaEntry && is_string($betaEntry['version'] ?? null) && (!$entry || version_compare($betaEntry['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $betaEntry;
-        }
-        return $entry;
+        return self::pick($data, $plugin);
     }
 
     /** The entry for this Pelican version in one update file. */
@@ -83,10 +98,10 @@ final class PluginUpdater
         return is_array($entry) ? $entry : null;
     }
 
-    /** "stable" or "beta": which Simplify releases this panel follows. */
+    /** "stable", "beta" or "snapshot": which Simplify releases this panel follows. */
     public static function channel(): string
     {
-        return FeatureSettings::enabled('simplify_beta') ? 'beta' : 'stable';
+        return FeatureSettings::enabled('simplify_snapshot') ? 'snapshot' : (FeatureSettings::enabled('simplify_beta') ? 'beta' : 'stable');
     }
 
     public static function panelVersion(): string

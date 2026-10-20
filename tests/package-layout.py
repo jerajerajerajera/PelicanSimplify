@@ -10,22 +10,27 @@ manifest = json.loads((root / 'plugin.json').read_text())
 assert manifest['id'] == 'pelican-simplify'
 assert (root / 'src' / f"{manifest['class']}.php").is_file()
 assert not (root / 'pelican-simplify').exists()
-channels = {name: json.loads((root / name).read_text()) for name in ['update.json', 'update-beta.json']}
-stable = '-' not in manifest['version']
-beta = channels['update-beta.json'][manifest['panel_version'].lstrip('^')]
-assert beta['version'] == manifest['version'], 'the beta channel announces the current version'
-assert beta['download_url'].endswith(f"dist/pelican-simplify-v{manifest['version']}.zip")
+channel = builder.channel_of(manifest['version'])
+channels = {name: json.loads((root / name).read_text()) for name in builder.CHANNEL_FILES if (root / name).is_file()}
+own = {'stable': 'update.json', 'beta': 'update-beta.json', 'snapshot': 'update-snapshot.json'}[channel]
 published = root / 'dist' / f"pelican-simplify-v{manifest['version']}.zip"
 assert published.is_file(), 'the published archive for this version is committed'
-assert beta['sha256'] == hashlib.sha256(published.read_bytes()).hexdigest()
-assert (root / 'dist/pelican-simplify-beta-latest.zip').read_bytes() == published.read_bytes(), 'beta-latest.zip is the newest build'
-if stable:
-    assert channels['update.json'] == channels['update-beta.json'], 'a stable release is on both channels'
+for panel in builder.SUPPORTED_PANELS:
+    current = channels[own][panel]
+    assert current['version'] == manifest['version'], f'{own} announces the current version for {panel}'
+    assert current['download_url'] == builder.REPOSITORY + builder.BRANCHES[channel] + f"/dist/pelican-simplify-v{manifest['version']}.zip", 'the download is served from the channel branch'
+    assert current['sha256'] == hashlib.sha256(published.read_bytes()).hexdigest()
+latest = 'pelican-simplify-snapshot-latest.zip' if channel == 'snapshot' else 'pelican-simplify-beta-latest.zip'
+assert (root / 'dist' / latest).read_bytes() == published.read_bytes(), latest + ' is the newest build'
+if channel == 'stable':
+    assert channels['update.json'] == channels['update-beta.json'], 'a stable release is also on main/update-beta.json, which older betas read'
     assert (root / 'dist/pelican-simplify-latest.zip').read_bytes() == published.read_bytes(), 'latest.zip is the stable release'
-referenced = {entry['download_url'].rsplit('/', 1)[-1] for data in channels.values() for entry in data.values()}
-for entry in [e for data in channels.values() for e in data.values()]:
-    assert (root / 'dist' / entry['download_url'].rsplit('/', 1)[-1]).is_file(), 'every announced archive is committed'
-assert sorted(p.name for p in (root / 'dist').glob('pelican-simplify-v*.zip')) == sorted(referenced), 'only archives on a channel are kept'
+    assert 'update-snapshot.json' not in channels, 'main carries no snapshot channel'
+served = builder.served_archives(channel)
+for name in served:
+    assert (root / 'dist' / name).is_file(), 'every announced archive on this branch is committed'
+assert sorted(p.name for p in (root / 'dist').glob('pelican-simplify-v*.zip')) == sorted(served), 'only archives on a channel of this branch are kept'
+assert builder.channel_of('0.4.3-snapshot.2') == 'snapshot' and builder.channel_of('0.4.3-rc.1') == 'beta' and builder.channel_of('0.4.3-beta.4') == 'beta'
 
 with tempfile.TemporaryDirectory() as temp:
     archive = builder.build(Path(temp), 1_800_000_000)
@@ -40,4 +45,4 @@ with tempfile.TemporaryDirectory() as temp:
         assert not any(n.startswith('pelican-simplify/docs/') for n in names), 'screenshots are not shipped'
         # Laravel reuses a compiled view if its mtime is newer than the source.
         assert package.getinfo('pelican-simplify/resources/views/dashboard.blade.php').date_time[0] >= 2027
-print('PASS Hub root manifest, autoload layout, native archive, stable and beta channels with their archives and checksums')
+print('PASS Hub root manifest, autoload layout, native archive, stable, beta and snapshot channels with their archives and checksums')

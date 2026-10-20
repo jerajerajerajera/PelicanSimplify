@@ -9,8 +9,8 @@
             <div class="ps-alert is-info ps-plugin-channel" role="note">
                 <x-tabler-versions class="ps-ico" aria-hidden="true" />
                 <div>
-                    <strong>Pelican {{ \Simplify\Panel\Services\PluginUpdater::panelVersion() }} · Simplify {{ \Simplify\Panel\Services\PluginUpdater::channel() === 'beta' ? 'beta' : 'stable' }} channel</strong>
-                    <small>Updates are always the build made for your Pelican version, so you never get a version that does not fit your panel. {{ \Simplify\Panel\Services\PluginUpdater::channel() === 'beta' ? 'You also get beta releases.' : 'You get stable releases only.' }} Change this in Simplify settings → Plugin manager.</small>
+                    <strong>Pelican {{ \Simplify\Panel\Services\PluginUpdater::panelVersion() }} · Simplify {{ \Simplify\Panel\Services\PluginUpdater::channel() }} channel</strong>
+                    <small>Updates are always the build made for your Pelican version, so you never get a version that does not fit your panel. {{ ['beta' => 'You also get beta versions.', 'snapshot' => 'You also get beta versions and snapshots.'][\Simplify\Panel\Services\PluginUpdater::channel()] ?? 'You get stable releases only.' }} Change this in Simplify settings → Plugin manager.</small>
                 </div>
             </div>
             <p class="ps-help">
