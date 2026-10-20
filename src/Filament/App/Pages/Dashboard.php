@@ -68,7 +68,7 @@ final class Dashboard extends Page
         $artworkMeta=Extensions::web()?Extensions::webAdapter()->metadata($s):$meta;
         $base['background_choices']=array_map(fn($id)=>['id'=>$id,'name'=>ucfirst($id),'url'=>ServerArtwork::backgroundUrl($id)],array_keys(ServerArtwork::BACKGROUNDS));
         $base['uploaded_backgrounds']=\Simplify\Panel\Services\ServerBanners::entries($s);
-        $base['server']=['external_pages'=>\Simplify\Panel\Services\ExternalPlugins::serverPages($s),'background_id'=>ServerArtwork::selection($s) ?? ($artworkMeta['background_id'] ?? 'auto'),'color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'short'=>$s->uuid_short,'name'=>$s->name,'address'=>$s->allocation?->display_address ?? $s->allocation?->address,
+        $base['server']=['external_pages'=>\Simplify\Panel\Services\ExternalPlugins::serverPages($s),'background_id'=>ServerArtwork::selection($s) ?? ($artworkMeta['background_id'] ?? 'auto'),'color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'short'=>$s->uuid_short,'name'=>$s->name,'address'=>\Simplify\Panel\Services\Subdomains::address($s) ?? $s->allocation?->display_address ?? $s->allocation?->address,
             'memory'=>$s->memory,'disk'=>$s->disk,'cpu'=>$s->cpu,'software'=>$s->egg?->name,'image'=>user()->can(P::StartupRead,$s)?$s->image:'Restricted','startup'=>user()->can(P::StartupRead,$s)?$s->startup:'Restricted',
             'alias'=>\Simplify\Panel\Services\ServerMetadata::read($s)['server_alias']??'','sftp'=>\Simplify\Panel\Services\SftpDetails::forServer($s),'package_kind'=>Packages::capability($s),'native_sections'=>$this->nativeSections($s),
             'owner'=>user()->isRootAdmin() || (int)$s->owner_id===(int)user()->id,'minecraft'=>ManagedSettings::minecraft($s),'can_resources'=>ManagedResources::canEdit($s),'permissions'=>$permissions,
@@ -274,11 +274,16 @@ final class Dashboard extends Page
         return$lists;
     }
     #[Renderless]
-    public function subdomain(string $name): void
+    public function subdomain(string $name): ?array
     {
         $s=$this->server();Access::owner($s);
         validator(['name'=>$name],['name'=>'nullable|string|max:63|regex:/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/'])->validate();
-        abort_unless(Extensions::web(),404);Extensions::webAdapter()->subdomain($s,$name);
+        if(\Simplify\Panel\Services\Subdomains::active()){
+            // Returned rather than thrown, so the dashboard can show why a name is refused.
+            try{\Simplify\Panel\Services\Subdomains::request($s,(string)$name);}catch(\Illuminate\Validation\ValidationException $e){return ['error'=>(string)collect($e->errors())->flatten()->first()];}
+            return null;
+        }
+        abort_unless(Extensions::web(),404);Extensions::webAdapter()->subdomain($s,$name);return null;
     }
     #[Renderless]
     public function deleteServer(string $confirmation): void
@@ -316,7 +321,12 @@ final class Dashboard extends Page
         catch(\Throwable $e){$s->update(['status'=>null]);throw$e;}
     }
     #[Renderless]
-    public function connectionData(): array { $s=$this->server();Access::permission($s,P::StartupRead);return ['requested_subdomain'=>Extensions::web()?Extensions::webAdapter()->metadata($s)['requested_subdomain']??'':'']; }
+    public function connectionData(): array
+    {
+        $s=$this->server();Access::permission($s,P::StartupRead);
+        if(\Simplify\Panel\Services\Subdomains::active())return ['subdomains'=>true,'requested_subdomain'=>($state=\Simplify\Panel\Services\Subdomains::state($s))['name'],'subdomain'=>$state,'address'=>\Simplify\Panel\Services\Subdomains::address($s)];
+        return ['requested_subdomain'=>Extensions::web()?Extensions::webAdapter()->metadata($s)['requested_subdomain']??'':''];
+    }
     #[Renderless]
     public function advancedData(): array { abort_unless(Access::feature('advanced')||Access::feature('software'),404);return \Simplify\Panel\Services\Software::data($this->server()); }
     #[Renderless]

@@ -29,6 +29,9 @@
         'Server icon' => $get('server_icon') ? 'Ready to upload' : 'Installer default',
         'Start after installation' => $get('start_on_completion') ? 'Yes' : 'No',
     ];
+    if (\Simplify\Panel\Services\Subdomains::active()) {
+        $rows['Subdomain'] = ($sub = strtolower(trim((string) $get('requested_subdomain')))) !== '' ? $sub . '.' . \Simplify\Panel\Services\Subdomains::settings()['domain'] : 'None';
+    }
     if ($other) {
         $rows['Game'] = $egg?->name ?? '—';
         foreach (['Minecraft', 'Java runtime', 'Server type', 'Server properties', 'MOTD', 'Server icon'] as $key) { unset($rows[$key]); }

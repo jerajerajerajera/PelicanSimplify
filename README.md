@@ -100,6 +100,7 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 - Steam banners and icons for games, and automatic Steam game server tokens for games that need one
 - Resource presets, per-user limits, a name generator *(Pelican)*, and server color and icon choice
 - Drafts are saved automatically and can be discarded
+- **Automatic subdomains** *(add-on, Cloudflare)*: choose a name such as `oak` in the creator or the server's Network section; Simplify creates the DNS records (a CNAME, plus an SRV record so Minecraft players need no port) and removes them with the server
 - Pelican's own creator stays available
 
 </details>

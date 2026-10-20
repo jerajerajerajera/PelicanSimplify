@@ -163,7 +163,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown()]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -178,6 +178,7 @@ class SimplifySettings extends Page implements HasForms
         'Easy server creator' => 'tabler-device-gamepad-2',
         'People & roles' => 'tabler-users-group',
         'Plugin manager' => 'tabler-plug',
+        'Automatic subdomains' => 'tabler-world-www',
     ];
 
     /** Pages other plugins add (empty when the service is not available, as in unit tests). */
@@ -322,6 +323,17 @@ class SimplifySettings extends Page implements HasForms
             'Plugin manager' => [
                 Section::make('Plugin updates')->description('Applies to every installed plugin with a published update, Simplify included. Updates can also be started by hand from Admin tools → Plugins. Needs the plugin manager add-on.')->schema([self::featureToggle('auto_update_plugins'), self::featureToggle('simplify_beta')]),
             ],
+            'Automatic subdomains' => [
+                Section::make('Addresses')->columns(2)->description('A server named "oak" gets oak.<domain>: a CNAME to the game address and, for Minecraft, an SRV record with its port, so Java players can leave the port out. Both are DNS only (not proxied), because Cloudflare\'s proxy does not carry game traffic.')->schema([
+                    TextInput::make('subdomains.domain')->label('Domain')->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => 'Enter a host name such as example.com.'])->placeholder('example.com')->maxLength(200)->helperText('The Cloudflare zone the subdomains are created in.'),
+                    TextInput::make('subdomains.target')->label('Game address')->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => 'Enter a host name such as example.com.'])->placeholder('play.example.com')->maxLength(253)->helperText('An existing DNS-only record that points to the public IP where your game ports arrive.'),
+                    TextInput::make('subdomains.port_min')->label('First forwarded port')->integer()->minValue(1)->maxValue(65535)->required(),
+                    TextInput::make('subdomains.port_max')->label('Last forwarded port')->integer()->minValue(1)->maxValue(65535)->required()->gte('subdomains.port_min')->helperText('Only servers with a port in this range get a subdomain. New servers get a port from this range when one is free.'),
+                ]),
+                Section::make('Cloudflare token')->description('Create a Cloudflare API token with only Zone → DNS → Edit for this zone. Add it and the zone ID (on the zone\'s overview page) to the panel\'s .env as CLOUDFLARE_API_TOKEN=… and CLOUDFLARE_ZONE_ID=…. Simplify reads them from there and never stores or shows the token.')->schema([
+                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? 'Still missing: '.implode(', ', $missing).'.' : 'Ready: new subdomains are connected automatically.'),
+                ]),
+            ],
         ];
         $icons = [...self::CATEGORIES, ...self::ADDONS];
         $addons = array_intersect_key($categories, self::ADDONS);
@@ -392,6 +404,7 @@ class SimplifySettings extends Page implements HasForms
         }
         \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']??[]);
         \Simplify\Panel\Services\PerformanceSettings::save($state['performance']??[]);
+        if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         \Simplify\Panel\Services\RoleAccess::save($roles);
         if (!Storage::disk('local')->put(CreatorAccess::FILE, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) {
             throw new \RuntimeException('Could not save creator settings.');

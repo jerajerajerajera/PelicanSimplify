@@ -980,7 +980,16 @@
                     <h3 class="ps-section-title">Server address</h3>
                     <p class="ps-help">Use this address to connect to your server.</p>
                     <button type="button" class="ps-btn ps-address" x-on:click="copy(server.address)"><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg></button>
-                    @if(\Simplify\Panel\Services\Extensions::web()) @include('server-directory::simplify.subdomain') @endif
+                    @if(\Simplify\Panel\Services\Subdomains::active())
+                        <h3 class="ps-section-title">Subdomain</h3>
+                        <p class="ps-help">Players can join with this name instead of the port address. The DNS records are created automatically; leave it empty to remove the subdomain.</p>
+                        <label class="ps-field">Name
+                            <span class="ps-input-row"><input x-model="requestedSubdomain" maxlength="63" placeholder="oak" x-on:keydown.enter.prevent="saveSubdomain()"><span class="ps-input-suffix" x-text="'.' + (advanced.subdomain?.domain || '')"></span><button type="button" class="ps-btn" x-on:click="saveSubdomain()" :disabled="busy || !server?.owner">Save</button></span>
+                        </label>
+                        <template x-if="subdomainStatus()">
+                            <p class="ps-help"><span class="ps-badge" :class="subdomainStatus().tone"><i></i><span x-text="subdomainStatus().label"></span></span> <span x-text="advanced.subdomain?.message"></span></p>
+                        </template>
+                    @elseif(\Simplify\Panel\Services\Extensions::web()) @include('server-directory::simplify.subdomain') @endif
                 </div>
 
                 {{-- Server software (Minecraft): reinstall with another type, version or modpack. --}}

@@ -1,5 +1,8 @@
 # Changes
 
+## Unreleased
+- **Automatic subdomains (add-on, off by default):** a server can get its own address, such as oak.example.com, chosen in the creator or in the server's Network section. Simplify creates a DNS-only CNAME to your game address in Cloudflare, plus an SRV record for Minecraft so Java players can leave out the port, and removes them when the server is deleted. Set the domain, game address and forwarded port range under Simplify settings → Automatic subdomains; the Cloudflare token (DNS edit only) and zone ID are read from the panel's .env (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID) and never stored or shown. Records Simplify did not create are never changed. Cloudflare is called after the page has responded, and `simplify:subdomains` (every five minutes) retries failures and follows port changes.
+
 ## 0.4.1-rc.1 (beta channel) — release candidate for 0.4.1
 The first release candidate for 0.4.1: the 0.4.1 betas bundled, plus one small fix. If no problems turn up, 0.4.1 becomes the next stable release. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support:** loads on Pelican 1.0.0-rc.1 as well as 1.0.0-beta38 (plugin.json declares "^1.0.0-beta38"), system checks accept rc.1, and server addresses respect rc.1's "hide port" allocation setting. (beta.1)

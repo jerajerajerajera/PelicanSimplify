@@ -1336,6 +1336,7 @@
           if (['advanced', 'software', 'connection'].includes(key) && (key !== 'software' || this.server?.minecraft)) {
             this.advanced = await load(() => (key === 'connection' ? wire.connectionData() : wire.advancedData()));
             this.requestedSubdomain = this.advanced.requested_subdomain || '';
+            if (key === 'connection' && this.server && this.advanced.address) this.server.address = this.advanced.address;
           }
           if (['settings', 'performance'].includes(key)) this.fillSettings();
           if (key === 'settings') {
@@ -1629,7 +1630,36 @@
         await this.run(() => wire.saveWebsite(state), 'Website settings saved');
       },
       async saveSubdomain() {
-        await this.run(() => wire.subdomain(this.requestedSubdomain), 'Subdomain request saved. DNS will be connected later.');
+        if (!this.advanced?.subdomains) {
+          await this.run(() => wire.subdomain(this.requestedSubdomain), 'Subdomain request saved. DNS will be connected later.');
+          return;
+        }
+        const name = this.requestedSubdomain.trim().toLowerCase();
+        const result = await this.run(() => wire.subdomain(name));
+        if (result === SKIPPED) return;
+        if (result?.error) return this.toast(result.error, 'danger');
+        this.toast(name ? 'Subdomain saved. Connecting…' : 'Subdomain removed', 'ok');
+        // Cloudflare is called right after the response; one follow-up read shows the outcome.
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        await this.refreshConnection();
+      },
+      async refreshConnection() {
+        if (this.modal !== 'connection') return;
+        try {
+          this.advanced = await wire.connectionData();
+          this.requestedSubdomain = this.advanced.requested_subdomain || '';
+          if (this.server && this.advanced.address) this.server.address = this.advanced.address;
+        } catch {}
+      },
+      subdomainStatus() {
+        const state = this.advanced?.subdomain || {};
+        if (!state.name) return null;
+        return {
+          active: { tone: 'is-ok', label: 'Connected' },
+          pending: { tone: 'is-info', label: 'Connecting…' },
+          removing: { tone: 'is-info', label: 'Removing…' },
+          error: { tone: 'is-danger', label: 'Not connected' },
+        }[state.status] || null;
       },
 
       /* Players and packages ------------------------------------------------------------------- */

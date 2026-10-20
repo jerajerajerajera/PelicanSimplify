@@ -40,6 +40,9 @@ function bladeToHtml(src) {
     .replace(/<x-filament-panels::page>|<\/x-filament-panels::page>/g, '')
     .replace(/@assets[\s\S]*?@endassets/g, '')
     .replace(/@js\(\$this->initial\(\)\)/g, 'window.__boot')
+    // The subdomain card is kept (its data comes from connectionData); the website extension's fallback is dropped.
+    .replace(/@if\(\\Simplify\\Panel\\Services\\Subdomains::active\(\)\)/g, '')
+    .replace(/@elseif\(\\Simplify\\Panel\\Services\\Extensions::web\(\)\)[\s\S]*?@endif/g, '')
     .replace(/@if\(\\Simplify\\Panel\\Services\\Extensions::web\(\)\)[\s\S]*?@endif/g, '')
     .replace(/@error\([^)]*\)[\s\S]*?@enderror/g, '')
     .replace(/@csrf/g, '')

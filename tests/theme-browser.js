@@ -144,6 +144,18 @@ const { start } = require('./browser-harness');
     await nodes.close();
     console.log('PASS servers grouped per node, compact list rows and host mode');
 
+    // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
+    const network = await open('/?mode=server&theme=light');
+    await network.evaluate(() => { window.__wire.connectionData = async () => ({ subdomains: true, requested_subdomain: 'oak', subdomain: { name: 'oak', status: 'active', message: '', domain: 'example.com' }, address: 'oak.example.com' }); });
+    await data(network, (d) => d.open('connection'));
+    await network.waitForFunction(() => document.querySelector('.ps-input-suffix')?.textContent === '.example.com');
+    const row = await network.evaluate(() => { const r = document.querySelector('.ps-input-suffix').parentElement; const items = [...r.children].map((e) => e.getBoundingClientRect()); return { centers: items.map((b) => Math.round(b.top + b.height / 2)), overflow: r.scrollWidth > r.clientWidth }; });
+    assert.ok(Math.max(...row.centers) - Math.min(...row.centers) <= 1 && !row.overflow, 'name, domain and Save share one row: ' + JSON.stringify(row));
+    assert.equal(await network.locator('.ps-badge.is-ok').filter({ hasText: 'Connected' }).count(), 1, 'connected subdomain shows the ok badge');
+    if (process.env.SCREENSHOT_DIR) await network.screenshot({ path: process.env.SCREENSHOT_DIR + '/network-subdomain.png' });
+    await network.close();
+    console.log('PASS network subdomain row and status badge');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

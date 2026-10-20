@@ -154,6 +154,7 @@ input[type="file"].ps-input::file-selector-button {
 .ps-input-row { display: flex; gap: 8px; align-items: center; }
 .ps-input-row > :is(input, select, .ps-input) { flex: 1 1 140px; }
 .ps-input-row > .ps-btn { flex: none; }
+.ps-input-row > .ps-input-suffix { flex: none; color: var(--ps-muted); font: 400 14px/1 var(--ps-font); }
 
 /* Switches share one look for checkboxes and toggle buttons. */
 .ps-switch,

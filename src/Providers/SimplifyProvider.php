@@ -33,6 +33,11 @@ final class SimplifyProvider extends ServiceProvider
             // Automatic backups start with the configured defaults; a storage error never blocks creation.
             try { \Simplify\Panel\Services\AutomaticBackups::initialize($server); } catch (\Throwable $e) { report($e); }
         });
+        \App\Models\Server::deleted(function($server):void{
+            // Removed after the response; simplify:subdomains retries when Cloudflare is unavailable.
+            $uuid=(string)$server->uuid;
+            if(\Simplify\Panel\Services\FeatureSettings::enabled('subdomains'))app()->terminating(function()use($uuid):void{try{\Simplify\Panel\Services\Subdomains::forget($uuid);}catch(\Throwable $e){report($e);}});
+        });
         \App\Models\User::creating(function():void {
             if(\Simplify\Panel\Services\FeatureSettings::enabled('restrict_access')) abort_unless(user()?->isAdmin(),403,'Only an administrator can create accounts.');
         });
@@ -53,6 +58,7 @@ final class SimplifyProvider extends ServiceProvider
         $this->app->booted(function():void {
             Schedule::command('simplify:maintenance')->everyMinute()->withoutOverlapping(5);
             Schedule::command('simplify:plugin-updates')->everyMinute()->withoutOverlapping(60);
+            Schedule::command('simplify:subdomains')->everyFiveMinutes()->withoutOverlapping(10);
         });
     }
 }

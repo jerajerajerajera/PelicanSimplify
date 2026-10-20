@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Test {class Component {public array $options=[];public function __construct(public string|int|null $label=null){}public static function make($label=null){return new static($label);}public function __call($method,$arguments){$this->options[$method]=$arguments;return $this;}}}
+namespace Test {class Component {public array $options=[];public function __construct(public mixed $label=null){}public static function make($label=null){return new static($label);}public function __call($method,$arguments){$this->options[$method]=$arguments;return $this;}}}
 namespace Livewire {trait WithFileUploads {}}
 namespace Filament\Pages {class Page {}}
 namespace Filament\Forms\Concerns {trait InteractsWithForms {}}
@@ -25,11 +25,11 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  $page=new \Simplify\Panel\Filament\Admin\Pages\SimplifySettings;
  $schema=$page->form(new \Filament\Schemas\Schema);$wizard=$schema->options['components'][0][0];$steps=$wizard->options['steps'];
  if(array_map(fn($step)=>$step->label,$steps)!==$page->setupSteps())throw new \RuntimeException('progress navigation and wizard steps disagree');
- if(array_map(fn($step)=>$step->label,$steps)!==['General','Appearance','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager']||$steps[1]->options['schema'][0][1]->label!=='Colours')throw new \RuntimeException('categories not separate pages');
+ if(array_map(fn($step)=>$step->label,$steps)!==['General','Appearance','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains']||$steps[1]->options['schema'][0][1]->label!=='Colours')throw new \RuntimeException('categories not separate pages');
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
- if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Users & access','Backups & performance','Server banners','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager'])throw new \RuntimeException('settings tabs lost a setup category');
+ if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Users & access','Backups & performance','Server banners','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains'])throw new \RuntimeException('settings tabs lost a setup category');
  $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];
  if(count($profiles)!==3||$profiles[2]->label!=='Modded / modpacks'||count($profiles[2]->options['schema'][0])!==3)throw new \RuntimeException('CPU/RAM/disk profiles missing from settings');
  if(($tabs[7]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
