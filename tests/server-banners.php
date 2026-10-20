@@ -14,9 +14,8 @@ if(!function_exists('mb_substr')){function mb_substr($s,$start,$length){return s
 function check($ok){if(!$ok)throw new \RuntimeException('Banner regression');}
 $bytes=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAIAAAAt/+nTAAAAQElEQVR4nO3PQQ0AIBDAMED5SUcEj4ZkVbDtmVk/OzrgVQNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oD2gVLaQHAY0QxtQAAAABJRU5ErkJggg==');check(B::validateBytes($bytes)==='png');
 foreach(['<svg></svg>',str_repeat('x',5*1024*1024+1),"<?php echo 'x';"] as $invalid){try{B::validateBytes($invalid);throw new \RuntimeException('accepted invalid upload');}catch(\Illuminate\Validation\ValidationException){}}
-$path=tempnam(sys_get_temp_dir(),'banner-test-');file_put_contents($path,$bytes);
+$path=__DIR__.'/fixtures/banner.png';check(file_get_contents($path)===$bytes);
 $file=new class($path){function __construct(private $path){}function getSize(){return filesize($this->path);}function getRealPath(){return $this->path;}function getClientOriginalName(){return '../../My banner.png';}};
-try{
 $a=new \App\Models\Server('server-a');$b=new \App\Models\Server('server-b');$item=B::upload($a,$file);$id=$item['id'];
 check(B::validId($id)&&B::belongsTo($id,$a)&&!B::belongsTo($id,$b));check(count(B::entries($a))===1&&B::entries($b)===[]);check(B::metadata('../../secret')===null);
 try{\Simplify\Panel\Services\ServerArtwork::save($b,$id);throw new \RuntimeException('accepted foreign banner');}catch(\RuntimeException $e){check($e->getMessage()==='422');}
@@ -27,5 +26,4 @@ $root=false;try{B::delete($id);throw new \RuntimeException('nonadmin deleted lib
 $root=true;\Simplify\Panel\Services\Access::$allowed=true;B::delete($id,$a);check(B::metadata($id)===null&&B::entries()===[]);check(json_decode(S::$files['simplify/backgrounds/server-a.json'],true)['background_id']==='auto');
 try{B::delete('valley');throw new \RuntimeException('deleted built-in banner');}catch(\RuntimeException $e){check($e->getMessage()==='404');}
 echo "PASS validated uploads, scoped gallery, foreign-server rejection, protected deletion, automatic fallback and permanent bundled banners\n";
-}finally{unlink($path);}
 }

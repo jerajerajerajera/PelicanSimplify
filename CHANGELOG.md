@@ -1,5 +1,11 @@
 # Changes
 
+## 0.4.5 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which scans the whole repository, not only the plugin. Nothing changes in how Simplify works.
+- The panel check of the shell installer (check-panel.php) uses Laravel's File and Process helpers; preflight.php and the tests write errors with fprintf.
+- The dependency and banner tests read committed fixtures under tests/fixtures instead of writing and deleting temporary files.
+- tests/hub-check.py now scans every PHP file in the repository, like the Hub.
+
 ## 0.4.4 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 For the Pelican Hub, which refuses plugins with direct file or process calls. Nothing changes in how Simplify works.
 - The setup check's write test and the updater's temporary download use Laravel's File helpers; the Minecraft status ping sends its packet with stream_socket_sendto.

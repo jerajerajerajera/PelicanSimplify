@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Checks what the Pelican Hub checks before it accepts a sync, so a release is not blocked there.
 
-- The repository archive the Hub syncs (git archive HEAD, so .gitattributes export-ignore applies) has no .php file
-  that calls a function the Hub bans as a file or process operation (it matches names, Blade templates included).
+- No .php file in the repository calls a function the Hub bans as a file or process operation. The Hub scans the
+  whole repository, tests and helper scripts included (.gitattributes export-ignore does not help), and matches names,
+  Blade templates included.
 - plugin.json has every field Pelican's plugin documentation marks as required (read live from pelican-dev/docs,
   with the list below as fallback), no "meta" block, and update_url on the Hub.
 Usage: python3 tests/hub-check.py   (run from the repository; needs git)
 """
 from pathlib import Path
-import io, json, re, subprocess, sys, tarfile, urllib.request
+import json, re, subprocess, sys, urllib.request
 
 root = Path(__file__).resolve().parent.parent
 HUB_UPDATE_URL = 'https://hub.pelican.dev/plugins/{id}/update.json'
@@ -35,18 +36,20 @@ def required_fields() -> tuple[list[str], str]:
     return REQUIRED_FALLBACK, 'built-in list'
 
 
-archive = subprocess.run(['git', 'archive', '--format=tar', 'HEAD'], cwd=root, capture_output=True, check=True).stdout
+# Tracked files plus new ones not yet committed, so the check also works before a commit.
+listed = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '--', '*.php'],
+                        cwd=root, capture_output=True, text=True, check=True).stdout.splitlines()
 php_files = 0
-with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-    for member in tar.getmembers():
-        if not member.isfile() or not member.name.endswith('.php'):
-            continue
-        php_files += 1
-        for number, line in enumerate(tar.extractfile(member).read().decode('utf-8', 'replace').splitlines(), 1):
-            for match in CALL.finditer(line):
-                failures.append(f'{member.name}:{number} {match.group(1)}()')
+for name in sorted(set(listed)):
+    path = root / name
+    if not path.is_file():
+        continue
+    php_files += 1
+    for number, line in enumerate(path.read_text('utf-8', 'replace').splitlines(), 1):
+        for match in CALL.finditer(line):
+            failures.append(f'{name}:{number} {match.group(1)}()')
 if php_files == 0:
-    failures.append('the repository archive has no .php files: is .gitattributes leaving out too much?')
+    failures.append('the repository has no .php files: is the check running in the right directory?')
 
 manifest = json.loads((root / 'plugin.json').read_text())
 fields, source = required_fields()
@@ -64,4 +67,4 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print(f'PASS Pelican Hub checks: {php_files} PHP files in the repository archive without banned calls, plugin.json fields ({source}), update_url on the Hub')
+print(f'PASS Pelican Hub checks: {php_files} PHP files in the repository without banned calls, plugin.json fields ({source}), update_url on the Hub')
