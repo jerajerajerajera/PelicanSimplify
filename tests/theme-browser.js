@@ -156,6 +156,19 @@ const { start } = require('./browser-harness');
     await network.close();
     console.log('PASS network subdomain row and status badge');
 
+    // 10. Website listing: a switch in the title card when the website plugin is installed, hidden otherwise.
+    const listing = await open('/?mode=server&theme=dark');
+    assert.equal(await listing.locator('.ps-web-listing').isVisible(), false, 'no switch without the website plugin');
+    await listing.evaluate(() => { window.__wire.saveListing = async (v) => v; Alpine.$data(document.querySelector('.ps')).server.website_listing = { visible: false }; });
+    await listing.waitForSelector('.ps-web-listing', { state: 'visible' });
+    await listing.click('.ps-web-listing');
+    await listing.waitForFunction(() => document.querySelector('.ps-web-listing').getAttribute('aria-checked') === 'true');
+    const place = await listing.evaluate(() => { const b = document.querySelector('.ps-web-listing').getBoundingClientRect(), c = document.querySelector('.ps-server-info').getBoundingClientRect(); return b.right <= c.right && b.top >= c.top && b.bottom <= c.bottom; });
+    assert.ok(place, 'the switch sits inside the title card');
+    if (process.env.SCREENSHOT_DIR) await listing.locator('.ps-server-info').screenshot({ path: process.env.SCREENSHOT_DIR + '/website-listing.png' });
+    await listing.close();
+    console.log('PASS website listing switch in the title card');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

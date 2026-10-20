@@ -492,6 +492,13 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
 .ps-info-address { margin-top: 14px; padding-right: 82px; }
 .ps-btn.ps-address { padding: 0 14px; }
 .ps-info-badges { grid-area: badges; align-self: start; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 180px; min-width: 0; }
+.ps-web-listing { gap: 6px; cursor: pointer; }
+.ps-web-listing:disabled { cursor: not-allowed; opacity: .6; }
+.ps-web-listing:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; }
+.ps-web-listing > svg { width: 13px; height: 13px; }
+.ps-switch.is-sm { width: 26px; height: 14px; }
+.ps-switch.is-sm::before { top: 2px; left: 2px; width: 10px; height: 10px; }
+.ps-switch.is-sm.is-on::before { transform: translateX(12px); }
 .ps-color-control { position: absolute; right: 20px; bottom: 20px; display: flex; align-items: center; gap: 10px; }
 .ps-color-dot { width: 26px; height: 26px; background: var(--ps-accent); }
 .ps-color-dot:disabled { cursor: not-allowed; opacity: .5; }

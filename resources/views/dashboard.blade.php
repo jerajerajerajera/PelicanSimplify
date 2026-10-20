@@ -549,6 +549,9 @@
                 <div class="ps-info-badges ps-identity-badges">
                     <span class="ps-badge is-strong ps-list-game"><svg aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="server?.minecraft ? 'Minecraft' : (server?.software || 'Other game')"></span></span>
                     <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
+                    <button type="button" class="ps-badge ps-web-listing" x-show="server?.website_listing" x-cloak role="switch" :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)" data-tip="Show this server on the public website">
+                        <svg aria-hidden="true"><use href="#ps-web"/></svg><span>Website</span><span class="ps-switch is-sm" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span>
+                    </button>
                 </div>
                 <span class="ps-info-icons">
                     <span class="ps-info-icon ps-custom-server-icon" x-show="server?.server_icon" data-tip="server-icon.png"><img :src="safeImage(server?.server_icon)" alt="Custom server icon" x-on:load="$el.style.visibility=''" x-on:error="$el.style.visibility='hidden'"></span>

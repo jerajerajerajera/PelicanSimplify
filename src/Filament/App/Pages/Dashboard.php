@@ -76,7 +76,7 @@ final class Dashboard extends Page
             'properties_available'=>!ManagedSettings::minecraft($s) || !empty($properties),'pending'=>$pending?['properties'=>user()->can(P::FileReadContent,$s)?($pending['properties']??[]):[],'resources'=>$pending['resources']??[],'pending'=>true,'file_only'=>!empty($pending['file_only']),'file_changes'=>!empty($pending['file_changes']),'restart_at'=>$pending['restart_at'],'restart_requested'=>$pending['restart_requested'],'error'=>$pending['error']??null]:null,
             'pack'=>array_intersect_key($meta,array_flip(['modpack_name','modpack_version','modpack_description','modpack_icon_url','modpack_url','plugins','version','motd','icon_url'])),
             'reported_version'=>$mc['version']??'','setup_state'=>$s->status?->value,'status'=>$s->retrieveStatus()->value,'players'=>$mc['players']??null,'max_players'=>$mc['max_players']??null,'player_names'=>$mc['names']??[],
-            'software_icon'=>ServerArtwork::softwareIcon($s,$meta),'server_icon'=>ServerArtwork::serverIcon($s),
+            'software_icon'=>ServerArtwork::softwareIcon($s,$meta),'server_icon'=>ServerArtwork::serverIcon($s),'website_listing'=>\Simplify\Panel\Services\WebsiteListing::forPage($s),
             'icon'=>ServerArtwork::icon($s,$meta),'background'=>ServerArtwork::background($s,$artworkMeta),'backup_options'=>AutomaticBackups::settings($s),'root_admin'=>user()->isRootAdmin(),
             'files_url'=>\App\Filament\Server\Resources\Files\FileResource::getUrl('index',panel:'server',tenant:$s),
             'backups_url'=>\App\Filament\Server\Resources\Backups\BackupResource::getUrl('index',panel:'server',tenant:$s),
@@ -253,6 +253,13 @@ final class Dashboard extends Page
     {
         abort_unless(Extensions::web(),404);$s=$uuid?Access::server($uuid):$this->server();Access::owner($s);
         return Extensions::webAdapter()->metadata($s);
+    }
+    #[Renderless]
+    public function saveListing(bool $visible): bool
+    {
+        abort_unless(\Simplify\Panel\Services\WebsiteListing::available(),404);$s=$this->server();Access::owner($s);
+        \Simplify\Panel\Services\WebsiteListing::setVisible($s,$visible);
+        return \Simplify\Panel\Services\WebsiteListing::visible($s);
     }
     #[Renderless]
     public function saveWebsite(array $input,?string $uuid=null): void

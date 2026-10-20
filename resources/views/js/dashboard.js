@@ -1631,6 +1631,12 @@
           Object.assign(this.server, await wire.refreshInfo());
         } catch {}
       },
+      async saveListing(value) {
+        const listing = this.server?.website_listing;
+        if (!listing) return;
+        const result = await this.run(() => wire.saveListing(value), value ? 'Shown on the website' : 'Hidden from the website');
+        if (result !== SKIPPED) listing.visible = result === true;
+      },
       async toggleWeb(s, value) {
         const result = await this.run(() => wire.saveWebsite({ visible: value }, s.uuid), 'Website visibility updated');
         s.visible = result === SKIPPED ? !value : value;
