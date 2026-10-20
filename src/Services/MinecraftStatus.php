@@ -24,7 +24,7 @@ final class MinecraftStatus
             try {
                 stream_set_timeout($socket,1);
                 $handshake=self::vi(0).self::vi(47).self::vi(strlen($host)).$host.pack('n',$port).self::vi(1);
-                fwrite($socket,self::vi(strlen($handshake)).$handshake."\x01\x00");
+                stream_socket_sendto($socket,self::vi(strlen($handshake)).$handshake."\x01\x00");
                 $len=self::num($socket);if($len>2097152||$len<1)return[];
                 if(self::num($socket)!==0)return[];
                 $jsonLen=self::num($socket);if($jsonLen>2097152||$jsonLen<1)return[];
