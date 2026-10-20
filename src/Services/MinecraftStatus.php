@@ -15,10 +15,11 @@ final class MinecraftStatus
         if(!ManagedSettings::minecraft($s))return[];
         $ttl=max(10,(int)PerformanceSettings::get('overview_seconds')-2);
         return \Illuminate\Support\Facades\Cache::remember('simplify.mcstatus.'.$s->uuid,$ttl,function()use($s):array {
-            $host=$s->allocation?->ip;$port=(int)$s->allocation?->port;
-            if(in_array($host,['','0.0.0.0','::',null],true))$host=parse_url($s->node->getConnectionAddress(),PHP_URL_HOST);
-            if(!$host||!$port)return[];
-            $socket=@stream_socket_client('tcp://'.(str_contains($host,':')?'['.$host.']':$host).':'.$port,$errno,$error,0.7);
+            $port=(int)$s->allocation?->port;$socket=null;
+            foreach($port?self::targets($s->allocation?->ip,$s->allocation?->ip_alias,(string)parse_url($s->node->getConnectionAddress(),PHP_URL_HOST)):[] as $host){
+                $socket=@stream_socket_client('tcp://'.(str_contains($host,':')?'['.$host.']':$host).':'.$port,$errno,$error,0.7);
+                if($socket)break;
+            }
             if(!$socket)return[];
             try {
                 stream_set_timeout($socket,1);
@@ -37,6 +38,17 @@ final class MinecraftStatus
                     'version'=>$data['version']['name']??''];
             }catch(\Throwable){return[];}finally{fclose($socket);}
         });
+    }
+    /**
+     * Hosts to ping, in order. A wildcard allocation (0.0.0.0/::) has no address of its own: try loopback first
+     * (panel and Wings on one machine, fastest), then its alias (the public address players use), then the node
+     * FQDN, which may point at an HTTP-only proxy such as Cloudflare when the node is behind one.
+     */
+    public static function targets(?string $ip, ?string $alias, string $nodeHost): array
+    {
+        if(!in_array($ip,['','0.0.0.0','::',null],true))return[$ip];
+        $alias=trim((string)$alias);$valid=fn(string $h):bool=>$h!==''&&(filter_var($h,FILTER_VALIDATE_IP)!==false||filter_var($h,FILTER_VALIDATE_DOMAIN,FILTER_FLAG_HOSTNAME)!==false&&str_contains($h,'.'));
+        return array_values(array_unique(array_filter([$ip==='::'?'::1':'127.0.0.1',$valid($alias)?$alias:'',$valid($nodeHost)?$nodeHost:''])));
     }
     /** The favicon from the latest status ping (data URI), kept for the icon route. */
     public static function favicon(Server $s): ?string
