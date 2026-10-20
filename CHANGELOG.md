@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.1-rc.2 (beta channel) — second release candidate for 0.4.1
+Same as rc.1 plus one fix. Still supports Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- Fixed: player counts and the MOTD were missing on the dashboard for servers on a 0.0.0.0 or :: allocation when the node's FQDN points at an HTTP-only proxy such as Cloudflare. Those servers are now pinged on the local machine first, then on the allocation alias (when it is a real host name or IP), then on the node's FQDN.
+
 ## 0.4.1-rc.1 (beta channel) — release candidate for 0.4.1
 The first release candidate for 0.4.1: the 0.4.1 betas bundled, plus one small fix. If no problems turn up, 0.4.1 becomes the next stable release. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support:** loads on Pelican 1.0.0-rc.1 as well as 1.0.0-beta38 (plugin.json declares "^1.0.0-beta38"), system checks accept rc.1, and server addresses respect rc.1's "hide port" allocation setting. (beta.1)
