@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.2-beta.6 (beta channel)
+- The creator's server icon step now shows the modpack's icon, already selected, next to "Upload your own". The icon is downloaded once and scaled to 64 × 64; a pack that ships its own server-icon.png keeps it.
+- Fixed: after a plugin update, Pelican's queue worker kept running the previous version's jobs until it was restarted, so 0.4.2-beta.4 created modded servers without the modpack icon. Simplify now restarts the queue workers once after each update (like `php artisan queue:restart`).
+
 ## 0.4.2-beta.5 (beta channel)
 - With the companion website plugin (server-directory) installed, a server's title card has a website switch next to the server colour: it shows or hides the server on the public website (hover for the text). Only the server owner and admins see it.
 
