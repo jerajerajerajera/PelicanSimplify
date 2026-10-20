@@ -2,7 +2,7 @@
 
 A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel) game server panel. You manage your servers from one overview and create new ones with a guided wizard. Everything still runs on Pelican and [Wings](https://github.com/pelican/wings), and the original panel stays available.
 
-**Stable 0.4.0 for Pelican 1.0.0-beta38 · Release candidate 0.4.1-rc.1 (adds Pelican 1.0.0-rc.1 support) on the beta channel · PHP 8.3+**
+**Stable 0.4.0 for Pelican 1.0.0-beta38 · Release candidate 0.4.1-rc.2 (adds Pelican 1.0.0-rc.1 support) on the beta channel · PHP 8.3+**
 
 *Screenshots use example servers.*
 
@@ -26,7 +26,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 - **It replaces a lot of the panel.** The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode.
 - **Everything can be switched off.** Each part has its own switch in Simplify settings, and you can turn off the whole Simplify dashboard. Pelican's original panel always stays available: the Legacy links in Admin tools lead to it, and even if you hide those links the pages keep working.
 - **It does not touch your running servers.** Servers, eggs, nodes and permissions stay Pelican's own. Simplify is a different way to look at and manage them.
-- **Other plugins are only partly supported inside Simplify.** They keep working in Pelican's original panel. In stable 0.4.0 their pages do not show up in Simplify; release candidate 0.4.1-rc.1 shows their admin and server pages under "External". Widgets and tiles from other plugins are not supported yet. Full plugin support is the top item on the roadmap (see Coming features).
+- **Other plugins are only partly supported inside Simplify.** They keep working in Pelican's original panel. In stable 0.4.0 their pages do not show up in Simplify; release candidate 0.4.1-rc.2 shows their admin and server pages under "External". Widgets and tiles from other plugins are not supported yet. Full plugin support is the top item on the roadmap (see Coming features).
 - **Make a backup before installing**, as with any plugin that changes this much.
 
 ## Getting started
@@ -34,7 +34,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 1. In Pelican, go to **Admin → Plugins → Import from URL**.
 2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.0/pelican-simplify-v0.4.0.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
 
-   **Beta channel:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/dist/pelican-simplify-beta-latest.zip`. Betas get new features first but are less tested. It currently holds release candidate 0.4.1-rc.1, with Pelican 1.0.0-rc.1 support and pages from other plugins; see the [changelog](CHANGELOG.md).
+   **Beta channel:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/dist/pelican-simplify-beta-latest.zip`. Betas get new features first but are less tested. It currently holds release candidate 0.4.1-rc.2, with Pelican 1.0.0-rc.1 support and pages from other plugins; see the [changelog](CHANGELOG.md).
 3. Follow the setup checks. Anything missing is shown with how to fix it.
 
 **Requirements:** Node.js 22.12+ or 24+, Yarn, and a running queue worker and scheduler.
