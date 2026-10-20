@@ -181,10 +181,10 @@ final class PluginUpdater
         if (!hash_equals($expected, hash('sha256', $body))) throw new \RuntimeException('The download does not match the published checksum.');
         $temporary = tempnam(sys_get_temp_dir(), 'simplify-plugin-').'.zip';
         try {
-            file_put_contents($temporary, $body);
+            File::put($temporary, $body);
             $service->downloadPluginFromFile(new \Illuminate\Http\UploadedFile($temporary, basename($url), 'application/zip', null, true), $plugin->id);
         } finally {
-            @unlink($temporary);
+            File::delete($temporary);
         }
     }
 

@@ -6,6 +6,7 @@ namespace Illuminate\Support\Facades {
   public static array $fs = [];
   public static function json($path) { return json_decode(self::$fs[$path], true); }
   public static function put($path, $content) { self::$fs[$path] = $content; return true; }
+  public static function delete($path) { unset(self::$fs[$path]); return true; }
   public static function deleteDirectory($dir) { foreach (array_keys(self::$fs) as $k) if (str_starts_with($k, $dir.'/')) unset(self::$fs[$k]); return true; }
   public static function ensureDirectoryExists($dir) {}
   public static function isDirectory($dir) { foreach (self::$fs as $k => $v) if (str_starts_with($k, $dir.'/')) return true; return false; }

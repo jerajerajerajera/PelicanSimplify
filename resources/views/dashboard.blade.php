@@ -520,7 +520,7 @@
             <div class="ps-statusbar" :class="{'is-visible': statusBarVisible && !!server}" :inert="!statusBarVisible" role="region" aria-label="Server status">
                 <span class="ps-statusbar-name" x-text="server?.alias || server?.name"></span>
                 <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
-                <button type="button" class="ps-statusbar-item ps-statusbar-address" x-show="server?.address" x-on:click="copy(server.address)" data-tip="Copy server address"><svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address"></span></button>
+                <button type="button" class="ps-statusbar-item ps-statusbar-address" x-show="server?.address" x-on:click="copyText(server.address)" data-tip="Copy server address"><svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address"></span></button>
                 <span class="ps-statusbar-item" data-tip="Players online"><svg aria-hidden="true"><use href="#ps-players"/></svg><span x-text="playerCount({ ...server, status })"></span></span>
                 <div class="ps-statusbar-power" :inert="['installing','restoring_backup'].includes(serverSetup())">
                     <button type="button" class="ps-btn is-sm is-primary" x-on:click="power('start')" :disabled="busy || !server?.permissions['control.start'] || status==='running'" aria-label="Start server" data-tip="Start"><svg aria-hidden="true"><use href="#ps-play"/></svg></button>
@@ -570,7 +570,7 @@
                         <div x-show="server?.pack?.modpack_name"><dt>Modpack version</dt><dd x-text="server?.pack?.modpack_version || 'Not reported'"></dd></div>
                     </dl>
                     <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
-                    <button type="button" class="ps-address ps-info-address" x-on:click="copy(server.address)" :disabled="!server?.address" data-tip="Copy server address">
+                    <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
                         <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
                     </button>
                 </div>
@@ -693,7 +693,7 @@
                 <div class="ps-sftp-inline" x-show="modal==='files' && server?.sftp">
                     <button type="button" class="ps-btn is-sm ps-sftp-toggle" x-on:click="sftpOpen=!sftpOpen" :aria-expanded="sftpOpen" aria-controls="ps-sftp-details" x-text="sftpOpen ? 'Hide SFTP details' : 'Show SFTP details'"></button>
                     <span id="ps-sftp-details" class="ps-sftp-details" x-show="sftpOpen" x-cloak>
-                        <button type="button" class="ps-sftp-value" x-on:click="copy(server.sftp.username, 'Username copied')" data-tip="Copy SFTP username"><span x-text="server?.sftp?.username"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg></button>
+                        <button type="button" class="ps-sftp-value" x-on:click="copyText(server.sftp.username, 'Username copied')" data-tip="Copy SFTP username"><span x-text="server?.sftp?.username"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg></button>
                         <small>Password: your panel password</small>
                         <a class="ps-sftp-connect" :href="sftpLink()" data-tip="Open SFTP connection"><span x-text="server?.sftp?.url"></span><svg aria-hidden="true"><use href="#ps-link"/></svg></a>
                     </span>
@@ -778,7 +778,7 @@
                         <section x-show="settingsTab==='general' || !server?.minecraft">
                             <h3 class="ps-section-title">Server identity</h3>
                             <label class="ps-field">Server name
-                                <span class="ps-input-row"><input x-model="name" maxlength="255"><button type="button" class="ps-btn" x-on:click="rename()" :disabled="busy || !server?.permissions['settings.rename']">Rename</button></span>
+                                <span class="ps-input-row"><input x-model="name" maxlength="255"><button type="button" class="ps-btn" x-on:click="renameServer()" :disabled="busy || !server?.permissions['settings.rename']">Rename</button></span>
                             </label>
                             <label class="ps-field">Display alias
                                 <span class="ps-input-row"><input x-model="aliasDraft" maxlength="80" placeholder="Leave empty to use the server name"><button type="button" class="ps-btn" x-on:click="saveAlias()" :disabled="busy || !server?.permissions['settings.rename']">Save alias</button></span>
@@ -976,7 +976,7 @@
                 <div x-show="modal==='connection' && !loading">
                     <h3 class="ps-section-title">Server address</h3>
                     <p class="ps-help">Use this address to connect to your server.</p>
-                    <button type="button" class="ps-btn ps-address" x-on:click="copy(server.address)"><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg></button>
+                    <button type="button" class="ps-btn ps-address" x-on:click="copyText(server.address)"><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg></button>
                     @if(\Simplify\Panel\Services\Subdomains::active())
                         <h3 class="ps-section-title">Subdomain</h3>
                         <p class="ps-help">Players can join with this name instead of the port address. The DNS records are created automatically; leave it empty to remove the subdomain.</p>

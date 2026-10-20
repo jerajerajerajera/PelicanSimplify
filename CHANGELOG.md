@@ -1,5 +1,11 @@
 # Changes
 
+## 0.4.4 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which refuses plugins with direct file or process calls. Nothing changes in how Simplify works.
+- The setup check's write test and the updater's temporary download use Laravel's File helpers; the Minecraft status ping sends its packet with stream_socket_sendto.
+- The dashboard's copy and rename actions are now called copyText and renameServer.
+- Repository archives (what the Hub syncs) now hold only the plugin, like the release zip: tests, build scripts, installers and documentation are left out through .gitattributes. They stay in the repository.
+
 ## 0.4.3 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 - Simplify is published on the Pelican Hub: plugin.json's update_url now points at the Hub (https://hub.pelican.dev/plugins/pelican-simplify/update.json), as the Hub requires, so Pelican's own updater gets Simplify from the Hub.
 - Simplify's plugin manager keeps all three channels: it also reads the stable, beta and snapshot builds on GitHub, and offers the newest of the Hub release and your channel. Until the Hub has a release, the stable build on GitHub is used.
