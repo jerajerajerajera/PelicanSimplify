@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Simplify\Panel\Services;
 
-/** Shared by the native installer, shell preflight and first-run setup. */
+/** Shared by the native installer and first-run setup. */
 final class DependencyCheck
 {
     public static function inspect(string $panel, string $plugin, bool $runtime = true, bool $allowLegacy = false): array
@@ -36,7 +36,7 @@ final class DependencyCheck
         }
         $legacyManifest = $panel.'/plugins/simple-server-creator/plugin.json';
         $legacy = is_readable($legacyManifest) ? json_decode((string) file_get_contents($legacyManifest), true) : [];
-        $add('Standalone creator retired', $allowLegacy || ($legacy['meta']['status'] ?? '') !== 'enabled', 'Use the migration installer to retire the former standalone creator before enabling the unified creator.');
+        $add('Standalone creator retired', $allowLegacy || ($legacy['meta']['status'] ?? '') !== 'enabled', 'Disable and delete the former standalone creator (simple-server-creator) under Admin → Plugins before enabling the unified creator.');
         $manifestPath = $panel.'/public/build/manifest.json';
         $manifest = is_readable($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
         $required = [];

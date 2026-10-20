@@ -3,10 +3,12 @@
 Planned work after the 0.3 betas. Scope and order may change.
 
 ## Easy server creator
-A separate add-on next to the **easy Minecraft server creator**.
-- Build a searchable index of games from Pelican's egg sources (the same GitHub index Pelican's *Import egg* dialog uses: Games Standalone, Games SteamCMD, Minecraft, …), so users can search "Valheim" instead of picking an egg.
-- Clicking a game downloads and installs the matching egg automatically for users with the *Install missing eggs* ability (Users & access), then continues with the same guided steps as the Minecraft creator.
-- Keep a small cache of the index; refresh it in the background.
+A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
+- Accept a game's EULA or license up front (checkbox and link), so Simplify sets the right variable or file and the server does not restart in a loop.
+- Recommended resources per game (small, normal, large), from the egg's recommendation or an admin default per game.
+- An optional own index URL, for example a fork or an own eggs repository.
+- "Popular" based on what is created most on the panel, with a small fixed starter list while there are few servers.
+- The progress card after Create (see Server installation overhaul), with the last install-log lines and *Reinstall* and *Console* buttons on failure.
 
 ## Server installation overhaul
 - Show one clear state ("Egg initialising…", "Server initialising…") with progress until the server is ready, instead of the start/stop flicker during installation.
