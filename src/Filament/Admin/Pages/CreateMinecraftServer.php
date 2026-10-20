@@ -645,7 +645,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->image()->acceptedFileTypes(['image/png'])->maxSize(100)
                                 ->imageResizeMode('cover')->imageResizeTargetWidth('64')->imageResizeTargetHeight('64')
                                 ->imageEditor()->imageEditorAspectRatios(['1:1'])->storeFiles(false)
-                                ->helperText('PNG, 64 × 64 pixels, up to 100 KB. Uploaded as server-icon.png after installation.'),
+                                ->helperText(fn (Get $get) => 'PNG, 64 × 64 pixels, up to 100 KB. Uploaded as server-icon.png after installation.' . ($get('server_type') === 'modded' ? ' Leave empty to use the modpack\'s icon.' : '')),
                         ]),
                     ... (\Simplify\Panel\Services\Extensions::webAdapter()?->creatorSteps($this) ?? []),
                     Step::make('Backups')->visible(fn()=>\Simplify\Panel\Services\FeatureSettings::enabled('backups'))->schema([
@@ -800,6 +800,7 @@ class CreateMinecraftServer extends Page implements HasForms
             // The accepted EULA is written with the other settings once installation finishes.
             if (($state['game'] ?? 'minecraft') === 'minecraft' && !in_array(config('queue.default'), ['sync', 'null'], true)) {
                 $prepared = [...$prepared, 'eula' => true];
+                if (empty($prepared['icon']) && ModpackCatalog::safeUrl($websitePack['modpack_icon_url'] ?? null)) $prepared['icon_url'] = $websitePack['modpack_icon_url'];
             }
             $warnings = [];
             if ($prepared) {
