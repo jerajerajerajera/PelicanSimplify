@@ -16,11 +16,12 @@ Three channels, each on its own branch (decided 20 October 2026):
 
 | Channel | Branch | Update file | Versions | Latest zip |
 |---|---|---|---|---|
-| Stable | `main` | `update.json` (also read by Pelican's own updater and the Pelican Hub) | `0.4.2` | `dist/pelican-simplify-latest.zip` + GitHub Release |
+| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.4.3` | `dist/pelican-simplify-latest.zip` + GitHub Release |
 | Beta | `beta` | `update-beta.json` | `0.4.3-beta.N`, `0.4.3-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
 | Snapshot | `snapshot` | `update-snapshot.json` | `0.4.3-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.2 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Current:** stable 0.4.3 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
 - **Channel choice:** Simplify settings → Plugin manager → "Simplify versions": Stable (default), Beta or Snapshot. Stored as the `simplify_beta` and `simplify_snapshot` switches. A panel gets the newest of its channel and every more stable one (`PluginUpdater::channelUrls`).
 - **Bridge for old betas:** installations up to 0.4.2-beta.7 read `main/update-beta.json`. A stable build writes that file too, so they move to the stable release, whose code then reads the beta branch.

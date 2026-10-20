@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.3 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+- Simplify is published on the Pelican Hub: plugin.json's update_url now points at the Hub (https://hub.pelican.dev/plugins/pelican-simplify/update.json), as the Hub requires, so Pelican's own updater gets Simplify from the Hub.
+- Simplify's plugin manager keeps all three channels: it also reads the stable, beta and snapshot builds on GitHub, and offers the newest of the Hub release and your channel. Until the Hub has a release, the stable build on GitHub is used.
+
 ## 0.4.2 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 Everything from 0.4.1-rc.2 and the 0.4.2 betas, now stable for both Pelican releases. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support** (PHP 8.4), next to 1.0.0-beta38, including rc.1's "hide port" allocation setting. (0.4.1)
