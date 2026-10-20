@@ -2,7 +2,7 @@
 
 A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel) game server panel. You manage your servers from one overview and create new ones with a guided wizard. Everything still runs on Pelican and [Wings](https://github.com/pelican/wings), and the original panel stays available.
 
-**Stable 0.4.2 for Pelican 1.0.0-beta38 and 1.0.0-rc.1 · PHP 8.3+ (8.4+ on rc.1)**
+**Stable 0.4.3 for Pelican 1.0.0-beta38 and 1.0.0-rc.1 · PHP 8.3+ (8.4+ on rc.1)**
 
 *Screenshots use example servers.*
 
@@ -32,7 +32,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 ## Getting started
 
 1. In Pelican, go to **Admin → Plugins → Import from URL**.
-2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.2/pelican-simplify-v0.4.2.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
+2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.3/pelican-simplify-v0.4.3.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
 
    **Beta and snapshot builds:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`, the newest snapshot at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-snapshot-latest.zip`. Betas test the next stable release with all its new features; snapshots are development builds with the latest changes. Both are less tested; see the [changelog](CHANGELOG.md).
 3. Follow the setup checks. Anything missing is shown with how to fix it.
