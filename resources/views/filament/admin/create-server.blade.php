@@ -15,11 +15,12 @@
             </button>
             <div class="ssc-delete-confirm" x-show="deleteConfirm" x-cloak><button type="button" class="ps-btn is-icon" data-tip="Keep draft" aria-label="Keep draft" x-on:click="deleteConfirm=false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button><button type="button" class="ps-btn is-icon is-danger" data-tip="Delete draft" aria-label="Confirm draft deletion" :disabled="saving||uploading||completed" x-on:click="discard(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></button></div></div>
         </div>
-        <nav class="ssc-progress" wire:ignore aria-label="Server creation progress">
+        <nav class="ssc-progress" wire:ignore style="--ssc-steps: {{ count($this->wizardStepLabels()) }}" :style="{'--ssc-step': step}" aria-label="Server creation progress">
             @foreach($this->wizardStepLabels() as $index=>$label)
                 <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep || switching || uploading" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                 @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless
             @endforeach
+            <span class="ssc-progress-count" x-text="'Step '+step+' of {{ count($this->wizardStepLabels()) }}'"></span>
         </nav>
         @if($draftIcon)
             <div class="ssc-draft-icon"><img src="data:image/png;base64,{{ $draftIcon }}" alt="Saved server icon" width="48" height="48"><span>Saved server icon · upload a new icon to replace it.</span><button type="button" class="ps-btn is-sm" wire:click="removeDraftIcon" x-on:click="changed()">Remove</button></div>

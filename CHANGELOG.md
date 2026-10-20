@@ -1,5 +1,12 @@
 # Changes
 
+## 0.4.7-snapshot.4 (snapshot channel)
+Phone layout for the server creator and the first setup, the last part of the phone experience for now. Wider screens do not change.
+- The step row becomes "Step 1 of 4" with the current step's name and a progress bar, instead of four steps over two lines.
+- Choices (server type, game, backups, CPU, storage, icon) are full-width rows with the icon on the left.
+- Back and Next stay at the bottom of the screen, 48 px tall, with Next taking the most room.
+- Browser tests check the phone creator at 360 and 430 px.
+
 ## 0.4.7-snapshot.3 (snapshot channel)
 Popups as sheets on phones, the third part of the phone experience. Wider screens do not change.
 - Every popup (creating a server, settings, confirmations) slides up from the bottom as a sheet with a drag handle. Drag the header down to close it; unsaved work is still asked about first.

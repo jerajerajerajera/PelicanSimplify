@@ -380,3 +380,28 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { width: 100%; height: auto; }
   .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: auto; overflow: visible; }
 }
+
+/* Phone layout (creator and first setup): "Step 1 of 4" with a progress bar instead of every step,
+   choices as rows with the icon on the left, and Back / Next always at the bottom of the screen. */
+.ssc-progress-count { display: none; }
+@media (max-width: 600px) {
+  .ssc-progress { position: relative; flex-wrap: nowrap; justify-content: space-between; gap: 12px; padding: 10px 14px 16px; }
+  .ssc-progress > button:not(.is-current), .ssc-progress > .ssc-step-arrow { display: none; }
+  .ssc-progress > button.is-current { min-width: 0; padding: 0; border: 0; background: none; font-size: 14px; }
+  .ssc-progress > button.is-current > span { display: none; }
+  .ssc-progress-count { display: block; flex: none; color: var(--ps-muted); font-size: 12px; }
+  .ssc-progress::after { content: ""; position: absolute; right: 14px; bottom: 8px; left: 14px; height: 4px; border-radius: 2px; background: linear-gradient(var(--ps-accent), var(--ps-accent)) 0 0 / calc(var(--ssc-step, 1) / var(--ssc-steps, 1) * 100%) 100% no-repeat, var(--ps-raised); transition: background-size var(--ps-slow, .3s); }
+  .ssc-draft-bar { margin: 8px 10px 8px auto; padding: 3px 4px 3px 12px; }
+  .ssc-draft-status { font-size: 12px; }
+
+  .ssc-cards:not(.ssc-cards--ram, .ssc-featured-options) { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .ssc-cards:not(.ssc-cards--ram, .ssc-featured-options) .ssc-card-content { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-content: center; align-items: center; justify-items: start; gap: 2px 14px; min-height: 72px; padding: 12px 14px; text-align: left; }
+  .ssc-cards:not(.ssc-cards--ram, .ssc-featured-options) .ssc-card-content > :first-child:is(.ssc-outline-icon, .ssc-pack-image) { grid-column: 1; grid-row: 1 / span 3; width: 44px; height: 44px; padding: 9px; }
+  .ssc-cards:not(.ssc-cards--ram, .ssc-featured-options) .ssc-card-content > .ssc-pack-image { padding: 0; }
+  .ssc-cards:not(.ssc-cards--ram, .ssc-featured-options) .ssc-card-content > :not(:first-child) { grid-column: 2; max-width: none; }
+
+  .ssc-wizard .fi-sc-wizard-footer { position: sticky !important; bottom: 0; z-index: 5; flex-wrap: nowrap; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 16px rgb(0 0 0 / .08); }
+  .ssc-wizard .fi-sc-wizard-footer > * { flex: 1 1 0; }
+  .ssc-wizard .fi-sc-wizard-footer .ssc-back-button { flex: 0 0 auto; }
+  .ssc-wizard :is(.fi-sc-wizard-footer .fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { justify-content: center; min-width: 0; min-height: 48px; }
+}

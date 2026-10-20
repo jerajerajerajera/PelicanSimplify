@@ -43,11 +43,12 @@
             @endif
             <div class="ssc-wizard ps-settings-form" @if($this->needsSetup()) x-data="simplifySetupProgress()" @endif>
                 @if($this->needsSetup())
-                    <nav class="ssc-progress" wire:ignore aria-label="Simplify setup progress">
+                    <nav class="ssc-progress" wire:ignore style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="Simplify setup progress">
                         @foreach($this->setupSteps() as $index => $label)
                             <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                             @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless
                         @endforeach
+                        <span class="ssc-progress-count" x-text="'Step '+step+' of {{ count($this->setupSteps()) }}'"></span>
                     </nav>
                 @endif
                 <form wire:submit="save">
