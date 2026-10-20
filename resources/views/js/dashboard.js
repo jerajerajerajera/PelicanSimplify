@@ -67,6 +67,7 @@
       overviewView: typeof innerWidth !== 'undefined' && innerWidth <= 600 ? 'list' : 'grid',
       // Shell
       accountMenu: false,
+      createMenu: false,
       navMenu: false,
       theme: 'system',
       themeDark: false,
@@ -955,6 +956,14 @@
       canCreateGame(game) {
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
+      },
+      /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
+      createChoices() {
+        return [
+          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
+          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'native', label: 'New server', icon: 'host' },
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
       },
       openCreate(game = 'minecraft') {
         if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;

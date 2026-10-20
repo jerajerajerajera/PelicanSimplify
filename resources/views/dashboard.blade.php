@@ -6,7 +6,7 @@
 <div class="ps" data-simplify-root x-cloak wire:ignore.self
      x-data="pelicanSimplify($wire, @js($this->initial()))"
      x-on:resize.window.debounce.150ms="applyScale(); restoreOverviewView()"
-     :class="{'dark': themeDark, 'server-active': !!server, 'is-embedded': embedded}"
+     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
 
@@ -412,7 +412,7 @@
                                     <div class="ps-overview-power-wrap" x-show="overviewPreferences.showQuickActions">
                                         <div class="ps-overview-power" :class="{'is-confirming': powerConfirmation?.uuid===s.uuid}" role="group" :aria-label="'Power controls for '+(s.alias || s.name)">
                                             <template x-for="action in [{key:'start',label:'Start',icon:'play'},{key:'stop',label:'Stop',icon:'stop'},{key:'restart',label:'Restart',icon:'restart'},{key:'kill',label:'Force stop',icon:'kill'}]" :key="action.key">
-                                                <button type="button" class="ps-btn is-icon" :class="{'is-danger': action.key==='kill'}" :data-tip="action.label" :aria-label="action.label+' '+(s.alias || s.name)" :disabled="!!overviewPowerBusy || !canOverviewPower(s, action.key)" x-on:click.stop="overviewPower(s, action.key)">
+                                                <button type="button" class="ps-btn is-icon" :class="{'is-danger': action.key==='kill'}" :data-power="action.key" :data-tip="action.label" :aria-label="action.label+' '+(s.alias || s.name)" :disabled="!!overviewPowerBusy || !canOverviewPower(s, action.key)" x-on:click.stop="overviewPower(s, action.key)">
                                                     <svg aria-hidden="true"><use :href="'#ps-'+action.icon"/></svg>
                                                 </button>
                                             </template>
@@ -444,6 +444,7 @@
                             <div class="ps-host-heading"><h3>Host health</h3><svg class="ps-health-expand" :class="{'expanded': healthExpanded}" aria-hidden="true"><use href="#ps-chevron"/></svg></div>
                             <span class="ps-health-status" :class="boot.host_health?.state || 'unavailable'"><strong x-text="boot.host_health?.label || 'Unavailable'"></strong></span>
                             <small x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts reporting'"></small>
+                            <small class="ps-health-phone-summary" x-text="'CPU '+hostValue('cpu')+' · RAM '+hostValue('memory')"></small>
                         </div>
                     </div>
                     <template x-for="metric in hostMetrics" :key="metric.key">
@@ -683,6 +684,28 @@
             </article>
         </section>
     </main>
+
+    {{-- Phone tab bar (overview only): servers, create and the panel menu within thumb reach. --}}
+    <nav class="ps-tabbar" x-show="!server && !hostMode" aria-label="Phone navigation" x-on:click.outside="createMenu=false" x-on:keydown.escape.stop="createMenu=false">
+        <button type="button" class="ps-tab is-active" aria-current="page" x-on:click="createMenu=false; navMenu=false; scrollTo({top: 0, behavior: 'smooth'})">
+            <svg aria-hidden="true"><use href="#ps-host"/></svg><span>Servers</span>
+        </button>
+        <div class="ps-tab-create" x-show="boot.can_create">
+            <button type="button" class="ps-tab" aria-haspopup="dialog" :aria-expanded="createMenu" x-on:click="navMenu=false; createChoices().length===1 ? openCreate(createChoices()[0].key) : (createMenu=!createMenu)">
+                <span class="ps-tab-plus"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span><span>New</span>
+            </button>
+            <div class="ps-dropdown ps-tab-create-menu" x-show="createMenu" x-cloak x-transition.opacity role="menu">
+                <template x-for="choice in createChoices()" :key="choice.key">
+                    <button type="button" class="ps-menu-item" role="menuitem" x-on:click="createMenu=false; openCreate(choice.key)">
+                        <svg aria-hidden="true"><use :href="'#ps-'+choice.icon"/></svg><span x-text="choice.label"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+        <button type="button" class="ps-tab" aria-controls="ps-navigation-items" :aria-expanded="navMenu" x-on:click.stop="createMenu=false; accountMenu=false; navMenu=!navMenu">
+            <svg aria-hidden="true"><use href="#ps-menu"/></svg><span>Menu</span>
+        </button>
+    </nav>
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
     <div class="ps-modal-layer" :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak>

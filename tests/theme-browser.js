@@ -217,6 +217,61 @@ const { start } = require('./browser-harness');
     await performance.close();
     console.log('PASS performance presets like the creator, with custom values');
 
+    // 13. Phone overview: the page scrolls as a whole, one filter row, compact rows with one large power
+    // button, a one-line health summary and a tab bar (360, 390 and 430 px wide).
+    for (const width of [360, 390, 430]) {
+      const phone = await open('/?mode=overview&theme=dark', { width, height: 800 });
+      const layout = await phone.evaluate(() => {
+        const nested = [...document.querySelectorAll('.ps *')].filter((el) => {
+          const s = getComputedStyle(el);
+          return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 4 && el.offsetParent;
+        }).map((el) => el.className.toString());
+        const toolbar = document.querySelector('.ps-overview-toolbar');
+        const tabbar = document.querySelector('.ps-tabbar').getBoundingClientRect();
+        const power = [...document.querySelectorAll('.ps-overview-power > .ps-btn')].filter((b) => b.offsetParent);
+        const small = [...document.querySelectorAll('.ps-tabbar button, .ps-overview-toolbar .ps-chip')].filter((b) => b.offsetParent && b.offsetHeight < 40).length;
+        return {
+          nested, small, pageScrolls: document.scrollingElement.scrollHeight > innerHeight, fits: document.documentElement.scrollWidth <= innerWidth,
+          filterRows: new Set([...toolbar.querySelectorAll('.ps-chip')].filter((c) => c.offsetParent).map((c) => Math.round(c.getBoundingClientRect().top))).size,
+          tabbarAtBottom: Math.round(tabbar.bottom) === innerHeight && tabbar.height >= 60,
+          powerPerCard: [...document.querySelectorAll('.ps-server-entry.has-power')].map((e) => [...e.querySelectorAll('.ps-overview-power > .ps-btn')].filter((b) => b.offsetParent).length),
+          powerSize: power.map((b) => b.offsetHeight),
+          healthHeight: document.querySelector('.ps-host-health').offsetHeight,
+        };
+      });
+      assert.deepEqual(layout.nested, [], width + ': no scroll areas inside the page');
+      assert.ok(layout.pageScrolls && layout.fits, width + ': the page itself scrolls and fits');
+      assert.equal(layout.filterRows, 1, width + ': game and node filters share one row');
+      assert.ok(layout.tabbarAtBottom, width + ': tab bar at the bottom');
+      assert.ok(layout.powerPerCard.length && layout.powerPerCard.every((n) => n === 1), width + ': one power button per card: ' + layout.powerPerCard);
+      assert.ok(layout.powerSize.every((h) => h >= 44), width + ': power buttons are touch-sized');
+      assert.equal(layout.small, 0, width + ': tabs and filters are touch-sized');
+      assert.ok(layout.healthHeight <= 60, width + ': host health is one line');
+      if (width === 390) {
+        // Stop asks for confirmation inside the row; Menu opens the panel menu above the tab bar; New opens a choice of creators.
+        await phone.click('.ps-server-entry.has-power [data-power="stop"]');
+        await phone.waitForSelector('.ps-power-confirm:visible');
+        await data(phone, (d) => { d.powerConfirmation = null; });
+        await phone.click('.ps-tabbar .ps-tab[aria-controls="ps-navigation-items"]');
+        const menu = await phone.evaluate(() => { const r = document.querySelector('.ps-nav-items').getBoundingClientRect(); return { visible: r.height > 0, above: r.bottom <= document.querySelector('.ps-tabbar').getBoundingClientRect().top }; });
+        assert.deepEqual(menu, { visible: true, above: true }, 'panel menu opens above the tab bar');
+        if (process.env.SCREENSHOT_DIR) await phone.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-overview.png' });
+        await phone.click('.ps-tabbar .ps-tab[aria-controls="ps-navigation-items"]');
+        assert.equal(await data(phone, (d) => d.navMenu), false, 'Menu closes again');
+        await phone.click('.ps-tab-create > .ps-tab');
+        await phone.waitForSelector('.ps-tab-create-menu .ps-menu-item:visible');
+        assert.equal(await phone.locator('.ps-tab-create-menu .ps-menu-item:visible').count(), 2);
+        await phone.click('.ps-tab-create-menu .ps-menu-item >> text=Minecraft server');
+        await phone.waitForSelector('.ps-modal');
+        assert.equal(await data(phone, (d) => d.createGame), 'minecraft');
+      }
+      await phone.close();
+    }
+    const desktop = await open('/?mode=overview&theme=dark');
+    assert.equal(await desktop.locator('.ps-tabbar').isVisible(), false, 'no tab bar on desktop');
+    await desktop.close();
+    console.log('PASS phone overview: page scroll, one filter row, compact rows, tab bar');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
