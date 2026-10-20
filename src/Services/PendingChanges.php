@@ -43,13 +43,13 @@ final class PendingChanges
             if (isset($state['memory_gb'],$state['disk_mb'],$state['cpu'])) {
                 Access::owner($s);
                 abort_unless(ManagedResources::canEdit($s),403);
-                $r=validator($state,['memory_gb'=>'required|integer|min:1|max:128','disk_mb'=>'required|integer|min:1024|max:10485760','cpu'=>'required|integer|min:1|max:1600'])->validate();
+                $limits=ResourceLimits::from($state);$r=ResourceLimits::pending($limits);
                 if (!CreatorAccess::admin()) {
                     $other=Server::where('owner_id',user()->id)->whereKeyNot($s->id)->get(['memory','disk']);
-                    $limits=CreatorAccess::settings();$limits['max_servers']=PHP_INT_MAX;$limits['max_backups']=max($limits['max_backups'],$s->backup_limit);
-                    CreatorAccess::checkQuota(['memory'=>$r['memory_gb']*1024,'disk'=>$r['disk_mb'],'cpu'=>$r['cpu'],'backup_limit'=>$s->backup_limit],['count'=>0,'memory'=>$other->sum('memory'),'disk'=>$other->sum('disk')],$limits);
+                    $quota=CreatorAccess::settings();$quota['max_servers']=PHP_INT_MAX;$quota['max_backups']=max($quota['max_backups'],$s->backup_limit);
+                    CreatorAccess::checkQuota([...$limits,'backup_limit'=>$s->backup_limit],['count'=>0,'memory'=>$other->sum('memory'),'disk'=>$other->sum('disk')],$quota);
                 }
-                if(SettingsDifference::resources($r,$s))$data['resources']=array_map('intval',$r);else unset($data['resources']);
+                if(SettingsDifference::resources($r,$s))$data['resources']=$r;else unset($data['resources']);
             }
             $data['minecraft'] = !empty($data['properties']) || $data['icon'] !== null;
             $hasChanges = $data['minecraft'] || isset($data['resources']) || !empty($data['file_changes']);

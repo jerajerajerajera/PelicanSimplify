@@ -20,20 +20,15 @@ final class ManagedResources
     public static function save(Server $server, array $state): void
     {
         abort_unless(self::canEdit($server), 403);
-        $ram = filter_var($state['memory_gb'] ?? null, FILTER_VALIDATE_INT);
-        $disk = filter_var($state['disk_mb'] ?? null, FILTER_VALIDATE_INT);
-        $cpu = filter_var($state['cpu'] ?? null, FILTER_VALIDATE_INT);
-        if ($ram === false || $ram < 1 || $ram > 128 || $disk === false || $disk < 1024 || $cpu === false || $cpu < 1 || $cpu > 1600) {
-            throw ValidationException::withMessages(['data.memory_gb' => 'Enter valid RAM, CPU and disk limits.']);
-        }
-        CreationGuard::withResourceLock(function () use ($server, $ram, $disk, $cpu): void {
-        DB::transaction(function () use ($server, $ram, $disk, $cpu): void {
+        ['memory' => $memory, 'cpu' => $cpu, 'disk' => $disk] = ResourceLimits::from($state);
+        CreationGuard::withResourceLock(function () use ($server, $memory, $disk, $cpu): void {
+        DB::transaction(function () use ($server, $memory, $disk, $cpu): void {
             User::query()->whereKey(user()->id)->lockForUpdate()->firstOrFail();
             $server->refresh();
             abort_unless(self::canEdit($server), 403);
             // Preserve every unrelated native limit: this service resets feature limits
             // if omitted from its input, so pass the actual stored values explicitly.
-            $payload = ['memory' => $ram * 1024, 'disk' => $disk, 'cpu' => $cpu,
+            $payload = ['memory' => $memory, 'disk' => $disk, 'cpu' => $cpu,
                 'backup_limit' => $server->backup_limit, 'database_limit' => $server->database_limit,
                 'allocation_limit' => $server->allocation_limit];
             if (!CreatorAccess::admin()) {

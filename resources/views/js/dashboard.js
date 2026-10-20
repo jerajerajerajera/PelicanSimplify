@@ -1141,6 +1141,26 @@
         if (this.server?.can_resources) {
           Object.assign(this.settings, { memory_gb: this.server.memory / 1024, disk_mb: this.server.disk, cpu: this.server.cpu, ...(this.server?.pending?.resources || {}) });
         }
+        this.resourceCustom = {};
+      },
+      /* Resource presets: the same choices as in the server creator, plus your own value. */
+      resourceGroups: [
+        { key: 'memory_gb', label: 'RAM', icon: 'ram', custom: 'Custom RAM in GB', min: 1, max: 128, presets: [[2, '2 GB', 'Small worlds'], [4, '4 GB', 'Everyday play'], [8, '8 GB', 'More headroom'], [12, '12 GB', 'Larger modpacks']] },
+        { key: 'cpu', label: 'CPU allocation', icon: 'cpu', custom: 'Custom CPU (%)', min: 1, max: 1600, presets: [[100, '100%', '1 CPU core'], [150, '150%', '1.5 CPU cores'], [200, '200%', '2 CPU cores'], [400, '400%', '4 CPU cores']] },
+        { key: 'disk_mb', label: 'Disk allocation', icon: 'disk', custom: 'Custom disk (MB)', min: 1024, max: 10485760, presets: [[5120, '5 GB', '5 GB storage'], [10240, '10 GB', '10 GB storage'], [20480, '20 GB', '20 GB storage'], [40960, '40 GB', '40 GB storage']] },
+      ],
+      resourceCustom: {},
+      resourceChoice(group) {
+        const value = Number(this.settings[group.key]);
+        return !this.resourceCustom[group.key] && group.presets.some(([preset]) => preset === value) ? value : 'custom';
+      },
+      pickResource(group, value) {
+        this.resourceCustom = { ...this.resourceCustom, [group.key]: value === 'custom' };
+        if (value !== 'custom') this.settings[group.key] = value;
+      },
+      /** Administrators may use 0 for unlimited, as in the creator. */
+      resourceMin(group) {
+        return this.server?.resources_admin && group.key !== 'memory_gb' ? 0 : group.min;
       },
       packageKind() {
         return ['mods', 'plugins'].includes(this.server?.package_kind) ? this.server.package_kind : '';

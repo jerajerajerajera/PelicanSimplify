@@ -202,6 +202,21 @@ const { start } = require('./browser-harness');
     await motd.close();
     console.log('PASS MOTD editor with in-place colours, clean codes and an aligned preview');
 
+    // 12. Performance: the creator's resource presets, with a custom value, are saved as limits.
+    const performance = await open('/?mode=server&theme=light');
+    await performance.evaluate(() => { window.__saved = null; window.__wire.saveResourceLimits = async (limits) => { window.__saved = limits; return { pending: true, changed: true }; }; });
+    await data(performance, (d) => d.open('performance'));
+    await performance.click('[role=radiogroup][aria-label=RAM] >> text=8 GB');
+    assert.equal(await performance.locator('[role=radiogroup][aria-label="CPU allocation"] [aria-checked=true]').innerText().then((t) => t.split('\n')[0]), '200%');
+    await performance.click('[role=radiogroup][aria-label="Disk allocation"] >> text=Custom');
+    await performance.fill('label:has-text("Custom disk") input', '30000');
+    await performance.click('text=Save limits');
+    await performance.waitForFunction(() => window.__saved);
+    assert.deepEqual(await performance.evaluate(() => window.__saved), { memory_gb: 8, cpu: 200, disk_mb: 30000 });
+    if (process.env.SCREENSHOT_DIR) await performance.screenshot({ path: process.env.SCREENSHOT_DIR + '/performance.png' });
+    await performance.close();
+    console.log('PASS performance presets like the creator, with custom values');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

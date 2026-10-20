@@ -828,11 +828,21 @@
                     </dl>
                     <section x-show="server?.can_resources">
                         <h3 class="ps-section-title">Change resources</h3>
-                        <div class="ps-grid-2">
-                            <label class="ps-field">RAM · GB<input type="number" min="1" max="128" x-model.number="settings.memory_gb"></label>
-                            <label class="ps-field">CPU · %<input type="number" min="1" max="1600" x-model.number="settings.cpu"></label>
-                            <label class="ps-field">Storage · MB<input type="number" min="1024" x-model.number="settings.disk_mb"></label>
-                        </div>
+                        <template x-for="group in resourceGroups" :key="group.key">
+                            <div class="ps-resource-group">
+                                <span class="ps-field" x-text="group.label"></span>
+                                <div class="ps-choice-cards" role="radiogroup" :aria-label="group.label">
+                                    <template x-for="option in [...group.presets, ['custom', 'Custom', 'Choose your own']]" :key="option[0]">
+                                        <button type="button" role="radio" class="ps-choice" :aria-checked="String(resourceChoice(group) === option[0])" x-on:click="pickResource(group, option[0])">
+                                            <svg aria-hidden="true"><use :href="'#ps-' + group.icon"/></svg>
+                                            <span class="ps-choice-title" x-text="option[1]"></span>
+                                            <span class="ps-choice-description" x-text="option[2]"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                                <label class="ps-field" x-show="resourceChoice(group) === 'custom'"><span x-text="group.custom + (resourceMin(group) === 0 ? ' · 0 = unlimited' : '')"></span><input type="number" step="any" :min="resourceMin(group)" :max="group.max" x-model.number="settings[group.key]"></label>
+                            </div>
+                        </template>
                         <p class="ps-help">Save changes, then apply them with a restart.</p>
                     </section>
                     <p class="ps-help" x-show="!server?.can_resources">Ask an administrator to change these limits.</p>

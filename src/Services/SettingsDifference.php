@@ -23,7 +23,7 @@ final class SettingsDifference
     }
     public static function resources(array $requested, object $server): bool
     {
-        return (int)$requested['memory_gb']*1024 !== (int)$server->memory
+        return (int)round((float)$requested['memory_gb']*1024) !== (int)$server->memory
             || (int)$requested['cpu'] !== (int)$server->cpu || (int)$requested['disk_mb'] !== (int)$server->disk;
     }
 }
