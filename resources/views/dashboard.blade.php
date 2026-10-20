@@ -635,7 +635,7 @@
                     </nav>
                     {{-- Phones: four tabs that always fit. Console and the two most used sections, the rest under More. --}}
                     <nav class="ps-phone-sections" aria-label="Server sections" x-on:click.outside="phoneMore=false" x-on:keydown.escape.stop="phoneMore=false">
-                        <button type="button" class="ps-phone-section" :aria-current="docked() ? null : 'page'" x-on:click="phoneMore=false; docked() ? close() : $refs.output.closest('.ps-console').scrollIntoView({behavior: 'smooth', block: 'start'})">Console</button>
+                        <button type="button" class="ps-phone-section" :aria-current="modal ? null : 'page'" x-on:click="phoneMore=false; modal ? close() : $refs.output.closest('.ps-console').scrollIntoView({behavior: 'smooth', block: 'start'})">Console</button>
                         <template x-for="widget in widgets.filter((w) => PHONE_SECTIONS.includes(w.key))" :key="widget.key">
                             <button type="button" class="ps-phone-section" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)" x-text="widget.key==='players' ? 'Players' : widgetTitle(widget)"></button>
                         </template>
@@ -736,7 +736,7 @@
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
     <div class="ps-modal-layer" :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak>
-        <section class="ps-modal" :class="modalSize()" :role="docked() ? 'region' : 'dialog'" :aria-modal="modal && !docked() ? 'true' : null" :aria-label="modalTitle()" x-trap.noscroll="modal && !docked()">
+        <section class="ps-modal" :class="modalSize()" x-on:touchstart="sheetStart($event)" x-on:touchmove="sheetMove($event)" x-on:touchend="sheetEnd()" x-on:touchcancel="sheetEnd()" :role="docked() ? 'region' : 'dialog'" :aria-modal="modal && !docked() ? 'true' : null" :aria-label="modalTitle()" x-trap.noscroll="modal && !docked()">
             <header class="ps-modal-head">
                 <h2 x-text="modalTitle()"></h2>
                 <button type="button" class="ps-btn is-sm is-icon is-subtle" x-show="modal==='files' && server?.files_url" x-on:click="window.open(server.files_url, 'ps-files-'+server.uuid, 'popup,width=1280,height=860')" data-tip="Open in a separate window" aria-label="Open file manager in a separate window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>

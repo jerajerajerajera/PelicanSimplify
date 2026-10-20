@@ -348,7 +348,20 @@ input[type="file"].ps-input::file-selector-button {
   .ps-modal-head { padding-left: 16px; min-height: 56px; }
   .ps-modal-body { padding: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .ps-modal { animation: none; } }
+/* Phones: popups are sheets that slide up from the bottom, with a drag handle and the footer (the save
+   bar) above the home indicator. */
+@media (max-width: 600px) {
+  .ps-modal-layer { place-items: end stretch; padding: 12px 0 0; }
+  .ps-modal, .ps-modal:is(.is-md, .is-lg) { width: 100%; height: calc(100dvh - 12px); border-bottom: 0; border-radius: 18px 18px 0 0; transition: transform .2s ease; animation: ps-sheet-in .22s cubic-bezier(.2, .8, .2, 1); }
+  .ps-modal.is-sm { height: auto; max-height: calc(100dvh - 12px); }
+  .ps-modal::before { content: ""; flex: none; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--ps-line-strong); }
+  .ps-modal-head { min-height: 52px; touch-action: none; }
+  .ps-modal-foot { padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .ps-modal-foot > .is-start { flex: 1 0 100%; margin: 0; }
+  .ps-modal-foot > .ps-btn { flex: 1 1 0; min-height: 44px; }
+}
+@keyframes ps-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ps-modal { animation: none; transition: none; } }
 /* Body scrolling stops while a popup is open. */
 html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidden; }
 /* Confirmation dialogs stack above an open workspace popup. */

@@ -50,6 +50,8 @@
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
       adminPage: null,
       overviewCompact: false,
+      phone: false,
+      sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
       powerConfirmation: null,
       healthExpanded: false,
@@ -794,6 +796,7 @@
       restoreOverviewView() {
         const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
         this.overviewCompact = phone;
+        this.phone = phone;
         this.overviewView = 'grid';
         try {
           const view = localStorage.getItem(this.overviewViewKey());
@@ -1256,7 +1259,8 @@
       },
       /** Server workspaces open inside the page instead of as a popup. */
       docked() {
-        return !!this.server && !!this.modal && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
+        // Phones open workspaces as sheets over the page instead of docking them next to the console.
+        return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
@@ -1292,7 +1296,7 @@
         if (this.busy || !page?.url) return;
         if (this.modal === 'external' && this.externalPage?.key === page.key) return;
         const change = () => { this.externalPage = page; this.modal = 'external'; };
-        if (this.docked()) change();
+        if (this.docked() || this.phone) change();
         else await this.layoutTransition(change);
         this.loading = true;
       },
@@ -1302,7 +1306,7 @@
       async open(key) {
         if (this.busy || !this.showWidget(key)) return;
         const request = ++this.modalRequest;
-        if (this.server && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
+        if (this.server && !this.phone && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
         else this.modal = key;
         this.loading = true;
         const current = () => !this.destroyed && this.modalRequest === request && this.modal === key;
@@ -1345,6 +1349,25 @@
             this.focusModal();
           }
         }
+      },
+      /** Phones: drag a sheet down by its header to close it (close() still asks about unsaved work). */
+      sheetStart(event) {
+        if (!this.phone || this.docked() || event.touches.length !== 1 || !event.target.closest('.ps-modal-head') || event.target.closest('button, a, input')) return;
+        this.sheetDrag = { y: event.touches[0].clientY, dy: 0, el: event.currentTarget };
+        this.sheetDrag.el.style.transition = 'none';
+      },
+      sheetMove(event) {
+        if (!this.sheetDrag) return;
+        this.sheetDrag.dy = Math.max(0, event.touches[0].clientY - this.sheetDrag.y);
+        this.sheetDrag.el.style.transform = this.sheetDrag.dy ? 'translateY(' + this.sheetDrag.dy + 'px)' : '';
+      },
+      sheetEnd() {
+        const drag = this.sheetDrag;
+        if (!drag) return;
+        this.sheetDrag = null;
+        drag.el.style.transition = '';
+        drag.el.style.transform = '';
+        if (drag.dy > 110) this.close();
       },
       async close() {
         if (this.busy || this.closingCreator) return;
