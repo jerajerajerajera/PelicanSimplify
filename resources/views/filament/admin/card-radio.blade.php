@@ -27,6 +27,12 @@
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => 'clock'])
                     @elseif (in_array($name, ['cpu_choice','disk_choice']))
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => $name === 'cpu_choice' ? 'cpu' : 'disk'])
+                    @elseif ($name === 'icon_source' && $value === 'modpack' && ($modpackIcon = $field->getLivewire()->modpackIcon()))
+                        <span class="ssc-pack-image ssc-server-icon-preview">
+                            <img src="data:image/png;base64,{{ $modpackIcon }}" alt="" width="64" height="64" />
+                        </span>
+                    @elseif ($name === 'icon_source')
+                        @include('pelican-simplify::filament.admin.outline-icon', ['icon' => 'upload'])
                     @elseif ($name === 'ram_gb')
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => 'ram'])
                     @elseif ($pack && !empty($pack['icon_url']))

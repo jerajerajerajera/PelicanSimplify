@@ -10,6 +10,7 @@ final class Maintenance extends Command
     protected $description='Apply scheduled changes and rotate automatic server backups.';
     public function handle(): int
     {
+        self::restartWorkersAfterUpdate();
         $disk=\Illuminate\Support\Facades\Storage::disk('local');$ids=[];
         $directories=['simplify/pending'];
         if(\Simplify\Panel\Services\FeatureSettings::enabled('automatic_backups'))$directories[]='simplify/backups';
@@ -24,5 +25,16 @@ final class Maintenance extends Command
             try { if(\Simplify\Panel\Services\FeatureSettings::enabled('automatic_backups')) AutomaticBackups::tick($s); } catch(\Throwable $e) { report($e);$this->error($s->name.': '.$e->getMessage()); }
         }
         return self::SUCCESS;
+    }
+
+    /** Queue workers keep the old plugin code in memory; after an update they are restarted, like queue:restart. */
+    public static function restartWorkersAfterUpdate(): void
+    {
+        $version=\Simplify\Panel\Services\BuildInfo::version();
+        if($version===null)return;
+        $cache=app('cache')->store();
+        if($cache->get('simplify.worker-version')===$version)return;
+        $cache->forever('illuminate:queue:restart',time());
+        $cache->forever('simplify.worker-version',$version);
     }
 }

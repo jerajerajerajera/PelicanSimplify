@@ -29,6 +29,7 @@
 .ssc-card-link:hover { text-decoration: underline; }
 .ssc-pack-image { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; }
 .ssc-pack-image img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; }
+.ssc-server-icon-preview img { border-radius: 4px; image-rendering: pixelated; }
 /* Resource presets: compact icon beside the value, help beneath. */
 .ssc-cards--ram { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 .ssc-cards--ram .ssc-card-content { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-content: center; align-items: center; justify-content: start; gap: 5px 9px; min-height: 78px; padding: 12px; text-align: left; }

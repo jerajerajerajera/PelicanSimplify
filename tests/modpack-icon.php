@@ -15,9 +15,13 @@ assert_ok(ModpackIcon::fromBytes('')===null,'Empty downloads are ignored');
 assert_ok(ModpackIcon::png('http://example.com/icon.png')===null&&!\Illuminate\Support\Facades\Http::$called,'Only https URLs are fetched');
 assert_ok(ModpackIcon::png('https://example.com/icon.png')===null,'Download failures return no icon');
 $job=file_get_contents(__DIR__.'/../src/Jobs/ApplyServerProperties.php');
-assert_ok(str_contains($job,"!\$this->hasFile(\$files, 'server-icon.png')"),'An existing server-icon.png is kept');
+assert_ok(str_contains($job,"(\$this->settings['icon_if_missing'] ?? false) && \$this->hasFile(\$files, 'server-icon.png')"),'A server-icon.png shipped by the pack is kept');
 $creator=file_get_contents(__DIR__.'/../src/Filament/Admin/Pages/CreateMinecraftServer.php');
-assert_ok(str_contains($creator,"empty(\$prepared['icon']) && ModpackCatalog::safeUrl(\$websitePack['modpack_icon_url']"),'An uploaded icon wins over the modpack icon');
-echo "PASS modpack icon becomes a 64 x 64 PNG, https only, failures ignored, uploads and shipped icons win\n";
+assert_ok(str_contains($creator,"(\$state['icon_source'] ?? 'modpack') === 'modpack'"),'The modpack icon is preselected');
+assert_ok(str_contains($creator,"if (\$modpackIcon !== null) \$state['server_icon'] = null;"),'Choosing the modpack icon ignores an earlier upload');
+assert_ok(str_contains($creator,"if (!\$offered && \$get('icon_source') === 'upload') return false;"),'Choosing to upload shows the upload field');
+$card=file_get_contents(__DIR__.'/../resources/views/filament/admin/card-radio.blade.php');
+assert_ok(str_contains($card,'data:image/png;base64,{{ $modpackIcon }}'),'The wizard previews the downloaded modpack icon');
+echo "PASS modpack icon becomes a 64 x 64 PNG, https only, failures ignored, preselected in the wizard with upload as alternative, shipped icons kept\n";
 function assert_ok(bool $ok,string $message):void{if(!$ok){fwrite(STDERR,"FAIL $message\n");exit(1);}}
 }

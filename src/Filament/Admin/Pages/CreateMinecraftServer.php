@@ -382,6 +382,30 @@ class CreateMinecraftServer extends Page implements HasForms
     }
 
     /** Steam art for the chosen game, if the add-on option is on and the store has a match. */
+    /** The selected modpack's icon as a base64 64 × 64 PNG, or null when it has none or cannot be downloaded. */
+    public function modpackIcon(?string $key = null): ?string
+    {
+        $pack = ModpackCatalog::pack($key ?? (string) ($this->data['modpack_project'] ?? ''));
+        $url = ModpackCatalog::safeUrl($pack['icon_url'] ?? null);
+        if ($url === null) return null;
+        // Downloaded once per icon; a failed download is retried after ten minutes.
+        $icon = \Illuminate\Support\Facades\Cache::get($cache = 'simplify.modpack-icon.' . sha1($url));
+        if ($icon === null) {
+            $png = \Simplify\Panel\Services\ModpackIcon::png($url);
+            $icon = $png === null ? '' : base64_encode($png);
+            \Illuminate\Support\Facades\Cache::put($cache, $icon, $icon === '' ? 600 : 86400);
+        }
+        return $icon !== '' ? $icon : null;
+    }
+
+    /** Whether the server icon comes from the modpack; with $offered, whether the choice is shown at all. */
+    private function usesModpackIcon(Get $get, bool $offered = false): bool
+    {
+        if (($this->creationGame ?: $get('game')) !== 'minecraft' || $get('server_type') !== 'modded') return false;
+        if (!$offered && $get('icon_source') === 'upload') return false;
+        return $this->modpackIcon((string) $get('modpack_project')) !== null;
+    }
+
     public function steamArt(): ?array
     {
         if (!\Simplify\Panel\Services\SteamArt::enabled()) return null;
@@ -641,11 +665,18 @@ class CreateMinecraftServer extends Page implements HasForms
                                     Toggle::make('white_list')->label('Whitelist')->helperText('Players must be added to the whitelist after creation.'),
                                     Toggle::make('allow_flight')->label('Allow flight'),
                                 ])->columns(2),
-                            FileUpload::make('server_icon')->label('Server icon (optional)')->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft')
+                            Radio::make('icon_source')->label('Server icon')
+                                ->options(['modpack' => 'Modpack icon', 'upload' => 'Upload your own'])
+                                ->descriptions(['modpack' => 'Shown in the multiplayer list.', 'upload' => 'A 64 × 64 PNG of your choice.'])
+                                ->default('modpack')->live()
+                                ->view('pelican-simplify::filament.admin.card-radio')
+                                ->visible(fn (Get $get) => $this->usesModpackIcon($get, true)),
+                            FileUpload::make('server_icon')->label(fn (Get $get) => $this->usesModpackIcon($get, true) ? 'Your server icon' : 'Server icon (optional)')
+                                ->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft' && !$this->usesModpackIcon($get))
                                 ->image()->acceptedFileTypes(['image/png'])->maxSize(100)
                                 ->imageResizeMode('cover')->imageResizeTargetWidth('64')->imageResizeTargetHeight('64')
                                 ->imageEditor()->imageEditorAspectRatios(['1:1'])->storeFiles(false)
-                                ->helperText(fn (Get $get) => 'PNG, 64 × 64 pixels, up to 100 KB. Uploaded as server-icon.png after installation.' . ($get('server_type') === 'modded' ? ' Leave empty to use the modpack\'s icon.' : '')),
+                                ->helperText('PNG, 64 × 64 pixels, up to 100 KB. Uploaded as server-icon.png after installation.'),
                         ]),
                     ... (\Simplify\Panel\Services\Extensions::webAdapter()?->creatorSteps($this) ?? []),
                     Step::make('Backups')->visible(fn()=>\Simplify\Panel\Services\FeatureSettings::enabled('backups'))->schema([
@@ -767,6 +798,8 @@ class CreateMinecraftServer extends Page implements HasForms
                 $state['server_icon'] = null;
                 $state['website_background_id'] = 'auto';
             }
+            $modpackIcon = ($state['game'] ?? 'minecraft') === 'minecraft' && ($state['server_type'] ?? '') === 'modded' && ($state['icon_source'] ?? 'modpack') === 'modpack' ? $this->modpackIcon((string) ($state['modpack_project'] ?? '')) : null;
+            if ($modpackIcon !== null) $state['server_icon'] = null;
             $prepared = ServerProperties::prepare($state, true, ($state['game'] ?? 'minecraft') === 'minecraft' ? $this->draftIcon : null);
             validator(['server_alias'=>$state['server_alias']??''],['server_alias'=>'nullable|string|max:100'])->validate();
             if (($state['game'] ?? '') === 'other') $state['game_variables'] = $this->autoSteamTokens($state);
@@ -800,7 +833,8 @@ class CreateMinecraftServer extends Page implements HasForms
             // The accepted EULA is written with the other settings once installation finishes.
             if (($state['game'] ?? 'minecraft') === 'minecraft' && !in_array(config('queue.default'), ['sync', 'null'], true)) {
                 $prepared = [...$prepared, 'eula' => true];
-                if (empty($prepared['icon']) && ModpackCatalog::safeUrl($websitePack['modpack_icon_url'] ?? null)) $prepared['icon_url'] = $websitePack['modpack_icon_url'];
+                // The modpack's icon, unless the pack ships its own server-icon.png.
+                if ($modpackIcon !== null) $prepared = [...$prepared, 'icon' => $modpackIcon, 'icon_if_missing' => true];
             }
             $warnings = [];
             if ($prepared) {

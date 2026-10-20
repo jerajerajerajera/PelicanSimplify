@@ -7,7 +7,6 @@ namespace Simplify\Panel\Jobs;
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
 use App\Repositories\Daemon\DaemonServerRepository;
-use Simplify\Panel\Services\ModpackIcon;
 use Simplify\Panel\Services\ServerProperties;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -56,11 +55,8 @@ final class ApplyServerProperties implements ShouldQueue
                 }
                 $files->putContent('/server.properties', ServerProperties::merge($original, $this->settings['properties']))->throw();
             }
-            if (!empty($this->settings['icon'])) {
+            if (!empty($this->settings['icon']) && !(($this->settings['icon_if_missing'] ?? false) && $this->hasFile($files, 'server-icon.png'))) {
                 $files->putContent('/server-icon.png', base64_decode($this->settings['icon'], true))->throw();
-            } elseif (!empty($this->settings['icon_url']) && !$this->hasFile($files, 'server-icon.png') && ($icon = ModpackIcon::png($this->settings['icon_url'])) !== null) {
-                // No uploaded icon: use the modpack's icon, unless the pack ships its own server-icon.png.
-                $files->putContent('/server-icon.png', $icon)->throw();
             }
             if (($this->settings['eula']??false)===true) {
                 $files->putContent('/eula.txt', "# Accepted by the server creator during setup.\neula=true\n")->throw();

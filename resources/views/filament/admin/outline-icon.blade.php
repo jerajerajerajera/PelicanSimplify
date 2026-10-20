@@ -11,6 +11,9 @@
         @case('game')
             <rect x="3" y="7" width="18" height="12" rx="4" /><path d="M7 11v4 M5 13h4 M15 12h.01 M18 14h.01" />
             @break
+        @case('upload')
+            <path d="M12 15V4 M7 9l5-5 5 5 M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+            @break
         @case('clock')
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 2" />
