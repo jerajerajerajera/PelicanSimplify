@@ -797,6 +797,10 @@ class CreateMinecraftServer extends Page implements HasForms
                 // Downloaded after the response, so creating the server is not slowed down by Steam.
                 app()->terminating(fn () => \Simplify\Panel\Services\SteamArt::apply($server, $art));
             }
+            // The accepted EULA is written with the other settings once installation finishes.
+            if (($state['game'] ?? 'minecraft') === 'minecraft' && !in_array(config('queue.default'), ['sync', 'null'], true)) {
+                $prepared = [...$prepared, 'eula' => true];
+            }
             $warnings = [];
             if ($prepared) {
                 try {

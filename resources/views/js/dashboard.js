@@ -103,6 +103,7 @@
       ws: null,
       reconnect: null,
       reconnectDelay: 0,
+      eulaPrompted: false,
       refreshTimer: null,
       pendingTimer: null,
       refreshingInfo: false,
@@ -1416,9 +1417,11 @@
               socket.send(JSON.stringify({ event: 'send stats', args: [null] }));
             }
             if (['console output', 'install output', 'daemon error'].includes(event)) {
-              this.logs.push(String(args[0] ?? '').replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, ''));
+              const line = String(args[0] ?? '').replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '');
+              this.logs.push(line);
               if (this.logs.length > 1200) this.logs.splice(0, this.logs.length - 1200);
               this.renderLogs();
+              if (event === 'console output' && /agree to the EULA/i.test(line)) this.promptEula();
             }
             if (event === 'status') {
               this.status = args[0];
@@ -1529,6 +1532,14 @@
         } finally {
           this.refreshingInfo = false;
         }
+      },
+      /** Minecraft stops until its EULA is accepted; offer to accept it once per page view. */
+      async promptEula() {
+        const p = this.server?.permissions || {};
+        if (this.eulaPrompted || !p['file.update'] || !p['control.start']) return;
+        this.eulaPrompted = true;
+        if (!(await this.ask({ title: 'Accept the Minecraft EULA?', message: 'This server stopped because the Minecraft EULA has not been accepted yet. Read it at minecraft.net/eula. Accepting writes eula=true to eula.txt and starts the server.', confirmLabel: 'Accept and start' }))) return;
+        await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
       },
       async power(action) {
         if (action === 'kill' && !(await this.ask({ title: 'Force stop this server?', message: 'The server stops immediately. Unsaved game progress may be lost.', confirmLabel: 'Force stop', tone: 'danger' }))) return;

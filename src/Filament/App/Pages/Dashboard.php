@@ -159,6 +159,15 @@ final class Dashboard extends Page
         abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
         app(DaemonServerRepository::class)->setServer($s)->power($action)->throw();
     }
+    /** Accept the Minecraft EULA for a server that stopped on the EULA prompt, then start it. */
+    #[Renderless]
+    public function acceptEula(): void
+    {
+        $s=$this->server();Access::permission($s,P::FileUpdate);Access::permission($s,P::ControlStart);
+        abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
+        app(DaemonFileRepository::class)->setServer($s)->putContent('/eula.txt',"# Accepted in Simplify by ".user()->username.".\neula=true\n")->throw();
+        app(DaemonServerRepository::class)->setServer($s)->power('start')->throw();
+    }
     #[Renderless]
     public function fileRevision(string $path): string
     {
