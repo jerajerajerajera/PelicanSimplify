@@ -17,6 +17,15 @@ final class LegacyNavigation
     }
     public static function topbarVisible(): bool
     {
-        return request()->routeIs('filament.admin.*', 'filament.app.resources.servers.index') && self::url() !== null;
+        return request()->routeIs('filament.admin.*', self::serverListRoute()) && self::url() !== null;
+    }
+    /** Pelican's own server list. Its resource uses the slug "/", so on beta38 and rc.1 the route is "filament.app.resources...index". */
+    public static function serverListRoute(): string
+    {
+        try {
+            return \App\Filament\App\Resources\Servers\Pages\ListServers::getRouteName(Filament::getPanel('app'));
+        } catch (\Throwable) {
+            return 'filament.app.resources.servers.index';
+        }
     }
 }

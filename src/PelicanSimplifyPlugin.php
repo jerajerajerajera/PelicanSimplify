@@ -27,7 +27,7 @@ final class PelicanSimplifyPlugin implements Plugin
         if($panel->getId()==='app'){
             $panel->pages([Dashboard::class,CreateServer::class,SimplifySettings::class]);
             $panel->middleware([Http\Middleware\Home::class]);
-            $panel->homeUrl(fn()=>FeatureSettings::enabled('dashboard')?Dashboard::getUrl(panel:'app'):route('filament.app.resources.servers.index'));
+            $panel->homeUrl(fn()=>FeatureSettings::enabled('dashboard')?Dashboard::getUrl(panel:'app'):route(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()));
         }
         if($panel->getId()==='admin'){
             $panel->topbar(true);

@@ -7,7 +7,7 @@ final class Home
 {
     public function handle(Request $r,Closure $next): mixed
     {
-        if (\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') && !($r->boolean('simplify_legacy') && (user()?->isAdmin()||\Simplify\Panel\Services\RoleAccess::can('legacy'))) && $r->isMethod('GET') && $r->route()?->getName()==='filament.app.resources.servers.index' && user()) return redirect(Dashboard::getUrl(panel:'app'));
+        if (\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') && !($r->boolean('simplify_legacy') && (user()?->isAdmin()||\Simplify\Panel\Services\RoleAccess::can('legacy'))) && $r->isMethod('GET') && $r->routeIs(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()) && user()) return redirect(Dashboard::getUrl(panel:'app'));
         return $next($r);
     }
 }

@@ -1,5 +1,5 @@
 @if(\Simplify\Panel\Services\LegacyNavigation::topbarVisible())
-    @if(request()->routeIs('filament.app.resources.servers.index'))
+    @if(request()->routeIs(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()))
         @php
             $nativeCreate = \App\Filament\Admin\Resources\Servers\ServerResource::canCreate();
             $simplifyCreate = \Simplify\Panel\Services\FeatureSettings::enabled('easy_creator') && \Simplify\Panel\Services\CreatorAccess::canCreate();
