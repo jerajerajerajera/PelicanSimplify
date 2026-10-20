@@ -1,5 +1,5 @@
 # Repository archives (GitHub's zip and tar downloads, which the Pelican Hub syncs) hold only the plugin itself,
-# like the release zip: tests, build scripts, installers and documentation stay in the repository.
+# like the release zip: tests, build scripts and documentation stay in the repository.
 /.github export-ignore
 /.gitattributes export-ignore
 /.gitignore export-ignore
@@ -7,13 +7,6 @@
 /docs export-ignore
 /scripts export-ignore
 /tests export-ignore
-/check-panel.php export-ignore
-/preflight.php export-ignore
-/prepare-policies.php export-ignore
-/restore-backup-policy.php export-ignore
-/INSTALL-PELICAN-SIMPLIFY.sh export-ignore
-/RESET-PLUGINS.sh export-ignore
-/ROLLBACK-PELICAN-SIMPLIFY.sh export-ignore
 /SHA256SUMS export-ignore
 /package.json export-ignore
 /package-lock.json export-ignore

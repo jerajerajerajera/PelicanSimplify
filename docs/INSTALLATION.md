@@ -1,6 +1,6 @@
 # Installation
 
-Target: Pelican 1.0.0-beta38 and PHP 8.3 or newer. This is a beta release.
+Target: Pelican 1.0.0-beta38 (PHP 8.3 or newer) or 1.0.0-rc.1 (PHP 8.4 or newer).
 
 ## Panel import
 
@@ -12,30 +12,8 @@ Simplify supplies its own CSS/JavaScript without a separate build. Pelican's own
 
 ## Migration from the standalone creator
 
-The former standalone creator must not run alongside the unified creator. Use the full migration package rather than a panel import:
-
-```bash
-sudo bash INSTALL-PELICAN-SIMPLIFY.sh /var/www/pelican core
-```
-
-The path can be changed. The installer checks dependencies as the panel user before replacing files, preserves configuration and creates a rollback copy. Use the exact backup path printed during installation:
-
-```bash
-sudo bash ROLLBACK-PELICAN-SIMPLIFY.sh /var/backups/pelican-simplify-XXXXXXXX /var/www/pelican
-```
+The former standalone creator (`simple-server-creator`) must not run alongside the unified creator. In **Admin → Plugins**, disable and delete it first, then import Simplify as above. The setup checks block the unified creator while the standalone creator is still enabled. Make a backup of the panel first, as with any plugin change.
 
 ## Development
 
 Run `bash tests/run.sh` with PHP 8.3 and Node installed. For the browser theme check, run `npm ci`, `npx playwright install chromium`, then `RUN_BROWSER_TESTS=1 bash tests/run.sh`.
-
-## Reset existing plugins to test the setup wizard
-
-Run the reset script on the panel host:
-
-```bash
-sudo bash RESET-PLUGINS.sh reset /var/www/pelican
-```
-
-It enters maintenance mode, archives and verifies all current panel plugins, moves them outside the active plugins folder, clears panel caches and resets only Simplify's setup-completed flag. Then import the plugin ZIP through Admin → Plugins and click Install. All former panel plugins, including Essentials, stay inactive until restored or reinstalled. Game servers, accounts, eggs, Wings and server files are left in place.
-
-The script prints an exact restore command. Keep the backup directory until you have tested the new installation. A failed reset attempts to restore the previous plugin folder and setup state automatically.

@@ -1,5 +1,11 @@
 # Changes
 
+## 0.4.6 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+A cleaner repository. Nothing changes in how Simplify works.
+- The shell installers are gone (INSTALL-PELICAN-SIMPLIFY.sh, ROLLBACK-PELICAN-SIMPLIFY.sh, RESET-PLUGINS.sh and their PHP helpers). Install and update through Pelican's plugin import or Simplify's plugin manager. Coming from the standalone creator: disable and delete it under Admin → Plugins first; the setup check now says so.
+- The open points of the "other games" creator proposal moved to the roadmap.
+- A manual "Delete branches" workflow removes branches that are no longer needed; main, beta and snapshot are always kept.
+
 ## 0.4.5 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 For the Pelican Hub, which scans the whole repository, not only the plugin. Nothing changes in how Simplify works.
 - The panel check of the shell installer (check-panel.php) uses Laravel's File and Process helpers; preflight.php and the tests write errors with fprintf.
