@@ -328,6 +328,30 @@ const { start } = require('./browser-harness');
     await desk.close();
     console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands, sheets');
 
+    // 16. Phone creator: "Step 1 of 4" with a progress bar, choices as full-width rows, Back / Next at the bottom.
+    for (const width of [360, 430]) {
+      const wizard = await browser.newPage({ viewport: { width, height: 640 } });
+      await wizard.goto(base + '/frame/creator');
+      await wizard.waitForSelector('.ssc-progress');
+      const layout = await wizard.evaluate(() => {
+        const visible = (el) => !!el.offsetParent;
+        const cards = [...document.querySelectorAll('.ssc-card-content')].map((c) => c.getBoundingClientRect());
+        const list = document.querySelector('.ssc-cards').getBoundingClientRect();
+        const foot = document.querySelector('.fi-sc-wizard-footer');
+        foot.scrollIntoView({ block: 'nearest' });
+        return {
+          steps: [...document.querySelectorAll('.ssc-progress > button')].filter(visible).map((b) => b.textContent.trim()),
+          count: document.querySelector('.ssc-progress-count').textContent.trim(),
+          rows: cards.every((c) => Math.round(c.width) === Math.round(list.width)) && cards.every((c, i) => i === 0 || c.top > cards[i - 1].bottom),
+          sticky: getComputedStyle(foot).position, buttons: [...foot.querySelectorAll('.fi-btn')].map((b) => b.offsetHeight >= 48),
+        };
+      });
+      assert.deepEqual(layout, { steps: ['1Server Type'], count: 'Step 1 of 4', rows: true, sticky: 'sticky', buttons: [true, true] }, width + ': phone creator layout ' + JSON.stringify(layout));
+      if (process.env.SCREENSHOT_DIR && width === 430) await wizard.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-creator.png' });
+      await wizard.close();
+    }
+    console.log('PASS phone creator: step count with a progress bar, choice rows, Back / Next at the bottom');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
