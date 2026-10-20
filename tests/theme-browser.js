@@ -306,7 +306,19 @@ const { start } = require('./browser-harness');
         await phone.waitForSelector('.ps-tabs');
         assert.equal(await phone.getAttribute('.ps-phone-more > .ps-phone-section', 'aria-current'), 'page', 'More shows the open section');
         if (process.env.SCREENSHOT_DIR) await phone.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-server.png' });
-        await phone.click('.ps-phone-section >> text=Console');
+        // 15. Workspaces open as a sheet over the page (not docked) with the save bar at the bottom; dragging the header down closes it.
+        await phone.waitForTimeout(400); // slide-in
+        const sheet = await phone.evaluate(() => {
+          const d = Alpine.$data(document.querySelector('.ps')), modal = document.querySelector('.ps-modal').getBoundingClientRect(), foot = document.querySelector('.ps-modal-foot').getBoundingClientRect();
+          return { docked: d.docked(), top: Math.round(modal.top), bottom: Math.round(modal.bottom) === innerHeight, foot: Math.round(foot.bottom) === innerHeight, locked: getComputedStyle(document.documentElement).overflow === 'hidden' };
+        });
+        assert.deepEqual(sheet, { docked: false, top: 12, bottom: true, foot: true, locked: true }, 'workspace sheet with the save bar at the bottom: ' + JSON.stringify(sheet));
+        const head = await phone.locator('.ps-modal-head').boundingBox();
+        const touch = await phone.context().newCDPSession(phone);
+        const drag = (type, y) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: head.x + 60, y }] });
+        await drag('touchStart', head.y + 20);
+        for (let i = 1; i <= 8; i++) await drag('touchMove', head.y + 20 + i * 25);
+        await drag('touchEnd');
         await phone.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
       }
       await phone.close();
@@ -314,7 +326,7 @@ const { start } = require('./browser-harness');
     const desk = await open('/?mode=server&theme=dark');
     assert.deepEqual(await desk.evaluate(() => [!!document.querySelector('.ps-phone-sections').offsetParent, !!document.querySelector('.ps-quick-commands').offsetParent, !!document.querySelector('.ps-widget-grid').offsetParent]), [false, false, true], 'desktop keeps its section menu');
     await desk.close();
-    console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands');
+    console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands, sheets');
 
     assert.deepEqual(errors, []);
   } finally {

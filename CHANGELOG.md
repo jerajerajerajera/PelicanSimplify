@@ -1,5 +1,12 @@
 # Changes
 
+## 0.4.7-snapshot.3 (snapshot channel)
+Popups as sheets on phones, the third part of the phone experience. Wider screens do not change.
+- Every popup (creating a server, settings, confirmations) slides up from the bottom as a sheet with a drag handle. Drag the header down to close it; unsaved work is still asked about first.
+- On the server page, sections (game settings, players, files and the rest) open as a full-height sheet over the page instead of between the tabs and the console, so the page behind them no longer jumps.
+- The save bar sits at the bottom of the sheet, above the home indicator, with large Cancel and Save buttons.
+- Browser tests check the sheet, its save bar and closing it by dragging.
+
 ## 0.4.7-snapshot.2 (snapshot channel)
 Phone layout for the server page, the second part of the phone experience. Wider screens do not change.
 - A more compact server card, larger power buttons and 40 px buttons in the status bar that stays at the top while scrolling.

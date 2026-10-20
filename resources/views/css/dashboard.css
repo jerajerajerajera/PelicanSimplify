@@ -1144,12 +1144,10 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-phone-more-menu .ps-menu-item[aria-current="page"] { background: var(--ps-raised); }
 
   .ps .ps-server-workspace .ps-console { height: max(380px, calc(100dvh - 140px)); min-height: 0; scroll-margin-top: 72px; }
-  .ps .ps-server-workspace.has-dock .ps-console { height: 200px; }
   .ps .ps-quick-commands { display: flex; flex: none; gap: 6px; padding: 8px 12px 0; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--ps-console-line); }
   .ps .ps-quick-commands::-webkit-scrollbar { display: none; }
   .ps .ps-quick-commands { background: var(--ps-console-raised); }
   .ps .ps-quick-commands:not([style*="none"]) + .ps-command { border-top: 0; }
-  .ps .ps-server-workspace.has-dock .ps-quick-commands { display: none; }
   .ps-quick-command { flex: none; min-height: 36px; padding: 0 12px; border: 1px solid var(--ps-console-line); border-radius: var(--ps-radius-pill); background: var(--ps-console-raised); color: var(--ps-console-ink); font: 12px var(--ps-mono); white-space: nowrap; }
   .ps-quick-command:disabled { opacity: .45; }
   .ps .ps-command input { height: 44px; font-size: 16px; }
