@@ -1,7 +1,7 @@
 # Changes
 
-## Unreleased
-- With the companion website plugin (server-directory) installed, the title card of a server now has a **Website** switch to show or hide the server on the public website. Only the server owner and admins see it.
+## 0.4.2-beta.5 (beta channel)
+- With the companion website plugin (server-directory) installed, a server's title card has a website switch next to the server colour: it shows or hides the server on the public website (hover for the text). Only the server owner and admins see it.
 
 ## 0.4.2-beta.4 (beta channel)
 - New modded Minecraft servers get the modpack's icon as their server icon (server-icon.png, shown in the multiplayer list). It is downloaded after installation and scaled to 64 × 64. An icon you upload in the creator still wins, and a pack that ships its own server-icon.png keeps it.
