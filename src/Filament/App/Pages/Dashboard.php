@@ -210,7 +210,7 @@ final class Dashboard extends Page
     #[Renderless]
     public function restartChanges(int $minutes=0): void { PendingChanges::requestRestart($this->server(),$minutes); }
     #[Renderless]
-    public function rename(string $name): void
+    public function renameServer(string $name): void
     {
         $s=$this->server();Access::permission($s,P::SettingsRename);
         $name=trim($name);validator(['name'=>$name],['name'=>'required|string|max:255'])->validate();$s->update(['name'=>$name]);

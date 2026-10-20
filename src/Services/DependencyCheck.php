@@ -132,8 +132,12 @@ final class DependencyCheck
     {
         if (!is_dir($directory) || !is_writable($directory)) return false;
         $path = $directory.'/.simplify-preflight-'.bin2hex(random_bytes(8));
-        if (@file_put_contents($path, 'ready') === false) return false;
-        $ok = @file_get_contents($path) === 'ready';
-        return @unlink($path) && $ok;
+        try {
+            if (\Illuminate\Support\Facades\File::put($path, 'ready') === false) return false;
+            $ok = \Illuminate\Support\Facades\File::get($path) === 'ready';
+            return \Illuminate\Support\Facades\File::delete($path) && $ok;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

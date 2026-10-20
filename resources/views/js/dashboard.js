@@ -1110,7 +1110,7 @@
           this.busy = false;
         }
       },
-      async copy(text, message = 'Address copied') {
+      async copyText(text, message = 'Address copied') {
         try {
           await navigator.clipboard.writeText(text);
         } catch {
@@ -1588,9 +1588,9 @@
         else if (result?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
         else this.toast('Changes applied. They will load at the next start.', 'ok');
       },
-      async rename() {
+      async renameServer() {
         const name = this.name;
-        const result = await this.run(() => wire.rename(name), 'Server renamed');
+        const result = await this.run(() => wire.renameServer(name), 'Server renamed');
         if (result !== SKIPPED) this.server.name = name;
       },
       async discard() {
