@@ -1051,58 +1051,12 @@
         const saved = String(this.server?.pack?.version || '').trim();
         return /^(?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?)$/.test(saved) ? saved : 'Not reported';
       },
-      motdColors: [
-        ['0', 'Black', '#000000'], ['1', 'Dark blue', '#0000aa'], ['2', 'Dark green', '#00aa00'], ['3', 'Dark aqua', '#00aaaa'],
-        ['4', 'Dark red', '#aa0000'], ['5', 'Dark purple', '#aa00aa'], ['6', 'Gold', '#ffaa00'], ['7', 'Gray', '#aaaaaa'],
-        ['8', 'Dark gray', '#555555'], ['9', 'Blue', '#5555ff'], ['a', 'Green', '#55ff55'], ['b', 'Aqua', '#55ffff'],
-        ['c', 'Red', '#ff5555'], ['d', 'Light purple', '#ff55ff'], ['e', 'Yellow', '#ffff55'], ['f', 'White', '#ffffff'],
-      ],
-      insertMotdCode(code) {
-        if (!/^[0-9a-fk-or]$/.test(code)) return;
-        const field = this.$refs?.motdInput;
-        const text = String(this.settings.motd || ''), start = field?.selectionStart ?? text.length, end = field?.selectionEnd ?? start;
-        const prefix = '§' + code, suffix = end > start && code !== 'r' ? '§r' : '';
-        const value = text.slice(0, start) + prefix + text.slice(start, end) + suffix + text.slice(end);
-        if (value.length > 512) {
-          this.toast('MOTD can contain at most 512 characters.', 'warn');
-          return;
-        }
-        this.settings.motd = value;
-        this.$nextTick?.(() => {
-          field?.focus();
-          field?.setSelectionRange(start + prefix.length, end + prefix.length);
-        });
-      },
-      motdPreview(value = this.settings.motd) {
-        const colors = Object.fromEntries(this.motdColors.map(([code, , color]) => [code, color]));
-        const parts = [];
-        let style = { color: '#aaaaaa' }, text = '';
-        const flush = () => {
-          if (text) {
-            parts.push({ text, style: { ...style } });
-            text = '';
-          }
-        };
-        value = String(value || '');
-        for (let i = 0; i < value.length; i++) {
-          if (value[i] === '§' && /^§x(?:§[0-9a-f]){6}/i.test(value.slice(i))) {
-            flush();
-            style = { color: '#' + value.slice(i + 2, i + 14).replace(/§/g, '') };
-            i += 13;
-          } else if (value[i] === '§' && /[0-9a-fk-or]/i.test(value[i + 1] || '')) {
-            flush();
-            const code = value[++i].toLowerCase();
-            if (colors[code]) style = { color: colors[code] };
-            else if (code === 'r') style = { color: '#aaaaaa' };
-            else if (code === 'l') style.fontWeight = 'bold';
-            else if (code === 'o') style.fontStyle = 'italic';
-            else if (code === 'n') style.textDecoration = (style.textDecoration || '') + ' underline';
-            else if (code === 'm') style.textDecoration = (style.textDecoration || '') + ' line-through';
-            else if (code === 'k') style.obfuscated = true;
-          } else text += value[i];
-        }
-        flush();
-        return parts.map((part) => ({ ...part, text: part.style.obfuscated ? part.text.replace(/[^\s]/g, '▒') : part.text }));
+      /** Read-only MOTD rendering for cards and the server header (the editor lives in motd.js). */
+      motdPreview(value) {
+        return window.psMotd.parse(value).flatMap((line, index) => [
+          ...(index ? [{ text: '\n', style: {} }] : []),
+          ...window.psMotd.runs(line).map(({ text, style, obfuscated }) => ({ text: obfuscated ? text.replace(/\S/g, '▒') : text, style })),
+        ]);
       },
       cleanMotd(s) {
         return String(s).replace(/§[0-9A-FK-OR]/gi, '').replace(/\\n/g, ' ').trim();

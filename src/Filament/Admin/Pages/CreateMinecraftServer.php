@@ -656,7 +656,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->schema([
                                     Toggle::make('properties_enabled')->label('Apply these settings')->columnSpanFull(),
                                     TextInput::make('max_players')->label('Maximum players')->integer()->minValue(1)->maxValue(1000)->required(),
-                                    Textarea::make('motd')->label('MOTD')->rows(2)->maxLength(512)->required()->helperText('Server description. Minecraft § colour codes are supported.'),
+                                    \Filament\Forms\Components\ViewField::make('motd')->label('MOTD')->view('pelican-simplify::filament.admin.motd-field')->required()->rules(['string', 'max:512'])->columnSpanFull(),
                                     Select::make('difficulty')->options(['peaceful' => 'Peaceful', 'easy' => 'Easy', 'normal' => 'Normal', 'hard' => 'Hard'])->required(),
                                     Select::make('gamemode')->options(['survival' => 'Survival', 'creative' => 'Creative', 'adventure' => 'Adventure', 'spectator' => 'Spectator'])->required(),
                                     TextInput::make('view_distance')->label('View distance (chunks)')->integer()->minValue(2)->maxValue(32)->required(),

@@ -169,6 +169,39 @@ const { start } = require('./browser-harness');
     await listing.close();
     console.log('PASS website listing switch next to the server color');
 
+    // 11. MOTD editor: the lines are edited in place, and the toolbar writes clean codes into the settings.
+    const motd = await open('/?mode=server&theme=dark');
+    await data(motd, (d) => d.open('settings'));
+    await motd.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).settings?.motd !== undefined);
+    await data(motd, (d) => { d.settingsTab = 'motd'; });
+    const line = motd.locator('[aria-label="MOTD line 1"]');
+    await line.waitFor({ state: 'visible' });
+    assert.equal(await line.inputValue(), 'Welcome to Survival');
+    await line.evaluate((el) => { el.focus(); el.setSelectionRange(0, 7); });
+    await motd.click('.ps-motd [aria-label="Colour: Red"]');
+    await motd.click('.ps-motd [aria-label="Bold"]');
+    assert.equal(await data(motd, (d) => d.settings.motd), '§c§lWelcome §ato §lSurvival');
+    assert.equal(await motd.locator('.ps-motd [aria-label="Bold"]').getAttribute('aria-pressed'), 'true');
+    await line.press('End');
+    await line.type('!');
+    assert.equal(await data(motd, (d) => d.settings.motd), '§c§lWelcome §ato §lSurvival!');
+    // The coloured mirror lines up with the transparent input, bold included.
+    const aligned = await motd.evaluate(async () => {
+      await document.fonts.ready;
+      const input = document.querySelector('[aria-label="MOTD line 1"]'), mirror = input.previousElementSibling;
+      const spans = [...mirror.children].filter((e) => e.tagName === 'SPAN').reduce((sum, e) => sum + e.getBoundingClientRect().width, 0);
+      const probe = Object.assign(document.createElement('span'), { textContent: input.value });
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:' + getComputedStyle(input).font;
+      mirror.parentElement.append(probe);
+      const width = probe.getBoundingClientRect().width;
+      probe.remove();
+      return Math.abs(spans - width) <= 1;
+    });
+    assert.ok(aligned, 'mirror and input have the same text width');
+    if (process.env.SCREENSHOT_DIR) await motd.locator('.ps-motd-editor').screenshot({ path: process.env.SCREENSHOT_DIR + '/motd-editor.png' });
+    await motd.close();
+    console.log('PASS MOTD editor with in-place colours, clean codes and an aligned preview');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

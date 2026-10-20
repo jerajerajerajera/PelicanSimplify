@@ -1,7 +1,3 @@
-@font-face { font-family: "Monocraft"; src: url("monocraft-regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "Monocraft"; src: url("monocraft-bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Monocraft"; src: url("monocraft-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
-@font-face { font-family: "Monocraft"; src: url("monocraft-bold-italic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
 /* Simplify dashboard layout. Colours, sizes and controls come from tokens.css and components.css;
    this file only places things. Per-server colours arrive as --ps-accent on the card or page root. */
 
@@ -620,13 +616,6 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
 .ps-tabs > button[aria-pressed="true"] { color: var(--ps-ink); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-surface)); box-shadow: inset 3px 0 0 var(--ps-accent); }
 .ps-tabs > button:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 1px; }
 .ps-tab-panels { min-width: 0; }
-.ps-motd-editor textarea { margin-bottom: 8px; }
-.ps-motd-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 4px 0 8px; }
-.ps-motd-colors { display: flex; flex-wrap: wrap; gap: 6px; }
-.ps-motd-colors .ps-swatch { width: 24px; height: 24px; border-radius: 6px; }
-.ps-motd-styles { display: flex; flex-wrap: wrap; gap: 5px; }
-.ps-motd-editor .ps-motd-preview { min-height: calc(3em + 26px); max-height: calc(3em + 26px); }
-.ps-motd-placeholder { opacity: .6; }
 @media (max-width: 760px) {
   .ps-settings-workspace.has-tabs { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .ps-tabs { position: static; flex-direction: row; overflow-x: auto; }

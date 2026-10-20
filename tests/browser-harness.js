@@ -36,6 +36,7 @@ function boot(mode, extra = {}) {
 function bladeToHtml(src) {
   return src
     .replace(/@include\('pelican-simplify::dashboard-icons'\)/g, () => read('dashboard-icons.blade.php'))
+    .replace(/@include\('pelican-simplify::motd-editor'\)/g, () => read('motd-editor.blade.php'))
     .replace(/\{\{--[\s\S]*?--\}\}/g, '')
     .replace(/<x-filament-panels::page>|<\/x-filament-panels::page>/g, '')
     .replace(/@assets[\s\S]*?@endassets/g, '')

@@ -1,0 +1,37 @@
+/* Minecraft MOTD editor (js/motd.js): shared by the server dashboard and the server creator.
+   The two lines are edited in place inside a Minecraft server-list row: a transparent input sits on top
+   of a mirror that renders the same text with its colours, so what you type is what players see. */
+@font-face { font-family: "Monocraft"; src: url("monocraft-regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Monocraft"; src: url("monocraft-bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Monocraft"; src: url("monocraft-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Monocraft"; src: url("monocraft-bold-italic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+
+.ps-motd { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.ps-motd-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.ps-motd-colors { display: grid; grid-template-columns: repeat(8, 22px); gap: 5px; }
+.ps-motd-colors .ps-swatch { width: 22px; height: 22px; border-radius: 6px; border-width: 2px; }
+.ps-motd-styles { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ps-motd-styles .ps-btn { font-size: 14px; }
+.ps-motd-divider { width: 1px; height: 22px; margin: 0 4px; background: var(--ps-line); }
+
+/* The server-list row. Colours are Minecraft's own, so they are the same in light and dark themes. */
+.ps-motd-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px; border: 1px solid #44444b; border-radius: var(--ps-radius); background: #202024; }
+.ps-motd-icon { grid-row: span 3; width: 56px; height: 56px; border-radius: 4px; background: #3a3a40; image-rendering: pixelated; object-fit: cover; }
+.ps-motd-head { display: flex; justify-content: space-between; gap: 12px; min-width: 0; color: #fff; font: 15px/24px "Monocraft", var(--ps-mono); text-shadow: 1px 1px #000; }
+.ps-motd-head span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-motd-head span:last-child { flex: none; color: #aaa; }
+.ps-motd-field { position: relative; min-width: 0; height: 26px; border-radius: 4px; }
+.ps-motd-field:hover { background: rgb(255 255 255 / .04); }
+.ps-motd-field:focus-within { background: rgb(255 255 255 / .06); outline: 1px solid rgb(255 255 255 / .35); }
+.ps-motd-mirror,
+.ps-motd-field input { position: absolute; inset: 0; box-sizing: border-box; width: 100%; height: 100%; margin: 0; padding: 0 4px; border: 0; font: 15px/26px "Monocraft", var(--ps-mono); letter-spacing: 0; white-space: pre; }
+.ps-motd-mirror { overflow: hidden; color: #aaa; text-shadow: 1px 1px #000; pointer-events: none; }
+.ps-motd-mirror .is-obfuscated { background: repeating-linear-gradient(135deg, rgb(255 255 255 / .16) 0 2px, transparent 2px 5px); }
+.ps-motd-field input { background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #fff; outline: none; }
+.ps-motd-field input::selection { background: rgb(120 160 255 / .45); }
+.ps-motd-field input::placeholder { color: #6b6b73; -webkit-text-fill-color: #6b6b73; }
+
+.ps-motd-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; color: var(--ps-muted); font: 12px/1.4 var(--ps-font); }
+.ps-motd-meta .is-warn { color: var(--ps-warn); }
+.ps-motd-codes { width: 100%; min-height: 64px; font: 13px/1.5 var(--ps-mono); }
+.ps-motd-link { padding: 0; border: 0; background: none; color: var(--ps-ink); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

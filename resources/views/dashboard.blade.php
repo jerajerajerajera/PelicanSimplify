@@ -810,25 +810,9 @@
                         </section>
                         <section x-show="settingsTab==='motd' && server?.minecraft" class="ps-motd-editor">
                             <h3 class="ps-section-title">Message of the day</h3>
-                            <label class="ps-field" for="ps-motd-input">MOTD</label>
-                            <textarea id="ps-motd-input" class="ps-input" x-ref="motdInput" x-model="settings.motd" rows="2" maxlength="512"></textarea>
-                            <div class="ps-motd-tools" role="group" aria-label="Minecraft text colors and formatting">
-                                <div class="ps-motd-colors">
-                                    <template x-for="color in motdColors" :key="color[0]">
-                                        <button type="button" class="ps-swatch" :style="{'background-color': color[2]}" :data-tip="color[1]" :aria-label="'MOTD color: '+color[1]" x-on:mousedown.prevent x-on:click="insertMotdCode(color[0])"></button>
-                                    </template>
-                                </div>
-                                <div class="ps-motd-styles">
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Bold" aria-label="MOTD bold" x-on:mousedown.prevent x-on:click="insertMotdCode('l')"><b>B</b></button>
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Italic" aria-label="MOTD italic" x-on:mousedown.prevent x-on:click="insertMotdCode('o')"><i>I</i></button>
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Underline" aria-label="MOTD underline" x-on:mousedown.prevent x-on:click="insertMotdCode('n')"><u>U</u></button>
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Strikethrough" aria-label="MOTD strikethrough" x-on:mousedown.prevent x-on:click="insertMotdCode('m')"><s>S</s></button>
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Obfuscated" aria-label="MOTD obfuscated" x-on:mousedown.prevent x-on:click="insertMotdCode('k')">▒</button>
-                                    <button type="button" class="ps-btn is-icon is-sm" data-tip="Reset formatting" aria-label="Reset MOTD formatting" x-on:mousedown.prevent x-on:click="insertMotdCode('r')"><svg aria-hidden="true"><use href="#ps-undo"/></svg></button>
-                                </div>
+                            <div class="ps-motd" x-data="psMotdEditor({ name: () => server?.alias || server?.name, icon: () => safeImage(server?.server_icon) })" x-modelable="value" x-model="settings.motd">
+                                @include('pelican-simplify::motd-editor')
                             </div>
-                            <p class="ps-help">Select text, then choose a color or style. Minecraft codes are inserted automatically.</p>
-                            <div class="ps-motd-preview" aria-label="Minecraft MOTD preview"><template x-for="(part,index) in motdPreview()" :key="index"><span :style="part.style" x-text="part.text"></span></template><span x-show="!settings.motd" class="ps-motd-placeholder">MOTD preview</span></div>
                         </section>
                         <p x-show="server?.minecraft && !server?.properties_available" class="ps-alert is-warn">Settings are available after server.properties has been created.</p>
                     </div>

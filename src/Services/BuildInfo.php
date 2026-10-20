@@ -7,11 +7,11 @@ final class BuildInfo
     /** Published asset name => source files under resources/views. */
     public const BUNDLES = [
         'core.css' => ['css/tokens.css', 'css/components.css', 'css/native.css'],
-        'dashboard.css' => ['css/dashboard.css'],
-        'wizard.css' => ['css/wizard.css'],
+        'dashboard.css' => ['css/motd.css', 'css/dashboard.css'],
+        'wizard.css' => ['css/motd.css', 'css/wizard.css'],
         'core.js' => ['js/core.js'],
-        'dashboard.js' => ['js/dashboard.js'],
-        'wizard.js' => ['js/wizard.js'],
+        'dashboard.js' => ['js/motd.js', 'js/dashboard.js'],
+        'wizard.js' => ['js/motd.js', 'js/wizard.js'],
     ];
     /** Web fonts under resources/fonts (Monocraft, SIL Open Font License; see Monocraft-OFL.txt). */
     public const FONTS = ['monocraft-regular.woff2', 'monocraft-bold.woff2', 'monocraft-italic.woff2', 'monocraft-bold-italic.woff2'];
