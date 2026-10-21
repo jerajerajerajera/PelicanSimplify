@@ -80,6 +80,8 @@
       theme: 'system',
       themeDark: false,
       themeListener: null,
+      installable: '',
+      installListener: null,
       noticeListener: null,
       started: false,
       destroyed: false,
@@ -238,6 +240,7 @@
         this.destroyed = true;
         window.removeEventListener?.('simplify:theme', this.themeListener);
         window.removeEventListener?.('simplify:notice', this.noticeListener);
+        window.removeEventListener?.('simplify:installable', this.installListener);
         clearInterval(this.noticeTimer);
         clearTimeout(this.incomingTimer);
         clearTimeout(this.reconnect);
@@ -339,6 +342,15 @@
         };
         window.addEventListener('simplify:theme', this.themeListener);
         this.applyTheme();
+        // "Install app" in the panel menu on phones and tablets, only while the browser can add the panel to the home screen.
+        this.installListener = () => { this.installable = matchMedia('(pointer: coarse)').matches ? window.SimplifyApp?.installable() || '' : ''; };
+        window.addEventListener('simplify:installable', this.installListener);
+        if (!this.embedded) this.installListener();
+      },
+      async installApp() {
+        this.navMenu = false;
+        await window.SimplifyApp?.install();
+        this.installListener?.();
       },
       setTheme(value) {
         window.SimplifyTheme?.set(value);
