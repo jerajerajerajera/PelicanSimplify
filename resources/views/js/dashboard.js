@@ -80,6 +80,9 @@
       theme: 'system',
       themeDark: false,
       themeListener: null,
+      installable: '',
+      installListener: null,
+      pluginActionListener: null,
       noticeListener: null,
       started: false,
       destroyed: false,
@@ -238,6 +241,9 @@
         this.destroyed = true;
         window.removeEventListener?.('simplify:theme', this.themeListener);
         window.removeEventListener?.('simplify:notice', this.noticeListener);
+        window.removeEventListener?.('simplify:installable', this.installListener);
+        window.removeEventListener?.('message', this.pluginActionListener);
+        clearTimeout(this.pluginActionTimer);
         clearInterval(this.noticeTimer);
         clearTimeout(this.incomingTimer);
         clearTimeout(this.reconnect);
@@ -339,6 +345,19 @@
         };
         window.addEventListener('simplify:theme', this.themeListener);
         this.applyTheme();
+        // "Install app" in the panel menu on phones and tablets, only while the browser can add the panel to the home screen.
+        this.pluginActionListener = (event) => {
+          if (event.origin === location.origin && event.data?.type === 'simplify:plugin-action') this.pluginActionMessage(event.data);
+        };
+        window.addEventListener('message', this.pluginActionListener);
+        this.installListener = () => { this.installable = matchMedia('(pointer: coarse)').matches ? window.SimplifyApp?.installable() || '' : ''; };
+        window.addEventListener('simplify:installable', this.installListener);
+        if (!this.embedded) this.installListener();
+      },
+      async installApp() {
+        this.navMenu = false;
+        await window.SimplifyApp?.install();
+        this.installListener?.();
       },
       setTheme(value) {
         window.SimplifyTheme?.set(value);
@@ -463,6 +482,8 @@
         this.hostSection = section;
         this.hostPage = section.pages[0] || null;
         this.rememberHostPlace();
+        // Phones show the sections as one sideways row: keep the open one in view.
+        if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
@@ -1061,6 +1082,58 @@
         } catch {
           this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: 0 };
         }
+      },
+      /** Buttons other plugins add to the server list ('app') or the console ('server'), already checked by the server. */
+      pluginActions(scope) {
+        return (scope === 'server' ? this.server?.plugin_actions : this.boot.plugin_actions) || [];
+      },
+      pluginActionFrame: null,
+      pluginActionOpen: false,
+      pluginActionBusy: null,
+      pluginActionTimer: null,
+      /** A link opens like a plugin page; anything else runs in a transparent layer that shows only the plugin's dialog. */
+      runPluginAction(action) {
+        if (!action || action.disabled || this.pluginActionBusy || this.pluginActionOpen) return;
+        if (action.url) {
+          if (action.new_tab || !this.frameUrl(action.url)) return void window.open(action.url, '_blank', 'noopener');
+          return this.openPluginPage({ key: action.key, label: action.label, url: action.url });
+        }
+        const url = action.run_url && this.frameUrl(action.run_url);
+        if (!url) return;
+        this.pluginActionOpen = false;
+        this.pluginActionBusy = action.key;
+        this.pluginActionFrame = { key: action.key, url };
+        // A button that never reports back (an error page) does not block the others.
+        clearTimeout(this.pluginActionTimer);
+        this.pluginActionTimer = setTimeout(() => this.pluginActionMessage({ state: 'done' }), 30000);
+      },
+      pluginActionMessage(data) {
+        if (!this.pluginActionFrame) return;
+        this.pluginActionBusy = null;
+        if (data.state === 'modal') {
+          clearTimeout(this.pluginActionTimer);
+          this.pluginActionOpen = true;
+          this.$nextTick?.(() => this.$root?.querySelector?.('.ps-plugin-action-layer iframe')?.focus());
+          return;
+        }
+        // Done: its notifications arrive with the next request and still have to reach the toasts, so the
+        // (invisible) layer goes a few seconds later; another button may start meanwhile.
+        const frame = this.pluginActionFrame;
+        this.pluginActionOpen = false;
+        clearTimeout(this.pluginActionTimer);
+        this.pluginActionTimer = setTimeout(() => { if (this.pluginActionFrame === frame) this.pluginActionFrame = null; }, 5000);
+        if (this.server) this.refreshServerInfo();
+      },
+      /** A button that redirects (to a page of its plugin) takes the whole window there, like on Pelican's page. */
+      pluginActionLoaded(frame) {
+        this.styleFrame(frame, 'native');
+        try {
+          const target = new URL(frame.contentWindow.location.href);
+          if (target.pathname.endsWith('/simplify-actions')) return;
+          target.searchParams.delete('simplify_embed');
+          this.pluginActionFrame = null;
+          window.location.href = target.href;
+        } catch {}
       },
       /** Account-level pages other plugins add to the panel (hidden ones are left out by the server). */
       pluginPages() {

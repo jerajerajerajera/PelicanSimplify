@@ -56,6 +56,8 @@
       root.dataset.psFrame = frameKind;
     }
     ui.layer?.classList.toggle('dark', dark());
+    // The phone's status bar follows the chosen theme, not only the system one.
+    if (!frameKind) document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute('content', dark() ? '#101012' : '#f4f4f5'));
     window.dispatchEvent(new CustomEvent('simplify:theme', { detail: { preference, dark: dark() } }));
   };
 
@@ -500,6 +502,58 @@
     const end = hex(brand?.color2) || hex(accent) || 'var(--ps-brand, var(--ps-accent, #2563eb))';
     return { ...style, 'background-image': `linear-gradient(110deg, ${ink} 40%, ${end} 100%)` };
   };
+
+  /* Web app ------------------------------------------------------------------------------------
+     The panel can be added to a phone's home screen. The service worker only shows an offline page when the
+     panel cannot be reached; Simplify offers "Install app" where the browser allows it (Android, desktop
+     Chrome and Edge) and explains the Share menu on iPhone and iPad. */
+  const webApp = {
+    prompt: null,
+    standalone: () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+    ios: () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+    /** 'prompt' (the browser can install), 'ios' (Share → Add to Home Screen) or '' (installed or not possible). */
+    installable() {
+      if (webApp.standalone()) return '';
+      if (webApp.prompt) return 'prompt';
+      return webApp.ios() && 'serviceWorker' in navigator ? 'ios' : '';
+    },
+    async install() {
+      if (webApp.prompt) {
+        const prompt = webApp.prompt;
+        webApp.prompt = null;
+        await prompt.prompt();
+        const choice = await prompt.userChoice.catch(() => null);
+        window.dispatchEvent(new CustomEvent('simplify:installable'));
+        return choice?.outcome === 'accepted';
+      }
+      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: 'Add to Home Screen', message: 'Tap the Share button in Safari, then choose "Add to Home Screen". The panel then opens as its own app.', confirmLabel: 'OK', cancelLabel: 'Close' });
+      return false;
+    },
+  };
+  window.SimplifyApp = webApp;
+  if (!frameKind && window.top === window) {
+    // Installed: the app draws up to the screen edges and keeps clear of the notch and home bar itself.
+    if (webApp.standalone()) {
+      root.classList.add('ps-standalone');
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport && !/viewport-fit/.test(viewport.content)) viewport.content += ', viewport-fit=cover';
+    }
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      webApp.prompt = event;
+      window.dispatchEvent(new CustomEvent('simplify:installable'));
+    });
+    window.addEventListener('appinstalled', () => {
+      webApp.prompt = null;
+      window.dispatchEvent(new CustomEvent('simplify:installable'));
+    });
+    const worker = options.web_app;
+    if (worker?.worker && 'serviceWorker' in navigator && window.isSecureContext) {
+      const register = () => navigator.serviceWorker.register(worker.worker, { scope: worker.scope || '/' }).catch(() => {});
+      if (document.readyState === 'complete') register();
+      else window.addEventListener('load', register, { once: true });
+    }
+  }
 
   apply();
   forwardNotifications();

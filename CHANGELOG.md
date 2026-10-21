@@ -1,5 +1,40 @@
 # Changes
 
+## 0.5.0-beta.2 (beta channel)
+The second beta of 0.5.0 finishes the phone experience and support for other plugins. Everything from 0.5.0-snapshot.4 to 7 below; tested on Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- The panel as an app: add it to your phone's home screen ("Install app" in the menu), with its own icon, full screen, and a clear page when there is no connection (0.5.0-snapshot.4).
+- Pelican's own pages inside Simplify (admin pages, account, server settings) are made for phones: one column, larger touch targets, no zooming into fields (0.5.0-snapshot.5).
+- Host mode on phones: a server switcher on top, the admin sections as one swipeable row and the page at full width (0.5.0-snapshot.6).
+- Buttons other plugins add to Pelican's server list and console (such as Create server from User Creatable Servers or Upload logs from Mclogs Uploader) now show and work in Simplify (0.5.0-snapshot.7).
+- Wider screens do not change.
+
+## 0.5.0-snapshot.7 (snapshot channel)
+Buttons other plugins add to Pelican's pages now also work in Simplify, the last part of plugin support. Tested on a Pelican 1.0.0-beta38 panel with the official User Creatable Servers and Mclogs Uploader plugins.
+- Buttons plugins add to Pelican's server list (such as Create server from User Creatable Servers) show under the overview's filters; buttons they add to Pelican's console (such as Upload logs from Mclogs Uploader) show in the title of Simplify's live console. Each is checked like on Pelican's page: hidden when the plugin hides it, greyed out when it is disabled.
+- A button that opens a page of its plugin opens it in a Simplify popup. Any other button runs exactly like on Pelican's page: its dialog opens over Simplify and its messages become Simplify notifications. Only Simplify can start a button this way (the link is signed for your session).
+- Tabs and fields plugins add to Pelican's own forms (the account page, edit pages) were already shown, because Simplify embeds those pages.
+- Every button can be switched off in Simplify settings → General → "Pages from other plugins".
+
+## 0.5.0-snapshot.6 (snapshot channel)
+Host mode on phones: one column instead of three.
+- A server switcher at the top lists your servers per node and shows the name of the open server; picking one opens its page at full width, with Open full page and Close above it.
+- The admin sections (Servers, Nodes, People, …, Health) form a row of labelled buttons that swipes sideways and keeps the open section in view; the selected admin page fills the rest of the screen.
+- Wider screens do not change.
+
+## 0.5.0-snapshot.5 (snapshot channel)
+Pelican's own pages inside Simplify (admin pages, the account page, server settings and the native forms) made for phones.
+- One column with 44 px touch targets: fields, buttons, tabs and table actions. Fields use 16 px text, so iPhones no longer zoom in when you type.
+- Header actions (Save, Delete, Console) get their own row above the tabs instead of covering them; tab rows and wizard steps swipe sideways.
+- Wide tables scroll sideways instead of being cut off, and search fields take the full width.
+- Small Pelican dialogs open as bottom sheets with full-width buttons, like Simplify's own popups. Wider screens do not change.
+
+## 0.5.0-snapshot.4 (snapshot channel)
+The first step towards 0.5.0-beta.2: the panel as an app on your phone's home screen.
+- Installable web app: the panel has a manifest, home screen icons and status bar colours that follow your theme, so Android, iPhone and desktop browsers can add it as its own app. It opens on the Simplify overview, full screen without the browser bar.
+- "Install app" in the menu on phones and tablets while the browser can install the panel; on iPhone and iPad it explains Share → Add to Home Screen.
+- When the panel cannot be reached, the app shows a clear "No connection" page that reloads by itself once you are online again. Nothing else is cached: pages always come from the panel.
+- The app's name is your panel name from Simplify settings → Appearance (or Pelican's app name).
+
 ## 0.5.0-beta.1 (beta channel)
 The first beta of 0.5.0, with two big additions: Simplify on phones and support for other Pelican plugins. Everything from the 0.4.7 and 0.5.0 snapshots below; tested on Pelican 1.0.0-beta38 and 1.0.0-rc.1.
 - Phones: the overview, the server page, popups as sheets and the creator are made for small screens (0.4.7-snapshot.1 to 4). Wider screens do not change.

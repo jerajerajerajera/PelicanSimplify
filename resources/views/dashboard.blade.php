@@ -37,6 +37,9 @@
                     <button type="button" x-show="boot.settings_url" x-on:click="openPanelSettings()" class="ps-btn is-icon is-subtle" data-tip="Simplify settings" aria-label="Simplify settings" aria-haspopup="dialog">
                         <span class="ps-settings-mark" aria-hidden="true"><svg><use href="#ps-simplify"/></svg><svg class="ps-settings-gear"><use href="#ps-gear"/></svg></span><span class="ps-mobile-label">Simplify settings</span>
                     </button>
+                    <button type="button" x-show="installable && !embedded" x-cloak x-on:click="installApp()" class="ps-btn is-icon is-subtle" data-tip="Install app" aria-label="Install app">
+                        <svg aria-hidden="true"><use href="#ps-download"/></svg><span class="ps-mobile-label">Install app</span>
+                    </button>
 
                     {{-- Admin tools: Pelican admin pages Simplify does not replace, opened in a popup (admins only). --}}
                     <div class="ps-notify" x-show="adminPages().length && !(hostMode && !server)" x-on:click.outside="adminMenu=false" x-on:keydown.escape.stop="adminMenu=false; $refs.adminButton.focus()">
@@ -251,7 +254,7 @@
         {{-- Host mode (admins, large hosts): server buttons per node, a colour-coded admin rail and the page. --}}
         <section class="ps-host" :class="{'has-server': !!hostServer}" x-show="!server && hostMode" x-cloak :style="accentStyle('overview')">
                 <aside class="ps-host-servers" :class="{'is-open': hostServersOpen}" aria-label="Servers">
-                    <button type="button" class="ps-btn is-sm ps-host-servers-toggle" x-on:click="hostServersOpen=!hostServersOpen" :aria-expanded="hostServersOpen"><svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="'Servers ('+(boot.servers||[]).length+')'"></span></button>
+                    <button type="button" class="ps-btn is-sm ps-host-servers-toggle" x-on:click="hostServersOpen=!hostServersOpen" :aria-expanded="hostServersOpen"><svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="hostServer ? cardNames(hostServer).large : 'Servers ('+(boot.servers||[]).length+')'"></span><svg class="ps-host-switch-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                     <div class="ps-host-server-list">
                         <template x-for="node in hostNodes()" :key="node.id">
                             <div class="ps-host-node">
@@ -360,6 +363,14 @@
                                 <button type="button" class="ps-chip" :aria-pressed="nodeFilter===node.id" x-on:click="nodeFilter=node.id" x-text="node.name"></button>
                             </template>
                         </div>
+                    </div>
+                    {{-- Buttons other plugins add to Pelican's server list (such as Create server from User Creatable Servers). --}}
+                    <div class="ps-plugin-actions" x-show="pluginActions('app').length" role="group" aria-label="Buttons from other plugins">
+                        <template x-for="action in pluginActions('app')" :key="action.key">
+                            <button type="button" class="ps-btn" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.plugin ? 'From the '+action.plugin+' plugin' : 'From another plugin'">
+                                <span class="ps-plugin-action-icon" x-show="action.icon" x-html="action.icon" aria-hidden="true"></span><span x-text="action.label"></span>
+                            </button>
+                        </template>
                     </div>
                     {{-- Widgets other plugins add to Pelican's server list (such as resource limits), sized to their content. --}}
                     <template x-if="boot.plugin_widgets_url">
@@ -690,6 +701,12 @@
                             <strong>Live console</strong>
                             <span class="ps-console-dot" :class="{'connected': connected}"></span><span class="ps-live-bars" x-show="connected" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                             <span class="ps-console-state" x-text="connected ? 'Connected to Wings' : 'Connecting to Wings…'"></span>
+                            {{-- Buttons other plugins add to Pelican's console (such as Upload logs from Mclogs Uploader). --}}
+                            <template x-for="action in pluginActions('server')" :key="action.key">
+                                <button type="button" class="ps-console-clear ps-console-plugin-action" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.label+(action.plugin ? ' — from the '+action.plugin+' plugin' : ' — from another plugin')" :aria-label="action.label">
+                                    <span class="ps-plugin-action-icon" x-show="action.icon" x-html="action.icon" aria-hidden="true"></span><span x-text="action.label"></span>
+                                </button>
+                            </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
@@ -760,6 +777,13 @@
             <svg aria-hidden="true"><use href="#ps-menu"/></svg><span>Menu</span>
         </button>
     </nav>
+
+    {{-- A plugin button running in its own panel: invisible until its dialog opens, which then shows over Simplify. --}}
+    <template x-if="pluginActionFrame">
+        <div class="ps-plugin-action-layer" :class="{'is-open': pluginActionOpen}">
+            <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="pluginActionFrame.url" title="Plugin action" x-on:load="pluginActionLoaded($el)"></iframe>
+        </div>
+    </template>
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
     <div class="ps-modal-layer" :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak>
