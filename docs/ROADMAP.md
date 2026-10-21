@@ -22,6 +22,10 @@ A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.
 ## Host mode
 - Larger hosts (several nodes) can switch to host mode: servers in a compact list per node on the left, Pelican's admin pages as the main workspace.
 
+## Other plugins
+- Done in the 0.5.0 snapshots: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
+- Still open: buttons that plugins add to Pelican's pages (for example Create server from User Creatable Servers on the server list), and tabs or form fields plugins add to Pelican's own forms.
+
 ## Phone experience
 - Done in the 0.4.7 snapshots: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
 - Bottom tab bar (Servers, Create, Alerts, Account) and a top bar that collapses on scroll.
