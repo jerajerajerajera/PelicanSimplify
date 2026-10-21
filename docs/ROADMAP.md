@@ -31,7 +31,7 @@ A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.
 - Bottom tab bar (Servers, Create, Alerts, Account) and a top bar that collapses on scroll.
 - Full-screen sheets with a drag handle instead of centred popups; the save bar sits above the tab bar.
 - Server page on phones: a status header with large power buttons, swipeable sections (Console, Players, Files, Settings), and a console with a command bar above the keyboard plus quick-command chips.
-- Embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
+- Done in 0.5.0-snapshot.5: embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
 - Host mode on phones: a node and server switcher instead of three columns.
 - Done in 0.5.0-snapshot.4: installable web app (manifest, icons, theme colour, offline page) and safe-area support for notched phones.
 - Checked with automated phone screenshots (360, 390 and 430 px wide) in the browser tests.
