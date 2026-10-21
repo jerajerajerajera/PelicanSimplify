@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.0-beta.1 — beta (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+Available on the beta channel (Simplify settings → Plugin manager → Beta), not yet a stable release. The full list of changes, including each snapshot, is in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **Phones:** the overview scrolls as one page with one filter row, compact server rows with one power button and a tab bar at the bottom; the server page has four tabs and a full-height console with quick commands; popups slide up as sheets with a drag handle; the creator shows "Step 1 of 4" with choice rows and Back / Next at the bottom. Wider screens do not change.
+- **Other plugins:** pages plugins add for every account are in the account menu (Legal Pages opens in a new tab); widgets from plugins are tiles above the server page and the server list, each with its own access check; a plugin that does part of what Simplify does (Subdomains) switches off only that Simplify feature instead of the dashboard. Every plugin page and widget can be switched off in Simplify settings.
+
 ## 0.4.6 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 A cleaner repository. Nothing changes in how Simplify works.
 - The shell installers are gone (INSTALL-PELICAN-SIMPLIFY.sh, ROLLBACK-PELICAN-SIMPLIFY.sh, RESET-PLUGINS.sh and their PHP helpers). Install and update through Pelican's plugin import or Simplify's plugin manager. Coming from the standalone creator: disable and delete it under Admin → Plugins first; the setup check now says so.
