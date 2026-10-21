@@ -201,3 +201,35 @@ html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-right: 11
 html.ps-frame .fi-section:not(.fi-section .fi-section) + .fi-section:not(.fi-section .fi-section) { margin-top: 4px; }
 
 /* Settings popup: the category menu stays in place while the settings beside it scroll. */
+
+/* Embedded pages on phones: one column, 44 px touch targets, header actions in their own row above the tabs
+   (instead of over them) and tab rows, wide tables and button groups that scroll sideways instead of clipping. */
+@media (max-width: 600px) {
+  html.ps-frame .fi-page { padding: 12px !important; }
+  html.ps-frame:is([data-ps-frame="files"], [data-ps-frame="editor"]) .fi-page { padding: 8px !important; }
+  html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-header:has(.fi-header-actions-ctn > *) { position: static; display: flex !important; justify-content: flex-end; margin: 0 0 8px !important; }
+  html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-right: 0 !important; }
+  html.ps-frame .fi-header-actions-ctn { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  html.ps-frame .fi-tabs { flex-wrap: nowrap !important; max-width: 100%; overflow-x: auto !important; overscroll-behavior-x: contain; scrollbar-width: none; }
+  html.ps-frame .fi-tabs::-webkit-scrollbar { display: none; }
+  html.ps-frame :is(.fi-tabs-item, .fi-sc-tabs-tab) { flex: none; min-height: 44px; white-space: nowrap; }
+  html.ps-frame :is(.fi-input-wrp, .fi-select-input) { min-height: 44px; }
+  html.ps-frame :is(.fi-input, .fi-select-input) { font-size: 16px !important; } /* 16 px: iOS does not zoom into the field. */
+  html.ps-frame .fi-fo-textarea textarea { font-size: 16px !important; }
+  html.ps-frame :is(.fi-btn, .fi-dropdown-list-item, .fi-pagination-item-btn) { min-height: 44px; }
+  html.ps-frame :is(.fi-ta-header-toolbar, .fi-ta-header, .fi-header-actions-ctn, .fi-ta-actions) .fi-icon-btn { width: 44px !important; height: 44px !important; }
+  html.ps-frame .fi-ta-row .fi-ta-actions .fi-icon-btn { width: 40px !important; height: 40px !important; }
+  html.ps-frame :is(.fi-checkbox-input, .fi-ta-record-checkbox, .fi-ta-page-checkbox) { width: 20px; height: 20px; }
+  html.ps-frame .fi-ta-content { overflow-x: auto !important; overscroll-behavior-x: contain; }
+  html.ps-frame .fi-ta-header-toolbar { flex-wrap: wrap; gap: 8px; }
+  html.ps-frame .fi-ta-search-field { flex: 1 1 100%; }
+  html.ps-frame .fi-fo-toggle-buttons, html.ps-frame .fi-sc-actions { flex-wrap: wrap; }
+  html.ps-frame .fi-sc-wizard-header { display: flex !important; overflow-x: auto; scrollbar-width: none; }
+  html.ps-frame .fi-sc-wizard-header-step { flex: none; }
+  html.ps-frame .fi-sc-wizard-footer { flex-wrap: wrap; gap: 8px; }
+  /* Small dialogs become bottom sheets, like Simplify's own popups on phones. */
+  html.ps-frame .fi-modal:not(.fi-modal-slide-over) .fi-modal-window-ctn:has(> .fi-modal-window:is(.fi-width-xs, .fi-width-sm, .fi-width-md, .fi-width-lg)) { align-items: flex-end !important; padding: 0 !important; }
+  html.ps-frame .fi-modal:not(.fi-modal-slide-over) .fi-modal-window:is(.fi-width-xs, .fi-width-sm, .fi-width-md, .fi-width-lg) { width: 100% !important; max-width: none !important; margin: 0 !important; border-radius: var(--ps-radius-xl) var(--ps-radius-xl) 0 0 !important; padding-bottom: env(safe-area-inset-bottom); }
+  html.ps-frame .fi-modal-footer-actions { flex-direction: column-reverse; align-items: stretch; }
+  html.ps-frame .fi-modal-footer-actions .fi-btn { width: 100%; justify-content: center; }
+}

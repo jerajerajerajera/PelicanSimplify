@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.0-snapshot.5 (snapshot channel)
+Pelican's own pages inside Simplify (admin pages, the account page, server settings and the native forms) made for phones.
+- One column with 44 px touch targets: fields, buttons, tabs and table actions. Fields use 16 px text, so iPhones no longer zoom in when you type.
+- Header actions (Save, Delete, Console) get their own row above the tabs instead of covering them; tab rows and wizard steps swipe sideways.
+- Wide tables scroll sideways instead of being cut off, and search fields take the full width.
+- Small Pelican dialogs open as bottom sheets with full-width buttons, like Simplify's own popups. Wider screens do not change.
+
 ## 0.5.0-snapshot.4 (snapshot channel)
 The first step towards 0.5.0-beta.2: the panel as an app on your phone's home screen.
 - Installable web app: the panel has a manifest, home screen icons and status bar colours that follow your theme, so Android, iPhone and desktop browsers can add it as its own app. It opens on the Simplify overview, full screen without the browser bar.
