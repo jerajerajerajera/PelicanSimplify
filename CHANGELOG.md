@@ -1,5 +1,17 @@
 # Changes
 
+## 0.5.0-snapshot.4 (snapshot channel)
+The first step towards 0.5.0-beta.2: the panel as an app on your phone's home screen.
+- Installable web app: the panel has a manifest, home screen icons and status bar colours that follow your theme, so Android, iPhone and desktop browsers can add it as its own app. It opens on the Simplify overview, full screen without the browser bar.
+- "Install app" in the menu on phones and tablets while the browser can install the panel; on iPhone and iPad it explains Share → Add to Home Screen.
+- When the panel cannot be reached, the app shows a clear "No connection" page that reloads by itself once you are online again. Nothing else is cached: pages always come from the panel.
+- The app's name is your panel name from Simplify settings → Appearance (or Pelican's app name).
+
+## 0.5.0-beta.1 (beta channel)
+The first beta of 0.5.0, with two big additions: Simplify on phones and support for other Pelican plugins. Everything from the 0.4.7 and 0.5.0 snapshots below; tested on Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- Phones: the overview, the server page, popups as sheets and the creator are made for small screens (0.4.7-snapshot.1 to 4). Wider screens do not change.
+- Other plugins: their account pages in the account menu, their widgets as tiles on the overview and the server page, and a plugin that does part of what Simplify does (such as Subdomains) switches off only that part instead of the whole dashboard (0.5.0-snapshot.1 to 3).
+
 ## 0.5.0-snapshot.3 (snapshot channel)
 Widgets from other plugins as tiles, the last part of better support for other Pelican plugins. Tested on a Pelican 1.0.0-rc.1 panel with the official Legal Pages, Player Counter, User Creatable Servers, Minecraft Modrinth and Tickets plugins.
 - Widgets plugins add to Pelican's console (such as players, hostname and map from Player Counter) show above the server workspace; widgets they add to the server list (such as the resource limits of User Creatable Servers) show above your servers. Each runs with its own access check and refreshes like on Pelican's page; a server without widgets shows nothing.

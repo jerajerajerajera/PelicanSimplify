@@ -37,6 +37,9 @@
                     <button type="button" x-show="boot.settings_url" x-on:click="openPanelSettings()" class="ps-btn is-icon is-subtle" data-tip="Simplify settings" aria-label="Simplify settings" aria-haspopup="dialog">
                         <span class="ps-settings-mark" aria-hidden="true"><svg><use href="#ps-simplify"/></svg><svg class="ps-settings-gear"><use href="#ps-gear"/></svg></span><span class="ps-mobile-label">Simplify settings</span>
                     </button>
+                    <button type="button" x-show="installable && !embedded" x-cloak x-on:click="installApp()" class="ps-btn is-icon is-subtle" data-tip="Install app" aria-label="Install app">
+                        <svg aria-hidden="true"><use href="#ps-download"/></svg><span class="ps-mobile-label">Install app</span>
+                    </button>
 
                     {{-- Admin tools: Pelican admin pages Simplify does not replace, opened in a popup (admins only). --}}
                     <div class="ps-notify" x-show="adminPages().length && !(hostMode && !server)" x-on:click.outside="adminMenu=false" x-on:keydown.escape.stop="adminMenu=false; $refs.adminButton.focus()">
