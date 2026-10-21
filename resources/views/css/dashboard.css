@@ -816,6 +816,51 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
   .ps-host-rail .ps-health-grid { justify-content: center; padding: 6px 0 0; }
 }
 
+/* Host mode on phones: one column. A server switcher on top (servers grouped per node, the open server's
+   name on the button), the admin sections as a row of labelled chips that swipes sideways, and the selected
+   page or server below at full width. */
+.ps-host-switch-chevron { display: none; }
+@media (max-width: 600px) {
+  .ps-host { display: flex; flex-direction: column; gap: 10px; }
+  .ps-host-servers { position: relative; z-index: 3; flex: none; border-radius: var(--ps-radius-lg); }
+  .ps-host-servers-toggle { justify-content: space-between; width: calc(100% - 16px); min-height: 44px; font-size: 14px; }
+  .ps-host-servers-toggle > span { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+  .ps-host-servers-toggle > .ps-host-switch-chevron { display: block; flex: none; width: 16px; height: 16px; transform: rotate(90deg); transition: transform var(--ps-fast); }
+  .ps-host-servers.is-open .ps-host-switch-chevron { transform: rotate(-90deg); }
+  .ps-host-servers.is-open .ps-host-server-list { position: absolute; top: calc(100% + 6px); right: 0; left: 0; max-height: min(70dvh, 560px); border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: var(--ps-shadow-lg); }
+  .ps-host-server { min-height: 56px; }
+  .ps-host-server:hover { transform: none; }
+  .ps-host-rail { flex: none; flex-direction: row; align-items: center; gap: 6px; padding: 6px; overflow-x: auto; border-right: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ps-host-rail::-webkit-scrollbar { display: none; }
+  .ps-host-rail-items { display: flex; flex: none; gap: 6px; overflow: visible; }
+  .ps-host .ps-host-rail-label { display: inline; }
+  .ps-host-rail-item { flex: none; width: auto; min-height: 44px; padding: 4px 12px 4px 6px; }
+  .ps-host-rail-item.is-health { margin: 0; }
+  .ps-host-rail .ps-health-grid { display: none; }
+  .ps-host-main, .ps-host-serverpane { flex: 1 0 auto; height: max(440px, calc(100dvh - 190px)); border-radius: var(--ps-radius-lg); }
+  .ps-host-head { padding: 10px 12px; }
+  .ps-host-head > .ps-host-title { display: none; }
+  .ps-host-head:has(.ps-host-subtabs[style*="none"]) { display: none !important; }
+  .ps-host-subtabs { justify-self: stretch; }
+  .ps-host-subtabs > button { min-height: 40px; padding: 6px 12px; }
+  .ps-host .ps-host-pane-actions { position: static; flex: none; justify-content: flex-end; padding: 6px 8px; border-bottom: 1px solid var(--ps-line); }
+  .ps-host .ps-host-pane-actions .ps-btn { width: 40px; height: 40px; box-shadow: none; backdrop-filter: none; }
+}
+
+/* Buttons from other plugins: a row under the overview toolbar, small buttons in the console title, and the
+   transparent layer a button runs in (visible only while the plugin's own dialog is open). */
+.ps-plugin-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.ps-plugin-action-icon { display: inline-grid; flex: none; place-items: center; }
+.ps-plugin-action-icon svg { width: 16px; height: 16px; }
+.ps-console-plugin-action { display: inline-flex; align-items: center; gap: 5px; }
+.ps-console-plugin-action .ps-plugin-action-icon svg { width: 13px; height: 13px; }
+.ps-console-plugin-action:disabled { opacity: .5; cursor: default; }
+:is(.ps-plugin-actions .ps-btn, .ps-console-plugin-action)[aria-busy="true"] { cursor: progress; }
+.ps-plugin-action-layer { position: fixed; inset: 0; z-index: var(--ps-z-modal); visibility: hidden; pointer-events: none; }
+.ps-plugin-action-layer.is-open { visibility: visible; pointer-events: auto; }
+.ps-plugin-action-layer iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+@media (max-width: 600px) { .ps-console-plugin-action > span:not(.ps-plugin-action-icon) { display: none; } }
+
 /* Server still being installed by Pelican. */
 .ps-setup-state { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); }
 .ps-setup-state > div { display: grid; gap: 4px; min-width: 0; }

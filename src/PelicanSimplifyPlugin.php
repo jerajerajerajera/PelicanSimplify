@@ -25,7 +25,7 @@ final class PelicanSimplifyPlugin implements Plugin
                 ->visible(fn()=>(bool)user()?->isRootAdmin()),
         ]);
         if($panel->getId()==='app'){
-            $panel->pages([Dashboard::class,CreateServer::class,SimplifySettings::class,Filament\App\Pages\PluginWidgets::class]);
+            $panel->pages([Dashboard::class,CreateServer::class,SimplifySettings::class,Filament\App\Pages\PluginWidgets::class,Filament\App\Pages\PluginActions::class]);
             $panel->middleware([Http\Middleware\Home::class]);
             $panel->homeUrl(fn()=>FeatureSettings::enabled('dashboard')?Dashboard::getUrl(panel:'app'):route(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()));
         }
@@ -36,7 +36,7 @@ final class PelicanSimplifyPlugin implements Plugin
         }
         if($panel->getId()==='server'){
             $panel->middleware([Http\Middleware\ServerHome::class]);
-            $panel->pages([Filament\Server\Pages\PluginWidgets::class]);
+            $panel->pages([Filament\Server\Pages\PluginWidgets::class,Filament\Server\Pages\PluginActions::class]);
         }
     }
     public function boot(Panel $panel): void { app('view')->addNamespace($this->getId(),plugin_path($this->getId(),'resources/views')); }

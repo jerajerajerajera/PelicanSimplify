@@ -513,3 +513,8 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 @keyframes ps-savebar-draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .ps-savebar { transition: opacity .2s ease, visibility 0s linear .2s; transform: none; } .ps-savebar-check { animation: none !important; stroke-dashoffset: 0; } }
 .ps-error { color: var(--ps-danger); font-weight: 600; }
+
+/* Installed web app (home screen): no browser bar, so the page keeps clear of the notch on the sides itself;
+   the bottom bars already keep clear of the home indicator (env(safe-area-inset-bottom)). */
+html.ps-standalone body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+html.ps-standalone { -webkit-tap-highlight-color: transparent; }
