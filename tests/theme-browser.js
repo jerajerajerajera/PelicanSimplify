@@ -374,6 +374,24 @@ const { start } = require('./browser-harness');
     }
     console.log('PASS plugin pages in the account menu, opened in a popup');
 
+    // 16. Widgets from other plugins: a tile sized to its content above the server workspace and the server list; none without widgets.
+    const widgets = await open('/?mode=server&theme=dark');
+    await data(widgets, (d) => { d.server = { ...d.server, plugin_widgets_url: '/frame/widgets' }; });
+    await widgets.waitForFunction(() => (Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights['11111111-1111-1111-1111-111111111111'] || Object.values(Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights)[0] || 0) > 20);
+    const tile = await widgets.evaluate(() => { const box = document.querySelector('.ps-server-dashboard .ps-plugin-widgets'), frame = box.querySelector('iframe'), inner = frame.contentDocument.querySelector('.simplify-plugin-widgets'); return { frame: frame.offsetHeight, inner: Math.ceil(inner.getBoundingClientRect().height), scroll: frame.contentDocument.documentElement.scrollHeight <= frame.clientHeight + 1, before: !!(box.compareDocumentPosition(document.querySelector('.ps-server-workspace')) & Node.DOCUMENT_POSITION_FOLLOWING) }; });
+    assert.ok(tile.frame === tile.inner && tile.scroll && tile.before, 'server widget tile: ' + JSON.stringify(tile));
+    if (process.env.SCREENSHOT_DIR) await widgets.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-widgets-server.png' });
+    await data(widgets, (d) => { d.server = { ...d.server, uuid: 'empty-widgets', plugin_widgets_url: '/frame/widgets?empty=1' }; });
+    await widgets.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights['empty-widgets'] === 0);
+    assert.equal(await widgets.evaluate(() => document.querySelector('.ps-server-dashboard .ps-plugin-widgets').getBoundingClientRect().height), 0, 'no widgets: no tile');
+    await widgets.close();
+    const listWidgets = await open('/?mode=overview&theme=light');
+    await data(listWidgets, (d) => { d.boot.plugin_widgets_url = '/frame/widgets'; });
+    await listWidgets.waitForFunction(() => (Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights.app || 0) > 20);
+    if (process.env.SCREENSHOT_DIR) await listWidgets.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-widgets-list.png' });
+    await listWidgets.close();
+    console.log('PASS plugin widgets as tiles sized to their content, hidden when a server has none');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

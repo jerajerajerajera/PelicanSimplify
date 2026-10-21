@@ -149,20 +149,76 @@ final class ExternalPlugins
                 $isResource = is_subclass_of($class, \Filament\Resources\Resource::class);
                 if (!$isResource && method_exists($class, 'shouldRegisterNavigation') && !$class::shouldRegisterNavigation()) continue;
                 if ($tenant === null && ($isResource ? !$class::canViewAny() : !$class::canAccess())) continue;
-                $url = $isResource ? $class::getUrl('index', panel: $panelId, tenant: $tenant) : $class::getUrl(panel: $panelId, tenant: $tenant);
                 $label = (string) $class::getNavigationLabel();
+                $url = $isResource ? $class::getUrl('index', panel: $panelId, tenant: $tenant) : self::panelUrl($class, $panelId, $tenant);
+                // Served outside the panel (Legal Pages: /imprint), so it cannot be embedded: it opens in a new tab.
+                $own = $url === null ? self::ownRoute($class) : null;
             } catch (\Throwable) {
                 continue;
             }
-            $pages[] = ['key' => 'ext-'.strtolower(class_basename($class)), 'label' => $label, 'url' => $url, 'plugin' => $plugin['name']];
+            if ($url === null && $own === null) continue;
+            $pages[] = ['key' => 'ext-'.strtolower(class_basename($class)), 'label' => $label, 'url' => $url ?? $own, 'plugin' => $plugin['name'], 'new_tab' => $own !== null];
         }
         usort($pages, fn (array $a, array $b): int => strnatcasecmp($a['label'], $b['label']));
         return $pages;
     }
 
+    private static function panelUrl(string $class, string $panelId, ?object $tenant): ?string
+    {
+        try {
+            return $class::getUrl(panel: $panelId, tenant: $tenant);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** A page some plugins serve on their own route instead of the panel's (Legal Pages: /imprint). */
+    private static function ownRoute(string $class): ?string
+    {
+        foreach (\Illuminate\Support\Facades\Route::getRoutes()->getRoutes() as $route) {
+            if (ltrim((string) $route->getControllerClass(), '\\') === $class && in_array('GET', $route->methods(), true)) return url($route->uri());
+        }
+        return null;
+    }
+
+    /** Pelican pages Simplify replaces, and where plugins register widgets on them, per panel. */
+    private const WIDGET_HOSTS = [
+        'server' => ['App\\Filament\\Server\\Pages\\Console', 'customWidgets'],
+        'app' => ['App\\Filament\\App\\Resources\\Servers\\Pages\\ListServers', 'customHeaderWidgets'],
+    ];
+
+    /**
+     * Widgets other plugins add to the console ("server") or the server list ("app"), which Simplify replaces:
+     * [{key, class, properties, label, plugin}]. Read from Pelican's registries, so nothing breaks on panels
+     * without them. Hidden widgets are left out unless $all.
+     */
+    public static function widgets(string $panelId, bool $all = false): array
+    {
+        [$host, $property] = self::WIDGET_HOSTS[$panelId] ?? [null, null];
+        if (!$host || self::plugins() === []) return [];
+        try {
+            $registered = (new \ReflectionProperty($host, $property))->getValue();
+        } catch (\Throwable) {
+            return [];
+        }
+        $widgets = [];
+        foreach ((array) $registered as $position) {
+            foreach ((array) $position as $widget) {
+                $class = is_string($widget) ? $widget : ($widget->widget ?? null);
+                if (!is_string($class) || !($plugin = self::owner($class))) continue;
+                $key = $panelId.'-widget:'.strtolower(class_basename($class));
+                if (isset($widgets[$key]) || (!$all && in_array($key, self::hidden(), true))) continue;
+                $properties = is_object($widget) && method_exists($widget, 'getProperties') ? (array) $widget->getProperties() : [];
+                $label = trim((string) preg_replace('/(?<!^)([A-Z])/', ' $1', (string) preg_replace('/Widget$/', '', class_basename($class))));
+                $widgets[$key] = ['key' => $key, 'class' => $class, 'properties' => $properties, 'label' => ucfirst(strtolower($label)), 'plugin' => $plugin['name']];
+            }
+        }
+        return array_values($widgets);
+    }
+
     private const HIDDEN_FILE = 'simplify/external-pages.json';
 
-    /** Every page other plugins add to the admin, server and account panels: key => "Label — Plugin (Admin/Server/Account)". */
+    /** Every page and widget other plugins add to the admin, server and account panels: key => "Label — Plugin (where)". */
     public static function catalog(): array
     {
         $list = [];
@@ -183,6 +239,9 @@ final class ExternalPlugins
                 }
                 $list[self::key($panelId, $class)] = $label.' — '.$plugin['name'].' ('.$where.')';
             }
+        }
+        foreach (['server' => 'Server widget', 'app' => 'Server list widget'] as $panelId => $where) {
+            foreach (self::widgets($panelId, true) as $widget) $list[$widget['key']] = $widget['label'].' — '.$widget['plugin'].' ('.$where.')';
         }
         asort($list, SORT_NATURAL | SORT_FLAG_CASE);
         return $list;

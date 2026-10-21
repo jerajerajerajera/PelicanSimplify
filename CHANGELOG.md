@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.0-snapshot.3 (snapshot channel)
+Widgets from other plugins as tiles, the last part of better support for other Pelican plugins. Tested on a Pelican 1.0.0-rc.1 panel with the official Legal Pages, Player Counter, User Creatable Servers, Minecraft Modrinth and Tickets plugins.
+- Widgets plugins add to Pelican's console (such as players, hostname and map from Player Counter) show above the server workspace; widgets they add to the server list (such as the resource limits of User Creatable Servers) show above your servers. Each runs with its own access check and refreshes like on Pelican's page; a server without widgets shows nothing.
+- Administrators can switch each widget off in Simplify settings, next to the pages from plugins.
+- A widget that fails leaves out only itself.
+- Pages from plugins in the account menu now also open when the plugin serves them outside the panel (Legal Pages): those open in a new tab. Plugin pages and widgets may now be shown inside Simplify's popups.
+
 ## 0.5.0-snapshot.2 (snapshot channel)
 Plugins that do part of what Simplify does no longer switch the whole dashboard off; only the overlapping part steps aside.
 - Subdomains (official plugin): Simplify's automatic subdomains switch off while it is enabled, so no DNS record is made twice. The setting explains why and your choice is kept for when the plugin is disabled again.
