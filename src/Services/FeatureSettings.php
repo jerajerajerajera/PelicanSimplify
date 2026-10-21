@@ -66,6 +66,8 @@ final class FeatureSettings
     {
         // A plugin that clashes with Simplify is enabled: hand the panel back to Pelican's own pages.
         if ($feature === 'dashboard' && ExternalPlugins::conflicts() !== []) return false;
+        // A plugin that does the same job is enabled (such as Subdomains): only that Simplify feature steps aside.
+        if (class_exists(ExternalPlugins::class) && ExternalPlugins::overlapFor($feature) !== null) return false;
         return self::all()[$feature]??false;
     }
     public static function save(array $input,bool $complete=false): void

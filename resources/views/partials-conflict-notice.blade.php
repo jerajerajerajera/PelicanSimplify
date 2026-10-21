@@ -9,3 +9,13 @@
         </div>
     </div>
 @endif
+@php($overlaps = \Simplify\Panel\Services\ExternalPlugins::overlaps())
+@if($overlaps)
+    <div class="ps-alert is-info ps-conflict-card" role="status">
+        <x-tabler-puzzle class="ps-ico" aria-hidden="true" />
+        <div>
+            <strong>{{ collect($overlaps)->pluck('name')->join(', ', ' and ') }} {{ count($overlaps) === 1 ? 'does' : 'do' }} part of what Simplify does</strong>
+            @foreach($overlaps as $overlap)<small>{{ $overlap['name'] }}: {{ $overlap['reason'] }}</small>@endforeach
+        </div>
+    </div>
+@endif

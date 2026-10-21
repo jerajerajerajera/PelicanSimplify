@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Http;
 /**
  * Other installed Pelican plugins, as Simplify sees them. A page belongs to a plugin when its class lives in
  * that plugin's namespace (from its plugin.json), so plugin pages can be shown under "External". Plugins
- * known to clash with Simplify are listed in conflicts.json (published next to update.json, so the list can
- * grow without a release); while one is enabled, Simplify's dashboard switches itself off.
+ * known to clash with Simplify are listed in conflicts.json: while one is enabled, Simplify's dashboard switches
+ * itself off, or only the Simplify features the plugin overlaps with.
  */
 final class ExternalPlugins
 {
@@ -40,37 +40,79 @@ final class ExternalPlugins
         return null;
     }
 
-    /** Known conflicts: [{id?, name?, reason}] from the published list, with the bundled copy as fallback. */
-    public static function conflictList(): array
+    /**
+     * The published list (conflicts.json next to update.json, so it can grow without a release), with the bundled copy
+     * as fallback per section: "plugins" switch Simplify's dashboard off, "overlaps" only the Simplify features they
+     * name. Versions before 0.5.0 only read "plugins", so overlaps never switch their dashboard off.
+     */
+    private static function published(string $section): array
     {
-        return Cache::remember('simplify.conflicts', 3600, function (): array {
+        $lists = Cache::remember('simplify.conflicts.v2', 3600, function (): array {
             $bundled = json_decode((string) @file_get_contents(dirname(__DIR__, 2).'/conflicts.json'), true);
-            $list = is_array($bundled['plugins'] ?? null) ? $bundled['plugins'] : [];
             try {
                 $url = 'https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/conflicts.json';
                 $remote = Http::timeout(4)->connectTimeout(2)->get($url)->throw()->json();
-                if (is_array($remote['plugins'] ?? null)) $list = $remote['plugins'];
             } catch (\Throwable) {
+                $remote = null;
             }
-            return array_values(array_filter($list, 'is_array'));
+            $lists = [];
+            foreach (['plugins', 'overlaps'] as $key) {
+                $list = is_array($remote[$key] ?? null) ? $remote[$key] : (is_array($bundled[$key] ?? null) ? $bundled[$key] : []);
+                $lists[$key] = array_values(array_filter($list, 'is_array'));
+            }
+            return $lists;
         });
+        return $lists[$section] ?? [];
     }
 
-    /** Enabled plugins that clash with Simplify, with the reason: [{id, name, reason}]. */
-    public static function conflicts(): array
+    /** Known conflicts: [{id?, name?, reason}]. */
+    public static function conflictList(): array
+    {
+        return self::published('plugins');
+    }
+
+    /** Enabled plugins listed in $list, with the matching entry: [[plugin, entry]]. */
+    private static function matches(array $list): array
     {
         $found = [];
         foreach (self::plugins() as $plugin) {
-            foreach (self::conflictList() as $entry) {
+            foreach ($list as $entry) {
                 $byId = isset($entry['id']) && strcasecmp((string) $entry['id'], $plugin['id']) === 0;
                 $byName = isset($entry['name']) && strcasecmp(trim((string) $entry['name']), trim($plugin['name'])) === 0;
                 if ($byId || $byName) {
-                    $found[] = ['id' => $plugin['id'], 'name' => $plugin['name'], 'reason' => (string) ($entry['reason'] ?? 'It changes the same parts of the panel as Simplify.')];
+                    $found[] = [$plugin, $entry];
                     break;
                 }
             }
         }
         return $found;
+    }
+
+    private static ?array $overlaps = null;
+
+    /**
+     * Enabled plugins that do part of what Simplify does: [{id, name, reason, features}]. The Simplify features they
+     * name are switched off while the plugin is enabled; without features it is only a notice in the settings.
+     */
+    public static function overlaps(): array
+    {
+        return self::$overlaps ??= array_map(fn (array $match): array => [
+            'id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? 'It does part of what Simplify does.'),
+            'features' => array_values(array_filter((array) ($match[1]['features'] ?? []), 'is_string')),
+        ], self::matches(self::published('overlaps')));
+    }
+
+    /** The overlapping plugin that switches a Simplify feature off, or null. */
+    public static function overlapFor(string $feature): ?array
+    {
+        foreach (self::overlaps() as $overlap) if (in_array($feature, $overlap['features'], true)) return $overlap;
+        return null;
+    }
+
+    /** Enabled plugins that clash with Simplify, with the reason: [{id, name, reason}]. */
+    public static function conflicts(): array
+    {
+        return array_map(fn (array $match): array => ['id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? 'It changes the same parts of the panel as Simplify.')], self::matches(self::conflictList()));
     }
 
     /**
