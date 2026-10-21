@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-snapshot.6 (snapshot channel)
+Host mode on phones: one column instead of three.
+- A server switcher at the top lists your servers per node and shows the name of the open server; picking one opens its page at full width, with Open full page and Close above it.
+- The admin sections (Servers, Nodes, People, …, Health) form a row of labelled buttons that swipes sideways and keeps the open section in view; the selected admin page fills the rest of the screen.
+- Wider screens do not change.
+
 ## 0.5.0-snapshot.5 (snapshot channel)
 Pelican's own pages inside Simplify (admin pages, the account page, server settings and the native forms) made for phones.
 - One column with 44 px touch targets: fields, buttons, tabs and table actions. Fields use 16 px text, so iPhones no longer zoom in when you type.

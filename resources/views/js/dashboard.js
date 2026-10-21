@@ -475,6 +475,8 @@
         this.hostSection = section;
         this.hostPage = section.pages[0] || null;
         this.rememberHostPlace();
+        // Phones show the sections as one sideways row: keep the open one in view.
+        if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
