@@ -364,6 +364,14 @@
                             </template>
                         </div>
                     </div>
+                    {{-- Buttons other plugins add to Pelican's server list (such as Create server from User Creatable Servers). --}}
+                    <div class="ps-plugin-actions" x-show="pluginActions('app').length" role="group" aria-label="Buttons from other plugins">
+                        <template x-for="action in pluginActions('app')" :key="action.key">
+                            <button type="button" class="ps-btn" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.plugin ? 'From the '+action.plugin+' plugin' : 'From another plugin'">
+                                <span class="ps-plugin-action-icon" x-show="action.icon" x-html="action.icon" aria-hidden="true"></span><span x-text="action.label"></span>
+                            </button>
+                        </template>
+                    </div>
                     {{-- Widgets other plugins add to Pelican's server list (such as resource limits), sized to their content. --}}
                     <template x-if="boot.plugin_widgets_url">
                         <div class="ps-plugin-widgets" :class="{'is-empty': !pluginWidgetHeights.app}" :style="{'--ps-widgets-height': (pluginWidgetHeights.app || 0)+'px'}">
@@ -693,6 +701,12 @@
                             <strong>Live console</strong>
                             <span class="ps-console-dot" :class="{'connected': connected}"></span><span class="ps-live-bars" x-show="connected" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                             <span class="ps-console-state" x-text="connected ? 'Connected to Wings' : 'Connecting to Wings…'"></span>
+                            {{-- Buttons other plugins add to Pelican's console (such as Upload logs from Mclogs Uploader). --}}
+                            <template x-for="action in pluginActions('server')" :key="action.key">
+                                <button type="button" class="ps-console-clear ps-console-plugin-action" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.label+(action.plugin ? ' — from the '+action.plugin+' plugin' : ' — from another plugin')" :aria-label="action.label">
+                                    <span class="ps-plugin-action-icon" x-show="action.icon" x-html="action.icon" aria-hidden="true"></span><span x-text="action.label"></span>
+                                </button>
+                            </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
@@ -763,6 +777,13 @@
             <svg aria-hidden="true"><use href="#ps-menu"/></svg><span>Menu</span>
         </button>
     </nav>
+
+    {{-- A plugin button running in its own panel: invisible until its dialog opens, which then shows over Simplify. --}}
+    <template x-if="pluginActionFrame">
+        <div class="ps-plugin-action-layer" :class="{'is-open': pluginActionOpen}">
+            <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="pluginActionFrame.url" title="Plugin action" x-on:load="pluginActionLoaded($el)"></iframe>
+        </div>
+    </template>
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
     <div class="ps-modal-layer" :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak>

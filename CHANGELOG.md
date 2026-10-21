@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.0-snapshot.7 (snapshot channel)
+Buttons other plugins add to Pelican's pages now also work in Simplify, the last part of plugin support. Tested on a Pelican 1.0.0-beta38 panel with the official User Creatable Servers and Mclogs Uploader plugins.
+- Buttons plugins add to Pelican's server list (such as Create server from User Creatable Servers) show under the overview's filters; buttons they add to Pelican's console (such as Upload logs from Mclogs Uploader) show in the title of Simplify's live console. Each is checked like on Pelican's page: hidden when the plugin hides it, greyed out when it is disabled.
+- A button that opens a page of its plugin opens it in a Simplify popup. Any other button runs exactly like on Pelican's page: its dialog opens over Simplify and its messages become Simplify notifications. Only Simplify can start a button this way (the link is signed for your session).
+- Tabs and fields plugins add to Pelican's own forms (the account page, edit pages) were already shown, because Simplify embeds those pages.
+- Every button can be switched off in Simplify settings → General → "Pages from other plugins".
+
 ## 0.5.0-snapshot.6 (snapshot channel)
 Host mode on phones: one column instead of three.
 - A server switcher at the top lists your servers per node and shows the name of the open server; picking one opens its page at full width, with Open full page and Close above it.

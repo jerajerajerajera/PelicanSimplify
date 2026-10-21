@@ -216,9 +216,107 @@ final class ExternalPlugins
         return array_values($widgets);
     }
 
+    /** Pelican pages Simplify replaces, where plugins register header buttons (Pelican's CanCustomizeHeaderActions). */
+    private const ACTION_HOSTS = [
+        'server' => 'App\\Filament\\Server\\Pages\\Console',
+        'app' => 'App\\Filament\\App\\Resources\\Servers\\Pages\\ListServers',
+    ];
+
+    /** The actions plugins registered on a replaced page, groups flattened: [Action]. Every entry comes from a plugin. */
+    public static function registeredActions(string $panelId): array
+    {
+        $host = self::ACTION_HOSTS[$panelId] ?? null;
+        if (!$host || self::plugins() === []) return [];
+        try {
+            $registered = (new \ReflectionProperty($host, 'customHeaderActions'))->getValue();
+        } catch (\Throwable) {
+            return [];
+        }
+        $actions = [];
+        $add = function ($item) use (&$add, &$actions): void {
+            if ($item instanceof \Filament\Actions\ActionGroup) {
+                foreach ($item->getActions() as $child) $add($child);
+            } elseif ($item instanceof \Filament\Actions\Action && is_string($item->getName()) && $item->getName() !== '') {
+                $actions[$item->getName()] ??= $item;
+            }
+        };
+        foreach ((array) $registered as $position) foreach ((array) $position as $item) $add($item);
+        return array_values($actions);
+    }
+
+    /**
+     * Buttons other plugins add to the console ("server") or the server list ("app"), which Simplify replaces:
+     * [{key, name, label, icon, url, new_tab, disabled, plugin, run_url}]. Each is checked like on Pelican's page
+     * (visible, disabled, label); a button that opens a link keeps its link, every other one runs on Simplify's
+     * plugin-actions page (run_url, signed for this session). Hidden ones are left out unless $all.
+     */
+    public static function actions(string $panelId, ?object $server = null, bool $all = false): array
+    {
+        $registered = self::registeredActions($panelId);
+        if ($registered === []) return [];
+        $previous = null;
+        if ($server !== null) {
+            $previous = \Filament\Facades\Filament::getTenant();
+            \Filament\Facades\Filament::setTenant($server, isQuiet: true);
+        }
+        $list = [];
+        try {
+            foreach ($registered as $action) {
+                $name = (string) $action->getName();
+                $key = $panelId.'-action:'.strtolower($name);
+                if (!$all && in_array($key, self::hidden(), true)) continue;
+                $owner = self::owner(get_class($action));
+                try {
+                    if (!$all && $action->isHidden()) continue;
+                    $label = trim(strip_tags((string) ($action->getTooltip() ?: $action->getLabel())));
+                    $url = $action->getUrl();
+                    $icon = $action->getIcon();
+                    $list[] = [
+                        'key' => $key, 'name' => $name, 'label' => $label !== '' ? $label : ucfirst(str_replace('_', ' ', $name)),
+                        'icon' => is_string($icon) && $icon !== '' ? self::iconHtml($icon) : null,
+                        'url' => is_string($url) && $url !== '' ? $url : null, 'new_tab' => (bool) $action->shouldOpenUrlInNewTab(),
+                        'disabled' => (bool) $action->isDisabled(), 'plugin' => $owner['name'] ?? null,
+                        'run_url' => is_string($url) && $url !== '' ? null : self::runUrl($panelId, $name, $server),
+                    ];
+                } catch (\Throwable $exception) {
+                    // A button whose checks fail is left out, like Pelican would fail to show it.
+                    report($exception);
+                }
+            }
+        } finally {
+            if ($server !== null) \Filament\Facades\Filament::setTenant($previous, isQuiet: true);
+        }
+        return $list;
+    }
+
+    private static function iconHtml(string $icon): ?string
+    {
+        try {
+            return function_exists('svg') ? svg($icon)->toHtml() : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** Signed for this session, so a link from elsewhere cannot run a plugin's button on someone's behalf. */
+    public static function runToken(string $panelId, string $name): string
+    {
+        return hash_hmac('sha256', $panelId.'|'.$name.'|'.session()->getId(), (string) config('app.key'));
+    }
+
+    private static function runUrl(string $panelId, string $name, ?object $server): ?string
+    {
+        $page = $panelId === 'server' ? \Simplify\Panel\Filament\Server\Pages\PluginActions::class : \Simplify\Panel\Filament\App\Pages\PluginActions::class;
+        try {
+            return $page::getUrl(['run' => $name, 'token' => self::runToken($panelId, $name)], panel: $panelId, tenant: $server);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     private const HIDDEN_FILE = 'simplify/external-pages.json';
 
-    /** Every page and widget other plugins add to the admin, server and account panels: key => "Label — Plugin (where)". */
+    /** Every page, widget and button other plugins add to the admin, server and account panels: key => "Label — Plugin (where)". */
     public static function catalog(): array
     {
         $list = [];
@@ -242,6 +340,16 @@ final class ExternalPlugins
         }
         foreach (['server' => 'Server widget', 'app' => 'Server list widget'] as $panelId => $where) {
             foreach (self::widgets($panelId, true) as $widget) $list[$widget['key']] = $widget['label'].' — '.$widget['plugin'].' ('.$where.')';
+        }
+        foreach (['server' => 'Console button', 'app' => 'Server list button'] as $panelId => $where) {
+            foreach (self::registeredActions($panelId) as $action) {
+                try {
+                    $label = trim(strip_tags((string) ($action->getTooltip() ?: $action->getLabel())));
+                } catch (\Throwable) {
+                    $label = '';
+                }
+                $list[$panelId.'-action:'.strtolower((string) $action->getName())] = ($label !== '' ? $label : (string) $action->getName()).' — '.(self::owner(get_class($action))['name'] ?? 'another plugin').' ('.$where.')';
+            }
         }
         asort($list, SORT_NATURAL | SORT_FLAG_CASE);
         return $list;
