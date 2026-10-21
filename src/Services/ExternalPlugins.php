@@ -79,20 +79,35 @@ final class ExternalPlugins
      */
     public static function serverPages(object $server): array
     {
+        return self::pages('server', $server);
+    }
+
+    /**
+     * Pages other plugins add to the account-level app panel (such as Legal Pages), for the account menu:
+     * [{key, label, url, plugin}]. Pages the user may not open are left out.
+     */
+    public static function appPages(): array
+    {
+        return self::pages('app');
+    }
+
+    private static function pages(string $panelId, ?object $tenant = null): array
+    {
         if (self::plugins() === []) return [];
         try {
-            $panel = \Filament\Facades\Filament::getPanel('server');
+            $panel = \Filament\Facades\Filament::getPanel($panelId);
         } catch (\Throwable) {
             return [];
         }
         $pages = [];
         foreach ([...$panel->getResources(), ...$panel->getPages()] as $class) {
             $plugin = self::owner($class);
-            if (!$plugin || self::isHidden('server', $class)) continue;
+            if (!$plugin || self::isHidden($panelId, $class)) continue;
             try {
                 $isResource = is_subclass_of($class, \Filament\Resources\Resource::class);
                 if (!$isResource && method_exists($class, 'shouldRegisterNavigation') && !$class::shouldRegisterNavigation()) continue;
-                $url = $isResource ? $class::getUrl('index', panel: 'server', tenant: $server) : $class::getUrl(panel: 'server', tenant: $server);
+                if ($tenant === null && ($isResource ? !$class::canViewAny() : !$class::canAccess())) continue;
+                $url = $isResource ? $class::getUrl('index', panel: $panelId, tenant: $tenant) : $class::getUrl(panel: $panelId, tenant: $tenant);
                 $label = (string) $class::getNavigationLabel();
             } catch (\Throwable) {
                 continue;
@@ -105,11 +120,11 @@ final class ExternalPlugins
 
     private const HIDDEN_FILE = 'simplify/external-pages.json';
 
-    /** Every page other plugins add to the admin and server panels: key => "Label — Plugin (Admin/Server)". */
+    /** Every page other plugins add to the admin, server and account panels: key => "Label — Plugin (Admin/Server/Account)". */
     public static function catalog(): array
     {
         $list = [];
-        foreach (['admin' => 'Admin', 'server' => 'Server'] as $panelId => $where) {
+        foreach (['admin' => 'Admin', 'server' => 'Server', 'app' => 'Account'] as $panelId => $where) {
             try {
                 $panel = \Filament\Facades\Filament::getPanel($panelId);
             } catch (\Throwable) {

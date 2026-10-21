@@ -352,6 +352,28 @@ const { start } = require('./browser-harness');
     }
     console.log('PASS phone creator: step count with a progress bar, choice rows, Back / Next at the bottom');
 
+    // 15. Account-level pages from other plugins (such as Legal Pages) open from the account menu.
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const account = await open('/?mode=overview&theme=light', viewport);
+      const pluginButton = account.locator('#ps-account-actions [aria-label="Plugin pages"]');
+      assert.equal(await pluginButton.count(), 1);
+      await data(account, (d) => { d.boot.plugin_pages = [{ key: 'ext-imprint', label: 'Imprint', url: '/frame/native', plugin: 'Legal Pages' }, { key: 'ext-termsofservice', label: 'Terms of Service', url: '/frame/native', plugin: 'Legal Pages' }]; });
+      if (viewport.width < 600) await data(account, (d) => { d.navMenu = true; });
+      await account.click('.ps-account-button');
+      await pluginButton.waitFor({ state: 'visible' });
+      await pluginButton.click();
+      await account.waitForSelector('#ps-plugin-pages', { state: 'visible' });
+      assert.deepEqual(await account.locator('#ps-plugin-pages .ps-notify-item strong').allTextContents(), ['Imprint', 'Terms of Service']);
+      assert.equal(await account.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, viewport.width + ': no horizontal scroll with the plugin pages open');
+      if (process.env.SCREENSHOT_DIR) await account.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-pages-' + viewport.width + '.png' });
+      await account.locator('#ps-plugin-pages .ps-notify-item').first().click();
+      await account.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).modal === 'admin-page');
+      assert.equal(await data(account, (d) => d.adminPage.label), 'Imprint');
+      await account.waitForSelector('#ps-plugin-pages', { state: 'hidden' });
+      await account.close();
+    }
+    console.log('PASS plugin pages in the account menu, opened in a popup');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

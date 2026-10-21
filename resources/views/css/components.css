@@ -424,6 +424,9 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ps-plugin-pages { width: min(320px, calc(100vw - 24px)); }
+.ps-plugin-pages .ps-notify-item { width: 100%; border: 0; background: transparent; font-family: inherit; cursor: pointer; }
+.ps-plugin-pages .ps-notify-item:is(:hover, :focus-visible) { background: var(--ps-raised); }
 .ps-admin-menu { width: min(520px, calc(100vw - 24px)); max-height: min(78vh, 640px); overflow-y: auto; }
 .ps-admin-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .ps-admin-group { display: grid; align-content: start; gap: 1px; padding: 8px; border: 1px solid color-mix(in srgb, var(--ps-tone) 22%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-tone) 5%, var(--ps-surface)); }
