@@ -3,10 +3,12 @@
 Planned work after the 0.3 betas. Scope and order may change.
 
 ## Easy server creator
-A separate add-on next to the **easy Minecraft server creator**.
-- Build a searchable index of games from Pelican's egg sources (the same GitHub index Pelican's *Import egg* dialog uses: Games Standalone, Games SteamCMD, Minecraft, …), so users can search "Valheim" instead of picking an egg.
-- Clicking a game downloads and installs the matching egg automatically for users with the *Install missing eggs* ability (Users & access), then continues with the same guided steps as the Minecraft creator.
-- Keep a small cache of the index; refresh it in the background.
+A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
+- Accept a game's EULA or license up front (checkbox and link), so Simplify sets the right variable or file and the server does not restart in a loop.
+- Recommended resources per game (small, normal, large), from the egg's recommendation or an admin default per game.
+- An optional own index URL, for example a fork or an own eggs repository.
+- "Popular" based on what is created most on the panel, with a small fixed starter list while there are few servers.
+- The progress card after Create (see Server installation overhaul), with the last install-log lines and *Reinstall* and *Console* buttons on failure.
 
 ## Server installation overhaul
 - Show one clear state ("Egg initialising…", "Server initialising…") with progress until the server is ready, instead of the start/stop flicker during installation.
@@ -20,7 +22,12 @@ A separate add-on next to the **easy Minecraft server creator**.
 ## Host mode
 - Larger hosts (several nodes) can switch to host mode: servers in a compact list per node on the left, Pelican's admin pages as the main workspace.
 
+## Other plugins
+- Done in the 0.5.0 snapshots: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
+- Still open: buttons that plugins add to Pelican's pages (for example Create server from User Creatable Servers on the server list), and tabs or form fields plugins add to Pelican's own forms.
+
 ## Phone experience
+- Done in the 0.4.7 snapshots: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
 - Bottom tab bar (Servers, Create, Alerts, Account) and a top bar that collapses on scroll.
 - Full-screen sheets with a drag handle instead of centred popups; the save bar sits above the tab bar.
 - Server page on phones: a status header with large power buttons, swipeable sections (Console, Players, Files, Settings), and a console with a command bar above the keyboard plus quick-command chips.

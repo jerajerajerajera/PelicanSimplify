@@ -1,4 +1,21 @@
 {
-  "about": "Plugins that change the same parts of Pelican as Simplify. While one of them is enabled, Simplify switches its own dashboard off and shows why. Matched on plugin id or plugin name (case-insensitive). Example entry: { \"id\": \"some-plugin\", \"reason\": \"Why it clashes.\" }",
-  "plugins": []
+  "about": "Plugins that change the same parts of Pelican as Simplify. \"plugins\": while one is enabled, Simplify switches its own dashboard off and shows why. \"overlaps\" (Simplify 0.5.0 and later): plugins that do part of what Simplify does; the Simplify features in \"features\" switch off while the plugin is enabled, and the reason is shown in Simplify settings. Matched on plugin id or plugin name (case-insensitive). Example entries: { \"id\": \"some-plugin\", \"reason\": \"Why it clashes.\" } and { \"id\": \"some-plugin\", \"features\": [\"subdomains\"], \"reason\": \"What overlaps.\" }",
+  "plugins": [],
+  "overlaps": [
+    {
+      "id": "subdomains",
+      "features": [
+        "subdomains"
+      ],
+      "reason": "Both create Cloudflare DNS records for servers. Simplify's automatic subdomains stay off while this plugin is enabled, so no record is made twice; the plugin's Subdomains page is on the server page under External."
+    },
+    {
+      "id": "minecraft-modrinth",
+      "reason": "Both install mods and plugins from Modrinth. They work side by side: Simplify's Mods and plugins section, and the plugin's pages on the server page under External."
+    },
+    {
+      "id": "user-creatable-servers",
+      "reason": "Both let people create their own servers, each with its own limits. They work side by side: Simplify's creator uses the creator access in Simplify settings, the plugin's Create Server page (in the account menu) uses the plugin's own limits."
+    }
+  ]
 }

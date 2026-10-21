@@ -6,6 +6,7 @@ namespace Illuminate\Support\Facades {
   public static array $fs = [];
   public static function json($path) { return json_decode(self::$fs[$path], true); }
   public static function put($path, $content) { self::$fs[$path] = $content; return true; }
+  public static function delete($path) { unset(self::$fs[$path]); return true; }
   public static function deleteDirectory($dir) { foreach (array_keys(self::$fs) as $k) if (str_starts_with($k, $dir.'/')) unset(self::$fs[$k]); return true; }
   public static function ensureDirectoryExists($dir) {}
   public static function isDirectory($dir) { foreach (self::$fs as $k => $v) if (str_starts_with($k, $dir.'/')) return true; return false; }
@@ -112,10 +113,9 @@ namespace {
 
  // Update channels: stable on main, beta and snapshot on their own branch; you get the newest of your channel or a more stable one.
  $raw = 'https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';
- check(U::channelUrls($raw.'main/update.json', 'stable') === [], 'stable reads update.json only');
- check(U::channelUrls($raw.'main/update.json', 'beta') === [$raw.'beta/update-beta.json'], 'beta reads the beta branch');
- check(U::channelUrls($raw.'main/update.json', 'snapshot') === [$raw.'beta/update-beta.json', $raw.'snapshot/update-snapshot.json'], 'snapshot also reads beta');
- check(U::channelUrls('https://example.test/simplify/update.json', 'beta') === ['https://example.test/simplify/update-beta.json'], 'other hosts use sibling files');
+ check(U::channelUrls('stable') === [$raw.'main/update.json'], 'stable reads update.json on main');
+ check(U::channelUrls('beta') === [$raw.'main/update.json', $raw.'beta/update-beta.json'], 'beta also reads the beta branch');
+ check(U::channelUrls('snapshot') === [$raw.'main/update.json', $raw.'beta/update-beta.json', $raw.'snapshot/update-snapshot.json'], 'snapshot also reads beta');
  $simplify = new \App\Models\Plugin; $simplify->id = 'pelican-simplify'; $simplify->update_url = $raw.'main/update.json';
  $at = fn (string $v) => ['1.0.0-beta38' => ['version' => $v]];
  Http::$byUrl = [$raw.'main/update.json' => $at('0.4.2'), $raw.'beta/update-beta.json' => $at('0.4.3-beta.1'), $raw.'snapshot/update-snapshot.json' => $at('0.4.3-snapshot.4')];
@@ -129,5 +129,15 @@ namespace {
  check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.4', 'a newer stable release wins on every channel');
  unset(Http::$byUrl[$raw.'beta/update-beta.json']);
  check($latest(['simplify_beta']) === '0.4.4', 'a missing channel file falls back to stable');
+ Http::$byUrl = [];
+ // update_url on the Pelican Hub ("*" entry): its stable release counts, and the GitHub channels still work.
+ $hub = 'https://hub.pelican.dev/plugins/pelican-simplify/update.json';
+ $simplify->update_url = $hub;
+ Http::$byUrl = [$hub => ['*' => ['version' => '0.4.3', 'channel' => 'stable']], $raw.'main/update.json' => $at('0.4.3'), $raw.'beta/update-beta.json' => $at('0.4.4-beta.1'), $raw.'snapshot/update-snapshot.json' => $at('0.4.5-snapshot.1')];
+ check($latest([]) === '0.4.3', 'stable channel gets the Hub release');
+ check($latest(['simplify_beta']) === '0.4.4-beta.1', 'beta channel works with the Hub as update_url');
+ check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.5-snapshot.1', 'snapshot channel works with the Hub as update_url');
+ Http::$byUrl[$hub] = [];
+ check($latest([]) === '0.4.3', 'an empty Hub file falls back to the stable build on GitHub');
  Http::$byUrl = [];
 }

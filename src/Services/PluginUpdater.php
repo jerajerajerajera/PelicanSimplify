@@ -46,9 +46,10 @@ final class PluginUpdater
     {
         $url = (string) $plugin->update_url;
         $entry = self::read($url, $plugin, $fresh);
-        // Simplify on the beta or snapshot channel: the newest of the stable build and the builds of the chosen channel and every more stable one.
-        if ($plugin->id === 'pelican-simplify' && str_ends_with($url, '/update.json')) {
-            foreach (self::channelUrls($url, self::channel()) as $channelUrl) {
+        // Simplify: the newest of its update_url (the Pelican Hub), the stable build on GitHub and the builds of the chosen channel and every more stable one.
+        if ($plugin->id === 'pelican-simplify') {
+            foreach (self::channelUrls(self::channel()) as $channelUrl) {
+                if ($channelUrl === $url) continue;
                 $candidate = self::read($channelUrl, $plugin, $fresh);
                 if ($candidate && is_string($candidate['version'] ?? null) && (!$entry || version_compare($candidate['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $candidate;
             }
@@ -56,17 +57,17 @@ final class PluginUpdater
         return $entry;
     }
 
+    /** Simplify's GitHub repository, where each update channel has its own branch. */
+    public const REPOSITORY = 'https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';
+
     /**
-     * Update files of the beta and snapshot channels. The stable update.json lives on main (what Pelican and the Hub read);
-     * beta and snapshot builds have their own branch. An update_url that is not a raw GitHub file uses sibling files.
+     * Simplify's update files on GitHub for a channel: stable on main, beta and snapshot on their own branch.
+     * plugin.json's update_url points at the Pelican Hub (which only offers stable releases), so these are read as well.
      */
-    public static function channelUrls(string $stableUrl, string $channel): array
+    public static function channelUrls(string $channel): array
     {
         $channels = ['beta' => ['beta'], 'snapshot' => ['beta', 'snapshot']][$channel] ?? [];
-        return array_map(function (string $name) use ($stableUrl): string {
-            if (preg_match('#^(https://raw\.githubusercontent\.com/[^/]+/[^/]+/)[^/]+/update\.json$#', $stableUrl, $m)) return $m[1].$name.'/update-'.$name.'.json';
-            return substr($stableUrl, 0, -strlen('update.json')).'update-'.$name.'.json';
-        }, $channels);
+        return [self::REPOSITORY.'main/update.json', ...array_map(fn (string $name): string => self::REPOSITORY.$name.'/update-'.$name.'.json', $channels)];
     }
 
     /** One update file's entry for this panel, or null when it cannot be read. */
@@ -180,10 +181,10 @@ final class PluginUpdater
         if (!hash_equals($expected, hash('sha256', $body))) throw new \RuntimeException('The download does not match the published checksum.');
         $temporary = tempnam(sys_get_temp_dir(), 'simplify-plugin-').'.zip';
         try {
-            file_put_contents($temporary, $body);
+            File::put($temporary, $body);
             $service->downloadPluginFromFile(new \Illuminate\Http\UploadedFile($temporary, basename($url), 'application/zip', null, true), $plugin->id);
         } finally {
-            @unlink($temporary);
+            File::delete($temporary);
         }
     }
 

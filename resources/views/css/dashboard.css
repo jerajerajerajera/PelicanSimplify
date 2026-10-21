@@ -692,7 +692,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-nav-items > div { width: 100%; }
   .ps-nav-items .ps-dropdown { position: static; width: 100%; margin-top: 4px; box-shadow: none; }
   .ps-notify-count { position: static; margin-left: auto; }
-  .ps-account { width: 100%; }
+  .ps-account { flex-wrap: wrap; width: 100%; }
+  .ps-account .ps-plugin-pages { flex-basis: 100%; }
   .ps-account-button { flex: 1 1 auto; max-width: none; }
   .ps-account-menu { order: 0; }
   .ps-account.account-open .ps-account-menu { margin: 0 0 0 8px; }
@@ -1027,3 +1028,129 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-choice-title { min-width: 0; font-size: 14px; font-weight: 650; }
 .ps-choice-description { grid-column: 1 / -1; color: var(--ps-muted); font-size: 11px; line-height: 1.4; }
 @media (max-width: 700px) { .ps-choice-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Phone layout (overview). The page scrolls as a whole instead of a server list inside a fixed-height
+   dock, filters share one swipeable row, cards become compact rows with one large power button, host
+   health is a one-line summary and a tab bar keeps Servers, New and Menu within thumb reach. */
+.ps-tabbar, .ps-health-phone-summary { display: none; }
+@media (max-width: 600px) {
+  body:has(.ps:not(.server-active, .host-mode)), body:has(.ps:not(.server-active, .host-mode)) :is(.fi-layout, .fi-main-ctn) { height: auto; overflow: visible; }
+  body:has(.ps:not(.server-active, .host-mode)) :is(.fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content), .ps:not(.server-active, .host-mode), .ps:not(.server-active, .host-mode) .ps-main { flex: 1 0 auto; min-height: auto; overflow: visible; }
+  .ps:not(.server-active, .host-mode) .ps-main { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body:has(.ps:not(.server-active, .host-mode)) :is(.fi-footer, [data-ps-footer]) { padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important; }
+  .ps .ps-overview, .ps .ps-server-scroll { flex: none; min-height: auto; overflow: visible; mask-image: none; }
+  .ps .ps-server-scroll { padding: 0; }
+
+  /* One swipeable filter row; creating moves to the tab bar. */
+  .ps .ps-overview-toolbar { flex-wrap: nowrap; justify-content: flex-start; gap: 8px; margin: 0 -14px 12px; padding: 2px 14px 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ps .ps-overview-toolbar::-webkit-scrollbar { display: none; }
+  .ps .ps-overview-toolbar > .ps-create-tiles, .ps .ps-node-search { display: none !important; }
+  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
+  .ps .ps-overview-toolbar > .ps-node-filters { padding-left: 8px; border-left: 1px solid var(--ps-line); }
+  .ps .ps-overview-toolbar .ps-chip { min-height: 40px; padding-inline: 14px; white-space: nowrap; }
+
+  /* Host health: one summary line above the servers; tapping still opens the node details. */
+  .ps .ps-overview > .ps-health-panel { order: -1; margin: 0 0 14px; box-shadow: none; }
+  .ps .ps-host-health { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; }
+  .ps .ps-host-health > .ps-host-metric, .ps .ps-host-state small:not(.ps-health-phone-summary), .ps .ps-host-server-badge, .ps .ps-host-state .ps-host-heading h3 { display: none; }
+  .ps .ps-host-state { flex: 1; }
+  .ps .ps-host-state > div { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+  .ps .ps-host-state .ps-host-heading { order: 3; margin-left: auto; }
+  .ps .ps-health-expand { transform: rotate(90deg); }
+  .ps .ps-health-expand.expanded { transform: rotate(-90deg); }
+  .ps .ps-host-emblem { width: 26px; height: 26px; }
+  .ps .ps-host-emblem .ps-host-heart { width: 24px; height: 24px; }
+  .ps .ps-health-status { font-size: 14px; line-height: 20px; }
+  .ps .ps-health-phone-summary { display: block; margin: 0; color: var(--ps-muted); font-size: 12px; }
+  .ps .ps-health-drawer, .ps .ps-health-drawer > div, .ps .ps-node-health-list { --ps-health-details-height: none; max-height: none; }
+  .ps .ps-health-panel:not(.expanded) .ps-health-drawer { max-height: 0; }
+  .ps .ps-node-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+
+  /* Compact server rows: icon, name, status and live numbers, with the main power action on the right. */
+  .ps .ps-server-grid.is-list { gap: 10px; }
+  .ps .ps-server-grid.is-list .ps-server-card { border-radius: 16px; }
+  .ps .ps-server-grid.is-list .ps-server-open,
+  .ps .ps-server-grid.is-list .has-power .ps-server-open,
+  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-server-open { grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto auto; align-items: center; gap: 2px 12px; height: auto; min-height: 76px; padding: 12px 14px; }
+  .ps .ps-server-grid.is-list .has-power .ps-server-open { padding-right: 70px !important; }
+  .ps .ps-server-grid.is-list .ps-card-head { grid-row: 1 / span 3; align-self: center; min-height: 0; }
+  .ps .ps-server-grid.is-list .ps-card-icons { --ps-icon-big: 48px; --ps-icon-small: 20px; --ps-icon-small-x: 32px; --ps-icon-small-y: 32px; width: 48px; height: 52px; }
+  .ps .ps-server-grid.is-list .ps-card-title-row { flex-direction: row; align-items: baseline; gap: 6px; height: auto; }
+  .ps .ps-server-grid.is-list .ps-card-title-row h3 { font-size: 17px !important; }
+  .ps .ps-server-grid.is-list .ps-card-real-name, .ps .ps-server-grid.is-list .ps-card-real-name.no-alias { display: none; }
+  .ps .ps-server-grid.is-list .ps-card-motd { display: none; }
+  .ps .ps-server-grid.is-list .ps-card-badges { position: static; grid-column: 2; grid-row: 2; flex-direction: row; justify-content: flex-start; gap: 6px; transform: none; }
+  .ps .ps-server-grid.is-list .ps-card-usage { grid-column: 2; grid-row: 3; display: flex; justify-self: start; gap: 14px; width: auto; max-width: 100%; margin: 2px 0 0; }
+  .ps .ps-server-grid.is-list .ps-card-mini-metric { padding: 0; border: 0; background: none; }
+  .ps .ps-server-grid.is-list .ps-card-graph { display: none; }
+  .ps .ps-server-grid.is-list .ps-card-usage-label { gap: 6px; font-size: 12px; }
+  .ps .ps-server-grid.is-list .ps-card-usage-label svg { width: 14px; height: 14px; }
+  .ps .ps-server-grid.is-list .ps-card-footer { display: none; }
+  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
+
+  /* Power: only the main action (start when offline, otherwise stop), 48 px, always visible. */
+  .ps .ps-server-grid.is-list .ps-overview-power-wrap { position: absolute; top: 50%; right: 12px; bottom: auto; left: auto; width: auto; visibility: visible; pointer-events: auto; transform: translateY(-50%); }
+  .ps .ps-server-grid.is-list .ps-overview-power { display: flex; gap: 6px; height: auto; padding: 0; border: 0; background: none; }
+  .ps .ps-server-grid.is-list .ps-overview-power > .ps-btn { width: 48px; height: 48px; min-height: 48px; border-radius: 14px; background: var(--ps-surface); }
+  .ps .ps-server-grid.is-list .ps-overview-power > .ps-btn:is(:disabled, [data-power="restart"], [data-power="kill"]) { display: none; }
+  .ps .ps-server-grid.is-list .ps-overview-power > .ps-btn svg { width: 20px; height: 20px; }
+  .ps .ps-server-grid.is-list .ps-overview-power.is-confirming > .ps-btn { display: none; }
+  .ps .ps-server-grid.is-list .ps-power-confirm { position: static; display: flex; flex-wrap: nowrap; gap: 6px; padding: 0; background: none; }
+  .ps .ps-server-grid.is-list .ps-power-confirm > .ps-btn { width: 48px; height: 48px; border-radius: 14px; }
+
+  /* Tab bar. The panel menu opens above it, so it is reachable from anywhere on the page. */
+  .ps:not(.server-active, .host-mode) .ps-mobile-menu { display: none !important; }
+  .ps:not(.server-active, .host-mode) .ps-nav-items { position: fixed; top: auto; right: 12px; bottom: calc(80px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 120px); }
+  .ps-tabbar { position: fixed; right: 0; bottom: 0; left: 0; z-index: var(--ps-z-dropdown); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 4px 8px env(safe-area-inset-bottom); border-top: 1px solid var(--ps-line); background: color-mix(in srgb, var(--ps-surface) 92%, transparent); backdrop-filter: blur(12px); }
+  .ps-tab-create { position: relative; display: grid; }
+  .ps-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 60px; padding: 4px; border: 0; background: none; color: var(--ps-muted); font: 500 11px/1.2 var(--ps-font); }
+  .ps-tab.is-active { color: var(--ps-ink); font-weight: 650; }
+  .ps-tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .ps-tab:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -4px; border-radius: var(--ps-radius); }
+  .ps-tab-plus { display: grid; place-items: center; width: 44px; height: 30px; border-radius: 10px; background: var(--ps-accent); color: var(--ps-on-accent); }
+  .ps-tab-plus svg { width: 18px; height: 18px; stroke-width: 2.4; }
+  .ps-tab-create-menu { position: absolute; top: auto; bottom: calc(100% + 10px); left: 50%; width: 220px; transform: translateX(-50%); }
+  .ps-tab-create-menu .ps-menu-item { min-height: 44px; font-size: 14px; }
+}
+
+/* Phone layout (server page): compact server card, large power buttons, four tabs that always fit
+   (Console, Players, Files, More) and a console that fills the screen with quick commands above the
+   command bar. */
+.ps-phone-sections, .ps-quick-commands { display: none; }
+@media (max-width: 600px) {
+  .ps .ps-server-info { gap: 10px 14px; margin-bottom: 12px; padding: 14px; }
+  .ps .ps-info-icon { width: 44px; height: 44px; }
+  .ps .ps-software-icon { width: 30px; height: 30px; }
+  .ps .ps-software-icon img { width: 26px; height: 26px; }
+  .ps .ps-game-title h2 { font-size: 21px; }
+  .ps .ps-info-content > .ps-motd-preview { display: none; }
+  .ps .ps-info-details { gap: 6px 14px; }
+  .ps .ps-info-details dt { font-size: 11px; }
+  .ps .ps-statusbar-power .ps-btn { width: 40px; height: 40px; }
+
+  .ps .ps-server-workspace { gap: 12px; }
+  .ps .ps-server-workspace .ps-power-tile { padding: 8px; }
+  .ps .ps-server-workspace .ps-power-tile .ps-btn { min-height: 52px; font-size: 12px; }
+
+  .ps .ps-server-workspace .ps-widget-grid { display: none; }
+  .ps .ps-phone-sections { grid-area: nav; position: relative; z-index: 2; display: flex; gap: 4px; padding: 4px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+  .ps-phone-sections > *, .ps-phone-more > .ps-phone-section { flex: 1 1 0; min-width: 0; }
+  .ps-phone-more { position: relative; display: flex; }
+  .ps-phone-section { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 0 6px; overflow: hidden; border: 0; border-radius: 10px; background: none; color: var(--ps-muted); font: 600 13px/1.2 var(--ps-font); text-overflow: ellipsis; white-space: nowrap; }
+  .ps-phone-section svg { flex: none; width: 14px; height: 14px; transform: rotate(90deg); }
+  .ps-phone-section[aria-current="page"] { background: var(--ps-raised); color: var(--ps-ink); box-shadow: inset 0 -2px 0 var(--ps-accent); }
+  .ps-phone-section:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; }
+  .ps-phone-more-menu { top: calc(100% + 8px); width: min(260px, calc(100vw - 28px)); max-height: 60dvh; overflow-y: auto; }
+  .ps-phone-more-menu .ps-menu-item { min-height: 44px; font-size: 14px; }
+  .ps-phone-more-menu .ps-menu-item[aria-current="page"] { background: var(--ps-raised); }
+
+  .ps .ps-server-workspace .ps-console { height: max(380px, calc(100dvh - 140px)); min-height: 0; scroll-margin-top: 72px; }
+  .ps .ps-quick-commands { display: flex; flex: none; gap: 6px; padding: 8px 12px 0; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--ps-console-line); }
+  .ps .ps-quick-commands::-webkit-scrollbar { display: none; }
+  .ps .ps-quick-commands { background: var(--ps-console-raised); }
+  .ps .ps-quick-commands:not([style*="none"]) + .ps-command { border-top: 0; }
+  .ps-quick-command { flex: none; min-height: 36px; padding: 0 12px; border: 1px solid var(--ps-console-line); border-radius: var(--ps-radius-pill); background: var(--ps-console-raised); color: var(--ps-console-ink); font: 12px var(--ps-mono); white-space: nowrap; }
+  .ps-quick-command:disabled { opacity: .45; }
+  .ps .ps-command input { height: 44px; font-size: 16px; }
+  .ps .ps-command button { min-width: 44px; height: 44px; }
+}

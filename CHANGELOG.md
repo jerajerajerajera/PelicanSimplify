@@ -1,5 +1,81 @@
 # Changes
 
+## 0.5.0-beta.1 (beta channel)
+The first beta of 0.5.0, with two big additions: Simplify on phones and support for other Pelican plugins. Everything from the 0.4.7 and 0.5.0 snapshots below; tested on Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- Phones: the overview, the server page, popups as sheets and the creator are made for small screens (0.4.7-snapshot.1 to 4). Wider screens do not change.
+- Other plugins: their account pages in the account menu, their widgets as tiles on the overview and the server page, and a plugin that does part of what Simplify does (such as Subdomains) switches off only that part instead of the whole dashboard (0.5.0-snapshot.1 to 3).
+
+## 0.5.0-snapshot.3 (snapshot channel)
+Widgets from other plugins as tiles, the last part of better support for other Pelican plugins. Tested on a Pelican 1.0.0-rc.1 panel with the official Legal Pages, Player Counter, User Creatable Servers, Minecraft Modrinth and Tickets plugins.
+- Widgets plugins add to Pelican's console (such as players, hostname and map from Player Counter) show above the server workspace; widgets they add to the server list (such as the resource limits of User Creatable Servers) show above your servers. Each runs with its own access check and refreshes like on Pelican's page; a server without widgets shows nothing.
+- Administrators can switch each widget off in Simplify settings, next to the pages from plugins.
+- A widget that fails leaves out only itself.
+- Pages from plugins in the account menu now also open when the plugin serves them outside the panel (Legal Pages): those open in a new tab. Plugin pages and widgets may now be shown inside Simplify's popups.
+
+## 0.5.0-snapshot.2 (snapshot channel)
+Plugins that do part of what Simplify does no longer switch the whole dashboard off; only the overlapping part steps aside.
+- Subdomains (official plugin): Simplify's automatic subdomains switch off while it is enabled, so no DNS record is made twice. The setting explains why and your choice is kept for when the plugin is disabled again.
+- Minecraft Modrinth and User Creatable Servers: they work side by side with Simplify; Simplify settings and the plugin manager show what overlaps.
+- The list lives in conflicts.json under "overlaps". Older Simplify versions only read "plugins", so they are not affected.
+
+## 0.5.0-snapshot.1 (snapshot channel)
+Pages from other plugins in the account menu, the first part of better support for other Pelican plugins.
+- Pages that plugins add for every account (such as Imprint, Privacy Policy and Terms of Service from Legal Pages, or Create Server from User Creatable Servers) were unreachable with Simplify. They now open from the account menu: a plugin button lists them, and each opens in a popup like Profile settings.
+- Only pages the person may open are listed. Administrators can switch each page off in Simplify settings, next to the admin and server pages from plugins.
+- Browser tests check the list on desktop and on phones.
+
+## 0.4.7-snapshot.4 (snapshot channel)
+Phone layout for the server creator and the first setup, the last part of the phone experience for now. Wider screens do not change.
+- The step row becomes "Step 1 of 4" with the current step's name and a progress bar, instead of four steps over two lines.
+- Choices (server type, game, backups, CPU, storage, icon) are full-width rows with the icon on the left.
+- Back and Next stay at the bottom of the screen, 48 px tall, with Next taking the most room.
+- Browser tests check the phone creator at 360 and 430 px.
+
+## 0.4.7-snapshot.3 (snapshot channel)
+Popups as sheets on phones, the third part of the phone experience. Wider screens do not change.
+- Every popup (creating a server, settings, confirmations) slides up from the bottom as a sheet with a drag handle. Drag the header down to close it; unsaved work is still asked about first.
+- On the server page, sections (game settings, players, files and the rest) open as a full-height sheet over the page instead of between the tabs and the console, so the page behind them no longer jumps.
+- The save bar sits at the bottom of the sheet, above the home indicator, with large Cancel and Save buttons.
+- Browser tests check the sheet, its save bar and closing it by dragging.
+
+## 0.4.7-snapshot.2 (snapshot channel)
+Phone layout for the server page, the second part of the phone experience. Wider screens do not change.
+- A more compact server card, larger power buttons and 40 px buttons in the status bar that stays at the top while scrolling.
+- Four tabs that always fit: Console, Players, Files and More. More lists every other section (game settings, plugins or mods, backups, schedules, software, network, performance, website, activity, advanced and pages from other plugins).
+- The console fills the screen, with a 44 px command bar and quick commands above it for Minecraft servers (list, say, time set day, weather clear, save-all). A quick command is put in the command bar to send with ↵, so nothing runs by accident.
+- Browser tests check the phone server page at 360, 390 and 430 px.
+
+## 0.4.7-snapshot.1 (snapshot channel)
+Phone layout for the server overview, the first part of the phone experience on the roadmap. Wider screens do not change.
+- The page scrolls as a whole on phones: every server is reachable without scrolling inside a box, and nothing is cut off.
+- Game and node filters share one swipeable row with touch-sized chips.
+- Host health is a one-line summary (status, CPU and RAM) above the servers; tapping it still opens the node details.
+- Servers are compact rows with their status, CPU and RAM and one large power button: start when offline, otherwise stop (with the usual confirmation).
+- A tab bar at the bottom: Servers, New (choose Minecraft or another game) and Menu (the panel menu, now opening above the tab bar).
+- Browser tests check the phone overview at 360, 390 and 430 px.
+
+## 0.4.6 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+A cleaner repository. Nothing changes in how Simplify works.
+- The shell installers are gone (INSTALL-PELICAN-SIMPLIFY.sh, ROLLBACK-PELICAN-SIMPLIFY.sh, RESET-PLUGINS.sh and their PHP helpers). Install and update through Pelican's plugin import or Simplify's plugin manager. Coming from the standalone creator: disable and delete it under Admin → Plugins first; the setup check now says so.
+- The open points of the "other games" creator proposal moved to the roadmap.
+- A manual "Delete branches" workflow removes branches that are no longer needed; main, beta and snapshot are always kept.
+
+## 0.4.5 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which scans the whole repository, not only the plugin. Nothing changes in how Simplify works.
+- The panel check of the shell installer (check-panel.php) uses Laravel's File and Process helpers; preflight.php and the tests write errors with fprintf.
+- The dependency and banner tests read committed fixtures under tests/fixtures instead of writing and deleting temporary files.
+- tests/hub-check.py now scans every PHP file in the repository, like the Hub.
+
+## 0.4.4 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+For the Pelican Hub, which refuses plugins with direct file or process calls. Nothing changes in how Simplify works.
+- The setup check's write test and the updater's temporary download use Laravel's File helpers; the Minecraft status ping sends its packet with stream_socket_sendto.
+- The dashboard's copy and rename actions are now called copyText and renameServer.
+- Repository archives (what the Hub syncs) now hold only the plugin, like the release zip: tests, build scripts, installers and documentation are left out through .gitattributes. They stay in the repository.
+
+## 0.4.3 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+- Simplify is published on the Pelican Hub: plugin.json's update_url now points at the Hub (https://hub.pelican.dev/plugins/pelican-simplify/update.json), as the Hub requires, so Pelican's own updater gets Simplify from the Hub.
+- Simplify's plugin manager keeps all three channels: it also reads the stable, beta and snapshot builds on GitHub, and offers the newest of the Hub release and your channel. Until the Hub has a release, the stable build on GitHub is used.
+
 ## 0.4.2 — stable release (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 Everything from 0.4.1-rc.2 and the 0.4.2 betas, now stable for both Pelican releases. Changes since stable 0.4.0:
 - **Pelican 1.0.0-rc.1 support** (PHP 8.4), next to 1.0.0-beta38, including rc.1's "hide port" allocation setting. (0.4.1)

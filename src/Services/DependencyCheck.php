@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Simplify\Panel\Services;
 
-/** Shared by the native installer, shell preflight and first-run setup. */
+/** Shared by the native installer and first-run setup. */
 final class DependencyCheck
 {
     public static function inspect(string $panel, string $plugin, bool $runtime = true, bool $allowLegacy = false): array
@@ -36,7 +36,7 @@ final class DependencyCheck
         }
         $legacyManifest = $panel.'/plugins/simple-server-creator/plugin.json';
         $legacy = is_readable($legacyManifest) ? json_decode((string) file_get_contents($legacyManifest), true) : [];
-        $add('Standalone creator retired', $allowLegacy || ($legacy['meta']['status'] ?? '') !== 'enabled', 'Use the migration installer to retire the former standalone creator before enabling the unified creator.');
+        $add('Standalone creator retired', $allowLegacy || ($legacy['meta']['status'] ?? '') !== 'enabled', 'Disable and delete the former standalone creator (simple-server-creator) under Admin → Plugins before enabling the unified creator.');
         $manifestPath = $panel.'/public/build/manifest.json';
         $manifest = is_readable($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
         $required = [];
@@ -132,8 +132,12 @@ final class DependencyCheck
     {
         if (!is_dir($directory) || !is_writable($directory)) return false;
         $path = $directory.'/.simplify-preflight-'.bin2hex(random_bytes(8));
-        if (@file_put_contents($path, 'ready') === false) return false;
-        $ok = @file_get_contents($path) === 'ready';
-        return @unlink($path) && $ok;
+        try {
+            if (\Illuminate\Support\Facades\File::put($path, 'ready') === false) return false;
+            $ok = \Illuminate\Support\Facades\File::get($path) === 'ready';
+            return \Illuminate\Support\Facades\File::delete($path) && $ok;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

@@ -217,6 +217,181 @@ const { start } = require('./browser-harness');
     await performance.close();
     console.log('PASS performance presets like the creator, with custom values');
 
+    // 13. Phone overview: the page scrolls as a whole, one filter row, compact rows with one large power
+    // button, a one-line health summary and a tab bar (360, 390 and 430 px wide).
+    for (const width of [360, 390, 430]) {
+      const phone = await open('/?mode=overview&theme=dark', { width, height: 800 });
+      const layout = await phone.evaluate(() => {
+        const nested = [...document.querySelectorAll('.ps *')].filter((el) => {
+          const s = getComputedStyle(el);
+          return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 4 && el.offsetParent;
+        }).map((el) => el.className.toString());
+        const toolbar = document.querySelector('.ps-overview-toolbar');
+        const tabbar = document.querySelector('.ps-tabbar').getBoundingClientRect();
+        const power = [...document.querySelectorAll('.ps-overview-power > .ps-btn')].filter((b) => b.offsetParent);
+        const small = [...document.querySelectorAll('.ps-tabbar button, .ps-overview-toolbar .ps-chip')].filter((b) => b.offsetParent && b.offsetHeight < 40).length;
+        return {
+          nested, small, pageScrolls: document.scrollingElement.scrollHeight > innerHeight, fits: document.documentElement.scrollWidth <= innerWidth,
+          filterRows: new Set([...toolbar.querySelectorAll('.ps-chip')].filter((c) => c.offsetParent).map((c) => Math.round(c.getBoundingClientRect().top))).size,
+          tabbarAtBottom: Math.round(tabbar.bottom) === innerHeight && tabbar.height >= 60,
+          powerPerCard: [...document.querySelectorAll('.ps-server-entry.has-power')].map((e) => [...e.querySelectorAll('.ps-overview-power > .ps-btn')].filter((b) => b.offsetParent).length),
+          powerSize: power.map((b) => b.offsetHeight),
+          healthHeight: document.querySelector('.ps-host-health').offsetHeight,
+        };
+      });
+      assert.deepEqual(layout.nested, [], width + ': no scroll areas inside the page');
+      assert.ok(layout.pageScrolls && layout.fits, width + ': the page itself scrolls and fits');
+      assert.equal(layout.filterRows, 1, width + ': game and node filters share one row');
+      assert.ok(layout.tabbarAtBottom, width + ': tab bar at the bottom');
+      assert.ok(layout.powerPerCard.length && layout.powerPerCard.every((n) => n === 1), width + ': one power button per card: ' + layout.powerPerCard);
+      assert.ok(layout.powerSize.every((h) => h >= 44), width + ': power buttons are touch-sized');
+      assert.equal(layout.small, 0, width + ': tabs and filters are touch-sized');
+      assert.ok(layout.healthHeight <= 60, width + ': host health is one line');
+      if (width === 390) {
+        // Stop asks for confirmation inside the row; Menu opens the panel menu above the tab bar; New opens a choice of creators.
+        await phone.click('.ps-server-entry.has-power [data-power="stop"]');
+        await phone.waitForSelector('.ps-power-confirm:visible');
+        await data(phone, (d) => { d.powerConfirmation = null; });
+        await phone.click('.ps-tabbar .ps-tab[aria-controls="ps-navigation-items"]');
+        const menu = await phone.evaluate(() => { const r = document.querySelector('.ps-nav-items').getBoundingClientRect(); return { visible: r.height > 0, above: r.bottom <= document.querySelector('.ps-tabbar').getBoundingClientRect().top }; });
+        assert.deepEqual(menu, { visible: true, above: true }, 'panel menu opens above the tab bar');
+        if (process.env.SCREENSHOT_DIR) await phone.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-overview.png' });
+        await phone.click('.ps-tabbar .ps-tab[aria-controls="ps-navigation-items"]');
+        assert.equal(await data(phone, (d) => d.navMenu), false, 'Menu closes again');
+        await phone.click('.ps-tab-create > .ps-tab');
+        await phone.waitForSelector('.ps-tab-create-menu .ps-menu-item:visible');
+        assert.equal(await phone.locator('.ps-tab-create-menu .ps-menu-item:visible').count(), 2);
+        await phone.click('.ps-tab-create-menu .ps-menu-item >> text=Minecraft server');
+        await phone.waitForSelector('.ps-modal');
+        assert.equal(await data(phone, (d) => d.createGame), 'minecraft');
+      }
+      await phone.close();
+    }
+    const desktop = await open('/?mode=overview&theme=dark');
+    assert.equal(await desktop.locator('.ps-tabbar').isVisible(), false, 'no tab bar on desktop');
+    await desktop.close();
+    console.log('PASS phone overview: page scroll, one filter row, compact rows, tab bar');
+
+    // 14. Phone server page: four tabs that fit, More lists the other sections, the console fills the screen
+    // and quick commands fill the command bar.
+    for (const width of [360, 390, 430]) {
+      const phone = await open('/?mode=server&theme=dark', { width, height: 800 });
+      await data(phone, (d) => { d.connected = true; });
+      const layout = await phone.evaluate(() => {
+        const tabs = [...document.querySelectorAll('.ps-phone-sections .ps-phone-section')].filter((b) => b.offsetParent);
+        const bar = document.querySelector('.ps-phone-sections').getBoundingClientRect();
+        const consoleBox = document.querySelector('.ps-console').getBoundingClientRect();
+        const power = [...document.querySelectorAll('.ps-power-tile .ps-btn')].map((b) => b.offsetHeight);
+        return {
+          tabs: tabs.map((b) => b.textContent.trim()), fit: tabs.every((b) => b.scrollWidth <= b.clientWidth && b.getBoundingClientRect().right <= bar.right + 1),
+          small: tabs.filter((b) => b.offsetHeight < 44).length, grid: !!document.querySelector('.ps-widget-grid').offsetParent,
+          consoleHeight: Math.round(consoleBox.height), power, fits: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      assert.deepEqual(layout.tabs, ['Console', 'Players', 'Files', 'More'], width + ': four tabs');
+      assert.ok(layout.fit && layout.fits, width + ': tabs fit on one row without clipping');
+      assert.equal(layout.small, 0, width + ': tabs are touch-sized');
+      assert.equal(layout.grid, false, width + ': the section grid makes way for the tabs');
+      assert.ok(layout.consoleHeight >= 600, width + ': console fills the screen (' + layout.consoleHeight + ' px)');
+      assert.ok(layout.power.length === 4 && layout.power.every((h) => h >= 48), width + ': large power buttons');
+      if (width === 390) {
+        await phone.click('.ps-quick-command >> text=say …');
+        assert.equal(await data(phone, (d) => d.command), 'say ');
+        await phone.waitForFunction(() => document.activeElement === document.querySelector('.ps-command input')); // quick command focuses the command bar
+        await phone.click('.ps-phone-more > .ps-phone-section');
+        await phone.waitForSelector('#ps-phone-more-menu .ps-menu-item:visible');
+        const more = await phone.locator('#ps-phone-more-menu .ps-menu-item:visible').allInnerTexts();
+        assert.ok(more.includes('Game settings') && !more.includes('Files'), 'More lists the other sections: ' + more);
+        await phone.click('#ps-phone-more-menu .ps-menu-item >> text=Game settings');
+        await phone.waitForSelector('.ps-tabs');
+        assert.equal(await phone.getAttribute('.ps-phone-more > .ps-phone-section', 'aria-current'), 'page', 'More shows the open section');
+        if (process.env.SCREENSHOT_DIR) await phone.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-server.png' });
+        // 15. Workspaces open as a sheet over the page (not docked) with the save bar at the bottom; dragging the header down closes it.
+        await phone.waitForTimeout(400); // slide-in
+        const sheet = await phone.evaluate(() => {
+          const d = Alpine.$data(document.querySelector('.ps')), modal = document.querySelector('.ps-modal').getBoundingClientRect(), foot = document.querySelector('.ps-modal-foot').getBoundingClientRect();
+          return { docked: d.docked(), top: Math.round(modal.top), bottom: Math.round(modal.bottom) === innerHeight, foot: Math.round(foot.bottom) === innerHeight, locked: getComputedStyle(document.documentElement).overflow === 'hidden' };
+        });
+        assert.deepEqual(sheet, { docked: false, top: 12, bottom: true, foot: true, locked: true }, 'workspace sheet with the save bar at the bottom: ' + JSON.stringify(sheet));
+        const head = await phone.locator('.ps-modal-head').boundingBox();
+        const touch = await phone.context().newCDPSession(phone);
+        const drag = (type, y) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: head.x + 60, y }] });
+        await drag('touchStart', head.y + 20);
+        for (let i = 1; i <= 8; i++) await drag('touchMove', head.y + 20 + i * 25);
+        await drag('touchEnd');
+        await phone.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
+      }
+      await phone.close();
+    }
+    const desk = await open('/?mode=server&theme=dark');
+    assert.deepEqual(await desk.evaluate(() => [!!document.querySelector('.ps-phone-sections').offsetParent, !!document.querySelector('.ps-quick-commands').offsetParent, !!document.querySelector('.ps-widget-grid').offsetParent]), [false, false, true], 'desktop keeps its section menu');
+    await desk.close();
+    console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands, sheets');
+
+    // 16. Phone creator: "Step 1 of 4" with a progress bar, choices as full-width rows, Back / Next at the bottom.
+    for (const width of [360, 430]) {
+      const wizard = await browser.newPage({ viewport: { width, height: 640 } });
+      await wizard.goto(base + '/frame/creator');
+      await wizard.waitForSelector('.ssc-progress');
+      const layout = await wizard.evaluate(() => {
+        const visible = (el) => !!el.offsetParent;
+        const cards = [...document.querySelectorAll('.ssc-card-content')].map((c) => c.getBoundingClientRect());
+        const list = document.querySelector('.ssc-cards').getBoundingClientRect();
+        const foot = document.querySelector('.fi-sc-wizard-footer');
+        foot.scrollIntoView({ block: 'nearest' });
+        return {
+          steps: [...document.querySelectorAll('.ssc-progress > button')].filter(visible).map((b) => b.textContent.trim()),
+          count: document.querySelector('.ssc-progress-count').textContent.trim(),
+          rows: cards.every((c) => Math.round(c.width) === Math.round(list.width)) && cards.every((c, i) => i === 0 || c.top > cards[i - 1].bottom),
+          sticky: getComputedStyle(foot).position, buttons: [...foot.querySelectorAll('.fi-btn')].map((b) => b.offsetHeight >= 48),
+        };
+      });
+      assert.deepEqual(layout, { steps: ['1Server Type'], count: 'Step 1 of 4', rows: true, sticky: 'sticky', buttons: [true, true] }, width + ': phone creator layout ' + JSON.stringify(layout));
+      if (process.env.SCREENSHOT_DIR && width === 430) await wizard.screenshot({ path: process.env.SCREENSHOT_DIR + '/phone-creator.png' });
+      await wizard.close();
+    }
+    console.log('PASS phone creator: step count with a progress bar, choice rows, Back / Next at the bottom');
+
+    // 15. Account-level pages from other plugins (such as Legal Pages) open from the account menu.
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const account = await open('/?mode=overview&theme=light', viewport);
+      const pluginButton = account.locator('#ps-account-actions [aria-label="Plugin pages"]');
+      assert.equal(await pluginButton.count(), 1);
+      await data(account, (d) => { d.boot.plugin_pages = [{ key: 'ext-imprint', label: 'Imprint', url: '/frame/native', plugin: 'Legal Pages' }, { key: 'ext-termsofservice', label: 'Terms of Service', url: '/frame/native', plugin: 'Legal Pages' }]; });
+      if (viewport.width < 600) await data(account, (d) => { d.navMenu = true; });
+      await account.click('.ps-account-button');
+      await pluginButton.waitFor({ state: 'visible' });
+      await pluginButton.click();
+      await account.waitForSelector('#ps-plugin-pages', { state: 'visible' });
+      assert.deepEqual(await account.locator('#ps-plugin-pages .ps-notify-item strong').allTextContents(), ['Imprint', 'Terms of Service']);
+      assert.equal(await account.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, viewport.width + ': no horizontal scroll with the plugin pages open');
+      if (process.env.SCREENSHOT_DIR) await account.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-pages-' + viewport.width + '.png' });
+      await account.locator('#ps-plugin-pages .ps-notify-item').first().click();
+      await account.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).modal === 'admin-page');
+      assert.equal(await data(account, (d) => d.adminPage.label), 'Imprint');
+      await account.waitForSelector('#ps-plugin-pages', { state: 'hidden' });
+      await account.close();
+    }
+    console.log('PASS plugin pages in the account menu, opened in a popup');
+
+    // 16. Widgets from other plugins: a tile sized to its content above the server workspace and the server list; none without widgets.
+    const widgets = await open('/?mode=server&theme=dark');
+    await data(widgets, (d) => { d.server = { ...d.server, plugin_widgets_url: '/frame/widgets' }; });
+    await widgets.waitForFunction(() => (Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights['11111111-1111-1111-1111-111111111111'] || Object.values(Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights)[0] || 0) > 20);
+    const tile = await widgets.evaluate(() => { const box = document.querySelector('.ps-server-dashboard .ps-plugin-widgets'), frame = box.querySelector('iframe'), inner = frame.contentDocument.querySelector('.simplify-plugin-widgets'); return { frame: frame.offsetHeight, inner: Math.ceil(inner.getBoundingClientRect().height), scroll: frame.contentDocument.documentElement.scrollHeight <= frame.clientHeight + 1, before: !!(box.compareDocumentPosition(document.querySelector('.ps-server-workspace')) & Node.DOCUMENT_POSITION_FOLLOWING) }; });
+    assert.ok(tile.frame === tile.inner && tile.scroll && tile.before, 'server widget tile: ' + JSON.stringify(tile));
+    if (process.env.SCREENSHOT_DIR) await widgets.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-widgets-server.png' });
+    await data(widgets, (d) => { d.server = { ...d.server, uuid: 'empty-widgets', plugin_widgets_url: '/frame/widgets?empty=1' }; });
+    await widgets.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights['empty-widgets'] === 0);
+    assert.equal(await widgets.evaluate(() => document.querySelector('.ps-server-dashboard .ps-plugin-widgets').getBoundingClientRect().height), 0, 'no widgets: no tile');
+    await widgets.close();
+    const listWidgets = await open('/?mode=overview&theme=light');
+    await data(listWidgets, (d) => { d.boot.plugin_widgets_url = '/frame/widgets'; });
+    await listWidgets.waitForFunction(() => (Alpine.$data(document.querySelector('.ps')).pluginWidgetHeights.app || 0) > 20);
+    if (process.env.SCREENSHOT_DIR) await listWidgets.screenshot({ path: process.env.SCREENSHOT_DIR + '/plugin-widgets-list.png' });
+    await listWidgets.close();
+    console.log('PASS plugin widgets as tiles sized to their content, hidden when a server has none');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

@@ -7,6 +7,9 @@
   const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen'];
   const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
+  // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
+  const PHONE_SECTIONS = ['players', 'files'];
+  const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
   const accentInk = (color) => {
     if (window.SimplifyTheme?.accentInk) return window.SimplifyTheme.accentInk(color);
     const [r, g, b] = color.slice(1).match(/../g).map((v) => {
@@ -47,6 +50,8 @@
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
       adminPage: null,
       overviewCompact: false,
+      phone: false,
+      sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
       powerConfirmation: null,
       healthExpanded: false,
@@ -67,6 +72,10 @@
       overviewView: typeof innerWidth !== 'undefined' && innerWidth <= 600 ? 'list' : 'grid',
       // Shell
       accountMenu: false,
+      createMenu: false,
+      phoneMore: false,
+      PHONE_SECTIONS,
+      QUICK_COMMANDS,
       navMenu: false,
       theme: 'system',
       themeDark: false,
@@ -787,6 +796,7 @@
       restoreOverviewView() {
         const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
         this.overviewCompact = phone;
+        this.phone = phone;
         this.overviewView = 'grid';
         try {
           const view = localStorage.getItem(this.overviewViewKey());
@@ -956,6 +966,14 @@
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
       },
+      /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
+      createChoices() {
+        return [
+          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
+          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'native', label: 'New server', icon: 'host' },
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
+      },
       openCreate(game = 'minecraft') {
         if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
@@ -1029,6 +1047,31 @@
         } catch {
           this.toast('Settings could not be opened.', 'danger');
         }
+      },
+      /** Measured height of each plugin widget frame (app list, or per server uuid); 0 hides the tile. */
+      pluginWidgetHeights: {},
+      pluginWidgetsLoaded(frame, slot) {
+        this.styleFrame(frame, 'native');
+        try {
+          const box = frame.contentDocument?.querySelector('.simplify-plugin-widgets');
+          const measure = () => { this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: box && box.children.length ? Math.ceil(box.getBoundingClientRect().height) : 0 }; };
+          measure();
+          // Widgets poll and change size (a player list fills in): follow the content.
+          if (box) new frame.contentWindow.ResizeObserver(measure).observe(box);
+        } catch {
+          this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: 0 };
+        }
+      },
+      /** Account-level pages other plugins add to the panel (hidden ones are left out by the server). */
+      pluginPages() {
+        return this.boot.plugin_pages || [];
+      },
+      openPluginPage(page) {
+        if (!page?.url || this.busy || this.modal) return;
+        this.accountMenu = false;
+        if (page.new_tab) return void window.open(page.url, '_blank', 'noopener');
+        this.adminPage = page;
+        this.openPopup('admin-page');
       },
       openAccount() {
         if (!this.boot.profile_url || this.busy || this.modal) return;
@@ -1110,7 +1153,7 @@
           this.busy = false;
         }
       },
-      async copy(text, message = 'Address copied') {
+      async copyText(text, message = 'Address copied') {
         try {
           await navigator.clipboard.writeText(text);
         } catch {
@@ -1241,7 +1284,8 @@
       },
       /** Server workspaces open inside the page instead of as a popup. */
       docked() {
-        return !!this.server && !!this.modal && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
+        // Phones open workspaces as sheets over the page instead of docking them next to the console.
+        return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
@@ -1277,7 +1321,7 @@
         if (this.busy || !page?.url) return;
         if (this.modal === 'external' && this.externalPage?.key === page.key) return;
         const change = () => { this.externalPage = page; this.modal = 'external'; };
-        if (this.docked()) change();
+        if (this.docked() || this.phone) change();
         else await this.layoutTransition(change);
         this.loading = true;
       },
@@ -1287,7 +1331,7 @@
       async open(key) {
         if (this.busy || !this.showWidget(key)) return;
         const request = ++this.modalRequest;
-        if (this.server && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
+        if (this.server && !this.phone && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
         else this.modal = key;
         this.loading = true;
         const current = () => !this.destroyed && this.modalRequest === request && this.modal === key;
@@ -1330,6 +1374,25 @@
             this.focusModal();
           }
         }
+      },
+      /** Phones: drag a sheet down by its header to close it (close() still asks about unsaved work). */
+      sheetStart(event) {
+        if (!this.phone || this.docked() || event.touches.length !== 1 || !event.target.closest('.ps-modal-head') || event.target.closest('button, a, input')) return;
+        this.sheetDrag = { y: event.touches[0].clientY, dy: 0, el: event.currentTarget };
+        this.sheetDrag.el.style.transition = 'none';
+      },
+      sheetMove(event) {
+        if (!this.sheetDrag) return;
+        this.sheetDrag.dy = Math.max(0, event.touches[0].clientY - this.sheetDrag.y);
+        this.sheetDrag.el.style.transform = this.sheetDrag.dy ? 'translateY(' + this.sheetDrag.dy + 'px)' : '';
+      },
+      sheetEnd() {
+        const drag = this.sheetDrag;
+        if (!drag) return;
+        this.sheetDrag = null;
+        drag.el.style.transition = '';
+        drag.el.style.transform = '';
+        if (drag.dy > 110) this.close();
       },
       async close() {
         if (this.busy || this.closingCreator) return;
@@ -1460,6 +1523,19 @@
         this.historyIndex = -1;
         this.command = '';
       },
+      /** Puts a quick command in the command bar (a trailing space means: type the rest), ready to send. */
+      useQuickCommand(text) {
+        if (!this.connected || !this.server?.permissions['control.console']) return;
+        this.command = text;
+        this.$nextTick(() => {
+          const input = this.$root.querySelector('.ps-command input');
+          input?.focus();
+          input?.setSelectionRange(text.length, text.length);
+        });
+      },
+      phoneMoreActive() {
+        return (!!this.modal && this.widgets.some((w) => w.key === this.modal && !PHONE_SECTIONS.includes(w.key))) || this.modal === 'external';
+      },
       historyBack() {
         this.historyIndex = Math.min(this.historyIndex + 1, this.history.length - 1);
         this.command = this.history[this.historyIndex] || '';
@@ -1588,9 +1664,9 @@
         else if (result?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
         else this.toast('Changes applied. They will load at the next start.', 'ok');
       },
-      async rename() {
+      async renameServer() {
         const name = this.name;
-        const result = await this.run(() => wire.rename(name), 'Server renamed');
+        const result = await this.run(() => wire.renameServer(name), 'Server renamed');
         if (result !== SKIPPED) this.server.name = name;
       },
       async discard() {

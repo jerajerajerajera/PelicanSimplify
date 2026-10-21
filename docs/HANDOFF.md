@@ -16,11 +16,12 @@ Three channels, each on its own branch (decided 20 October 2026):
 
 | Channel | Branch | Update file | Versions | Latest zip |
 |---|---|---|---|---|
-| Stable | `main` | `update.json` (also read by Pelican's own updater and the Pelican Hub) | `0.4.2` | `dist/pelican-simplify-latest.zip` + GitHub Release |
+| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.4.3` | `dist/pelican-simplify-latest.zip` + GitHub Release |
 | Beta | `beta` | `update-beta.json` | `0.4.3-beta.N`, `0.4.3-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
 | Snapshot | `snapshot` | `update-snapshot.json` | `0.4.3-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.2 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Current:** stable 0.4.3 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
 - **Channel choice:** Simplify settings → Plugin manager → "Simplify versions": Stable (default), Beta or Snapshot. Stored as the `simplify_beta` and `simplify_snapshot` switches. A panel gets the newest of its channel and every more stable one (`PluginUpdater::channelUrls`).
 - **Bridge for old betas:** installations up to 0.4.2-beta.7 read `main/update-beta.json`. A stable build writes that file too, so they move to the stable release, whose code then reads the beta branch.
@@ -33,11 +34,11 @@ Three channels, each on its own branch (decided 20 October 2026):
    - The version decides the channel: `-snapshot.N`, `-beta.N`/`-rc.N`, or none for stable.
 3. Add an entry at the top of `CHANGELOG.md`.
 4. `python3 scripts/build-package.py`. It builds `dist/pelican-simplify-v<version>.zip` and writes the channel's update file with download links on the channel's branch, updates the latest zip, removes zips this branch no longer serves and refreshes `SHA256SUMS`. A stable build also writes `update-beta.json`, `dist/pelican-simplify-latest.zip` and the README install link. Supported Pelican versions are in `SUPPORTED_PANELS`.
-5. Run all checks and **check every exit code**, chained with `&&`:
+5. Run all checks and **check every exit code**, chained with `&&`. `tests/run.sh` includes `tests/hub-check.py`, which runs the Pelican Hub's checks (banned file and process calls in every PHP file of the repository, tests and helper scripts included, as the Hub scans the whole repository; required plugin.json fields read from pelican-dev/docs; update_url on the Hub):
    - `python3 tests/package-layout.py && bash tests/run.sh && PHP_BIN=php8.4 bash tests/run.sh && PW_CHROMIUM=/opt/pw-browsers/chromium node tests/theme-browser.js`
 6. Commit with the attribution lines the session asks for and push to the channel's branch (via a PR, with the owner's approval).
 7. **Promote:** PR `snapshot` → `beta` for a beta (version `-beta.1`), PR `beta` → `main` for stable. After a stable release, merge `main` back into `beta` and `snapshot` and continue with the next `-snapshot.1`.
-8. Stable releases only: the owner creates the GitHub Release by hand (tag `v<version>` on `main`, zip attached, marked latest). Pushing tags from the cloud environment is refused (403).
+8. Stable releases only: the `Release` workflow (`.github/workflows/release.yml`) creates GitHub Release `v<version>` with the zip and the CHANGELOG section, marked latest, as soon as the stable version is on `main`. It skips versions that already have a release and can be started by hand under Actions. (Pushing tags from the cloud environment is refused, so this is how releases are made.)
 
 ## Architecture (main files)
 

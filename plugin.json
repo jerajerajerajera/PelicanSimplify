@@ -2,7 +2,7 @@
   "id": "pelican-simplify",
   "name": "PelicanSimplify",
   "author": "jera",
-  "version": "0.4.2",
+  "version": "0.5.0-beta.1",
   "description": "Unified Simplify dashboard and optional easy server creator with shared theme and setup settings.",
   "category": "plugin",
   "namespace": "Simplify\\Panel",
@@ -14,5 +14,5 @@
   ],
   "panel_version": "^1.0.0-beta38",
   "api_version": 1,
-  "update_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/update.json"
+  "update_url": "https://hub.pelican.dev/plugins/pelican-simplify/update.json"
 }
