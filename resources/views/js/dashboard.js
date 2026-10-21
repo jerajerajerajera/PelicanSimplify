@@ -1048,6 +1048,16 @@
           this.toast('Settings could not be opened.', 'danger');
         }
       },
+      /** Account-level pages other plugins add to the panel (hidden ones are left out by the server). */
+      pluginPages() {
+        return this.boot.plugin_pages || [];
+      },
+      openPluginPage(page) {
+        if (!page?.url || this.busy || this.modal) return;
+        this.accountMenu = false;
+        this.adminPage = page;
+        this.openPopup('admin-page');
+      },
       openAccount() {
         if (!this.boot.profile_url || this.busy || this.modal) return;
         this.openPopup('account');

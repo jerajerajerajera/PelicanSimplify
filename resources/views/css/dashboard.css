@@ -692,7 +692,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-nav-items > div { width: 100%; }
   .ps-nav-items .ps-dropdown { position: static; width: 100%; margin-top: 4px; box-shadow: none; }
   .ps-notify-count { position: static; margin-left: auto; }
-  .ps-account { width: 100%; }
+  .ps-account { flex-wrap: wrap; width: 100%; }
+  .ps-account .ps-plugin-pages { flex-basis: 100%; }
   .ps-account-button { flex: 1 1 auto; max-width: none; }
   .ps-account-menu { order: 0; }
   .ps-account.account-open .ps-account-menu { margin: 0 0 0 8px; }

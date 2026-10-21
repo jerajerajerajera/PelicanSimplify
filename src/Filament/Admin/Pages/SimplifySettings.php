@@ -237,7 +237,7 @@ class SimplifySettings extends Page implements HasForms
                 self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.'),
                 self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.'),
                 self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. Each add-on has its own settings tab at the bottom of the menu.'),
-                Section::make('Pages from other plugins')->description('Pages that other installed plugins add to the admin panel or to servers. Ticked pages show up in Simplify under "External" (Admin tools, host mode and the server page); they always stay available in Pelican\'s own panel.')->schema([
+                Section::make('Pages from other plugins')->description('Pages that other installed plugins add to the admin panel, to servers or to every account. Ticked pages show up in Simplify: admin and server pages under "External" (Admin tools, host mode and the server page), account pages in the account menu. They always stay available in Pelican\'s own panel.')->schema([
                     \Filament\Forms\Components\CheckboxList::make('external_shown')->hiddenLabel()->options(fn () => self::externalCatalog())->bulkToggleable()->columns(1)
                         ->visible(fn () => self::externalCatalog() !== []),
                     \Filament\Schemas\Components\Text::make('No other plugins add pages right now.')->visible(fn () => self::externalCatalog() === []),

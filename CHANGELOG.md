@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-snapshot.1 (snapshot channel)
+Pages from other plugins in the account menu, the first part of better support for other Pelican plugins.
+- Pages that plugins add for every account (such as Imprint, Privacy Policy and Terms of Service from Legal Pages, or Create Server from User Creatable Servers) were unreachable with Simplify. They now open from the account menu: a plugin button lists them, and each opens in a popup like Profile settings.
+- Only pages the person may open are listed. Administrators can switch each page off in Simplify settings, next to the admin and server pages from plugins.
+- Browser tests check the list on desktop and on phones.
+
 ## 0.4.7-snapshot.4 (snapshot channel)
 Phone layout for the server creator and the first setup, the last part of the phone experience for now. Wider screens do not change.
 - The step row becomes "Step 1 of 4" with the current step's name and a progress bar, instead of four steps over two lines.
