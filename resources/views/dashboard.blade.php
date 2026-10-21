@@ -254,7 +254,7 @@
         {{-- Host mode (admins, large hosts): server buttons per node, a colour-coded admin rail and the page. --}}
         <section class="ps-host" :class="{'has-server': !!hostServer}" x-show="!server && hostMode" x-cloak :style="accentStyle('overview')">
                 <aside class="ps-host-servers" :class="{'is-open': hostServersOpen}" aria-label="Servers">
-                    <button type="button" class="ps-btn is-sm ps-host-servers-toggle" x-on:click="hostServersOpen=!hostServersOpen" :aria-expanded="hostServersOpen"><svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="'Servers ('+(boot.servers||[]).length+')'"></span></button>
+                    <button type="button" class="ps-btn is-sm ps-host-servers-toggle" x-on:click="hostServersOpen=!hostServersOpen" :aria-expanded="hostServersOpen"><svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="hostServer ? cardNames(hostServer).large : 'Servers ('+(boot.servers||[]).length+')'"></span><svg class="ps-host-switch-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                     <div class="ps-host-server-list">
                         <template x-for="node in hostNodes()" :key="node.id">
                             <div class="ps-host-node">
