@@ -238,7 +238,7 @@
                             <div class="ps-notify-list">
                                 <template x-for="page in pluginPages()" :key="page.key">
                                     <button type="button" class="ps-notify-item" style="--ps-tone: #2dd4bf" x-on:click="openPluginPage(page)">
-                                        <svg aria-hidden="true"><use href="#ps-plugins"/></svg><strong x-text="page.label"></strong><small x-text="'From '+page.plugin"></small>
+                                        <svg aria-hidden="true"><use :href="page.new_tab ? '#ps-link' : '#ps-plugins'"/></svg><strong x-text="page.label"></strong><small x-text="'From '+page.plugin+(page.new_tab ? ' · opens in a new tab' : '')"></small>
                                     </button>
                                 </template>
                             </div>
@@ -361,6 +361,12 @@
                             </template>
                         </div>
                     </div>
+                    {{-- Widgets other plugins add to Pelican's server list (such as resource limits), sized to their content. --}}
+                    <template x-if="boot.plugin_widgets_url">
+                        <div class="ps-plugin-widgets" :class="{'is-empty': !pluginWidgetHeights.app}" :style="{'--ps-widgets-height': (pluginWidgetHeights.app || 0)+'px'}">
+                            <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="frameUrl(boot.plugin_widgets_url)" title="Plugin widgets" x-on:load="pluginWidgetsLoaded($el, 'app')"></iframe>
+                        </div>
+                    </template>
                     <div class="ps-server-grid" :class="{'is-list': overviewView==='list', 'has-motd': overviewPreferences.showMotd, 'no-metrics': !overviewMetrics().length, 'no-quick-actions': !overviewPreferences.showQuickActions}">
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': overviewPreferences.showQuickActions && s.linked && Object.values(s.permissions || {}).some(Boolean), 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
@@ -610,6 +616,13 @@
                     </div>
                 </div>
             </article>
+
+            {{-- Widgets other plugins add above Pelican's console (such as Player Counter), sized to their content. --}}
+            <template x-if="server?.plugin_widgets_url">
+                <div class="ps-plugin-widgets" :class="{'is-empty': !pluginWidgetHeights[server.uuid]}" :style="{'--ps-widgets-height': (pluginWidgetHeights[server.uuid] || 0)+'px'}">
+                    <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="frameUrl(server.plugin_widgets_url)" title="Plugin widgets" x-on:load="pluginWidgetsLoaded($el, server.uuid)"></iframe>
+                </div>
+            </template>
 
             {{-- A new or reinstalled server: nothing to click until Pelican has finished installing it. --}}
             <div class="ps-setup-state" x-show="serverSetup()" x-cloak role="status" aria-live="polite" :class="'is-'+serverSetup()">

@@ -10,6 +10,7 @@ namespace Illuminate\Support\Facades {
 namespace App\Models {class Plugin {public static array $rows=[];public static function all(){return self::$rows;}}}
 namespace Filament\Resources {class Resource {}}
 namespace Filament\Facades {class Filament {public static array $panels=[];public static function getPanel($id){return self::$panels[$id]??throw new \RuntimeException('no panel');}}}
+namespace App\Filament\Server\Pages {class Console {protected static array $customWidgets=['above_console'=>['Vendor\\Legal\\Widgets\\ServerPlayerWidget','Other\\Widget'],'bottom'=>['Vendor\\Legal\\Widgets\\ServerPlayerWidget']];}}
 namespace Vendor\Legal\Pages {
  class Imprint {public static function shouldRegisterNavigation(){return true;}public static function canAccess(){return true;}public static function getUrl(...$a){return '/imprint';}public static function getNavigationLabel(){return 'Imprint';}}
  class Secret {public static function shouldRegisterNavigation(){return true;}public static function canAccess(){return false;}public static function getUrl(...$a){return '/secret';}public static function getNavigationLabel(){return 'Secret';}}
@@ -45,5 +46,5 @@ namespace {
  \Filament\Facades\Filament::$panels['app']=new class{public function getResources(){return [];}public function getPages(){return [\Vendor\Legal\Pages\Imprint::class,\Vendor\Legal\Pages\Secret::class,'Simplify\\Panel\\Filament\\App\\Pages\\Dashboard'];}};
  $pages=X::appPages();
  $check(array_column($pages,'label')===['Imprint']&&$pages[0]['plugin']==='Legal Pages'&&$pages[0]['url']==='/imprint','account pages: '.json_encode($pages));
- echo "PASS plugin overlaps switch off only their feature, bundled overlaps with an older published list, account pages from plugins\n";
+ echo "PASS plugin overlaps switch off only their feature, bundled overlaps with an older published list, account pages and console widgets from plugins\n";
 }

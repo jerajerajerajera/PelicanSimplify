@@ -1048,6 +1048,20 @@
           this.toast('Settings could not be opened.', 'danger');
         }
       },
+      /** Measured height of each plugin widget frame (app list, or per server uuid); 0 hides the tile. */
+      pluginWidgetHeights: {},
+      pluginWidgetsLoaded(frame, slot) {
+        this.styleFrame(frame, 'native');
+        try {
+          const box = frame.contentDocument?.querySelector('.simplify-plugin-widgets');
+          const measure = () => { this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: box && box.children.length ? Math.ceil(box.getBoundingClientRect().height) : 0 }; };
+          measure();
+          // Widgets poll and change size (a player list fills in): follow the content.
+          if (box) new frame.contentWindow.ResizeObserver(measure).observe(box);
+        } catch {
+          this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: 0 };
+        }
+      },
       /** Account-level pages other plugins add to the panel (hidden ones are left out by the server). */
       pluginPages() {
         return this.boot.plugin_pages || [];
@@ -1055,6 +1069,7 @@
       openPluginPage(page) {
         if (!page?.url || this.busy || this.modal) return;
         this.accountMenu = false;
+        if (page.new_tab) return void window.open(page.url, '_blank', 'noopener');
         this.adminPage = page;
         this.openPopup('admin-page');
       },
