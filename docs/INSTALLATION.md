@@ -4,7 +4,7 @@ Target: Pelican 1.0.0-beta38 (PHP 8.3 or newer) or 1.0.0-rc.1 (PHP 8.4 or newer)
 
 ## Panel import
 
-In **Admin → Plugins → Import from URL**, paste `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/dist/pelican-simplify-latest.zip`, import it, then click **Install**. You can also upload the ZIP through Import. The repository also uses Pelican's standard plugin layout, with plugin.json and src at its root. The installer checks dependencies before enabling the plugin. Open Simplify settings and finish setup after every required check passes.
+In **Admin → Plugins → Import from URL**, paste `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/dist/pelican-simplify-latest.zip`, import it, then click **Install**. To try the beta (0.5.0-beta.1: Simplify on phones and support for other plugins), use `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip` instead, or choose Beta later under Simplify settings → Plugin manager → "Simplify versions". You can also upload the ZIP through Import. The repository also uses Pelican's standard plugin layout, with plugin.json and src at its root. The installer checks dependencies before enabling the plugin. Open Simplify settings and finish setup after every required check passes.
 
 Node.js 22.12+ or 24+, Yarn, the panel's PHP extensions and Composer dependencies, writable Laravel storage, a working database/cache and a persistent queue connection are required. The setup page lists failed checks and repair instructions; use **Check again** after fixing them. The configured queue check does not prove that the worker or scheduler is running. Keep both services active as required by Pelican.
 
