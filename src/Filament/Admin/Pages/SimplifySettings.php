@@ -195,7 +195,7 @@ class SimplifySettings extends Page implements HasForms
     private static function featureSection(string $title, string $group, ?string $description = null): Section
     {
         $definitions = array_filter(\Simplify\Panel\Services\FeatureSettings::definitions(), fn ($item) => ($item[3] ?? 'Server features') === $group);
-        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (array $definition, string $key) => Toggle::make('features.'.$key)->label($definition[0])->helperText($definition[1]), $definitions, array_keys($definitions)));
+        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key), array_keys($definitions)));
         return $description ? $section->description($description) : $section;
     }
 
@@ -223,7 +223,10 @@ class SimplifySettings extends Page implements HasForms
     private static function featureToggle(string $key): Toggle
     {
         $definition = \Simplify\Panel\Services\FeatureSettings::definitions()[$key] ?? [$key, null];
-        return Toggle::make('features.'.$key)->label($definition[0])->helperText($definition[1]);
+        $overlap = class_exists(\Simplify\Panel\Services\ExternalPlugins::class) ? \Simplify\Panel\Services\ExternalPlugins::overlapFor($key) : null;
+        // The saved choice is kept; it applies again once the overlapping plugin is disabled.
+        $help = $overlap ? 'Off while the '.$overlap['name'].' plugin is enabled. '.$overlap['reason'] : $definition[1];
+        return Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
     }
 
     public function form(Schema $schema): Schema

@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-snapshot.2 (snapshot channel)
+Plugins that do part of what Simplify does no longer switch the whole dashboard off; only the overlapping part steps aside.
+- Subdomains (official plugin): Simplify's automatic subdomains switch off while it is enabled, so no DNS record is made twice. The setting explains why and your choice is kept for when the plugin is disabled again.
+- Minecraft Modrinth and User Creatable Servers: they work side by side with Simplify; Simplify settings and the plugin manager show what overlaps.
+- The list lives in conflicts.json under "overlaps". Older Simplify versions only read "plugins", so they are not affected.
+
 ## 0.5.0-snapshot.1 (snapshot channel)
 Pages from other plugins in the account menu, the first part of better support for other Pelican plugins.
 - Pages that plugins add for every account (such as Imprint, Privacy Policy and Terms of Service from Legal Pages, or Create Server from User Creatable Servers) were unreachable with Simplify. They now open from the account menu: a plugin button lists them, and each opens in a popup like Profile settings.
