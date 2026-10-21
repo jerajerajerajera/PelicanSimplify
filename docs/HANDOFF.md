@@ -1,6 +1,6 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 20 October 2026 (0.4.2).
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 21 October 2026 (stable 0.4.6, beta 0.5.0-beta.1).
 
 ## The project in short
 
@@ -16,16 +16,17 @@ Three channels, each on its own branch (decided 20 October 2026):
 
 | Channel | Branch | Update file | Versions | Latest zip |
 |---|---|---|---|---|
-| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.4.3` | `dist/pelican-simplify-latest.zip` + GitHub Release |
-| Beta | `beta` | `update-beta.json` | `0.4.3-beta.N`, `0.4.3-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
-| Snapshot | `snapshot` | `update-snapshot.json` | `0.4.3-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
+| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.4.6` | `dist/pelican-simplify-latest.zip` + GitHub Release |
+| Beta | `beta` | `update-beta.json` | `0.5.0-beta.N`, `0.5.0-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
+| Snapshot | `snapshot` | `update-snapshot.json` | `0.5.0-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.3 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Current:** stable 0.4.6, beta 0.5.0-beta.1 and snapshot 0.5.0-snapshot.3, all for Pelican 1.0.0-beta38 and 1.0.0-rc.1. The beta adds Simplify on phones and support for other plugins.
+- **Documentation on `main`:** the README's "Now in beta" section and channel table, CHANGELOG, ROADMAP and these docs are kept up to date on `main` (documentation only, no version or plugin files). The CHANGELOG on `main` has one summary entry per beta that links to the full beta changelog; when the beta becomes stable, that summary is replaced by the stable entry.
 - **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
 - **Channel choice:** Simplify settings → Plugin manager → "Simplify versions": Stable (default), Beta or Snapshot. Stored as the `simplify_beta` and `simplify_snapshot` switches. A panel gets the newest of its channel and every more stable one (`PluginUpdater::channelUrls`).
 - **Bridge for old betas:** installations up to 0.4.2-beta.7 read `main/update-beta.json`. A stable build writes that file too, so they move to the stable release, whose code then reads the beta branch.
-- Version order (PHP `version_compare`): `0.4.3-snapshot.N < 0.4.3-beta.N < 0.4.3-rc.N < 0.4.3`.
+- Version order (PHP `version_compare`): `0.5.0-snapshot.N < 0.5.0-beta.N < 0.5.0-rc.N < 0.5.0`.
 
 ## How a release is made
 
@@ -67,7 +68,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - `resources/views/js/dashboard.js`: the Alpine component `pelicanSimplify`.
   - `resources/views/js/core.js`: shared UI such as the save bar, dialogs, tooltips and `brandTextStyle`.
 - **CSS:** `resources/views/css/tokens.css`, `components.css`, `dashboard.css`, `native.css` (styling of embedded Pelican pages), `wizard.css` (settings and creators).
-- `conflicts.json`: plugins that clash with Simplify. Currently empty. It is also fetched hourly from GitHub `main`, so it can be changed without a release.
+- `conflicts.json`: plugins that clash with Simplify (`plugins`, currently empty). From 0.5.0 also `overlaps`: plugins that do part of what Simplify does, with the Simplify `features` that switch off while they are enabled (Subdomains switches off automatic subdomains). It is also fetched hourly from GitHub `main`, so it can be changed without a release; older versions ignore `overlaps`.
 
 ## What the plugin does now (short)
 
@@ -91,15 +92,15 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Per page you can show or hide them (Settings → General → "Pages from other plugins").
   - Plugins on the conflict list switch the Simplify dashboard off, with an explanation.
   - Tested with Tickets and Legal Pages from `pelican-dev/plugins`.
+  - In 0.5.0-beta.1: their account pages in the account menu, their widgets as tiles, and overlapping plugins switch off only the matching Simplify feature.
+- **Phones (0.5.0-beta.1):** the overview, the server page (four tabs, quick commands), popups as sheets and the creator have their own layout below 600 px wide.
 
 ## Open items and ideas
 
-- **Plugin support, next steps:**
-  - App-panel pages from plugins in the account menu (for example Legal Pages).
-  - Widgets from plugins as tiles.
-  - Check overlap with the official plugins `minecraft-modrinth`, `subdomains` and `user-creatable-servers`.
+- **Plugin support:** account pages in the account menu, widgets as tiles and overlaps are done in 0.5.0-beta.1. Still open: buttons and tabs that plugins add to Pelican's own pages and forms.
+- **Phones:** overview, server page, sheets and creator are done in 0.5.0-beta.1. Still open: embedded Pelican pages on narrow screens, host mode on phones, installable web app.
 - **Optional:** a manual "interface size" choice next to the automatic scaling.
-- **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): better phone experience, Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
+- **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
 - **Pelican Hub:** it reads the repository, so `main` must stay stable-only.
 
 ## Notes on the owner's own panel

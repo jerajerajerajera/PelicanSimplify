@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned work after the 0.3 betas. Scope and order may change.
+Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.4.6; the beta channel has 0.5.0-beta.1.
 
 ## Easy server creator
 A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
