@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.4.6; the beta channel has 0.5.0-beta.1.
+Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.4.6; the beta channel has 0.5.0-beta.2.
 
 ## Easy server creator
 A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
@@ -24,16 +24,17 @@ A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.
 
 ## Other plugins
 - In beta 0.5.0-beta.1: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
-- Still open: buttons that plugins add to Pelican's pages (for example Create server from User Creatable Servers on the server list), and tabs or form fields plugins add to Pelican's own forms.
+- In beta 0.5.0-beta.2: buttons that plugins add to Pelican's server list and console (for example Create server from User Creatable Servers), shown and run in Simplify. Tabs and form fields plugins add to Pelican's own forms show in the embedded pages.
+- Still open: installing, updating and switching plugins on or off from Simplify's plugin manager.
 
 ## Phone experience
 - In beta 0.5.0-beta.1: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
 - Bottom tab bar (Servers, Create, Alerts, Account) and a top bar that collapses on scroll.
 - Full-screen sheets with a drag handle instead of centred popups; the save bar sits above the tab bar.
 - Server page on phones: a status header with large power buttons, swipeable sections (Console, Players, Files, Settings), and a console with a command bar above the keyboard plus quick-command chips.
-- Embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
-- Host mode on phones: a node and server switcher instead of three columns.
-- Installable web app (manifest, icons, theme color) and safe-area support for notched phones.
+- In beta 0.5.0-beta.2: embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
+- In beta 0.5.0-beta.2: host mode on phones, with a node and server switcher instead of three columns.
+- In beta 0.5.0-beta.2: installable web app (manifest, icons, theme colour, offline page) and safe-area support for notched phones.
 - Checked with automated phone screenshots (360, 390 and 430 px wide) in the browser tests.
 
 ## Server page
