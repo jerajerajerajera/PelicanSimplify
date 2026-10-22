@@ -1,6 +1,6 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 21 October 2026 (stable 0.4.6, beta 0.5.0-beta.1).
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 22 October 2026 (stable 0.4.6, beta 0.5.0-beta.2).
 
 ## The project in short
 
@@ -20,7 +20,7 @@ Three channels, each on its own branch (decided 20 October 2026):
 | Beta | `beta` | `update-beta.json` | `0.5.0-beta.N`, `0.5.0-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
 | Snapshot | `snapshot` | `update-snapshot.json` | `0.5.0-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.6, beta 0.5.0-beta.1 and snapshot 0.5.0-snapshot.3, all for Pelican 1.0.0-beta38 and 1.0.0-rc.1. The beta adds Simplify on phones and support for other plugins.
+- **Current:** stable 0.4.6, beta 0.5.0-beta.2 and snapshot 0.5.0-snapshot.7, all for Pelican 1.0.0-beta38 and 1.0.0-rc.1. The beta adds Simplify on phones, the panel as an installable app and support for other plugins.
 - **Documentation on `main`:** the README's "Now in beta" section and channel table, CHANGELOG, ROADMAP and these docs are kept up to date on `main` (documentation only, no version or plugin files). The CHANGELOG on `main` has one summary entry per beta that links to the full beta changelog; when the beta becomes stable, that summary is replaced by the stable entry.
 - **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
@@ -92,13 +92,13 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Per page you can show or hide them (Settings → General → "Pages from other plugins").
   - Plugins on the conflict list switch the Simplify dashboard off, with an explanation.
   - Tested with Tickets and Legal Pages from `pelican-dev/plugins`.
-  - In 0.5.0-beta.1: their account pages in the account menu, their widgets as tiles, and overlapping plugins switch off only the matching Simplify feature.
-- **Phones (0.5.0-beta.1):** the overview, the server page (four tabs, quick commands), popups as sheets and the creator have their own layout below 600 px wide.
+  - In the 0.5.0 betas: their account pages in the account menu, their widgets as tiles, their buttons on the server list and console, and overlapping plugins switch off only the matching Simplify feature.
+- **Phones (0.5.0 betas):** the overview, the server page (four tabs, quick commands), popups as sheets, the creator, Pelican's embedded pages and host mode have their own layout below 600 px wide; the panel is an installable web app with an offline page.
 
 ## Open items and ideas
 
-- **Plugin support:** account pages in the account menu, widgets as tiles and overlaps are done in 0.5.0-beta.1. Still open: buttons and tabs that plugins add to Pelican's own pages and forms.
-- **Phones:** overview, server page, sheets and creator are done in 0.5.0-beta.1. Still open: embedded Pelican pages on narrow screens, host mode on phones, installable web app.
+- **Plugin support:** account pages, widgets, buttons and overlaps are done in the 0.5.0 betas. Still open: installing, updating and switching plugins from Simplify's plugin manager.
+- **Phones:** done in the 0.5.0 betas (overview, server page, sheets, creator, embedded Pelican pages, host mode, installable web app).
 - **Optional:** a manual "interface size" choice next to the automatic scaling.
 - **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
 - **Pelican Hub:** it reads the repository, so `main` must stay stable-only.

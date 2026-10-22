@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.0-beta.2 — beta (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
+Available on the beta channel (Simplify settings → Plugin manager → Beta), not yet a stable release. Finishes the phone experience and support for other plugins; everything from 0.5.0-beta.1 below is included. The full list of changes is in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **The panel as an app:** add it to your phone's home screen ("Install app" in the menu), with its own icon, full screen, and a clear page when there is no connection.
+- **Pelican's own pages on phones:** admin pages, account and server settings inside Simplify get one column, 44 px touch targets and no zooming into fields; small dialogs open as bottom sheets.
+- **Host mode on phones:** a server switcher on top, the admin sections as one swipeable row and the page at full width.
+- **Buttons from other plugins:** buttons plugins add to Pelican's server list and console (such as Create server from User Creatable Servers or Upload logs from Mclogs Uploader) show and work in Simplify, and can be switched off in Simplify settings.
+- Wider screens do not change.
+
 ## 0.5.0-beta.1 — beta (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 Available on the beta channel (Simplify settings → Plugin manager → Beta), not yet a stable release. The full list of changes, including each snapshot, is in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Phones:** the overview scrolls as one page with one filter row, compact server rows with one power button and a tab bar at the bottom; the server page has four tabs and a full-height console with quick commands; popups slide up as sheets with a drag handle; the creator shows "Step 1 of 4" with choice rows and Back / Next at the bottom. Wider screens do not change.
