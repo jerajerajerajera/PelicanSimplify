@@ -50,7 +50,7 @@ final class DependencyCheck
         $errors = self::assetErrors($manifest, $panel.'/public/build', $required);
         $add('Built Pelican CSS and JavaScript', $errors === [], 'Rebuild the panel assets with yarn install and yarn build in your Pelican folder. '.implode(' ', $errors));
         if ($runtime) {
-            $add('Supported Pelican release', in_array(ltrim((string) config('app.version'), 'v'), ['1.0.0-beta38', '1.0.0-rc.1'], true), 'Use Pelican 1.0.0-beta38 or 1.0.0-rc.1; other releases have not been validated for this plugin.');
+            $add('Supported Pelican release', in_array(ltrim((string) config('app.version'), 'v'), ['1.0.0-beta38', '1.0.0-rc.1', '1.0.0-rc.2'], true), 'Use Pelican 1.0.0-beta38, 1.0.0-rc.1 or 1.0.0-rc.2; other releases have not been validated for this plugin.');
             try { \Illuminate\Support\Facades\DB::connection()->getPdo(); $database = true; } catch (\Throwable) { $database = false; }
             $add('Database connection', $database, 'Repair the panel database connection before continuing.');
             try {
