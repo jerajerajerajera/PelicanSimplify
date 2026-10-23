@@ -1,6 +1,6 @@
 # Installation
 
-Target: Pelican 1.0.0-beta38 (PHP 8.3 or newer) or 1.0.0-rc.1 (PHP 8.4 or newer).
+Target: Pelican 1.0.0-beta38 (PHP 8.3 or newer), 1.0.0-rc.1 or 1.0.0-rc.2 (PHP 8.4 or newer).
 
 ## Panel import
 
