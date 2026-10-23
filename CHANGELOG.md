@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.0-beta.3 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+Available on the beta channel. Adds support for Pelican 1.0.0-rc.2; everything from 0.5.0-beta.2 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **Pelican 1.0.0-rc.2:** Simplify installs on rc.2, and the plugin manager understands rc.2's new "crashed" status (it shows the error; Enable tries again, Delete removes the plugin).
+- **Tested on fresh panels:** Pelican 1.0.0-beta38 with PHP 8.3, 8.4 and 8.5, and 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.4 and 8.5. All seven combinations install, start and open every Simplify page without errors (see Compatibility in the README).
+
 ## 0.5.0-beta.2 — beta (Pelican 1.0.0-beta38 and 1.0.0-rc.1)
 Available on the beta channel (Simplify settings → Plugin manager → Beta), not yet a stable release. Finishes the phone experience and support for other plugins; everything from 0.5.0-beta.1 below is included. The full list of changes is in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **The panel as an app:** add it to your phone's home screen ("Install app" in the menu), with its own icon, full screen, and a clear page when there is no connection.
