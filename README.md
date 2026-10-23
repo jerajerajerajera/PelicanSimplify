@@ -51,7 +51,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 |---|---|---|---|
 | **Stable** (default) | 0.4.6 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
 | **Beta** | 0.5.0-beta.2 | Stable plus Simplify on phones, the panel as an app and support for other plugins (see Now in beta) | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.5.0-snapshot.7 | The newest development build; at the moment the same features as the beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Snapshot** | 0.5.0-snapshot.8 | The newest development build: everything in the beta, plus support for Pelican 1.0.0-rc.2 (PHP 8.4 or 8.5) | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 **Requirements:** Node.js 22.12+ or 24+, Yarn, and a running queue worker and scheduler.
 
