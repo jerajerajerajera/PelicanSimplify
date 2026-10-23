@@ -70,7 +70,8 @@ final class ManagePlugins extends Page
     public function setEnabled(string $id, bool $enabled): void
     {
         $plugin = Plugin::query()->findOrFail($id);
-        abort_unless($this->canChange($plugin) && in_array($plugin->status->value, ['enabled', 'disabled'], true), 403);
+        // Pelican 1.0.0-rc.2 marks a plugin that took the panel down as crashed; enabling it gives it another try.
+        abort_unless($this->canChange($plugin) && in_array($plugin->status->value, $enabled ? ['disabled', 'crashed'] : ['enabled'], true), 403);
         $service = app(\App\Services\Helpers\PluginService::class);
         $enabled ? $service->enablePlugin($plugin) : $service->disablePlugin($plugin);
         Notification::make()->title($plugin->name.($enabled ? ' enabled' : ' disabled'))->body('Reload the panel to apply the change.')->success()->send();
@@ -90,7 +91,7 @@ final class ManagePlugins extends Page
     public function uninstallPlugin(string $id): void
     {
         $plugin = Plugin::query()->findOrFail($id);
-        abort_unless($this->canChange($plugin) && !in_array($plugin->status->value, ['not_installed', 'errored'], true), 403);
+        abort_unless($this->canChange($plugin) && !in_array($plugin->status->value, ['not_installed', 'errored', 'crashed'], true), 403);
         \Illuminate\Support\Facades\Cache::put('simplify.plugin-queued.'.$id, now()->timestamp, 1800);
         $this->busy = true;
         \Simplify\Panel\Jobs\ChangePlugin::dispatchAfterResponse($plugin->id, 'uninstall', (int) user()->id);
@@ -100,7 +101,7 @@ final class ManagePlugins extends Page
     public function deletePlugin(string $id): void
     {
         $plugin = Plugin::query()->findOrFail($id);
-        abort_unless(user()?->can('delete', $plugin) && in_array($plugin->status->value, ['not_installed', 'errored'], true), 403);
+        abort_unless(user()?->can('delete', $plugin) && in_array($plugin->status->value, ['not_installed', 'errored', 'crashed'], true), 403);
         app(\App\Services\Helpers\PluginService::class)->deletePlugin($plugin);
         Notification::make()->title($plugin->name.' deleted')->success()->send();
     }

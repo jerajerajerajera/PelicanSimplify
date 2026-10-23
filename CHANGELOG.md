@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-snapshot.8 (snapshot channel)
+Support for Pelican 1.0.0-rc.2 (PHP 8.4 or 8.5). Tested on a fresh Pelican 1.0.0-rc.2 panel with PHP 8.4; beta38 and rc.1 keep working.
+- Simplify installs on rc.2: the system check and the update files now list 1.0.0-rc.2 next to 1.0.0-beta38 and 1.0.0-rc.1.
+- The plugin manager understands rc.2's new "crashed" status, for a plugin that took the panel down and was switched off by Pelican: it shows the error, and Enable gives the plugin another try (or Delete removes it), like Pelican's own plugin page.
+- Power actions from Simplify now also show in the activity log and fire server webhooks on rc.2, because Pelican logs them itself from this release on.
+
 ## 0.5.0-snapshot.7 (snapshot channel)
 Buttons other plugins add to Pelican's pages now also work in Simplify, the last part of plugin support. Tested on a Pelican 1.0.0-beta38 panel with the official User Creatable Servers and Mclogs Uploader plugins.
 - Buttons plugins add to Pelican's server list (such as Create server from User Creatable Servers) show under the overview's filters; buttons they add to Pelican's console (such as Upload logs from Mclogs Uploader) show in the title of Simplify's live console. Each is checked like on Pelican's page: hidden when the plugin hides it, greyed out when it is disabled.

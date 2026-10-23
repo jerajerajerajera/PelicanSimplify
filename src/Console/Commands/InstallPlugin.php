@@ -25,7 +25,7 @@ final class InstallPlugin extends Command
                 $plugins->installPlugin($plugin, (bool) $this->option('enable'));
             }
             $plugin = $plugin->refresh();
-            if (in_array($plugin->status->value, ['errored', 'incompatible', 'not_installed'], true)) throw new \RuntimeException($plugin->status_message ?: 'The plugin reports status '.$plugin->status->value.'.');
+            if (in_array($plugin->status->value, ['errored', 'crashed', 'incompatible', 'not_installed'], true)) throw new \RuntimeException($plugin->status_message ?: 'The plugin reports status '.$plugin->status->value.'.');
             if (!class_exists(ltrim($plugin->fullClass(), '\\'))) throw new \RuntimeException('The plugin class '.$plugin->fullClass().' could not be loaded.');
             $this->call('view:clear');
             $this->info('ok');
