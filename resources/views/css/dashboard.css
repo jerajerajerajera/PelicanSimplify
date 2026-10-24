@@ -1052,10 +1052,15 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-group-down svg { transform: rotate(90deg); }
 .ps-group-servers { margin: 0 0 8px 34px; }
 .ps-group-servers .ps-customize-switch { padding: 7px 0; }
-.ps-group-servers .ps-customize-switch:first-child { border-top: 0; }
 .ps-group-add { justify-self: start; margin-top: 8px; gap: 6px; }
+.ps-group-order { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 0 8px; font-size: 12px; font-weight: 600; color: var(--ps-muted); }
+.ps-group-order select.ps-input { flex: 0 1 190px; min-height: 30px; padding: 4px 8px; font-size: 12.5px; }
+.ps-group-server { display: flex; align-items: center; gap: 2px; border-top: 1px solid var(--ps-line); }
+.ps-group-server:first-of-type { border-top: 0; }
+.ps-group-server .ps-customize-switch { flex: 1 1 auto; min-width: 0; border-top: 0; }
+.ps-group-server-move { display: flex; flex: none; margin-left: 6px; }
 /* Phones: the name gets its own line, the order and remove buttons sit under it. */
-@media (max-width: 600px) { .ps-group-row { flex-wrap: wrap; } .ps-group-name.ps-input { flex-basis: calc(100% - 56px); } .ps-group-count { display: none; } .ps-group-up { margin-left: auto; } .ps-group-servers { margin-left: 0; } }
+@media (max-width: 600px) { .ps-group-row { flex-wrap: wrap; } .ps-group-name.ps-input { flex-basis: calc(100% - 56px); } .ps-group-count { display: none; } .ps-group-row .ps-group-up { margin-left: auto; } .ps-group-servers { margin-left: 0; } }
 @media (max-width: 480px) { .ps-overview-appearance-menu { width: min(400px, calc(100vw - 24px)); } .ps-customize-row { flex-wrap: wrap; } }
 /* Every header menu points at the button that opened it, like the incoming notification does. The arrow
    sits on the wrapper because the menu itself scrolls (and would clip it). */

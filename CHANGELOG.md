@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.0-snapshot.15 (snapshot channel)
+Choose the order of your servers, and server groups get their own button.
+- A new Server groups button in the top bar (a folder) holds everything about groups: make, rename, order and remove them, and pick their servers. Customize overview has a switch to hide the button; your groups keep showing.
+- Server order for the overview: Name (as in Pelican's list), Created (oldest first) or Port (lowest first).
+- Each group has its own order: the same as the overview, My own order (move servers up and down with arrows), Name, Oldest first or Port.
+- The order is saved with your account like the groups, so every device shows the same.
+
 ## 0.5.0-snapshot.14 (snapshot channel)
 Quick actions can be Off, On or Hover, and things in the server list only get smaller when they would not fit.
 - Customize overview → Quick actions has three choices. Off hides the start/stop/restart buttons. On always shows them; in the grid the cards get a little taller for them, so graphs and text keep their size. Hover (the default) shows them when you point at a card. On a touch screen, where you cannot point, Hover shows them like On.
