@@ -200,6 +200,31 @@
                                             <span class="ps-switch" :class="{'is-on': overviewPreferences[option.key]}" aria-hidden="true"></span>
                                         </button>
                                     </template>
+                                    {{-- Own groups: shown above the other servers; a server sits in one group at most. --}}
+                                    <span class="ps-customize-head">My groups</span>
+                                    <small class="ps-group-note" x-show="!overviewGroups.length">Make your own groups, such as Survival or Friends, and pick which servers go in each. They are shown at the top of the overview.</small>
+                                    <template x-for="(group, index) in overviewGroups" :key="group.id">
+                                        <div class="ps-group-edit" :class="{'is-open': groupEditing===group.id}">
+                                            <div class="ps-group-row">
+                                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-toggle" x-on:click="groupEditing = groupEditing===group.id ? null : group.id" :aria-expanded="groupEditing===group.id" :data-tip="groupEditing===group.id ? 'Done' : 'Choose servers'" :aria-label="'Choose servers for '+group.name"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                                <input type="text" class="ps-input ps-group-name" :value="group.name" maxlength="40" aria-label="Group name" x-on:keydown.enter.prevent="$el.blur()" x-on:change="$el.value = renameOverviewGroup(group.id, $el.value)">
+                                                <small class="ps-group-count" x-text="groupCount(group)+(groupCount(group)===1 ? ' server' : ' servers')"></small>
+                                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-up" :disabled="index===0" x-on:click="moveOverviewGroup(group.id, -1)" data-tip="Move up" :aria-label="'Move '+group.name+' up'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-down" :disabled="index===overviewGroups.length-1" x-on:click="moveOverviewGroup(group.id, 1)" data-tip="Move down" :aria-label="'Move '+group.name+' down'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                                <button type="button" class="ps-btn is-sm is-icon is-subtle" x-on:click="removeOverviewGroup(group.id)" data-tip="Remove group" :aria-label="'Remove '+group.name"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                                            </div>
+                                            <div class="ps-group-servers" x-show="groupEditing===group.id">
+                                                <template x-for="s in groupServerOptions()" :key="s.uuid">
+                                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="group.servers.includes(s.uuid)" x-on:click="toggleGroupServer(group.id, s.uuid)">
+                                                        <span><strong x-text="cardNames(s).large"></strong><small x-show="serverGroup(s.uuid) && serverGroup(s.uuid).id!==group.id" x-text="'Now in '+serverGroup(s.uuid)?.name"></small></span>
+                                                        <span class="ps-switch" :class="{'is-on': group.servers.includes(s.uuid)}" aria-hidden="true"></span>
+                                                    </button>
+                                                </template>
+                                                <small class="ps-group-note" x-show="!(boot.servers||[]).length">No servers yet.</small>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <button type="button" class="ps-btn is-sm ps-group-add" x-show="overviewGroups.length < 30" x-on:click="addOverviewGroup(); $nextTick(() => [...$el.parentElement.querySelectorAll('.ps-group-name')].pop()?.select())"><svg aria-hidden="true"><use href="#ps-plus"/></svg>New group</button>
                                 </div>
                             </template>
                         </div>
@@ -386,7 +411,7 @@
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': overviewPreferences.showQuickActions && s.linked && Object.values(s.permissions || {}).some(Boolean), 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
-                                    <h2 class="ps-node-heading"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
+                                    <h2 class="ps-node-heading"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
                                 </template>
                                 <template x-if="!s.isNodeHeader">
                                 <article class="ps-server-card" :class="{'locked': !s.linked}">
