@@ -1,17 +1,17 @@
 {
   "1.0.0-beta38": {
-    "version": "0.5.0-snapshot.12",
-    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.12.zip",
-    "sha256": "8729f9715eb6f3516e2c0bca3b34bfec40a5bfad39abbb3896e906e4de8e91a7"
+    "version": "0.5.0-snapshot.13",
+    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.13.zip",
+    "sha256": "717c1f17072358458448543a34ec9d1e04aa0c73dd10e33fa2130d979b59a1a5"
   },
   "1.0.0-rc.1": {
-    "version": "0.5.0-snapshot.12",
-    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.12.zip",
-    "sha256": "8729f9715eb6f3516e2c0bca3b34bfec40a5bfad39abbb3896e906e4de8e91a7"
+    "version": "0.5.0-snapshot.13",
+    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.13.zip",
+    "sha256": "717c1f17072358458448543a34ec9d1e04aa0c73dd10e33fa2130d979b59a1a5"
   },
   "1.0.0-rc.2": {
-    "version": "0.5.0-snapshot.12",
-    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.12.zip",
-    "sha256": "8729f9715eb6f3516e2c0bca3b34bfec40a5bfad39abbb3896e906e4de8e91a7"
+    "version": "0.5.0-snapshot.13",
+    "download_url": "https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-v0.5.0-snapshot.13.zip",
+    "sha256": "717c1f17072358458448543a34ec9d1e04aa0c73dd10e33fa2130d979b59a1a5"
   }
 }

@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-snapshot.13 (snapshot channel)
+Your server groups are saved with your account, so every device shows the same groups.
+- Groups you make under Customize overview → My groups are now kept on the panel per account instead of in the browser. Open the panel on your phone or another computer and the same groups are there.
+- Groups you already made on 0.5.0-beta.5 or snapshot.11/12 move to your account by themselves the first time you open the overview on that device (only while your account has no groups yet).
+- The other Customize choices (layout, card icon, full screen width and so on) stay per device.
+
 ## 0.5.0-snapshot.12 (snapshot channel)
 "Full screen width" now only changes the overview.
 - Server pages and host mode keep their centred column when the switch is on, so the server page looks the same as before.
