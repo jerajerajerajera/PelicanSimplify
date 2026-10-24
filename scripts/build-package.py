@@ -49,7 +49,7 @@ def build(output: Path, epoch: int | None = None) -> Path:
     return archive
 
 
-SUPPORTED_PANELS = ['1.0.0-beta38', '1.0.0-rc.1']
+SUPPORTED_PANELS = ['1.0.0-beta38', '1.0.0-rc.1', '1.0.0-rc.2']
 BRANCHES = {'stable': 'main', 'beta': 'beta', 'snapshot': 'snapshot'}
 
 

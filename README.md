@@ -42,7 +42,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 ## Getting started
 
 1. In Pelican, go to **Admin → Plugins → Import from URL**.
-2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.6/pelican-simplify-v0.4.6.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
+2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.7/pelican-simplify-v0.4.7.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
 
    **Beta and snapshot builds:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`, the newest snapshot at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-snapshot-latest.zip`. Betas test the next stable release with all its new features; snapshots are development builds with the latest changes. Both are less tested; see the channel table below.
 3. Follow the setup checks. Anything missing is shown with how to fix it.
