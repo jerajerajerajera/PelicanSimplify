@@ -433,9 +433,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-back-overview { align-self: flex-start; }
 .ps-server-dashboard { width: 100%; max-width: 1400px; min-width: 0; margin-inline: auto; }
 .ps-statusbar { position: fixed; top: 10px; left: 50%; z-index: var(--ps-z-sticky, 30); display: flex; align-items: center; gap: 14px; width: min(1400px, calc(100% - 32px)); padding: 8px 10px 8px 16px; border: 1px solid var(--ps-line); border-left: 3px solid var(--ps-accent); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 88%, transparent); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgb(0 0 0 / .18); opacity: 0; pointer-events: none; transform: translate(-50%, -16px); transition: opacity var(--ps-fast), transform var(--ps-slow); }
-/* Full screen width (Customize overview): drop the centred column limits; phones are full width already. */
-.ps.is-full-width :is(.ps-top, .ps-server-stage, .ps-server-stage.is-list, .ps-server-dashboard, .ps-host) { max-width: none; }
-.ps.is-full-width .ps-statusbar { width: calc(100% - 32px); }
+/* Full screen width (Customize overview): only the overview drops its centred column; server pages and host mode keep theirs, phones are full width already. */
+.ps.is-full-width:not(.server-active, .host-mode) :is(.ps-top, .ps-server-stage, .ps-server-stage.is-list) { max-width: none; }
 .ps-statusbar.is-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .ps-statusbar-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 700; color: var(--ps-accent); text-overflow: ellipsis; white-space: nowrap; }
 .ps-statusbar-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ps-muted); font-size: 13px; font-weight: 600; white-space: nowrap; }

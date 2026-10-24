@@ -190,7 +190,7 @@
                                         </div>
                                     </div>
                                     <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.fullWidth" x-on:click="setOverviewPreference('fullWidth', !overviewPreferences.fullWidth)">
-                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column, on every page</small></span>
+                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for the overview</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.fullWidth}" aria-hidden="true"></span>
                                     </button>
                                     <span class="ps-customize-head">Show on each card</span>
