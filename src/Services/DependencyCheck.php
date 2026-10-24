@@ -7,11 +7,13 @@ namespace Simplify\Panel\Services;
 /** Shared by the native installer and first-run setup. */
 final class DependencyCheck
 {
+    public const TESTED_RELEASES = ['1.0.0-beta38', '1.0.0-rc.1', '1.0.0-rc.2'];
+
     public static function inspect(string $panel, string $plugin, bool $runtime = true, bool $allowLegacy = false): array
     {
         $checks = [];
-        $add = static function (string $name, bool $ok, string $fix) use (&$checks): void {
-            $checks[] = ['name' => $name, 'ok' => $ok, 'fix' => $ok ? '' : $fix];
+        $add = static function (string $name, bool $ok, string $fix, bool $blocking = true) use (&$checks): void {
+            $checks[] = ['name' => $name, 'ok' => $ok, 'fix' => $ok ? '' : $fix, 'blocking' => $blocking];
         };
         $add('PHP 8.3 or newer', version_compare(PHP_VERSION, '8.3', '>='), 'Upgrade PHP for both the web server and queue worker to PHP 8.3 or newer.');
         foreach (['intl', 'json', 'mbstring', 'pdo', 'zip', 'openssl', 'fileinfo', 'ctype', 'tokenizer', 'xml', 'dom', 'curl', 'session'] as $extension) {
@@ -50,7 +52,9 @@ final class DependencyCheck
         $errors = self::assetErrors($manifest, $panel.'/public/build', $required);
         $add('Built Pelican CSS and JavaScript', $errors === [], 'Rebuild the panel assets with yarn install and yarn build in your Pelican folder. '.implode(' ', $errors));
         if ($runtime) {
-            $add('Supported Pelican release', in_array(ltrim((string) config('app.version'), 'v'), ['1.0.0-beta38', '1.0.0-rc.1'], true), 'Use Pelican 1.0.0-beta38 or 1.0.0-rc.1; other releases have not been validated for this plugin.');
+            // A newer Pelican release is a warning, not a blocker: installing still works and the warning says it is untested.
+            $release = ltrim((string) config('app.version'), 'v');
+            $add('Tested Pelican release', in_array($release, self::TESTED_RELEASES, true), 'Simplify is tested on Pelican '.implode(', ', self::TESTED_RELEASES).'; this panel reports '.($release === '' ? 'no version' : $release).'. Installing continues, but report problems on GitHub.', false);
             try { \Illuminate\Support\Facades\DB::connection()->getPdo(); $database = true; } catch (\Throwable) { $database = false; }
             $add('Database connection', $database, 'Repair the panel database connection before continuing.');
             try {

@@ -15,7 +15,7 @@ namespace {
  function abort_unless($ok,$code){if(!$ok)throw new \RuntimeException((string)$code);}
  function base_path(){return sys_get_temp_dir().'/simplify-nonexistent-panel';}
  function plugin_path($id){return __DIR__.'/..';}
- function config($name){return $name==='app.version'?'1.0.0-beta38':'sync';}
+ function config($name){return $name==='app.version'?($GLOBALS['panelVersion']??'1.0.0-beta38'):'sync';}
  $page=new \Simplify\Panel\Filament\Admin\Pages\SimplifySettings;
  // No form or save services exist here. A direct save must return before accessing them.
  $page->save();
@@ -26,6 +26,15 @@ namespace {
  $groups=$page->requirementGroups();
  if(!isset($groups['PHP runtime'],$groups['Styles and scripts'],$groups['Panel services']))throw new \RuntimeException('grouped checks omitted required categories');
  if(array_sum(array_map('count',$groups))!==count($page->requirements))throw new \RuntimeException('grouping dropped a dependency');
+ // A Pelican release Simplify was not tested on warns, but never blocks installation on its own.
+ $release=fn()=>array_values(array_filter(\Simplify\Panel\Services\DependencyCheck::inspect(base_path(),plugin_path('pelican-simplify')),fn($c)=>$c['name']==='Tested Pelican release'))[0];
+ if(!$release()['ok'])throw new \RuntimeException('beta38 is a tested release');
+ $GLOBALS['panelVersion']='v1.0.0-rc.2'; if(!$release()['ok'])throw new \RuntimeException('rc.2 is a tested release');
+ $GLOBALS['panelVersion']='1.0.0-rc.3'; $untested=$release();
+ if($untested['ok']||$untested['blocking']!==false||!str_contains($untested['fix'],'1.0.0-rc.3'))throw new \RuntimeException('an untested release must be a non-blocking warning naming the version');
+ \Simplify\Panel\Services\DependencyCheck::assertReady([['name'=>'CSS','ok'=>true,'fix'=>''],$untested]);
+ $page->requirements=[$untested]; if(!isset($page->requirementGroups()['Panel services']))throw new \RuntimeException('release warning belongs with panel services');
+ echo "PASS an untested Pelican release warns under panel services and does not block installation\n";
  echo "PASS failed or stale checks cannot open first setup; grouped cards retain every check\n";
  echo "PASS direct setup save cannot bypass failed dependencies or write settings\n";
 }

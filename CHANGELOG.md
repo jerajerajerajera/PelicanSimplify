@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.7 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+Simplify no longer refuses to install on a Pelican release it has not been tested on.
+- **Newer Pelican releases:** the system check "Tested Pelican release" is now a warning instead of a blocker. On a release Simplify was not tested on, installing continues and the check names the version the panel reports. Before, installing stopped with "Supported Pelican release: Use Pelican 1.0.0-beta38 or 1.0.0-rc.1".
+- **Pelican 1.0.0-rc.2:** counts as a tested release, and the plugin manager understands rc.2's new "crashed" status (it shows the error; Enable tries again, Delete removes the plugin). Same changes as in beta 0.5.0-beta.3.
+
 ## 0.5.0-beta.3 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Available on the beta channel. Adds support for Pelican 1.0.0-rc.2; everything from 0.5.0-beta.2 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Pelican 1.0.0-rc.2:** Simplify installs on rc.2, and the plugin manager understands rc.2's new "crashed" status (it shows the error; Enable tries again, Delete removes the plugin).

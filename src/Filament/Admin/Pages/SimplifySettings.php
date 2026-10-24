@@ -128,6 +128,7 @@ class SimplifySettings extends Page implements HasForms
         foreach ($this->requirements as $check) {
             $name = $check['name'];
             $group = match (true) {
+                $name === 'Tested Pelican release' => 'Panel services',
                 ($check['blocking'] ?? true) === false => 'Upload capacity',
                 str_starts_with($name, 'PHP') => 'PHP runtime',
                 str_starts_with($name, 'Composer:') || str_contains($name, 'Composer') || str_contains($name, 'Tabler') => 'Panel components',

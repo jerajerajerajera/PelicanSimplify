@@ -31,7 +31,7 @@
                     <div class="ps-plugin-main">
                         <div class="ps-plugin-title">
                             <strong>{{ $plugin['name'] }}</strong>
-                            <span class="ps-badge ps-status {{ ['enabled' => 'running', 'disabled' => 'unavailable', 'not_installed' => 'unavailable', 'errored' => 'offline', 'incompatible' => 'offline'][$plugin['status']] ?? '' }}"><i></i><span>{{ str_replace('_', ' ', $plugin['status']) }}</span></span>
+                            <span class="ps-badge ps-status {{ ['enabled' => 'running', 'disabled' => 'unavailable', 'not_installed' => 'unavailable', 'errored' => 'offline', 'crashed' => 'offline', 'incompatible' => 'offline'][$plugin['status']] ?? '' }}"><i></i><span>{{ str_replace('_', ' ', $plugin['status']) }}</span></span>
                             @if($plugin['latest'])<span class="ps-badge is-info"><span>Update {{ $plugin['latest'] }}</span></span>@endif
                         </div>
                         <small>{{ $plugin['author'] }} · version {{ $plugin['version'] }}</small>
@@ -41,7 +41,7 @@
                                 @if(now()->timestamp - (int) $plugin['busy_since'] > 300)<span class="ps-plugin-error">This is taking long: reload the page; if it stays, check the panel log.</span>@endif
                             </p>
                         @endif
-                        @if($plugin['message'] && in_array($plugin['status'], ['errored', 'incompatible', 'not_installed'], true))<p class="ps-plugin-error">{{ $plugin['message'] }}</p>@endif
+                        @if($plugin['message'] && in_array($plugin['status'], ['errored', 'crashed', 'incompatible', 'not_installed'], true))<p class="ps-plugin-error">{{ $plugin['message'] }}</p>@endif
                     </div>
                     @if($plugin['can_change'])
                         <div class="ps-plugin-actions">
@@ -55,10 +55,10 @@
                             @endif
                             @if($plugin['status'] === 'enabled')
                                 <button type="button" class="ps-btn is-sm" wire:click="setEnabled('{{ $plugin['id'] }}', false)">Disable</button>
-                            @elseif($plugin['status'] === 'disabled')
+                            @elseif(in_array($plugin['status'], ['disabled', 'crashed'], true))
                                 <button type="button" class="ps-btn is-sm" wire:click="setEnabled('{{ $plugin['id'] }}', true)">Enable</button>
                             @endif
-                            @if(in_array($plugin['status'], ['not_installed', 'errored'], true))
+                            @if(in_array($plugin['status'], ['not_installed', 'errored', 'crashed'], true))
                                 @if($plugin['can_delete'])
                                     <button type="button" class="ps-btn is-sm is-danger" wire:click="deletePlugin('{{ $plugin['id'] }}')" wire:confirm="Delete {{ $plugin['name'] }} and its files?">Delete</button>
                                 @endif
