@@ -33,6 +33,7 @@
         <symbol id="ps-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
         <symbol id="ps-moon" viewBox="0 0 24 24"><path d="M20.5 14.3A9 9 0 0 1 9.7 3.5 9 9 0 1 0 20.5 14.3Z"/></symbol>
         <symbol id="ps-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+        <symbol id="ps-grid-small" viewBox="0 0 24 24"><rect x="3" y="3" width="4.5" height="4.5" rx=".8"/><rect x="9.75" y="3" width="4.5" height="4.5" rx=".8"/><rect x="16.5" y="3" width="4.5" height="4.5" rx=".8"/><rect x="3" y="9.75" width="4.5" height="4.5" rx=".8"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx=".8"/><rect x="16.5" y="9.75" width="4.5" height="4.5" rx=".8"/><rect x="3" y="16.5" width="4.5" height="4.5" rx=".8"/><rect x="9.75" y="16.5" width="4.5" height="4.5" rx=".8"/><rect x="16.5" y="16.5" width="4.5" height="4.5" rx=".8"/></symbol>
         <symbol id="ps-list" viewBox="0 0 24 24"><path d="M8 5h13M8 12h13M8 19h13M3 5h.01M3 12h.01M3 19h.01"/></symbol>
         <symbol id="ps-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
         <symbol id="ps-back" viewBox="0 0 24 24"><path d="m12 5-7 7 7 7M5 12h14"/></symbol>

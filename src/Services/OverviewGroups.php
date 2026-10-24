@@ -3,9 +3,9 @@ declare(strict_types=1);
 namespace Simplify\Panel\Services;
 use Illuminate\Support\Facades\Storage;
 /**
- * Server groups a user makes in Customize overview, saved per account so every device shows the same.
- * A server sits in one group at most; null means this account never saved groups (the browser then
- * hands over the groups it kept itself before 0.5.0-snapshot.13).
+ * Server groups and server order a user picks under Server groups, saved per account so every device
+ * shows the same. A server sits in one group at most; null means this account never saved groups (the
+ * browser then hands over the groups it kept itself before 0.5.0-snapshot.13).
  */
 final class OverviewGroups
 {
@@ -13,6 +13,8 @@ final class OverviewGroups
     public const LIMIT=30;
     public const NAME_LENGTH=40;
     private const SERVERS=500;
+    public const ORDERS=['name','created','port'];
+    public const GROUP_ORDERS=['overview','manual','name','created','port'];
 
     public static function get(object $user): ?array
     {
@@ -20,15 +22,22 @@ final class OverviewGroups
         $path=self::path($user);
         if(!$disk->exists($path))return null;
         try{$saved=json_decode((string)$disk->get($path),true,8,JSON_THROW_ON_ERROR);}
-        catch(\Throwable $e){report($e);return [];}
-        return self::clean(is_array($saved)?$saved:[]);
+        catch(\Throwable $e){report($e);return ['groups'=>[],'order'=>'name'];}
+        $saved=is_array($saved)?$saved:[];
+        // Up to 0.5.0-snapshot.13 the file held only the list of groups.
+        return array_is_list($saved)?['groups'=>self::clean($saved),'order'=>'name']:['groups'=>self::clean(is_array($saved['groups']??null)?$saved['groups']:[]),'order'=>self::order($saved['order']??null)];
     }
 
-    public static function save(object $user,array $groups): array
+    public static function save(object $user,array $groups,?string $order='name'): array
     {
-        $groups=self::clean($groups);
-        if(!Storage::disk('local')->put(self::path($user),json_encode($groups,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save your server groups.');
-        return $groups;
+        $data=['groups'=>self::clean($groups),'order'=>self::order($order)];
+        if(!Storage::disk('local')->put(self::path($user),json_encode($data,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save your server groups.');
+        return $data;
+    }
+
+    private static function order(mixed $order): string
+    {
+        return in_array($order,self::ORDERS,true)?$order:'name';
     }
 
     /** Same rules as the dashboard: unique ids, a name, at most one group per server. */
@@ -47,7 +56,7 @@ final class OverviewGroups
                 $seen[$uuid]=true;$servers[]=$uuid;
             }
             $ids[$group['id']]=true;
-            $groups[]=['id'=>$group['id'],'name'=>$name,'servers'=>$servers];
+            $groups[]=['id'=>$group['id'],'name'=>$name,'servers'=>$servers,'sort'=>in_array($group['sort']??null,self::GROUP_ORDERS,true)?$group['sort']:'overview'];
         }
         return $groups;
     }

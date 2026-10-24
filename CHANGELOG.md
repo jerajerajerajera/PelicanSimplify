@@ -1,5 +1,39 @@
 # Changes
 
+## 0.5.0-beta.7 (beta channel)
+Server order and a Server groups button, Quick actions Off/On/Hover, normal interface size and a choice of layout, columns and card width (0.5.0-snapshot.14 to 17 below).
+- Server groups have their own button in the top bar. Choose the order of the overview (Name, Created or Port) and per group (also My own order with arrows); the order is saved with your account.
+- Customize overview → Quick actions: Off, On or Hover. The MOTD in the list only gets narrower when the row runs out of room.
+- The interface keeps its normal size and only scales down when the page would not fit. Long server names in the grid use two lines.
+- Customize overview → Layout: Cards, Compact (new) or List, with Columns (Auto or 2 to 6) and Card width (Narrow, Normal, Wide). Phones can pick their own layout.
+
+## 0.5.0-snapshot.17 (snapshot channel)
+Choose how the server overview is laid out: big cards, compact cards or a list, how many columns and how wide the cards are.
+- Customize overview → Layout has three choices: Cards (as before), Compact (new: small cards with the icon, name, status and players, without the graphs, so many more servers fit on one screen) and List (as before).
+- Columns: Auto (as before) or 2 to 6. A number is the most cards per row; on a narrower window the rest moves to the next row.
+- Card width: Narrow, Normal (as before) or Wide. The grid is as wide as the columns times the card width and stays centred; with Full screen width the cards stretch to the edges.
+- On a phone you can pick the layout too: List (still the default), Compact with two cards per row, or Cards with one big card per row. The phone remembers its own choice, so your computer keeps its own layout.
+- Quick actions work in Compact too: on hover they slide over the bottom of the card, with On the card gets a little taller for them.
+
+## 0.5.0-snapshot.16 (snapshot channel)
+Simplify keeps its normal size, and long server names use two lines.
+- The interface no longer gets smaller on screens below 1440p (it was about 80% on a 1080p screen). It stays at normal size and is only scaled down, just enough and never below 75%, when the page would otherwise be wider than the window.
+- In the grid a long server name wraps onto a second line. Only a name that does not fit on two lines gets a little smaller.
+
+## 0.5.0-snapshot.15 (snapshot channel)
+Choose the order of your servers, and server groups get their own button.
+- A new Server groups button in the top bar (a folder) holds everything about groups: make, rename, order and remove them, and pick their servers. Customize overview has a switch to hide the button; your groups keep showing.
+- Server order for the overview: Name (as in Pelican's list), Created (oldest first) or Port (lowest first).
+- Each group has its own order: the same as the overview, My own order (move servers up and down with arrows), Name, Oldest first or Port.
+- The order is saved with your account like the groups, so every device shows the same.
+
+## 0.5.0-snapshot.14 (snapshot channel)
+Quick actions can be Off, On or Hover, and things in the server list only get smaller when they would not fit.
+- Customize overview → Quick actions has three choices. Off hides the start/stop/restart buttons. On always shows them; in the grid the cards get a little taller for them, so graphs and text keep their size. Hover (the default) shows them when you point at a card. On a touch screen, where you cannot point, Hover shows them like On.
+- Your old setting carries over: the switch "Quick actions on hover" on becomes Hover, off becomes Off.
+- List view with the MOTD: the MOTD keeps its full width. It only gets narrower when the row really runs out of room (a long server name, a narrow window, or the quick actions sliding in), and before the server name shrinks. Before, it always got narrower as soon as you pointed at a row.
+- A server name that is a fraction too wide now shrinks a tiny bit to fit instead of ending in "…".
+
 ## 0.5.0-beta.6 (beta channel)
 Your server groups are saved with your account (0.5.0-snapshot.13 below).
 - Groups under Customize overview → My groups are kept on the panel per account, so every device shows the same groups. Groups made on beta.5 move to your account by themselves the first time you open the overview on that device.
