@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.0-snapshot.12 (snapshot channel)
+"Full screen width" now only changes the overview.
+- Server pages and host mode keep their centred column when the switch is on, so the server page looks the same as before.
+
 ## 0.5.0-snapshot.11 (snapshot channel)
 Group your servers yourself in the overview.
 - Customize overview has a new part, My groups: make a group (such as Survival or Friends), give it a name and switch on the servers that belong in it. Arrows change the order of the groups, the cross removes a group (its servers stay, they just move back).

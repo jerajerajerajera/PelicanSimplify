@@ -125,7 +125,7 @@ const { start } = require('./browser-harness');
     }
     console.log('PASS phone layouts without horizontal scrolling');
 
-    // 7b. Full screen width (Customize overview): the centred column limits go, phones stay the same.
+    // 7b. Full screen width (Customize overview): only the overview drops its centred column; server pages keep theirs.
     for (const url of ['/?mode=overview&theme=dark', '/?mode=server&theme=dark']) {
       const wide = await open(url, { width: 2400, height: 1100 });
       const width = () => wide.evaluate((selector) => document.querySelector(selector).getBoundingClientRect().width / innerWidth, url.includes('server') ? '.ps-server-dashboard' : '.ps-server-stage');
@@ -133,15 +133,15 @@ const { start } = require('./browser-harness');
       await data(wide, (d) => d.setOverviewPreference('fullWidth', true));
       await wide.waitForTimeout(200);
       const after = await width();
-      assert.ok(before < 0.7 && after > 0.9, url + ' uses the full width when switched on: ' + before + ' -> ' + after);
-      if (process.env.SCREENSHOT_DIR) await wide.screenshot({ path: process.env.SCREENSHOT_DIR + '/full-width-' + (url.includes('server') ? 'server' : 'overview') + '.png' });
+      if (url.includes('server')) assert.ok(Math.abs(after - before) < 0.01, 'server page keeps its width: ' + before + ' -> ' + after);
+      else assert.ok(before < 0.7 && after > 0.9, 'overview uses the full width when switched on: ' + before + ' -> ' + after);
       await wide.close();
     }
     const narrow = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
     await data(narrow, (d) => d.setOverviewPreference('fullWidth', true));
     assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'full width still fits a phone');
     await narrow.close();
-    console.log('PASS full screen width switch on wide screens and phones');
+    console.log('PASS full screen width switch on the overview, server pages unchanged, phones fit');
 
     // 8. Overview by node: one heading per node, compact list rows whatever the card options, host mode.
     const prefs = (o) => `localStorage.setItem('pelicanSimplify.overviewAppearance.jera', ${JSON.stringify(JSON.stringify(o))})`;
