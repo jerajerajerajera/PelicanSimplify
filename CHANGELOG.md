@@ -1,5 +1,15 @@
 # Changes
 
+## 0.5.0-beta.6 (beta channel)
+Your server groups are saved with your account (0.5.0-snapshot.13 below).
+- Groups under Customize overview → My groups are kept on the panel per account, so every device shows the same groups. Groups made on beta.5 move to your account by themselves the first time you open the overview on that device.
+
+## 0.5.0-snapshot.13 (snapshot channel)
+Your server groups are saved with your account, so every device shows the same groups.
+- Groups you make under Customize overview → My groups are now kept on the panel per account instead of in the browser. Open the panel on your phone or another computer and the same groups are there.
+- Groups you already made on 0.5.0-beta.5 or snapshot.11/12 move to your account by themselves the first time you open the overview on that device (only while your account has no groups yet).
+- The other Customize choices (layout, card icon, full screen width and so on) stay per device.
+
 ## 0.5.0-beta.5 (beta channel)
 Group your servers yourself and a full screen width switch (0.5.0-snapshot.10 to 12 below).
 - Customize overview → My groups: make your own groups, switch servers into them and order them. They show at the top of the overview; the other servers follow under Other servers or per node.
