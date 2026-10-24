@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.0-snapshot.10 (snapshot channel)
+A switch to use the full width of your screen.
+- Customize overview has a new switch "Full screen width". When it is on, the overview, server pages and host mode use the whole width of the screen instead of a centred column; on wide screens the overview shows more cards per row.
+- Like the other Customize options it is only for you, on this device, and it is off by default. Phones do not change: they already use the full width.
+
 ## 0.5.0-snapshot.9 (snapshot channel)
 Simplify no longer refuses to install on a Pelican release it has not been tested on (same change as stable 0.4.7).
 - The system check "Tested Pelican release" is now a warning instead of a blocker. On an untested release (a newer Pelican, or a panel installed from git that reports "canary") installing continues and the check names the version the panel reports.
