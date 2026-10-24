@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.0-beta.8 (beta channel)
+Fixes the overview and server pages answering with a server error (500) on beta.7.
+- The Simplify page said "Attribute Livewire\Attributes\Renderless must not be repeated". One action carried the same marker twice; it now has it once, and a new check stops a repeated attribute from being released again.
+
 ## 0.5.0-beta.7 (beta channel)
 Server order and a Server groups button, Quick actions Off/On/Hover, normal interface size and a choice of layout, columns and card width (0.5.0-snapshot.14 to 17 below).
 - Server groups have their own button in the top bar. Choose the order of the overview (Name, Created or Port) and per group (also My own order with arrows); the order is saved with your account.
