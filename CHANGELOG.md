@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.0-beta.4 (beta channel)
+Simplify no longer refuses to install on a Pelican release it has not been tested on (0.5.0-snapshot.9 below, same change as stable 0.4.7).
+- On an untested Pelican release (a newer one, or a panel installed from git that reports "canary") the system check "Tested Pelican release" is a warning and installing continues.
+
+## 0.5.0-snapshot.9 (snapshot channel)
+Simplify no longer refuses to install on a Pelican release it has not been tested on (same change as stable 0.4.7).
+- The system check "Tested Pelican release" is now a warning instead of a blocker. On an untested release (a newer Pelican, or a panel installed from git that reports "canary") installing continues and the check names the version the panel reports.
+
 ## 0.5.0-beta.3 (beta channel)
 Support for Pelican 1.0.0-rc.2 (0.5.0-snapshot.8 below). Tested on fresh panels: Pelican 1.0.0-beta38 with PHP 8.3, 8.4 and 8.5, and 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.4 and 8.5 (install, panel start and every Simplify page, without errors).
 - Simplify installs on Pelican 1.0.0-rc.2, next to 1.0.0-beta38 and 1.0.0-rc.1.
