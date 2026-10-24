@@ -2,7 +2,7 @@
   "id": "pelican-simplify",
   "name": "PelicanSimplify",
   "author": "jera",
-  "version": "0.5.0-snapshot.16",
+  "version": "0.5.0-snapshot.17",
   "description": "Unified Simplify dashboard and optional easy server creator with shared theme and setup settings.",
   "category": "plugin",
   "namespace": "Simplify\\Panel",

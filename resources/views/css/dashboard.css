@@ -92,7 +92,7 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-overview { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; overflow: hidden; }
 .ps-server-scroll { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; overflow: hidden auto; padding: 12px 4px; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
 .ps-server-scroll:focus-visible { outline: 2px solid var(--ps-line); outline-offset: 2px; border-radius: var(--ps-radius); }
-.ps-server-stage { --ps-grid-width: calc(4 * 260px + 3 * 16px); flex: none; width: 100%; max-width: var(--ps-grid-width); margin: auto; }
+.ps-server-stage { flex: none; width: 100%; max-width: var(--ps-grid-width); margin: auto; }
 .ps-server-stage.is-list { max-width: 1088px; margin: clamp(4px, calc(4dvh - 28px), 24px) auto 0; }
 .ps-overview-toolbar { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 12px; }
 .ps-overview-toolbar > .ps-game-filters { margin-left: auto; order: 2; }
@@ -105,7 +105,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-node-heading { display: flex; align-items: center; gap: 8px; width: 100%; margin: 10px 0 0; padding-bottom: 6px; border-bottom: 1px solid var(--ps-line); color: var(--ps-ink); font-size: 14px; font-weight: 700; }
 .ps-node-heading svg { width: 16px; height: 16px; color: var(--ps-muted); }
 .ps-node-heading small { margin-left: auto; color: var(--ps-muted); font-size: 12px; font-weight: 500; }
-.ps-server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 16px; width: 100%; }
+.ps-overview { --ps-grid-width: calc(4 * 260px + 3 * 16px); }
+.ps-server-grid { display: grid; grid-template-columns: var(--ps-grid-template, repeat(auto-fill, minmax(min(100%, 230px), 1fr))); gap: 16px; width: 100%; }
 .ps-server-grid.is-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
 /* Server cards. */
@@ -278,6 +279,23 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   .ps-create-card h3 { max-width: 120px; opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ps-create-plus > svg, .ps-create-plus::after { animation: none !important; } }
+
+/* Compact cards: icon, name, status and players only, so more servers fit on a screen. */
+.ps-server-grid.is-compact { --ps-compact-h: 156px; --ps-compact-pad: 14px; gap: 12px; }
+.ps-server-grid.is-compact.quick-actions-on { --ps-power-room: 42px; }
+.ps-server-grid.is-compact .ps-server-open { height: calc(var(--ps-compact-h) + var(--ps-power-room, 0px)) !important; padding: var(--ps-compact-pad) !important; }
+.ps-server-grid.is-compact .has-power.power-shown .ps-server-open { padding-bottom: calc(var(--ps-compact-pad) + var(--ps-power-room, 0px)) !important; }
+.ps-server-grid.is-compact .ps-card-head { min-height: 36px; margin-bottom: 10px !important; }
+.ps-server-grid.is-compact .ps-card-icons { --ps-icon-big: 36px; --ps-icon-small: 22px; --ps-icon-gap: 6px; }
+.ps-server-grid.is-compact .ps-card-title-row { height: 40px; min-height: 0; }
+/* Compact names stay on one line; a long name gets smaller first. */
+.ps-server-grid.is-compact .ps-card-title-row h3 { display: block; height: 24px; max-height: none; font-size: 18px; line-height: 24px; letter-spacing: -.3px; white-space: nowrap; -webkit-line-clamp: unset; }
+.ps-server-grid.is-compact :is(.ps-card-usage, .ps-card-motd, .ps-list-game) { display: none !important; }
+.ps-server-grid.is-compact .ps-card-badges { top: 10px; right: 10px; max-width: calc(100% - 84px); }
+.ps-server-grid.is-compact .ps-card-bottom { margin-top: auto; padding-top: 8px; font-size: 13px; }
+.ps-server-grid.is-compact .ps-overview-power { gap: 4px; padding: 5px; }
+.ps-server-grid.is-compact .ps-overview-power > .ps-btn { min-height: 30px; }
+.ps-server-grid.is-compact .has-power :is(.ps-card-background, .ps-offline-artwork) { transform: none !important; }
 
 /* List view: one row per server; controls dock at the right edge. */
 .ps-server-grid.is-list .ps-server-open { display: grid; grid-template-columns: 80px minmax(0, 1fr) minmax(100px, 240px) 140px; align-items: center; gap: 10px; height: 76px; padding: 10px 16px; }
@@ -695,6 +713,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-server-stage, .ps-server-stage.is-list { max-width: 100%; margin: 0; }
   .ps-overview-toolbar { margin-bottom: 10px; }
   .ps-server-grid { grid-template-columns: minmax(0, 1fr); }
+  .ps-server-grid.is-compact { --ps-compact-h: 132px; --ps-compact-pad: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ps-server-grid.is-compact .ps-card-title-row h3 { font-size: 16px; }
   .ps-health-panel { width: 100%; margin: 0; }
   .ps-host-health { gap: 12px; padding: 12px; }
   .ps-host-emblem { width: 58px; height: 58px; }
@@ -1216,3 +1236,4 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-command input { height: 44px; font-size: 16px; }
   .ps .ps-command button { min-width: 44px; height: 44px; }
 }
+@media (max-width: 480px) { .ps-customize-row > .ps-segmented { display: flex; width: 100%; } .ps-customize-row > .ps-segmented > button { flex: 1 1 0; justify-content: center; } .ps-customize-row > .ps-segmented svg { display: none; } }

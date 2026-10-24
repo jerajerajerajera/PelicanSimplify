@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.0-snapshot.17 (snapshot channel)
+Choose how the server overview is laid out: big cards, compact cards or a list, how many columns and how wide the cards are.
+- Customize overview → Layout has three choices: Cards (as before), Compact (new: small cards with the icon, name, status and players, without the graphs, so many more servers fit on one screen) and List (as before).
+- Columns: Auto (as before) or 2 to 6. A number is the most cards per row; on a narrower window the rest moves to the next row.
+- Card width: Narrow, Normal (as before) or Wide. The grid is as wide as the columns times the card width and stays centred; with Full screen width the cards stretch to the edges.
+- On a phone you can pick the layout too: List (still the default), Compact with two cards per row, or Cards with one big card per row. The phone remembers its own choice, so your computer keeps its own layout.
+- Quick actions work in Compact too: on hover they slide over the bottom of the card, with On the card gets a little taller for them.
+
 ## 0.5.0-snapshot.16 (snapshot channel)
 Simplify keeps its normal size, and long server names use two lines.
 - The interface no longer gets smaller on screens below 1440p (it was about 80% on a 1080p screen). It stays at normal size and is only scaled down, just enough and never below 75%, when the page would otherwise be wider than the window.

@@ -144,6 +144,26 @@ const { start } = require('./browser-harness');
     await narrow.close();
     console.log('PASS full screen width switch on the overview, server pages unchanged, phones fit');
 
+    // 7c. Layout, columns and card width: a column count caps each row; compact cards are smaller; phones show two compact cards per row.
+    const columns = await open('/?mode=overview&theme=dark', { width: 1600, height: 1000 });
+    const perRow = () => columns.evaluate(() => { const tops = [...document.querySelectorAll('.ps-server-card')].map((c) => Math.round(c.getBoundingClientRect().top)); return tops.filter((t) => t === tops[0]).length; });
+    const cardHeight = () => columns.evaluate(() => document.querySelector('.ps-server-card').getBoundingClientRect().height);
+    await data(columns, (d) => d.setOverviewPreference('columns', '2'));
+    await columns.waitForTimeout(200);
+    assert.equal(await perRow(), 2, 'two columns');
+    const big = await cardHeight();
+    await data(columns, (d) => d.setOverviewView('compact'));
+    await columns.waitForTimeout(200);
+    assert.ok(await cardHeight() < big * 0.7, 'compact cards are smaller');
+    await columns.close();
+    const compactPhone = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
+    await data(compactPhone, (d) => d.setOverviewView('compact'));
+    await compactPhone.waitForTimeout(200);
+    assert.equal(await compactPhone.evaluate(() => { const [a, b] = document.querySelectorAll('.ps-server-card'); return Math.round(a.getBoundingClientRect().top) === Math.round(b.getBoundingClientRect().top); }), true, 'two compact cards per row on a phone');
+    assert.equal(await compactPhone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'compact fits a phone');
+    await compactPhone.close();
+    console.log('PASS layout cards/compact/list, column count and compact cards on phones');
+
     // 8. Overview by node: one heading per node, compact list rows whatever the card options, host mode.
     const prefs = (o) => `localStorage.setItem('pelicanSimplify.overviewAppearance.jera', ${JSON.stringify(JSON.stringify(o))})`;
     const nodes = await browser.newPage({ viewport: { width: 1440, height: 900 } });
