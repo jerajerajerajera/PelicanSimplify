@@ -6,6 +6,9 @@
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
   const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true, fullWidth: false };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen', 'fullWidth'];
+  // Own server groups in the overview: at most this many groups, names at most this long.
+  const GROUP_LIMIT = 30;
+  const GROUP_NAME_LENGTH = 40;
   const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
   // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
   const PHONE_SECTIONS = ['players', 'files'];
@@ -53,6 +56,8 @@
       phone: false,
       sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
+      overviewGroups: [],
+      groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
       healthOpenNodes: [],
@@ -179,6 +184,7 @@
         });
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
+        this.restoreOverviewGroups();
         this.restoreHostMode();
         this.initTheme();
         this.initNotices();
@@ -764,17 +770,91 @@
         const mode = this.overviewPreferences.groupByNode;
         return mode === 'always' || (mode === 'auto' && this.nodeOptions().length > 1);
       },
-      /** Servers, with a heading row before each node when grouping is on. */
+      /** Servers, with a heading row before each own group, then each node when grouping by node is on. */
       overviewItems() {
         const servers = this.visibleServers();
-        if (!this.groupedByNode()) return servers;
-        const items = [];
-        for (const node of this.nodeOptions()) {
-          const members = servers.filter((s) => Number(s.node_id) === node.id);
+        const items = [], placed = new Set();
+        for (const group of this.overviewGroups) {
+          const members = servers.filter((s) => group.servers.includes(s.uuid) && !placed.has(s.uuid));
           if (!members.length) continue;
-          items.push({ isNodeHeader: true, uuid: 'node-' + node.id, name: node.name, count: members.length }, ...members);
+          members.forEach((s) => placed.add(s.uuid));
+          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length }, ...members);
         }
-        return items;
+        const rest = servers.filter((s) => !placed.has(s.uuid));
+        if (this.groupedByNode()) {
+          for (const node of this.nodeOptions()) {
+            const members = rest.filter((s) => Number(s.node_id) === node.id);
+            if (members.length) items.push({ isNodeHeader: true, uuid: 'node-' + node.id, name: node.name, count: members.length }, ...members);
+          }
+          return items;
+        }
+        if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: 'Other servers', count: rest.length });
+        return items.concat(rest);
+      },
+      overviewGroupsKey() {
+        return 'pelicanSimplify.overviewGroups.' + encodeURIComponent(this.boot.user || 'default');
+      },
+      /** Own groups from this device; a server sits in at most one group. */
+      restoreOverviewGroups() {
+        const groups = [], seen = new Set();
+        try {
+          const saved = JSON.parse(localStorage.getItem(this.overviewGroupsKey()) || 'null');
+          for (const group of Array.isArray(saved) ? saved : []) {
+            if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
+            const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
+            const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
+            groups.push({ id: group.id.slice(0, 40), name, servers });
+          }
+        } catch {}
+        this.overviewGroups = groups;
+      },
+      saveOverviewGroups(groups) {
+        this.overviewGroups = groups;
+        try {
+          localStorage.setItem(this.overviewGroupsKey(), JSON.stringify(groups));
+        } catch {}
+      },
+      addOverviewGroup() {
+        if (this.overviewGroups.length >= GROUP_LIMIT) return;
+        let number = this.overviewGroups.length + 1;
+        while (this.overviewGroups.some((g) => g.name === 'Group ' + number)) number++;
+        const id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        this.saveOverviewGroups([...this.overviewGroups, { id, name: 'Group ' + number, servers: [] }]);
+        this.groupEditing = id;
+      },
+      renameOverviewGroup(id, name) {
+        const clean = String(name || '').trim().slice(0, GROUP_NAME_LENGTH);
+        // An empty name keeps the old one (the field shows it again).
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id && clean ? { ...g, name: clean } : { ...g })));
+        return this.overviewGroups.find((g) => g.id === id)?.name || '';
+      },
+      removeOverviewGroup(id) {
+        this.saveOverviewGroups(this.overviewGroups.filter((g) => g.id !== id));
+        if (this.groupEditing === id) this.groupEditing = null;
+      },
+      moveOverviewGroup(id, step) {
+        const groups = [...this.overviewGroups], from = groups.findIndex((g) => g.id === id), to = from + step;
+        if (from < 0 || to < 0 || to >= groups.length) return;
+        [groups[from], groups[to]] = [groups[to], groups[from]];
+        this.saveOverviewGroups(groups);
+      },
+      /** Puts a server in this group (taking it out of any other), or takes it out again. */
+      toggleGroupServer(id, uuid) {
+        const inGroup = this.overviewGroups.some((g) => g.id === id && g.servers.includes(uuid));
+        this.saveOverviewGroups(this.overviewGroups.map((g) => {
+          const servers = g.servers.filter((x) => x !== uuid);
+          return { ...g, servers: g.id === id && !inGroup ? [...servers, uuid] : servers };
+        }));
+      },
+      serverGroup(uuid) {
+        return this.overviewGroups.find((g) => g.servers.includes(uuid)) || null;
+      },
+      /** Servers in a group that still exist (a removed server simply stops counting). */
+      groupCount(group) {
+        return (this.boot.servers || []).filter((s) => group.servers.includes(s.uuid)).length;
+      },
+      groupServerOptions() {
+        return [...(this.boot.servers || [])].sort((a, b) => this.cardNames(a).large.localeCompare(this.cardNames(b).large));
       },
       setGameFilter(key) {
         if (key === 'all' || this.gameOptions().some((g) => g.key === key)) this.gameFilter = key;

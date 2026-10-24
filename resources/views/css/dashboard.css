@@ -1050,6 +1050,23 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-customize-head + .ps-customize-switch { border-top: 0; }
 .ps-customize-switch { cursor: pointer; }
 .ps-customize-switch .ps-switch { flex: none; }
+/* Own groups in Customize overview. */
+.ps-group-note { padding: 4px 0 2px; }
+.ps-group-edit { border-top: 1px solid var(--ps-line); }
+.ps-customize-head + .ps-group-edit { border-top: 0; }
+.ps-group-row { display: flex; align-items: center; gap: 4px; padding: 8px 0; }
+.ps-group-name.ps-input { flex: 1 1 auto; min-width: 0; min-height: 30px; padding: 4px 8px; font-size: 13px; font-weight: 650; }
+.ps-group-count { flex: none; margin: 0 4px; white-space: nowrap; }
+.ps-group-toggle svg { transition: transform .15s ease; }
+.ps-group-edit.is-open .ps-group-toggle svg { transform: rotate(90deg); }
+.ps-group-up svg { transform: rotate(-90deg); }
+.ps-group-down svg { transform: rotate(90deg); }
+.ps-group-servers { margin: 0 0 8px 34px; }
+.ps-group-servers .ps-customize-switch { padding: 7px 0; }
+.ps-group-servers .ps-customize-switch:first-child { border-top: 0; }
+.ps-group-add { justify-self: start; margin-top: 8px; gap: 6px; }
+/* Phones: the name gets its own line, the order and remove buttons sit under it. */
+@media (max-width: 600px) { .ps-group-row { flex-wrap: wrap; } .ps-group-name.ps-input { flex-basis: calc(100% - 56px); } .ps-group-count { display: none; } .ps-group-up { margin-left: auto; } .ps-group-servers { margin-left: 0; } }
 @media (max-width: 480px) { .ps-overview-appearance-menu { width: min(400px, calc(100vw - 24px)); } .ps-customize-row { flex-wrap: wrap; } }
 /* Every header menu points at the button that opened it, like the incoming notification does. The arrow
    sits on the wrapper because the menu itself scrolls (and would clip it). */
