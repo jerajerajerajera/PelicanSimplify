@@ -1,5 +1,8 @@
 # Changes
 
+## 0.5.0-beta.4 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+Available on the beta channel. The same change as stable 0.4.7: on a Pelican release Simplify was not tested on, the setup check "Tested Pelican release" is a warning and installing continues. Everything from 0.5.0-beta.3 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+
 ## 0.4.7 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Simplify no longer refuses to install on a Pelican release it has not been tested on.
 - **Newer Pelican releases:** the system check "Tested Pelican release" is now a warning instead of a blocker. On a release Simplify was not tested on, installing continues and the check names the version the panel reports. Before, installing stopped with "Supported Pelican release: Use Pelican 1.0.0-beta38 or 1.0.0-rc.1".

@@ -2,7 +2,7 @@
 
 A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel) game server panel. You manage your servers from one overview and create new ones with a guided wizard. Everything still runs on Pelican and [Wings](https://github.com/pelican/wings), and the original panel stays available.
 
-**Stable 0.4.6 for Pelican 1.0.0-beta38 and 1.0.0-rc.1 · Beta 0.5.0-beta.3 also for 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
+**Stable 0.4.7 and beta 0.5.0-beta.4 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
 
 *Screenshots use example servers.*
 
@@ -19,9 +19,9 @@ A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel)
 - **Make it yours:** light and dark themes, server colors, banners, and your own logo or styled panel name.
 - **Friends mode, people and roles:** everyone can see every server but only manage their own, and roles set clear permissions and limits.
 
-## Now in beta (0.5.0-beta.3)
+## Now in beta (0.5.0-beta.4)
 
-The next release is in beta. It adds two big features on top of stable 0.4.6, and supports Pelican 1.0.0-rc.2. Tested on Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.3 to 8.5 (see Compatibility):
+The next release is in beta. It adds two big features on top of stable 0.4.7. Tested on Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.3 to 8.5 (see Compatibility):
 
 - **Simplify on your phone.** The overview, the server page, popups and the server creator are made for small screens: one page that scrolls, compact server rows with one power button, a tab bar at the bottom, a full-height console with quick commands, and popups that slide up as sheets. Pelican's own pages inside Simplify (admin pages, account, server settings) get one column and larger touch targets, and host mode becomes one column with a server switcher. Wider screens do not change.
 - **The panel as an app.** Add the panel to your phone's home screen ("Install app" in the menu): its own icon, full screen without the browser bar, and a clear page when there is no connection. New in 0.5.0-beta.2.
@@ -49,23 +49,23 @@ Simplify is a large change to how your panel looks and works. Please read this f
 
 | Channel | Current version | What it has | Changelog |
 |---|---|---|---|
-| **Stable** (default) | 0.4.6 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
-| **Beta** | 0.5.0-beta.3 | Stable plus Simplify on phones, the panel as an app, support for other plugins and Pelican 1.0.0-rc.2 (see Now in beta) | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.5.0-snapshot.8 | The newest development build; at the moment the same features as the beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Stable** (default) | 0.4.7 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
+| **Beta** | 0.5.0-beta.4 | Stable plus Simplify on phones, the panel as an app and support for other plugins (see Now in beta) | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
+| **Snapshot** | 0.5.0-snapshot.9 | The newest development build; at the moment the same features as the beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
 
-| Pelican | PHP | Stable 0.4.6 | Beta 0.5.0-beta.3 |
+| Pelican | PHP | Stable 0.4.7 | Beta 0.5.0-beta.4 |
 |---|---|---|---|
 | 1.0.0-beta38 | 8.3 | ✅ Works | ✅ Tested, works |
 | 1.0.0-beta38 | 8.4 | Not tested | ✅ Tested, works |
 | 1.0.0-beta38 | 8.5 | Not tested | ✅ Tested, works |
 | 1.0.0-rc.1 | 8.4 | ✅ Works | ✅ Tested, works |
 | 1.0.0-rc.1 | 8.5 | Not tested | ✅ Tested, works |
-| 1.0.0-rc.2 | 8.4 | ❌ Not supported | ✅ Tested, works |
-| 1.0.0-rc.2 | 8.5 | ❌ Not supported | ✅ Tested, works |
+| 1.0.0-rc.2 | 8.4 | ✅ Supported | ✅ Tested, works |
+| 1.0.0-rc.2 | 8.5 | ✅ Supported | ✅ Tested, works |
 
-Pelican 1.0.0-rc.1 and rc.2 need PHP 8.4 or newer. "Tested" means a fresh panel with that Pelican and PHP version: Simplify installed, the panel started and every Simplify page opened without errors. Snapshot 0.5.0-snapshot.8 supports the same versions as the beta.
+Pelican 1.0.0-rc.1 and rc.2 need PHP 8.4 or newer. "Tested" means a fresh panel with that Pelican and PHP version: Simplify installed, the panel started and every Simplify page opened without errors. The beta was tested as 0.5.0-beta.3; beta.4 only turns the release check into a warning. Stable 0.4.7 has the same rc.2 changes as that beta. Snapshot 0.5.0-snapshot.9 supports the same versions as the beta. On a Pelican release that is not in this table (a newer one, or a panel installed from git that reports "canary"), the setup check "Tested Pelican release" shows a warning and installing continues.
 
 **Requirements:** Node.js 22.12+ or 24+, Yarn, and a running queue worker and scheduler.
 
