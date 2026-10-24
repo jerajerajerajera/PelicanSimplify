@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.0-snapshot.14 (snapshot channel)
+Quick actions can be Off, On or Hover, and things in the server list only get smaller when they would not fit.
+- Customize overview → Quick actions has three choices. Off hides the start/stop/restart buttons. On always shows them; in the grid the cards get a little taller for them, so graphs and text keep their size. Hover (the default) shows them when you point at a card. On a touch screen, where you cannot point, Hover shows them like On.
+- Your old setting carries over: the switch "Quick actions on hover" on becomes Hover, off becomes Off.
+- List view with the MOTD: the MOTD keeps its full width. It only gets narrower when the row really runs out of room (a long server name, a narrow window, or the quick actions sliding in), and before the server name shrinks. Before, it always got narrower as soon as you pointed at a row.
+- A server name that is a fraction too wide now shrinks a tiny bit to fit instead of ending in "…".
+
 ## 0.5.0-snapshot.13 (snapshot channel)
 Your server groups are saved with your account, so every device shows the same groups.
 - Groups you make under Customize overview → My groups are now kept on the panel per account instead of in the browser. Open the panel on your phone or another computer and the same groups are there.

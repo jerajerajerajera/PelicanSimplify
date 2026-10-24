@@ -129,12 +129,14 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-offline-artwork { position: absolute; inset: 0 0 0 auto; z-index: -1; width: 80%; color: var(--ps-muted); opacity: .27; filter: blur(1.5px); pointer-events: none; mask-image: linear-gradient(to left, #000, transparent 95%); transition: transform var(--ps-slow); }
 .ps.dark .ps-offline-artwork { opacity: .32; }
 .ps-offline-artwork svg { position: absolute; top: 50%; right: -10%; width: auto; height: 80%; aspect-ratio: 1; fill: currentColor; stroke: none; transform: translateY(-50%); }
-.ps-server-open { display: flex; flex-direction: column; width: 100%; height: 320px; padding: 18px; border: 0; background: transparent; color: var(--ps-ink); text-align: left; transition: padding var(--ps-slow); }
+.ps-server-open { display: flex; flex-direction: column; width: 100%; height: calc(320px + var(--ps-power-room, 0px)); padding: 18px; border: 0; background: transparent; color: var(--ps-ink); text-align: left; transition: padding var(--ps-slow); }
 .ps-server-open:disabled { cursor: default; }
 .ps-server-open:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -4px; border-radius: var(--ps-radius-lg); }
-.ps-server-grid:not(.is-list).has-motd .ps-server-open { height: 380px; }
-.ps-server-grid:not(.is-list).no-metrics .ps-server-open { height: 240px; }
-.ps-server-grid:not(.is-list).no-metrics.has-motd .ps-server-open { height: 300px; }
+.ps-server-grid:not(.is-list).has-motd .ps-server-open { height: calc(380px + var(--ps-power-room, 0px)); }
+.ps-server-grid:not(.is-list).no-metrics .ps-server-open { height: calc(240px + var(--ps-power-room, 0px)); }
+.ps-server-grid:not(.is-list).no-metrics.has-motd .ps-server-open { height: calc(300px + var(--ps-power-room, 0px)); }
+/* Quick actions set to On: cards grow by the button bar instead of squeezing their content. */
+.ps-server-grid.quick-actions-on:not(.is-list) { --ps-power-room: 58px; }
 .ps-server-grid:not(.is-list).no-metrics.no-quick-actions .ps-server-open { height: 200px; }
 .ps-server-grid:not(.is-list).no-metrics.no-quick-actions.has-motd .ps-server-open { height: 260px; }
 .ps-card-head { display: flex; flex: none; align-items: flex-start; justify-content: space-between; min-height: 44px; margin-bottom: 18px; transition: margin var(--ps-slow); }
@@ -223,18 +225,13 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-overview-power > .ps-btn { width: 100%; transition: opacity var(--ps-fast), transform var(--ps-fast); }
 .ps-overview-power.is-confirming > .ps-btn { visibility: hidden; opacity: 0; transform: translateX(-20px); }
 .ps-power-confirm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px; background: inherit; animation: ps-modal-in .2s ease-out; }
-.ps-server-entry.has-power:is(:hover, :focus-within) .ps-overview-power-wrap,
+.ps-server-entry.has-power:is(:hover, :focus-within, .power-shown) .ps-overview-power-wrap,
 .ps-server-entry.confirming-power .ps-overview-power-wrap { visibility: visible; pointer-events: auto; transform: none; }
-.ps-server-grid:not(.is-list) .has-power:is(:hover, :focus-within, .confirming-power) .ps-server-open { padding-bottom: 76px; }
-.ps-server-grid:not(.is-list) .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-head { margin-bottom: 8px; }
-.ps-server-grid:not(.is-list) .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-graph { height: 30px; }
-.ps-server-grid:not(.is-list) .has-power:is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: translateY(calc(-1 * var(--ps-power-h))); }
-@media (hover: none) {
-  .ps-server-entry.has-power .ps-overview-power-wrap { visibility: visible; pointer-events: auto; transform: none; }
-  .ps-server-grid:not(.is-list) .has-power .ps-server-open { padding-bottom: 76px; }
-  .ps-server-grid:not(.is-list) .has-power .ps-card-head { margin-bottom: 8px; }
-  .ps-server-grid:not(.is-list) .has-power .ps-card-graph { height: 30px; }
-}
+.ps-server-grid:not(.is-list) .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-server-open { padding-bottom: 76px; }
+/* On hover the bar slides over a card of fixed height, so only then does the content squeeze up. */
+.ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) .ps-card-head { margin-bottom: 8px; }
+.ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) .ps-card-graph { height: 30px; }
+.ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: translateY(calc(-1 * var(--ps-power-h))); }
 
 /* Creation tiles: a large logo that makes room for its label on hover. */
 .ps-create-tiles { display: flex; align-items: center; gap: 12px; order: -1; min-width: 0; margin-right: 8px; }
@@ -297,15 +294,10 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-server-grid.is-list .ps-overview-power { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); height: 100%; border-top: 0; border-left: 1px solid var(--ps-line); }
 .ps-server-grid.is-list .ps-overview-power > .ps-btn { height: 100%; min-height: 0; }
 .ps-server-grid.is-list .ps-power-confirm { flex-wrap: wrap; }
-.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-server-open { padding-right: 130px; }
-.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-badges { right: 128px; }
-.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-footer { padding-right: 104px; }
-.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: translateX(-104px); }
-@media (hover: none) and (min-width: 701px) {
-  .ps-server-grid.is-list .has-power .ps-server-open { padding-right: 130px; }
-  .ps-server-grid.is-list .has-power .ps-card-badges { right: 128px; }
-  .ps-server-grid.is-list .has-power .ps-card-footer { padding-right: 104px; }
-}
+.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-server-open { padding-right: 130px; }
+.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-card-badges { right: 128px; }
+.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-card-footer { padding-right: 104px; }
+.ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) :is(.ps-card-background, .ps-offline-artwork) { transform: translateX(-104px); }
 /* Wide screens: one compact row. Badges sit side by side, the player count docks under them and the
    MOTD gets its own column instead of making the row taller. */
 @media (min-width: 1051px) {
@@ -316,20 +308,17 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   .ps-server-grid.is-list .ps-card-title { align-self: center; }
   .ps-server-grid.is-list .ps-server-entry.has-card-motd .ps-card-title { flex-direction: row; align-items: center; gap: 16px; }
   .ps-server-grid.is-list .ps-server-entry.has-card-motd .ps-card-title-row { flex: 1 1 0; min-width: 0; }
-  .ps-server-grid.is-list .ps-card-motd { flex: 0 1 340px; min-width: 0; margin: 0; transition: flex-basis var(--ps-slow); }
-  /* When quick actions slide in, the MOTD gives up the room; title and icons stay put. */
-  .ps-server-grid.is-list .ps-server-entry.has-card-motd .ps-card-title-row { flex: 1 1 auto; min-width: 140px; }
-  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-motd { flex-basis: 200px; }
+  /* The MOTD keeps its full width while the row has room. When it runs short (quick actions sliding
+     in, a long name, a narrow window) the MOTD gives way first, then the name shrinks to fit. */
+  .ps-server-grid.is-list .ps-card-motd { flex: 0 1 340px; min-width: 160px; margin: 0; }
+  .ps-server-grid.is-list .ps-server-entry.has-card-motd .ps-card-title-row { flex: 1 0 auto; min-width: 140px; max-width: calc(100% - 176px); }
   .ps-server-grid.is-list .ps-card-usage { align-self: center; }
   .ps-server-grid.is-list .ps-card-mini-metric { padding: 3px 6px; }
   .ps-server-grid.is-list .ps-card-graph { height: 18px; margin-top: 2px; }
   .ps-server-grid.is-list .ps-card-badges { top: 9px; right: 16px; flex-direction: row; }
   .ps-server-grid.is-list .ps-card-footer { position: absolute; right: 8px; bottom: 6px; z-index: 3; border: 0; background: transparent; }
   .ps-server-grid.is-list .ps-list-player-count { min-height: 0; padding: 2px 8px; }
-  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-footer { padding-right: 0; right: 112px; }
-}
-@media (hover: none) and (min-width: 1051px) {
-  .ps-server-grid.is-list .has-power .ps-card-footer { padding-right: 0; right: 112px; }
+  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-card-footer { padding-right: 0; right: 112px; }
 }
 @media (max-width: 1050px) {
   .ps-server-grid.is-list .ps-server-open { grid-template-columns: 80px minmax(0, 1fr) 130px; height: auto; }
@@ -346,13 +335,13 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   .ps-server-grid.is-list .ps-card-badges { position: static; grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; max-width: 100%; }
   .ps-server-grid.is-list .ps-card-usage { grid-row: auto; max-width: 100%; }
   .ps-server-grid.is-list .has-power .ps-server-open,
-  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-server-open { padding: 12px 14px; }
+  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-server-open { padding: 12px 14px; }
   .ps-server-grid.is-list .has-power .ps-card-footer,
-  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-card-footer { padding-right: 0; }
+  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-card-footer { padding-right: 0; }
   .ps-server-grid.is-list .ps-overview-power-wrap { position: static; width: auto; visibility: visible; pointer-events: auto; transform: none; }
   .ps-server-grid.is-list .ps-overview-power { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: none; height: auto; border-left: 0; border-top: 1px solid var(--ps-line); }
   .ps-server-grid.is-list .ps-overview-power > .ps-btn { height: auto; min-height: var(--ps-h); }
-  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
+  .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
 }
 
 /* Host health dock: compact summary row that expands upward into node details. */
@@ -1136,7 +1125,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-server-grid.is-list .ps-server-card { border-radius: 16px; }
   .ps .ps-server-grid.is-list .ps-server-open,
   .ps .ps-server-grid.is-list .has-power .ps-server-open,
-  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) .ps-server-open { grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto auto; align-items: center; gap: 2px 12px; height: auto; min-height: 76px; padding: 12px 14px; }
+  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) .ps-server-open { grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto auto; align-items: center; gap: 2px 12px; height: auto; min-height: 76px; padding: 12px 14px; }
   .ps .ps-server-grid.is-list .has-power .ps-server-open { padding-right: 70px !important; }
   .ps .ps-server-grid.is-list .ps-card-head { grid-row: 1 / span 3; align-self: center; min-height: 0; }
   .ps .ps-server-grid.is-list .ps-card-icons { --ps-icon-big: 48px; --ps-icon-small: 20px; --ps-icon-small-x: 32px; --ps-icon-small-y: 32px; width: 48px; height: 52px; }
@@ -1151,7 +1140,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-server-grid.is-list .ps-card-usage-label { gap: 6px; font-size: 12px; }
   .ps .ps-server-grid.is-list .ps-card-usage-label svg { width: 14px; height: 14px; }
   .ps .ps-server-grid.is-list .ps-card-footer { display: none; }
-  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
+  .ps .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
 
   /* Power: only the main action (start when offline, otherwise stop), 48 px, always visible. */
   .ps .ps-server-grid.is-list .ps-overview-power-wrap { position: absolute; top: 50%; right: 12px; bottom: auto; left: auto; width: auto; visibility: visible; pointer-events: auto; transform: translateY(-50%); }
