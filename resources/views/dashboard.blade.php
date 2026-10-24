@@ -202,7 +202,7 @@
                                     </template>
                                     {{-- Own groups: shown above the other servers; a server sits in one group at most. --}}
                                     <span class="ps-customize-head">My groups</span>
-                                    <small class="ps-group-note" x-show="!overviewGroups.length">Make your own groups, such as Survival or Friends, and pick which servers go in each. They are shown at the top of the overview.</small>
+                                    <small class="ps-group-note"><span x-show="!overviewGroups.length">Make your own groups, such as Survival or Friends, and pick which servers go in each. They are shown at the top of the overview. </span>Saved with your account, so every device shows the same groups.</small>
                                     <template x-for="(group, index) in overviewGroups" :key="group.id">
                                         <div class="ps-group-edit" :class="{'is-open': groupEditing===group.id}">
                                             <div class="ps-group-row">
