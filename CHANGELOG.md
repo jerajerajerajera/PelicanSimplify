@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.0-snapshot.9 (snapshot channel)
+Simplify no longer refuses to install on a Pelican release it has not been tested on (same change as stable 0.4.7).
+- The system check "Tested Pelican release" is now a warning instead of a blocker. On an untested release (a newer Pelican, or a panel installed from git that reports "canary") installing continues and the check names the version the panel reports.
+
 ## 0.5.0-snapshot.8 (snapshot channel)
 Support for Pelican 1.0.0-rc.2 (PHP 8.4 or 8.5). Tested on a fresh Pelican 1.0.0-rc.2 panel with PHP 8.4; beta38 and rc.1 keep working.
 - Simplify installs on rc.2: the system check and the update files now list 1.0.0-rc.2 next to 1.0.0-beta38 and 1.0.0-rc.1.
