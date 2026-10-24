@@ -4,8 +4,10 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true, fullWidth: false };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen', 'fullWidth'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth'];
+  // Overview settings that pick one of a fixed set of values.
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'] };
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
   const GROUP_NAME_LENGTH = 40;
@@ -698,7 +700,7 @@
       },
       canOverviewPower(s, action) {
         const permission = { start: 'control.start', stop: 'control.stop', kill: 'control.stop', restart: 'control.restart' }[action];
-        return this.overviewPreferences.showQuickActions && !!permission && !!s.linked && !!s.permissions?.[permission]
+        return this.quickActionsMode() !== 'off' && !!permission && !!s.linked && !!s.permissions?.[permission]
           && !['installing', 'restoring'].includes(s.status)
           && (action !== 'start' || s.status === 'offline')
           && (!['stop', 'kill', 'restart'].includes(action) || s.status !== 'offline');
@@ -734,8 +736,15 @@
         title.style.fontSize = base + 'px';
         const original = row.querySelector('.ps-card-real-name');
         const reserve = this.overviewView === 'list' && typeof innerWidth !== 'undefined' && innerWidth > 700 && original && !original.classList.contains('no-alias') ? original.getBoundingClientRect().width + 8 : 0;
-        const available = Math.max(0, row.clientWidth - reserve);
-        if (available > 0 && title.scrollWidth > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / title.scrollWidth)) + 'px';
+        const available = Math.max(0, row.getBoundingClientRect().width - reserve);
+        // Measure the text itself: scrollWidth rounds, so a name a fraction too wide would get "…" instead of fitting.
+        let needed = title.scrollWidth;
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(title);
+          needed = range.getBoundingClientRect().width;
+        } catch {}
+        if (available > 0 && needed > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / needed * 10) / 10) + 'px';
       },
       softwareTooltip(s) {
         const software = String(s.software || 'Server software').trim();
@@ -888,9 +897,9 @@
           const saved = JSON.parse(localStorage.getItem(this.overviewPreferencesKey()) || 'null');
           if (saved && typeof saved === 'object') {
             for (const key of OVERVIEW_SWITCHES) if (typeof saved[key] === 'boolean') preferences[key] = saved[key];
-            if (['server', 'egg'].includes(saved.largeIcon)) preferences.largeIcon = saved.largeIcon;
-            if (['alias', 'name'].includes(saved.largeName)) preferences.largeName = saved.largeName;
-            if (['auto', 'always', 'off'].includes(saved.groupByNode)) preferences.groupByNode = saved.groupByNode;
+            // Before Off/On/Hover, quick actions were a switch that meant "on hover".
+            if (typeof saved.showQuickActions === 'boolean') preferences.quickActions = saved.showQuickActions ? 'hover' : 'off';
+            for (const [key, values] of Object.entries(OVERVIEW_CHOICES)) if (values.includes(saved[key])) preferences[key] = saved[key];
           }
         } catch {}
         this.overviewPreferences = preferences;
@@ -898,12 +907,18 @@
       setOverviewPreference(key, value) {
         if (OVERVIEW_SWITCHES.includes(key)) {
           if (typeof value !== 'boolean') return;
-        } else if (!({ largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'] }[key] || []).includes(value)) return;
+        } else if (!(OVERVIEW_CHOICES[key] || []).includes(value)) return;
         this.overviewPreferences = { ...this.overviewPreferences, [key]: value };
-        if (key === 'showQuickActions' && !value) this.powerConfirmation = null;
+        if (key === 'quickActions' && value === 'off') this.powerConfirmation = null;
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
+      quickActionsMode() {
+        const mode = this.overviewPreferences.quickActions;
+        if (mode !== 'hover') return mode === 'on' ? 'on' : 'off';
+        return typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches ? 'on' : 'hover';
       },
       overviewMetrics() {
         return [

@@ -146,7 +146,7 @@ const { start } = require('./browser-harness');
     // 8. Overview by node: one heading per node, compact list rows whatever the card options, host mode.
     const prefs = (o) => `localStorage.setItem('pelicanSimplify.overviewAppearance.jera', ${JSON.stringify(JSON.stringify(o))})`;
     const nodes = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await nodes.addInitScript(prefs({ showQuickActions: false, showCpu: false, showRam: false }));
+    await nodes.addInitScript(prefs({ quickActions: 'off', showCpu: false, showRam: false }));
     await nodes.goto(base + '/?mode=overview&theme=dark');
     await nodes.waitForFunction(() => window.Alpine && document.querySelector('.ps-node-heading'));
     assert.equal(await nodes.locator('.ps-node-heading').count(), 2, 'one heading per node');
@@ -161,6 +161,36 @@ const { start } = require('./browser-harness');
     assert.equal(await nodes.locator('.ps-host-server').count(), 4, 'host mode lists every server');
     await nodes.close();
     console.log('PASS servers grouped per node, compact list rows and host mode');
+
+    // 8b. Things only shrink when they would not fit: the list MOTD keeps its width when quick actions
+    // slide in, and quick actions set to On stay visible and make grid cards taller instead of squeezing them.
+    const fit = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    await fit.addInitScript(prefs({ showMotd: true, fullWidth: true, quickActions: 'hover' }));
+    await fit.goto(base + '/?mode=overview&theme=dark');
+    await fit.waitForFunction(() => window.Alpine && document.querySelector('.ps-card-motd'));
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewView('list'));
+    await fit.waitForTimeout(300);
+    const motdWidth = () => fit.evaluate(() => document.querySelector('.ps-server-entry.has-card-motd .ps-card-motd').offsetWidth);
+    const restingMotd = await motdWidth();
+    await fit.hover('.ps-server-entry.has-card-motd .ps-card-title');
+    await fit.waitForTimeout(400);
+    assert.equal(await motdWidth(), restingMotd, 'MOTD keeps its width while the row has room');
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'on'));
+    await fit.mouse.move(5, 5);
+    await fit.waitForTimeout(400);
+    assert.equal(await fit.locator('.ps-server-entry.has-power .ps-overview-power-wrap').first().evaluate((e) => getComputedStyle(e).visibility), 'visible', 'On shows the buttons without pointing');
+    const card = () => fit.evaluate(() => { const e = document.querySelector('.ps-server-entry.has-power'); return { height: e.querySelector('.ps-server-open').offsetHeight, graph: e.querySelector('.ps-card-graph').getBoundingClientRect().height }; });
+    await fit.evaluate(() => { const d = Alpine.$data(document.querySelector('.ps')); d.setOverviewView('grid'); d.setOverviewPreference('quickActions', 'hover'); });
+    await fit.waitForTimeout(400);
+    const hoverCard = await card();
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'on'));
+    await fit.waitForTimeout(400);
+    const onCard = await card();
+    assert.ok(onCard.height > hoverCard.height && Math.abs(onCard.graph - hoverCard.graph) < 1, 'On grows the card, graphs keep their size: ' + JSON.stringify({ hoverCard, onCard }));
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'off'));
+    assert.equal(await fit.locator('.ps-server-entry.has-power').count(), 0, 'Off hides quick actions');
+    await fit.close();
+    console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover');
 
     // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
     const network = await open('/?mode=server&theme=light');

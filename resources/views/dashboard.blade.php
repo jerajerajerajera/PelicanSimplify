@@ -194,12 +194,20 @@
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.fullWidth}" aria-hidden="true"></span>
                                     </button>
                                     <span class="ps-customize-head">Show on each card</span>
-                                    <template x-for="option in [{key:'showMotd',label:'Message of the day',hint:'The Minecraft MOTD under the server name'},{key:'showCpu',label:'CPU usage',hint:'A small live CPU graph'},{key:'showRam',label:'Memory usage',hint:'A small live RAM graph'},{key:'showQuickActions',label:'Quick actions on hover',hint:'Start, stop and restart buttons when you point at a card'}]" :key="option.key">
+                                    <template x-for="option in [{key:'showMotd',label:'Message of the day',hint:'The Minecraft MOTD under the server name'},{key:'showCpu',label:'CPU usage',hint:'A small live CPU graph'},{key:'showRam',label:'Memory usage',hint:'A small live RAM graph'}]" :key="option.key">
                                         <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences[option.key]" x-on:click="setOverviewPreference(option.key, !overviewPreferences[option.key])">
                                             <span><strong x-text="option.label"></strong><small x-text="option.hint"></small></span>
                                             <span class="ps-switch" :class="{'is-on': overviewPreferences[option.key]}" aria-hidden="true"></span>
                                         </button>
                                     </template>
+                                    <div class="ps-customize-row">
+                                        <div><strong>Quick actions</strong><small>Start, stop and restart buttons on each card: always, or only when you point at it (on a touch screen they are always shown)</small></div>
+                                        <div class="ps-segmented" role="group" aria-label="Quick actions">
+                                            <template x-for="mode in [{key:'off',label:'Off'},{key:'on',label:'On'},{key:'hover',label:'Hover'}]" :key="mode.key">
+                                                <button type="button" :aria-pressed="overviewPreferences.quickActions===mode.key" x-on:click="setOverviewPreference('quickActions', mode.key)" x-text="mode.label"></button>
+                                            </template>
+                                        </div>
+                                    </div>
                                     {{-- Own groups: shown above the other servers; a server sits in one group at most. --}}
                                     <span class="ps-customize-head">My groups</span>
                                     <small class="ps-group-note"><span x-show="!overviewGroups.length">Make your own groups, such as Survival or Friends, and pick which servers go in each. They are shown at the top of the overview. </span>Saved with your account, so every device shows the same groups.</small>
@@ -407,9 +415,9 @@
                             <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="frameUrl(boot.plugin_widgets_url)" title="Plugin widgets" x-on:load="pluginWidgetsLoaded($el, 'app')"></iframe>
                         </div>
                     </template>
-                    <div class="ps-server-grid" :class="{'is-list': overviewView==='list', 'has-motd': overviewPreferences.showMotd, 'no-metrics': !overviewMetrics().length, 'no-quick-actions': !overviewPreferences.showQuickActions}">
+                    <div class="ps-server-grid" :class="{'is-list': overviewView==='list', 'has-motd': overviewPreferences.showMotd, 'no-metrics': !overviewMetrics().length, 'no-quick-actions': quickActionsMode()==='off', 'quick-actions-on': quickActionsMode()==='on'}">
                         <template x-for="s in overviewItems()" :key="s.uuid">
-                            <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': overviewPreferences.showQuickActions && s.linked && Object.values(s.permissions || {}).some(Boolean), 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
+                            <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': quickActionsMode()!=='off' && s.linked && Object.values(s.permissions || {}).some(Boolean), 'power-shown': quickActionsMode()==='on', 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
                                     <h2 class="ps-node-heading"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
                                 </template>
@@ -469,7 +477,7 @@
                                             <svg aria-hidden="true"><use :href="s.linked ? '#ps-chevron' : '#ps-lock'"/></svg>
                                         </button>
                                     </div>
-                                    <div class="ps-overview-power-wrap" x-show="overviewPreferences.showQuickActions">
+                                    <div class="ps-overview-power-wrap" x-show="quickActionsMode()!=='off'">
                                         <div class="ps-overview-power" :class="{'is-confirming': powerConfirmation?.uuid===s.uuid}" role="group" :aria-label="'Power controls for '+(s.alias || s.name)">
                                             <template x-for="action in [{key:'start',label:'Start',icon:'play'},{key:'stop',label:'Stop',icon:'stop'},{key:'restart',label:'Restart',icon:'restart'},{key:'kill',label:'Force stop',icon:'kill'}]" :key="action.key">
                                                 <button type="button" class="ps-btn is-icon" :class="{'is-danger': action.key==='kill'}" :data-power="action.key" :data-tip="action.label" :aria-label="action.label+' '+(s.alias || s.name)" :disabled="!!overviewPowerBusy || !canOverviewPower(s, action.key)" x-on:click.stop="overviewPower(s, action.key)">
