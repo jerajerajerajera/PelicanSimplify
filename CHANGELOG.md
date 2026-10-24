@@ -1,5 +1,26 @@
 # Changes
 
+## 0.5.0-beta.5 (beta channel)
+Group your servers yourself and a full screen width switch (0.5.0-snapshot.10 to 12 below).
+- Customize overview → My groups: make your own groups, switch servers into them and order them. They show at the top of the overview; the other servers follow under Other servers or per node.
+- Customize overview → Full screen width: the overview uses the whole width of the screen. Server pages keep their normal width.
+
+## 0.5.0-snapshot.12 (snapshot channel)
+"Full screen width" now only changes the overview.
+- Server pages and host mode keep their centred column when the switch is on, so the server page looks the same as before.
+
+## 0.5.0-snapshot.11 (snapshot channel)
+Group your servers yourself in the overview.
+- Customize overview has a new part, My groups: make a group (such as Survival or Friends), give it a name and switch on the servers that belong in it. Arrows change the order of the groups, the cross removes a group (its servers stay, they just move back).
+- Groups are shown at the top of the overview, each with its own heading. Servers without a group follow under Other servers, or per node when Group by node is on. The game and node filters still work inside groups.
+- A server sits in one group at most; switching it on in another group moves it there.
+- Like the other Customize choices, groups are only for you and kept on this device. Works on phones too, under Menu → Customize overview.
+
+## 0.5.0-snapshot.10 (snapshot channel)
+A switch to use the full width of your screen.
+- Customize overview has a new switch "Full screen width". When it is on, the overview, server pages and host mode use the whole width of the screen instead of a centred column; on wide screens the overview shows more cards per row.
+- Like the other Customize options it is only for you, on this device, and it is off by default. Phones do not change: they already use the full width.
+
 ## 0.5.0-beta.4 (beta channel)
 Simplify no longer refuses to install on a Pelican release it has not been tested on (0.5.0-snapshot.9 below, same change as stable 0.4.7).
 - On an untested Pelican release (a newer one, or a panel installed from git that reports "canary") the system check "Tested Pelican release" is a warning and installing continues.
