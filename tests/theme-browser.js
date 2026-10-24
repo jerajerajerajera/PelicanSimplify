@@ -59,12 +59,13 @@ const { start } = require('./browser-harness');
     await dark.waitForTimeout(300); // opening fade
     const size = () => dark.evaluate(() => {
       const box = document.querySelector('.ps-modal').getBoundingClientRect();
-      return [Math.round(box.width), Math.round(box.height), Math.round(box.top)];
+      return [Math.round(box.width), Math.round(box.height), Math.round(box.top + scrollY)]; // page position: a click may scroll the page
     });
     const before = await size();
     await dark.click('.ps-tabs button:nth-child(2)');
     await dark.click('.ps-tabs button:nth-child(3)');
-    assert.deepEqual(await size(), before, 'switching tabs does not resize or move the popup');
+    const afterTabs = await size();
+    assert.deepEqual(afterTabs, before, 'switching tabs does not resize or move the popup: ' + JSON.stringify({ before, afterTabs, scale: await data(dark, (d) => d.uiScale) }));
     await dark.evaluate(() => (document.querySelector('.ps-tab-panels').style.height = '3000px'));
     assert.deepEqual(await size(), before, 'long content scrolls inside the popup');
     assert.equal(await dark.evaluate(() => getComputedStyle(document.querySelector('.ps-modal-body')).overflowY), 'auto');
