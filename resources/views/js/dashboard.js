@@ -4,11 +4,17 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true, fullWidth: false };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen', 'fullWidth'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal' };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
+  // Overview settings that pick one of a fixed set of values.
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'] };
+  const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
   const GROUP_NAME_LENGTH = 40;
+  // Server order for the overview, and per group (Overview follows the overview's order, Manual uses the arrows).
+  const SERVER_ORDERS = [{ key: 'name', label: 'Name' }, { key: 'created', label: 'Created' }, { key: 'port', label: 'Port' }];
+  const GROUP_ORDERS = [{ key: 'overview', label: 'Same as the overview' }, { key: 'manual', label: 'My own order' }, ...SERVER_ORDERS.map((o) => ({ ...o, label: { name: 'Name (A to Z)', created: 'Oldest first', port: 'Port (lowest first)' }[o.key] }))];
   const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
   // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
   const PHONE_SECTIONS = ['players', 'files'];
@@ -58,6 +64,8 @@
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
       overviewGroups: [],
       overviewGroupsTimer: null,
+      overviewServerOrder: 'name',
+      groupsMenu: false,
       groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
@@ -81,6 +89,8 @@
       createMenu: false,
       phoneMore: false,
       PHONE_SECTIONS,
+      SERVER_ORDERS,
+      GROUP_ORDERS,
       QUICK_COMMANDS,
       navMenu: false,
       theme: 'system',
@@ -179,6 +189,8 @@
         if (this.started) return;
         this.started = true;
         this.applyScale();
+        // Measure again once the page has its content.
+        this.$nextTick?.(() => this.applyScale());
         this.widgets = this.widgets.filter((w) => {
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
@@ -283,19 +295,20 @@
       },
       /** Panel name gradient: the common accent, else the page accent (blue on an uncoloured overview). */
       /**
-       * Interface size follows the window: designed for a 1440p screen (scale 1) and scaled down in
-       * proportion on smaller ones (a 1080p screen gets about 0.75). Phones keep their own layout.
+       * Interface size: normal size whenever it fits. Only when the page would get wider than the
+       * window is it scaled down, just enough to fit (never below 75%). Phones keep their own layout.
        * Inside the host mode pane nothing extra is applied: the frame is scaled with the page around it.
        */
       uiScale: 1,
       applyScale() {
         if (typeof window === 'undefined' || !this.$root?.style) return;
+        const root = this.$root;
+        root.style.zoom = '';
         let scale = 1;
-        // Inside the host mode pane the frame is already scaled with the page around it.
-        if (!this.embedded && window.innerWidth > 900) scale = Math.min(1, Math.max(0.75, Math.min(window.innerWidth / 2300, window.innerHeight / 1200)));
-        scale = Math.round(scale * 100) / 100;
+        if (!this.embedded && window.innerWidth > 900 && root.scrollWidth > root.clientWidth + 1)
+          scale = Math.max(0.75, Math.floor((root.clientWidth / root.scrollWidth) * 100) / 100);
         this.uiScale = scale;
-        this.$root.style.zoom = scale === 1 ? '' : String(scale);
+        root.style.zoom = scale === 1 ? '' : String(scale);
         document.documentElement.style.setProperty('--ps-ui-scale', String(scale));
       },
       /** Shows the status bar while the server card is scrolled out of view. */
@@ -516,6 +529,7 @@
       async toggleNotifications() {
         this.notifyMenu = !this.notifyMenu;
         this.appearanceMenu = false;
+        this.groupsMenu = false;
         this.accountMenu = false;
         if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
         try {
@@ -698,7 +712,7 @@
       },
       canOverviewPower(s, action) {
         const permission = { start: 'control.start', stop: 'control.stop', kill: 'control.stop', restart: 'control.restart' }[action];
-        return this.overviewPreferences.showQuickActions && !!permission && !!s.linked && !!s.permissions?.[permission]
+        return this.quickActionsMode() !== 'off' && !!permission && !!s.linked && !!s.permissions?.[permission]
           && !['installing', 'restoring'].includes(s.status)
           && (action !== 'start' || s.status === 'offline')
           && (!['stop', 'kill', 'restart'].includes(action) || s.status !== 'offline');
@@ -730,12 +744,25 @@
       fitCardTitle(row, name) {
         const title = row.querySelector('h3');
         if (!title) return;
-        const base = this.overviewView === 'list' ? 21 : 23;
+        const base = { list: 21, compact: 18 }[this.overviewView] || 23;
         title.style.fontSize = base + 'px';
+        if (this.overviewView !== 'list') {
+          // Grid: the name may use two lines; only a name that still does not fit gets smaller.
+          let size = base;
+          while (size > 12 && (title.scrollHeight > title.clientHeight + 1 || title.scrollWidth > title.clientWidth + 1)) title.style.fontSize = --size + 'px';
+          return;
+        }
         const original = row.querySelector('.ps-card-real-name');
         const reserve = this.overviewView === 'list' && typeof innerWidth !== 'undefined' && innerWidth > 700 && original && !original.classList.contains('no-alias') ? original.getBoundingClientRect().width + 8 : 0;
-        const available = Math.max(0, row.clientWidth - reserve);
-        if (available > 0 && title.scrollWidth > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / title.scrollWidth)) + 'px';
+        const available = Math.max(0, row.getBoundingClientRect().width - reserve);
+        // Measure the text itself: scrollWidth rounds, so a name a fraction too wide would get "…" instead of fitting.
+        let needed = title.scrollWidth;
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(title);
+          needed = range.getBoundingClientRect().width;
+        } catch {}
+        if (available > 0 && needed > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / needed * 10) / 10) + 'px';
       },
       softwareTooltip(s) {
         const software = String(s.software || 'Server software').trim();
@@ -773,10 +800,11 @@
       },
       /** Servers, with a heading row before each own group, then each node when grouping by node is on. */
       overviewItems() {
-        const servers = this.visibleServers();
+        // The listing already comes sorted by name.
+        const servers = this.overviewServerOrder === 'name' ? this.visibleServers() : this.sortServers(this.visibleServers(), this.overviewServerOrder);
         const items = [], placed = new Set();
         for (const group of this.overviewGroups) {
-          const members = servers.filter((s) => group.servers.includes(s.uuid) && !placed.has(s.uuid));
+          const members = this.groupMembers(group, servers).filter((s) => !placed.has(s.uuid));
           if (!members.length) continue;
           members.forEach((s) => placed.add(s.uuid));
           items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length }, ...members);
@@ -792,6 +820,20 @@
         if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: 'Other servers', count: rest.length });
         return items.concat(rest);
       },
+      /** Name sorts by server name (A to Z, like Pelican's list); Created is oldest first and Port lowest first, then by name. */
+      sortServers(list, order) {
+        const key = { created: 'created', port: 'port' }[order];
+        const name = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
+        if (!key) return order === 'name' ? [...list].sort(name) : list;
+        const value = (s) => (s[key] !== null && s[key] !== '' && Number.isFinite(Number(s[key])) ? Number(s[key]) : Infinity);
+        return [...list].sort((a, b) => value(a) - value(b) || name(a, b));
+      },
+      /** A group's servers among list (already in the overview's order), in the group's own order. */
+      groupMembers(group, list) {
+        const members = list.filter((s) => group.servers.includes(s.uuid));
+        if (group.sort === 'manual') return members.sort((a, b) => group.servers.indexOf(a.uuid) - group.servers.indexOf(b.uuid));
+        return group.sort === 'overview' ? members : this.sortServers(members, group.sort);
+      },
       /** Where groups lived before they were saved with the account (0.5.0-snapshot.11 and .12, beta.5). */
       overviewGroupsKey() {
         return 'pelicanSimplify.overviewGroups.' + encodeURIComponent(this.boot.user || 'default');
@@ -803,14 +845,17 @@
           if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
           const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
           const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
-          groups.push({ id: group.id.slice(0, 40), name, servers });
+          const sort = GROUP_ORDERS.some((o) => o.key === group.sort) ? group.sort : 'overview';
+          groups.push({ id: group.id.slice(0, 40), name, servers, sort });
         }
         return groups;
       },
-      /** Groups come with the account; an account that never saved any takes over the groups this browser kept. */
+      /** Groups and order come with the account; an account that never saved any takes over the groups this browser kept. */
       restoreOverviewGroups() {
-        if (Array.isArray(this.boot.overview_groups)) {
-          this.overviewGroups = this.cleanOverviewGroups(this.boot.overview_groups);
+        const account = this.boot.overview_groups;
+        if (account && typeof account === 'object') {
+          this.overviewGroups = this.cleanOverviewGroups(account.groups);
+          this.overviewServerOrder = SERVER_ORDERS.some((o) => o.key === account.order) ? account.order : 'name';
           return;
         }
         let saved = null;
@@ -827,19 +872,49 @@
         clearTimeout(this.overviewGroupsTimer);
         this.overviewGroupsTimer = setTimeout(async () => {
           try {
-            await wire.saveOverviewGroups(this.overviewGroups);
+            await wire.saveOverviewGroups(this.overviewGroups, this.overviewServerOrder);
             if (handover) localStorage.removeItem(this.overviewGroupsKey());
           } catch {
             if (!handover) this.toast('Your groups could not be saved. Try again in a moment.', 'danger');
           }
         }, handover ? 0 : 400);
       },
+      setServerOrder(order) {
+        if (!SERVER_ORDERS.some((o) => o.key === order) || order === this.overviewServerOrder) return;
+        this.overviewServerOrder = order;
+        this.saveOverviewGroups(this.overviewGroups);
+      },
+      setGroupOrder(id, order) {
+        if (!GROUP_ORDERS.some((o) => o.key === order)) return;
+        const group = this.overviewGroups.find((g) => g.id === id);
+        if (!group || group.sort === order) return;
+        // Switching to My own order starts from the order shown right now.
+        const servers = order === 'manual' ? [...this.groupMembers(group, this.sortServers(this.boot.servers || [], this.overviewServerOrder)).map((s) => s.uuid), ...group.servers.filter((uuid) => !(this.boot.servers || []).some((s) => s.uuid === uuid))] : group.servers;
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id ? { ...g, sort: order, servers } : g)));
+      },
+      /** Arrows in My own order: swaps a server with the one shown above or below it. */
+      moveGroupServer(id, uuid, step) {
+        const group = this.overviewGroups.find((g) => g.id === id);
+        if (!group || group.sort !== 'manual') return;
+        const shown = this.groupMembers(group, this.boot.servers || []), at = shown.findIndex((s) => s.uuid === uuid), other = shown[at + step];
+        if (at < 0 || !other) return;
+        const servers = [...group.servers], a = servers.indexOf(uuid), b = servers.indexOf(other.uuid);
+        [servers[a], servers[b]] = [servers[b], servers[a]];
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id ? { ...g, servers } : g)));
+      },
+      /** The group's servers first, in its order, then every other server by name. */
+      groupServerList(group) {
+        const all = this.boot.servers || [];
+        const members = this.groupMembers(group, this.sortServers(all, this.overviewServerOrder));
+        const others = all.filter((s) => !group.servers.includes(s.uuid)).sort((a, b) => this.cardNames(a).large.localeCompare(this.cardNames(b).large));
+        return [...members, ...others];
+      },
       addOverviewGroup() {
         if (this.overviewGroups.length >= GROUP_LIMIT) return;
         let number = this.overviewGroups.length + 1;
         while (this.overviewGroups.some((g) => g.name === 'Group ' + number)) number++;
         const id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        this.saveOverviewGroups([...this.overviewGroups, { id, name: 'Group ' + number, servers: [] }]);
+        this.saveOverviewGroups([...this.overviewGroups, { id, name: 'Group ' + number, servers: [], sort: 'overview' }]);
         this.groupEditing = id;
       },
       renameOverviewGroup(id, name) {
@@ -873,9 +948,6 @@
       groupCount(group) {
         return (this.boot.servers || []).filter((s) => group.servers.includes(s.uuid)).length;
       },
-      groupServerOptions() {
-        return [...(this.boot.servers || [])].sort((a, b) => this.cardNames(a).large.localeCompare(this.cardNames(b).large));
-      },
       setGameFilter(key) {
         if (key === 'all' || this.gameOptions().some((g) => g.key === key)) this.gameFilter = key;
       },
@@ -888,9 +960,9 @@
           const saved = JSON.parse(localStorage.getItem(this.overviewPreferencesKey()) || 'null');
           if (saved && typeof saved === 'object') {
             for (const key of OVERVIEW_SWITCHES) if (typeof saved[key] === 'boolean') preferences[key] = saved[key];
-            if (['server', 'egg'].includes(saved.largeIcon)) preferences.largeIcon = saved.largeIcon;
-            if (['alias', 'name'].includes(saved.largeName)) preferences.largeName = saved.largeName;
-            if (['auto', 'always', 'off'].includes(saved.groupByNode)) preferences.groupByNode = saved.groupByNode;
+            // Before Off/On/Hover, quick actions were a switch that meant "on hover".
+            if (typeof saved.showQuickActions === 'boolean') preferences.quickActions = saved.showQuickActions ? 'hover' : 'off';
+            for (const [key, values] of Object.entries(OVERVIEW_CHOICES)) if (values.includes(saved[key])) preferences[key] = saved[key];
           }
         } catch {}
         this.overviewPreferences = preferences;
@@ -898,12 +970,18 @@
       setOverviewPreference(key, value) {
         if (OVERVIEW_SWITCHES.includes(key)) {
           if (typeof value !== 'boolean') return;
-        } else if (!({ largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'] }[key] || []).includes(value)) return;
+        } else if (!(OVERVIEW_CHOICES[key] || []).includes(value)) return;
         this.overviewPreferences = { ...this.overviewPreferences, [key]: value };
-        if (key === 'showQuickActions' && !value) this.powerConfirmation = null;
+        if (key === 'quickActions' && value === 'off') this.powerConfirmation = null;
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
+      quickActionsMode() {
+        const mode = this.overviewPreferences.quickActions;
+        if (mode !== 'hover') return mode === 'on' ? 'on' : 'off';
+        return typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches ? 'on' : 'hover';
       },
       overviewMetrics() {
         return [
@@ -912,29 +990,37 @@
         ].filter((metric) => metric.show);
       },
       overviewViewKey() {
-        return 'pelicanSimplify.overviewView.' + encodeURIComponent(this.boot.user || 'default');
+        const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
+        return 'pelicanSimplify.overviewView.' + (phone ? 'phone.' : '') + encodeURIComponent(this.boot.user || 'default');
       },
       restoreOverviewView() {
         const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
         this.overviewCompact = phone;
         this.phone = phone;
-        this.overviewView = 'grid';
+        this.overviewView = phone ? 'list' : 'grid';
         try {
           const view = localStorage.getItem(this.overviewViewKey());
-          if (['grid', 'list'].includes(view)) this.overviewView = view;
+          if (OVERVIEW_VIEWS.includes(view)) this.overviewView = view;
         } catch {}
-        if (phone) this.overviewView = 'list';
       },
       setOverviewView(view) {
-        if (!['grid', 'list'].includes(view)) return;
-        if (typeof innerWidth !== 'undefined' && innerWidth <= 600) {
-          this.overviewView = 'list';
-          return;
-        }
+        if (!OVERVIEW_VIEWS.includes(view)) return;
         this.overviewView = view;
         try {
           localStorage.setItem(this.overviewViewKey(), view);
         } catch {}
+      },
+      /** Card width and column count for the grid views: a fixed count is the most per row, narrower screens wrap. */
+      overviewGridStyle() {
+        const compact = this.overviewView === 'compact';
+        const width = (compact ? { narrow: 170, normal: 210, wide: 270 } : { narrow: 210, normal: 260, wide: 330 })[this.overviewPreferences.cardWidth] || 260;
+        const fixed = Number(this.overviewPreferences.columns) || 0;
+        const most = fixed || (compact ? { narrow: 7, normal: 6, wide: 5 } : { narrow: 5, normal: 4, wide: 3 })[this.overviewPreferences.cardWidth] || 4;
+        const min = width - 30;
+        return {
+          '--ps-grid-width': `calc(${most} * ${width}px + ${most - 1} * 16px)`,
+          '--ps-grid-template': fixed ? `repeat(auto-fill, minmax(min(100%, max(${min}px, calc((100% - ${(fixed - 1) * 16}px) / ${fixed}))), 1fr))` : `repeat(auto-fill, minmax(min(100%, ${min}px), 1fr))`,
+        };
       },
       /** Keeps the health dock aligned with the rendered card grid (including scrollbar width). */
       initOverviewDock() {
@@ -1106,6 +1192,7 @@
         this.navMenu = false;
         this.notifyMenu = false;
         this.appearanceMenu = false;
+        this.groupsMenu = false;
         this.modalRequest++;
         this.modal = key;
         this.loading = false;

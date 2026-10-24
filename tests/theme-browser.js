@@ -59,12 +59,13 @@ const { start } = require('./browser-harness');
     await dark.waitForTimeout(300); // opening fade
     const size = () => dark.evaluate(() => {
       const box = document.querySelector('.ps-modal').getBoundingClientRect();
-      return [Math.round(box.width), Math.round(box.height), Math.round(box.top)];
+      return [Math.round(box.width), Math.round(box.height), Math.round(box.top + scrollY)]; // page position: a click may scroll the page
     });
     const before = await size();
     await dark.click('.ps-tabs button:nth-child(2)');
     await dark.click('.ps-tabs button:nth-child(3)');
-    assert.deepEqual(await size(), before, 'switching tabs does not resize or move the popup');
+    const afterTabs = await size();
+    assert.deepEqual(afterTabs, before, 'switching tabs does not resize or move the popup: ' + JSON.stringify({ before, afterTabs, scale: await data(dark, (d) => d.uiScale) }));
     await dark.evaluate(() => (document.querySelector('.ps-tab-panels').style.height = '3000px'));
     assert.deepEqual(await size(), before, 'long content scrolls inside the popup');
     assert.equal(await dark.evaluate(() => getComputedStyle(document.querySelector('.ps-modal-body')).overflowY), 'auto');
@@ -143,10 +144,30 @@ const { start } = require('./browser-harness');
     await narrow.close();
     console.log('PASS full screen width switch on the overview, server pages unchanged, phones fit');
 
+    // 7c. Layout, columns and card width: a column count caps each row; compact cards are smaller; phones show two compact cards per row.
+    const columns = await open('/?mode=overview&theme=dark', { width: 1600, height: 1000 });
+    const perRow = () => columns.evaluate(() => { const tops = [...document.querySelectorAll('.ps-server-card')].map((c) => Math.round(c.getBoundingClientRect().top)); return tops.filter((t) => t === tops[0]).length; });
+    const cardHeight = () => columns.evaluate(() => document.querySelector('.ps-server-card').getBoundingClientRect().height);
+    await data(columns, (d) => d.setOverviewPreference('columns', '2'));
+    await columns.waitForTimeout(200);
+    assert.equal(await perRow(), 2, 'two columns');
+    const big = await cardHeight();
+    await data(columns, (d) => d.setOverviewView('compact'));
+    await columns.waitForTimeout(200);
+    assert.ok(await cardHeight() < big * 0.7, 'compact cards are smaller');
+    await columns.close();
+    const compactPhone = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
+    await data(compactPhone, (d) => d.setOverviewView('compact'));
+    await compactPhone.waitForTimeout(200);
+    assert.equal(await compactPhone.evaluate(() => { const [a, b] = document.querySelectorAll('.ps-server-card'); return Math.round(a.getBoundingClientRect().top) === Math.round(b.getBoundingClientRect().top); }), true, 'two compact cards per row on a phone');
+    assert.equal(await compactPhone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'compact fits a phone');
+    await compactPhone.close();
+    console.log('PASS layout cards/compact/list, column count and compact cards on phones');
+
     // 8. Overview by node: one heading per node, compact list rows whatever the card options, host mode.
     const prefs = (o) => `localStorage.setItem('pelicanSimplify.overviewAppearance.jera', ${JSON.stringify(JSON.stringify(o))})`;
     const nodes = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await nodes.addInitScript(prefs({ showQuickActions: false, showCpu: false, showRam: false }));
+    await nodes.addInitScript(prefs({ quickActions: 'off', showCpu: false, showRam: false }));
     await nodes.goto(base + '/?mode=overview&theme=dark');
     await nodes.waitForFunction(() => window.Alpine && document.querySelector('.ps-node-heading'));
     assert.equal(await nodes.locator('.ps-node-heading').count(), 2, 'one heading per node');
@@ -161,6 +182,39 @@ const { start } = require('./browser-harness');
     assert.equal(await nodes.locator('.ps-host-server').count(), 4, 'host mode lists every server');
     await nodes.close();
     console.log('PASS servers grouped per node, compact list rows and host mode');
+
+    // 8b. Things only shrink when they would not fit: the list MOTD keeps its width when quick actions
+    // slide in, and quick actions set to On stay visible and make grid cards taller instead of squeezing them.
+    const fit = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    await fit.addInitScript(prefs({ showMotd: true, fullWidth: true, quickActions: 'hover' }));
+    await fit.goto(base + '/?mode=overview&theme=dark');
+    await fit.waitForFunction(() => window.Alpine && document.querySelector('.ps-card-motd'));
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewView('list'));
+    await fit.waitForTimeout(300);
+    const motdWidth = () => fit.evaluate(() => document.querySelector('.ps-server-entry.has-card-motd .ps-card-motd').offsetWidth);
+    const restingMotd = await motdWidth();
+    await fit.hover('.ps-server-entry.has-card-motd .ps-card-title');
+    await fit.waitForTimeout(400);
+    assert.equal(await motdWidth(), restingMotd, 'MOTD keeps its width while the row has room');
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'on'));
+    await fit.mouse.move(5, 5);
+    await fit.waitForTimeout(400);
+    assert.equal(await fit.locator('.ps-server-entry.has-power .ps-overview-power-wrap').first().evaluate((e) => getComputedStyle(e).visibility), 'visible', 'On shows the buttons without pointing');
+    const card = () => fit.evaluate(() => { const e = document.querySelector('.ps-server-entry.has-power'); return { height: e.querySelector('.ps-server-open').offsetHeight, graph: e.querySelector('.ps-card-graph').getBoundingClientRect().height }; });
+    await fit.evaluate(() => { const d = Alpine.$data(document.querySelector('.ps')); d.setOverviewView('grid'); d.setOverviewPreference('quickActions', 'hover'); });
+    await fit.waitForTimeout(900); // graph heights animate
+    const hoverCard = await card();
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'on'));
+    await fit.waitForTimeout(900);
+    const onCard = await card();
+    assert.ok(onCard.height > hoverCard.height && Math.abs(onCard.graph - hoverCard.graph) < 1, 'On grows the card, graphs keep their size: ' + JSON.stringify({ hoverCard, onCard }));
+    await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'off'));
+    assert.equal(await fit.locator('.ps-server-entry.has-power').count(), 0, 'Off hides quick actions');
+    assert.equal(await data(fit, (d) => d.uiScale), 1, 'interface keeps its normal size when everything fits');
+    const longName = await fit.evaluate(() => { const h = [...document.querySelectorAll('.ps-card-title-row h3')].find((e) => e.textContent.startsWith('Creative')); return { size: parseFloat(h.style.fontSize), lines: Math.round(h.clientHeight / parseFloat(getComputedStyle(h).lineHeight)), clipped: h.scrollHeight > h.clientHeight + 1 }; });
+    assert.ok(longName.lines === 2 && !longName.clipped && longName.size >= 14, 'a long grid name wraps onto two lines before it shrinks: ' + JSON.stringify(longName));
+    await fit.close();
+    console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover, normal interface size, two-line names');
 
     // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
     const network = await open('/?mode=server&theme=light');

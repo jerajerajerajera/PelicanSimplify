@@ -111,9 +111,9 @@ final class Dashboard extends Page
     #[Renderless]
     public function markPanelNotificationsRead(array $ids): array { \Simplify\Panel\Services\PanelNotifications::markRead($ids); return \Simplify\Panel\Services\PanelNotifications::unread(); }
     #[Renderless]
-    /** Own server groups from Customize overview, kept with the account. */
+    /** Own server groups and the server order, kept with the account. */
     #[Renderless]
-    public function saveOverviewGroups(array $groups): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups); }
+    public function saveOverviewGroups(array $groups,?string $order='name'): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups,$order); }
 
     public function hostHealth(): array { return \Simplify\Panel\Services\FeatureSettings::enabled('host_health')?HostHealth::snapshot():[]; }
     #[Renderless]
@@ -126,7 +126,7 @@ final class Dashboard extends Page
             $status=$s->retrieveStatus()->value;$mc=$status==='offline'?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
             $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,
-                'node_id'=>(int)$s->node_id,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
+                'node_id'=>(int)$s->node_id,'created'=>$s->created_at?->getTimestamp(),'port'=>$s->allocation?->port!==null?(int)$s->allocation->port:null,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
                 'url'=>$linked?self::getUrl(['server'=>$s->uuid],panel:'app'):null,
                 'server_icon'=>$serverIcon,'software_icon'=>ServerArtwork::softwareIcon($s,$m),'egg_icon'=>$s->egg?->icon,
                 'icon'=>$serverIcon ?: ServerArtwork::icon($s,$m),'background'=>ServerArtwork::background($s,$m),'players'=>$mc['players']??null,'max_players'=>$mc['max_players']??null,
