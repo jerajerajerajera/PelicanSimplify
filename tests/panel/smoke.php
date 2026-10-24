@@ -18,8 +18,8 @@ const SMOKE_EMAIL='smoke@example.com';
 // The message plus where it came from: the frames in the plugin and in Filament or Livewire, innermost first.
 function problem(\Throwable $e):string{
     while($e->getPrevious()&&$e instanceof \Illuminate\View\ViewException)$e=$e->getPrevious();
-    $frames=array_filter($e->getTrace(),fn($f)=>preg_match('#pelican-simplify/(src|resources)|vendor/(filament|livewire)/#',$f['file']??''));
-    $where=array_map(fn($f)=>preg_replace('#^.*/(plugins|vendor)/#','',$f['file']).':'.$f['line'],array_slice(array_values($frames),0,8));
+    $frames=array_filter($e->getTrace(),fn($f)=>preg_match('#pelican-simplify/(src|resources)|vendor/(filament|livewire|charrafimed)/|panel/app/|storage/framework/views/#',$f['file']??''));
+    $where=array_map(fn($f)=>preg_replace('#^.*/(plugins|vendor|panel)/#','',$f['file']).':'.$f['line'],array_slice(array_values($frames),0,24));
     return get_class($e).': '.substr($e->getMessage(),0,300).' ('.basename($e->getFile()).':'.$e->getLine().')'.($where?' via '.implode(' < ',$where):'');
 }
 function result(bool $ok,string $line):never{echo json_encode(['ok'=>$ok,'line'=>$line]),"\n";exit(0);}
