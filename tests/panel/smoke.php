@@ -24,15 +24,15 @@ function problem(\Throwable $e):string{
 }
 function result(bool $ok,string $line):never{echo json_encode(['ok'=>$ok,'line'=>$line]),"\n";exit(0);}
 
-// Child: open one page as the admin over HTTP (redirects followed), the way Laravel's feature tests request pages.
+// Child: open one page as the admin over HTTP, the way Laravel's feature tests request pages. A redirect fails too: then the page itself was not tested.
 if(($argv[1]??'')==='page'){
     [$what,$url]=[$argv[2],$argv[3]];
     try{
         $client=new class($app){use Illuminate\Foundation\Testing\Concerns\MakesHttpRequests,Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication,Illuminate\Foundation\Testing\Concerns\InteractsWithSession;public function __construct(public $app){}};
-        $response=$client->actingAs(User::where('email',SMOKE_EMAIL)->firstOrFail())->followingRedirects()->get($url);
-        $status=$response->getStatusCode();$where=$response->baseRequest?->getRequestUri()??$url;
-        if($status!==200)result(false,$what.' ('.$url.'): HTTP '.$status.' at '.$where.($response->exception?' '.problem($response->exception):''));
-        result(true,$what.' renders (HTTP 200 at '.$where.')');
+        $response=$client->actingAs(User::where('email',SMOKE_EMAIL)->firstOrFail())->get($url);
+        $status=$response->getStatusCode();
+        if($status!==200)result(false,$what.' ('.$url.'): HTTP '.$status.($response->isRedirect()?' to '.$response->headers->get('Location'):'').($response->exception?' '.problem($response->exception):''));
+        result(true,$what.' renders (HTTP 200 at '.parse_url($url,PHP_URL_PATH).')');
     }catch(\Throwable $e){result(false,$what.' ('.$url.'): '.problem($e));}
 }
 
@@ -69,6 +69,8 @@ $passed[]=$classes.' plugin classes load with their attributes';
 $admin=User::withoutEvents(fn()=>User::factory()->create(['username'=>'smoke-admin','email'=>SMOKE_EMAIL]));
 $admin->syncRoles(Role::getRootAdmin());
 $server=Server::factory()->create(['owner_id'=>$admin->id,'name'=>'Smoke server']);
+// Finish Simplify's setup as the admin does in the setup wizard (until then every page sends the admin to the settings), with every feature on so every page is reachable.
+auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
 
 // 3. Every Simplify page on every panel, each in its own process.
 $urls=[];
