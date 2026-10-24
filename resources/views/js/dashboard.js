@@ -188,6 +188,8 @@
         if (this.started) return;
         this.started = true;
         this.applyScale();
+        // Measure again once the page has its content.
+        this.$nextTick?.(() => this.applyScale());
         this.widgets = this.widgets.filter((w) => {
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
@@ -292,19 +294,20 @@
       },
       /** Panel name gradient: the common accent, else the page accent (blue on an uncoloured overview). */
       /**
-       * Interface size follows the window: designed for a 1440p screen (scale 1) and scaled down in
-       * proportion on smaller ones (a 1080p screen gets about 0.75). Phones keep their own layout.
+       * Interface size: normal size whenever it fits. Only when the page would get wider than the
+       * window is it scaled down, just enough to fit (never below 75%). Phones keep their own layout.
        * Inside the host mode pane nothing extra is applied: the frame is scaled with the page around it.
        */
       uiScale: 1,
       applyScale() {
         if (typeof window === 'undefined' || !this.$root?.style) return;
+        const root = this.$root;
+        root.style.zoom = '';
         let scale = 1;
-        // Inside the host mode pane the frame is already scaled with the page around it.
-        if (!this.embedded && window.innerWidth > 900) scale = Math.min(1, Math.max(0.75, Math.min(window.innerWidth / 2300, window.innerHeight / 1200)));
-        scale = Math.round(scale * 100) / 100;
+        if (!this.embedded && window.innerWidth > 900 && root.scrollWidth > root.clientWidth + 1)
+          scale = Math.max(0.75, Math.floor((root.clientWidth / root.scrollWidth) * 100) / 100);
         this.uiScale = scale;
-        this.$root.style.zoom = scale === 1 ? '' : String(scale);
+        root.style.zoom = scale === 1 ? '' : String(scale);
         document.documentElement.style.setProperty('--ps-ui-scale', String(scale));
       },
       /** Shows the status bar while the server card is scrolled out of view. */
@@ -742,6 +745,12 @@
         if (!title) return;
         const base = this.overviewView === 'list' ? 21 : 23;
         title.style.fontSize = base + 'px';
+        if (this.overviewView !== 'list') {
+          // Grid: the name may use two lines; only a name that still does not fit gets smaller.
+          let size = base;
+          while (size > 12 && (title.scrollHeight > title.clientHeight + 1 || title.scrollWidth > title.clientWidth + 1)) title.style.fontSize = --size + 'px';
+          return;
+        }
         const original = row.querySelector('.ps-card-real-name');
         const reserve = this.overviewView === 'list' && typeof innerWidth !== 'undefined' && innerWidth > 700 && original && !original.classList.contains('no-alias') ? original.getBoundingClientRect().width + 8 : 0;
         const available = Math.max(0, row.getBoundingClientRect().width - reserve);
