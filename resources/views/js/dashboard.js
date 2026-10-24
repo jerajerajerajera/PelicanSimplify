@@ -4,10 +4,11 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true };
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal' };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
   // Overview settings that pick one of a fixed set of values.
-  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'] };
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'] };
+  const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
   const GROUP_NAME_LENGTH = 40;
@@ -743,7 +744,7 @@
       fitCardTitle(row, name) {
         const title = row.querySelector('h3');
         if (!title) return;
-        const base = this.overviewView === 'list' ? 21 : 23;
+        const base = { list: 21, compact: 18 }[this.overviewView] || 23;
         title.style.fontSize = base + 'px';
         if (this.overviewView !== 'list') {
           // Grid: the name may use two lines; only a name that still does not fit gets smaller.
@@ -989,29 +990,37 @@
         ].filter((metric) => metric.show);
       },
       overviewViewKey() {
-        return 'pelicanSimplify.overviewView.' + encodeURIComponent(this.boot.user || 'default');
+        const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
+        return 'pelicanSimplify.overviewView.' + (phone ? 'phone.' : '') + encodeURIComponent(this.boot.user || 'default');
       },
       restoreOverviewView() {
         const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
         this.overviewCompact = phone;
         this.phone = phone;
-        this.overviewView = 'grid';
+        this.overviewView = phone ? 'list' : 'grid';
         try {
           const view = localStorage.getItem(this.overviewViewKey());
-          if (['grid', 'list'].includes(view)) this.overviewView = view;
+          if (OVERVIEW_VIEWS.includes(view)) this.overviewView = view;
         } catch {}
-        if (phone) this.overviewView = 'list';
       },
       setOverviewView(view) {
-        if (!['grid', 'list'].includes(view)) return;
-        if (typeof innerWidth !== 'undefined' && innerWidth <= 600) {
-          this.overviewView = 'list';
-          return;
-        }
+        if (!OVERVIEW_VIEWS.includes(view)) return;
         this.overviewView = view;
         try {
           localStorage.setItem(this.overviewViewKey(), view);
         } catch {}
+      },
+      /** Card width and column count for the grid views: a fixed count is the most per row, narrower screens wrap. */
+      overviewGridStyle() {
+        const compact = this.overviewView === 'compact';
+        const width = (compact ? { narrow: 170, normal: 210, wide: 270 } : { narrow: 210, normal: 260, wide: 330 })[this.overviewPreferences.cardWidth] || 260;
+        const fixed = Number(this.overviewPreferences.columns) || 0;
+        const most = fixed || (compact ? { narrow: 7, normal: 6, wide: 5 } : { narrow: 5, normal: 4, wide: 3 })[this.overviewPreferences.cardWidth] || 4;
+        const min = width - 30;
+        return {
+          '--ps-grid-width': `calc(${most} * ${width}px + ${most - 1} * 16px)`,
+          '--ps-grid-template': fixed ? `repeat(auto-fill, minmax(min(100%, max(${min}px, calc((100% - ${(fixed - 1) * 16}px) / ${fixed}))), 1fr))` : `repeat(auto-fill, minmax(min(100%, ${min}px), 1fr))`,
+        };
       },
       /** Keeps the health dock aligned with the rendered card grid (including scrollbar width). */
       initOverviewDock() {

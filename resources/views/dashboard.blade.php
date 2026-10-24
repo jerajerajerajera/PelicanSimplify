@@ -216,11 +216,27 @@
                             <p class="ps-dropdown-hint">Only for you, on this device.</p>
                             <template x-if="!server">
                                 <div class="ps-customize">
-                                    <div class="ps-customize-row" x-show="!overviewCompact">
-                                        <div><strong>Layout</strong><small>Cards in a grid, or one row per server</small></div>
+                                    <div class="ps-customize-row">
+                                        <div><strong>Layout</strong><small>Cards, small cards or rows</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Layout">
-                                            <template x-for="view in [{key:'grid',label:'Grid',icon:'grid'},{key:'list',label:'List',icon:'list'}]" :key="view.key">
+                                            <template x-for="view in [{key:'grid',label:'Cards',icon:'grid'},{key:'compact',label:'Compact',icon:'grid-small'},{key:'list',label:'List',icon:'list'}]" :key="view.key">
                                                 <button type="button" :aria-pressed="overviewView===view.key" x-on:click="setOverviewView(view.key)"><svg aria-hidden="true"><use :href="'#ps-'+view.icon"/></svg><span x-text="view.label"></span></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="ps-customize-row" x-show="overviewView!=='list' && !overviewCompact">
+                                        <div><strong>Columns</strong><small>Most cards per row</small></div>
+                                        <div class="ps-segmented ps-columns-choice" role="group" aria-label="Columns">
+                                            <template x-for="count in ['auto','2','3','4','5','6']" :key="count">
+                                                <button type="button" :aria-pressed="overviewPreferences.columns===count" x-on:click="setOverviewPreference('columns', count)" x-text="count==='auto' ? 'Auto' : count"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="ps-customize-row" x-show="overviewView!=='list' && !overviewCompact">
+                                        <div><strong>Card width</strong><small>Size of each card</small></div>
+                                        <div class="ps-segmented" role="group" aria-label="Card width">
+                                            <template x-for="size in [{key:'narrow',label:'Narrow'},{key:'normal',label:'Normal'},{key:'wide',label:'Wide'}]" :key="size.key">
+                                                <button type="button" :aria-pressed="overviewPreferences.cardWidth===size.key" x-on:click="setOverviewPreference('cardWidth', size.key)" x-text="size.label"></button>
                                             </template>
                                         </div>
                                     </div>
@@ -404,7 +420,7 @@
         </section>
 
         {{-- Overview -------------------------------------------------------------------------------- --}}
-        <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns()}">
+        <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
                     <div class="ps-overview-toolbar">
@@ -451,7 +467,7 @@
                             <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="frameUrl(boot.plugin_widgets_url)" title="Plugin widgets" x-on:load="pluginWidgetsLoaded($el, 'app')"></iframe>
                         </div>
                     </template>
-                    <div class="ps-server-grid" :class="{'is-list': overviewView==='list', 'has-motd': overviewPreferences.showMotd, 'no-metrics': !overviewMetrics().length, 'no-quick-actions': quickActionsMode()==='off', 'quick-actions-on': quickActionsMode()==='on'}">
+                    <div class="ps-server-grid" :class="{'is-list': overviewView==='list', 'is-compact': overviewView==='compact', 'has-motd': overviewPreferences.showMotd, 'no-metrics': !overviewMetrics().length, 'no-quick-actions': quickActionsMode()==='off', 'quick-actions-on': quickActionsMode()==='on'}">
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': quickActionsMode()!=='off' && s.linked && Object.values(s.permissions || {}).some(Boolean), 'power-shown': quickActionsMode()==='on', 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
@@ -501,7 +517,7 @@
                                             <span class="ps-badge is-strong ps-list-game"><svg aria-hidden="true"><use :href="s.game==='minecraft' ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="s.game_label"></span></span>
                                             <span class="ps-badge ps-status" :class="s.status"><i></i><span x-text="s.status"></span></span>
                                         </div>
-                                        <div class="ps-card-bottom" x-show="overviewView==='grid'">
+                                        <div class="ps-card-bottom" x-show="overviewView!=='list'">
                                             <span x-text="playerCount(s)"></span>
                                             <svg aria-hidden="true"><use :href="s.linked ? '#ps-chevron' : '#ps-lock'"/></svg>
                                         </div>
