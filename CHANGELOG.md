@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.0-snapshot.18 (snapshot channel)
+Fixes the Simplify page answering with a server error (500): "Attribute Livewire\Attributes\Renderless must not be repeated" (same fix as 0.5.0-beta.8).
+- One action carried the same marker twice; it now has it once, and a new check stops a repeated attribute from being released again.
+
 ## 0.5.0-snapshot.17 (snapshot channel)
 Choose how the server overview is laid out: big cards, compact cards or a list, how many columns and how wide the cards are.
 - Customize overview → Layout has three choices: Cards (as before), Compact (new: small cards with the icon, name, status and players, without the graphs, so many more servers fit on one screen) and List (as before).

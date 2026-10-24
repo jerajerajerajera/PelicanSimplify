@@ -110,11 +110,10 @@ final class Dashboard extends Page
     public function panelNotifications(): array { return \Simplify\Panel\Services\PanelNotifications::unread(); }
     #[Renderless]
     public function markPanelNotificationsRead(array $ids): array { \Simplify\Panel\Services\PanelNotifications::markRead($ids); return \Simplify\Panel\Services\PanelNotifications::unread(); }
-    #[Renderless]
     /** Own server groups and the server order, kept with the account. */
     #[Renderless]
     public function saveOverviewGroups(array $groups,?string $order='name'): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups,$order); }
-
+    #[Renderless]
     public function hostHealth(): array { return \Simplify\Panel\Services\FeatureSettings::enabled('host_health')?HostHealth::snapshot():[]; }
     #[Renderless]
     public function listing(): array
