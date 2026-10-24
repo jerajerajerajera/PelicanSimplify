@@ -1052,7 +1052,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 /* Own groups in Customize overview. */
 .ps-group-note { padding: 4px 0 2px; }
 .ps-group-edit { border-top: 1px solid var(--ps-line); }
-.ps-customize-head + .ps-group-edit { border-top: 0; }
+.ps-customize-head + .ps-group-edit, .ps-group-note + .ps-group-edit { border-top: 0; }
+.ps-group-note:has(+ .ps-group-edit) { padding-bottom: 8px; border-bottom: 1px solid var(--ps-line); }
 .ps-group-row { display: flex; align-items: center; gap: 4px; padding: 8px 0; }
 .ps-group-name.ps-input { flex: 1 1 auto; min-width: 0; min-height: 30px; padding: 4px 8px; font-size: 13px; font-weight: 650; }
 .ps-group-count { flex: none; margin: 0 4px; white-space: nowrap; }

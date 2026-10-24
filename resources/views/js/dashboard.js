@@ -57,6 +57,7 @@
       sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
       overviewGroups: [],
+      overviewGroupsTimer: null,
       groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
@@ -791,28 +792,47 @@
         if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: 'Other servers', count: rest.length });
         return items.concat(rest);
       },
+      /** Where groups lived before they were saved with the account (0.5.0-snapshot.11 and .12, beta.5). */
       overviewGroupsKey() {
         return 'pelicanSimplify.overviewGroups.' + encodeURIComponent(this.boot.user || 'default');
       },
-      /** Own groups from this device; a server sits in at most one group. */
-      restoreOverviewGroups() {
+      /** A server sits in at most one group; the server checks the same rules. */
+      cleanOverviewGroups(list) {
         const groups = [], seen = new Set();
-        try {
-          const saved = JSON.parse(localStorage.getItem(this.overviewGroupsKey()) || 'null');
-          for (const group of Array.isArray(saved) ? saved : []) {
-            if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
-            const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
-            const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
-            groups.push({ id: group.id.slice(0, 40), name, servers });
-          }
-        } catch {}
-        this.overviewGroups = groups;
+        for (const group of Array.isArray(list) ? list : []) {
+          if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
+          const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
+          const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
+          groups.push({ id: group.id.slice(0, 40), name, servers });
+        }
+        return groups;
       },
-      saveOverviewGroups(groups) {
-        this.overviewGroups = groups;
+      /** Groups come with the account; an account that never saved any takes over the groups this browser kept. */
+      restoreOverviewGroups() {
+        if (Array.isArray(this.boot.overview_groups)) {
+          this.overviewGroups = this.cleanOverviewGroups(this.boot.overview_groups);
+          return;
+        }
+        let saved = null;
         try {
-          localStorage.setItem(this.overviewGroupsKey(), JSON.stringify(groups));
+          saved = JSON.parse(localStorage.getItem(this.overviewGroupsKey()) || 'null');
         } catch {}
+        const groups = this.cleanOverviewGroups(saved);
+        this.overviewGroups = groups;
+        if (groups.length) this.saveOverviewGroups(groups, true);
+      },
+      /** Shows the change at once and saves it shortly after, so quick clicks become one save. */
+      saveOverviewGroups(groups, handover = false) {
+        this.overviewGroups = groups;
+        clearTimeout(this.overviewGroupsTimer);
+        this.overviewGroupsTimer = setTimeout(async () => {
+          try {
+            await wire.saveOverviewGroups(this.overviewGroups);
+            if (handover) localStorage.removeItem(this.overviewGroupsKey());
+          } catch {
+            if (!handover) this.toast('Your groups could not be saved. Try again in a moment.', 'danger');
+          }
+        }, handover ? 0 : 400);
       },
       addOverviewGroup() {
         if (this.overviewGroups.length >= GROUP_LIMIT) return;
