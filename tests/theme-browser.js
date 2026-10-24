@@ -59,12 +59,13 @@ const { start } = require('./browser-harness');
     await dark.waitForTimeout(300); // opening fade
     const size = () => dark.evaluate(() => {
       const box = document.querySelector('.ps-modal').getBoundingClientRect();
-      return [Math.round(box.width), Math.round(box.height), Math.round(box.top)];
+      return [Math.round(box.width), Math.round(box.height), Math.round(box.top + scrollY)]; // page position: a click may scroll the page
     });
     const before = await size();
     await dark.click('.ps-tabs button:nth-child(2)');
     await dark.click('.ps-tabs button:nth-child(3)');
-    assert.deepEqual(await size(), before, 'switching tabs does not resize or move the popup');
+    const afterTabs = await size();
+    assert.deepEqual(afterTabs, before, 'switching tabs does not resize or move the popup: ' + JSON.stringify({ before, afterTabs, scale: await data(dark, (d) => d.uiScale) }));
     await dark.evaluate(() => (document.querySelector('.ps-tab-panels').style.height = '3000px'));
     assert.deepEqual(await size(), before, 'long content scrolls inside the popup');
     assert.equal(await dark.evaluate(() => getComputedStyle(document.querySelector('.ps-modal-body')).overflowY), 'auto');
@@ -181,16 +182,19 @@ const { start } = require('./browser-harness');
     assert.equal(await fit.locator('.ps-server-entry.has-power .ps-overview-power-wrap').first().evaluate((e) => getComputedStyle(e).visibility), 'visible', 'On shows the buttons without pointing');
     const card = () => fit.evaluate(() => { const e = document.querySelector('.ps-server-entry.has-power'); return { height: e.querySelector('.ps-server-open').offsetHeight, graph: e.querySelector('.ps-card-graph').getBoundingClientRect().height }; });
     await fit.evaluate(() => { const d = Alpine.$data(document.querySelector('.ps')); d.setOverviewView('grid'); d.setOverviewPreference('quickActions', 'hover'); });
-    await fit.waitForTimeout(400);
+    await fit.waitForTimeout(900); // graph heights animate
     const hoverCard = await card();
     await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'on'));
-    await fit.waitForTimeout(400);
+    await fit.waitForTimeout(900);
     const onCard = await card();
     assert.ok(onCard.height > hoverCard.height && Math.abs(onCard.graph - hoverCard.graph) < 1, 'On grows the card, graphs keep their size: ' + JSON.stringify({ hoverCard, onCard }));
     await fit.evaluate(() => Alpine.$data(document.querySelector('.ps')).setOverviewPreference('quickActions', 'off'));
     assert.equal(await fit.locator('.ps-server-entry.has-power').count(), 0, 'Off hides quick actions');
+    assert.equal(await data(fit, (d) => d.uiScale), 1, 'interface keeps its normal size when everything fits');
+    const longName = await fit.evaluate(() => { const h = [...document.querySelectorAll('.ps-card-title-row h3')].find((e) => e.textContent.startsWith('Creative')); return { size: parseFloat(h.style.fontSize), lines: Math.round(h.clientHeight / parseFloat(getComputedStyle(h).lineHeight)), clipped: h.scrollHeight > h.clientHeight + 1 }; });
+    assert.ok(longName.lines === 2 && !longName.clipped && longName.size >= 14, 'a long grid name wraps onto two lines before it shrinks: ' + JSON.stringify(longName));
     await fit.close();
-    console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover');
+    console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover, normal interface size, two-line names');
 
     // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
     const network = await open('/?mode=server&theme=light');

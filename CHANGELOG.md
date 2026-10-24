@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.0-snapshot.16 (snapshot channel)
+Simplify keeps its normal size, and long server names use two lines.
+- The interface no longer gets smaller on screens below 1440p (it was about 80% on a 1080p screen). It stays at normal size and is only scaled down, just enough and never below 75%, when the page would otherwise be wider than the window.
+- In the grid a long server name wraps onto a second line. Only a name that does not fit on two lines gets a little smaller.
+
 ## 0.5.0-snapshot.15 (snapshot channel)
 Choose the order of your servers, and server groups get their own button.
 - A new Server groups button in the top bar (a folder) holds everything about groups: make, rename, order and remove them, and pick their servers. Customize overview has a switch to hide the button; your groups keep showing.
