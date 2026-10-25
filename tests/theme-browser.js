@@ -351,6 +351,7 @@ const { start } = require('./browser-harness');
     for (const width of [360, 390, 430]) {
       const phone = await open('/?mode=server&theme=dark', { width, height: 800 });
       await data(phone, (d) => { d.connected = true; });
+      await phone.waitForFunction(() => document.documentElement.scrollHeight <= innerHeight); // the work area is measured again after fonts and the connection settle
       const layout = await phone.evaluate(() => {
         const tabs = [...document.querySelectorAll('.ps-phone-sections .ps-phone-section')].filter((b) => b.offsetParent);
         const bar = document.querySelector('.ps-phone-sections').getBoundingClientRect();

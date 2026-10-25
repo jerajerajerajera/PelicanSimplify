@@ -336,18 +336,20 @@
           const bar = this.$root.querySelector('.ps-phone-sections');
           const barHeight = bar && getComputedStyle(bar).position === 'fixed' ? bar.offsetHeight : 0;
           const top = el.getBoundingClientRect().top + window.scrollY;
-          const min = window.innerHeight < 500 ? 120 : 300;
+          const min = window.innerHeight < 500 ? 120 : window.innerWidth <= 600 ? 220 : 300;
           let height = Math.max(min, Math.floor((window.innerHeight - top - barHeight) / scale - (this.embedded ? 0 : 16)));
           el.style.setProperty('--ps-work-height', height + 'px');
           for (let pass = 0; pass < 2; pass++) {
             const over = Math.ceil(document.documentElement.scrollHeight - window.innerHeight);
-            if (over <= 0 || height - over < min) break;
-            height -= over;
+            const next = Math.max(min, height - over);
+            if (over <= 0 || next === height) break;
+            height = next;
             el.style.setProperty('--ps-work-height', height + 'px');
           }
         };
         this.fitWorkspaceNow = fit;
         this.$nextTick?.(fit);
+        document.fonts?.ready?.then(fit); // the header is measured again once the web font has swapped in
         window.addEventListener('resize', fit);
         if (typeof ResizeObserver === 'function') {
           const watch = new ResizeObserver(fit);
