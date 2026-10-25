@@ -95,6 +95,46 @@
   --ps-shadow-modal: 0 24px 70px rgb(0 0 0 / .55);
 }
 
+/* A Pelican theme plugin (Nord, Catppuccin, Theme Customizer, ...) is active: the palette and font come from
+   Filament's own colour variables, so Simplify matches the rest of the panel. Set by core.js as .ps-panel-theme. */
+:root.ps-panel-theme,
+.ps-panel-theme :is(.ps, .ps-ui) {
+  --ps-bg: var(--gray-50);
+  --ps-surface: #fff;
+  --ps-raised: var(--gray-100);
+  --ps-field: #fff;
+  --ps-ink: var(--gray-950);
+  --ps-muted: var(--gray-600);
+  --ps-line: var(--gray-200);
+  --ps-line-strong: var(--gray-300);
+  --ps-contrast-bg: var(--gray-900);
+  --ps-contrast-ink: var(--gray-50);
+  --ps-ok: var(--success-700);
+  --ps-warn: var(--warning-700);
+  --ps-danger: var(--danger-600);
+  --ps-info: var(--info-600);
+  --ps-font: var(--font-family), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root.ps-panel-theme.dark,
+.ps-panel-theme :is(.ps, .ps-ui).dark {
+  --ps-bg: var(--gray-950);
+  --ps-surface: var(--gray-900);
+  --ps-raised: var(--gray-800);
+  --ps-field: color-mix(in oklab, var(--gray-950) 50%, var(--gray-900));
+  --ps-ink: var(--gray-50);
+  --ps-muted: var(--gray-400);
+  --ps-line: color-mix(in oklab, var(--gray-700) 60%, var(--gray-800));
+  --ps-line-strong: var(--gray-600);
+  --ps-contrast-bg: var(--gray-800);
+  --ps-contrast-ink: var(--gray-50);
+  --ps-contrast-line: var(--gray-700);
+  --ps-ok: var(--success-400);
+  --ps-warn: var(--warning-400);
+  --ps-danger: var(--danger-400);
+  --ps-info: var(--info-400);
+}
+
 /* An adaptive console follows the page surface instead of staying black.
    Declared on the console itself so it resolves against the dashboard's own theme. */
 .ps-console-adaptive .ps-console {

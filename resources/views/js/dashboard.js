@@ -89,6 +89,7 @@
       navMenu: false,
       theme: 'system',
       themeDark: false,
+      themeForced: false,
       themeListener: null,
       installable: '',
       installListener: null,
@@ -384,6 +385,8 @@
       },
       applyTheme() {
         this.themeDark = window.SimplifyTheme?.dark() ?? false;
+        // A panel theme that only comes in light or dark (such as Catppuccin) hides the theme choice.
+        this.themeForced = !!window.SimplifyTheme?.forced?.();
         this.$root?.querySelectorAll?.('iframe').forEach((frame) => window.SimplifyTheme?.frame(frame, frame.dataset.psFrame, this.currentAccentHex()));
       },
       initNotices() {
