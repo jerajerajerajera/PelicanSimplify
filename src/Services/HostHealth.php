@@ -2,7 +2,6 @@
 declare(strict_types=1);
 namespace Simplify\Panel\Services;
 use App\Models\Node;
-use Illuminate\Support\Facades\Http;
 final class HostHealth
 {
     /** One snapshot shared by every viewer for the configured cache time. */
@@ -36,20 +35,18 @@ final class HostHealth
     }
     private static function traffic(Node $node): ?array
     {
-        // Wings exposes container traffic, not the physical host interface capacity.
+        // Wings exposes container traffic, not the physical host interface capacity. The node list is shared with the overview.
         try {
-            $response=Http::daemon($node)->connectTimeout(1)->timeout(2)->get('/api/servers');
-            if(!$response->successful())return null;
-            $servers=$response->json();if(!is_array($servers)||!array_is_list($servers))return null;
+            $snapshot=WingsServers::forNode($node);
+            if($snapshot===null)return null;
             $rx=0.0;$tx=0.0;$counters=[];
-            foreach($servers as $server){
+            foreach($snapshot['servers'] as $uuid=>$server){
                 $network=$server['utilization']['network']??[];
                 foreach(['rx_bytes','tx_bytes'] as $key)if(!is_numeric($network[$key]??null)||!is_finite((float)$network[$key])||(float)$network[$key]<0)return null;
                 $rx+=(float)$network['rx_bytes'];$tx+=(float)$network['tx_bytes'];
-                $id=$server['configuration']['uuid']??$server['uuid']??null;
-                if(is_string($id))$counters[$id]=['rx_bytes'=>(float)$network['rx_bytes'],'tx_bytes'=>(float)$network['tx_bytes']];
+                $counters[$uuid]=['rx_bytes'=>(float)$network['rx_bytes'],'tx_bytes'=>(float)$network['tx_bytes']];
             }
-            return ['rx_bytes'=>$rx,'tx_bytes'=>$tx,...NetworkRates::sample('node-'.$node->id,$counters)];
+            return ['rx_bytes'=>$rx,'tx_bytes'=>$tx,...NetworkRates::sample('node-'.$node->id,$counters,(float)$snapshot['at'])];
         }catch(\Throwable){return null;}
     }
     public static function summarize(array $samples): array

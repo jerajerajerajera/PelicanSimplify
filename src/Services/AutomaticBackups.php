@@ -32,8 +32,7 @@ final class AutomaticBackups
 
     public static function settings(Server $s): array
     {
-        $raw = Storage::disk('local')->get(self::path($s));
-        return array_replace(self::defaults(), $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : []);
+        return array_replace(self::defaults(), JsonFile::read(self::path($s)));
     }
 
     /** New servers start with the configured defaults and a first backup once they have run. */

@@ -1,5 +1,18 @@
 # Changes
 
+## 0.5.1 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+The first stable release since 0.4.7. It brings everything from the 0.5.0 and 0.5.1 betas. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **Announcements:** Info, Warning or Success bars above the server overview, managed under Admin tools → Announcements, with a start and end time, everyone or administrators only, and an optional button. Administrators also see a notice when Simplify, another plugin, Wings or Pelican has a new version.
+- **App notifications:** turn them on per device under Account menu → Notifications, with a test button; announcements and updates can arrive as notifications on your phone or computer.
+- **A reworked server page:** a compact header with the power buttons and the MOTD (the modpack name links to its page), a row with players and usage, and a console that fits the screen. Phones get a bottom bar with Console, Players, Files and More.
+- **Phones:** the panel works as an app on your home screen, with an overview, server page and creator built for one hand, and Pelican's own pages fitted to small screens.
+- **Overview your way:** your own server groups with their own colour, layouts (Cards, Compact or List) with 2 to 6 columns and three card widths, sorting, quick actions Off, On or Hover, and for administrators a filter on All servers, My servers or Others.
+- **A calmer look** with icons from Tabler, and Simplify follows Pelican theme plugins (Nord, Catppuccin, Theme Customizer, ...).
+- **Other plugins:** their account pages, widgets and buttons show inside Simplify, and each can be switched off.
+- **Faster overview:** one Wings call per node instead of one per server.
+- **Halloween touches** from 25 October to 2 November, easy to turn off.
+- Tested on fresh panels: Pelican 1.0.0-beta38 with PHP 8.3, and 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.4 and 8.5, on desktop and on phones.
+
 ## 0.5.0-beta.5 to 0.5.0-beta.8 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Available on the beta channel: a more flexible server overview. Everything from 0.5.0-beta.4 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Server groups:** make your own groups from the Server groups button in the top bar, each with its own order; groups are saved with your account, so every device shows the same. (beta.5, beta.6, beta.7)

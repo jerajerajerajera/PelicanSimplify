@@ -8,12 +8,10 @@ use App\Models\Egg;
 use App\Models\Role;
 use Filament\Forms\Components\Repeater;
 use App\Models\Node;
-use App\Models\User;
 use App\Models\Server;
 use Simplify\Panel\Services\AppearanceSettings;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Simplify\Panel\Services\CreatorAccess;
 use Filament\Pages\Page;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -196,7 +194,7 @@ class SimplifySettings extends Page implements HasForms
     private static function featureSection(string $title, string $group, ?string $description = null): Section
     {
         $definitions = array_filter(\Simplify\Panel\Services\FeatureSettings::definitions(), fn ($item) => ($item[3] ?? 'Server features') === $group);
-        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (array $definition, string $key) => Toggle::make('features.'.$key)->label($definition[0])->helperText($definition[1]), $definitions, array_keys($definitions)));
+        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key), array_keys($definitions)));
         return $description ? $section->description($description) : $section;
     }
 
@@ -224,7 +222,10 @@ class SimplifySettings extends Page implements HasForms
     private static function featureToggle(string $key): Toggle
     {
         $definition = \Simplify\Panel\Services\FeatureSettings::definitions()[$key] ?? [$key, null];
-        return Toggle::make('features.'.$key)->label($definition[0])->helperText($definition[1]);
+        $overlap = class_exists(\Simplify\Panel\Services\ExternalPlugins::class) ? \Simplify\Panel\Services\ExternalPlugins::overlapFor($key) : null;
+        // The saved choice is kept; it applies again once the overlapping plugin is disabled.
+        $help = $overlap ? 'Off while the '.$overlap['name'].' plugin is enabled. '.$overlap['reason'] : $definition[1];
+        return Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
     }
 
     public function form(Schema $schema): Schema
@@ -238,7 +239,7 @@ class SimplifySettings extends Page implements HasForms
                 self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.'),
                 self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.'),
                 self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. Each add-on has its own settings tab at the bottom of the menu.'),
-                Section::make('Pages from other plugins')->description('Pages that other installed plugins add to the admin panel or to servers. Ticked pages show up in Simplify under "External" (Admin tools, host mode and the server page); they always stay available in Pelican\'s own panel.')->schema([
+                Section::make('Pages from other plugins')->description('Pages that other installed plugins add to the admin panel, to servers or to every account. Ticked pages show up in Simplify: admin and server pages under "External" (Admin tools, host mode and the server page), account pages in the account menu, widgets as tiles and buttons on the overview and in the console. They always stay available in Pelican\'s own panel.')->schema([
                     \Filament\Forms\Components\CheckboxList::make('external_shown')->hiddenLabel()->options(fn () => self::externalCatalog())->bulkToggleable()->columns(1)
                         ->visible(fn () => self::externalCatalog() !== []),
                     \Filament\Schemas\Components\Text::make('No other plugins add pages right now.')->visible(fn () => self::externalCatalog() === []),
@@ -249,6 +250,7 @@ class SimplifySettings extends Page implements HasForms
                 Section::make('Colours')->columns(2)->schema([
                     ColorPicker::make('appearance.accent_color')->view('pelican-simplify::filament.admin.accent-picker')->label('Panel accent color')->hex()->required()->rules(['regex:/^#[0-9a-fA-F]{6}$/'])->helperText('Used throughout the shared interface and by every server when separate colors are off.')->columnSpanFull(),
                     Toggle::make('appearance.individual_colors')->label('Use separate server colors')->helperText('On assigns a color to every server without one. Off makes all servers use the panel accent; saved colors are retained.')->columnSpanFull(),
+                    Toggle::make('appearance.seasonal')->label('Seasonal touches')->helperText('A few small Halloween decorations for everyone from 25 October to 2 November. Each person can still turn them off under Customize overview.')->columnSpanFull(),
                 ]),
                 Section::make('Panel name & logo')->description('How your panel name looks in the top-left corner. The default is your name with the accent color fading in toward the right.')->columns(2)->schema([
                     \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.brand-editor')->columnSpanFull(),

@@ -70,6 +70,7 @@ namespace App\Models {
 }
 namespace {
  require __DIR__.'/../src/Services/PluginUpdater.php';
+ require __DIR__.'/../src/Services/PanelUpdates.php';
  use Illuminate\Support\Facades\{File, Http, Process};
  use Simplify\Panel\Services\PluginUpdater as U;
  function plugin_path($id) { return '/plugins/'.$id; }

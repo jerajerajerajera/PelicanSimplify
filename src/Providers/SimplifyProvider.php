@@ -27,6 +27,10 @@ final class SimplifyProvider extends ServiceProvider
         \Illuminate\Support\Facades\Route::get('/simplify/server-icon/{uuid}',\Simplify\Panel\Http\Controllers\ServerIconController::class)->middleware(['web','auth'])->name('simplify.server-icon');
         \Illuminate\Support\Facades\Route::get('/simplify/logo',\Simplify\Panel\Http\Controllers\LogoController::class)->middleware(['web','auth'])->name('simplify.logo');
         \Illuminate\Support\Facades\Route::get('/simplify/favicon.svg',\Simplify\Panel\Http\Controllers\FaviconController::class)->name('simplify.favicon');
+        // Installable web app: manifest, icons and the service worker (served at the root so its scope is the whole panel).
+        \Illuminate\Support\Facades\Route::get('/simplify/manifest.webmanifest',[\Simplify\Panel\Http\Controllers\WebAppController::class,'manifest'])->name('simplify.manifest');
+        \Illuminate\Support\Facades\Route::get('/simplify/app-icon/{size}.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'icon'])->whereNumber('size')->name('simplify.app-icon');
+        \Illuminate\Support\Facades\Route::get('/simplify-worker.js',[\Simplify\Panel\Http\Controllers\WebAppController::class,'worker'])->name('simplify.worker');
         // Keep account creation and server linking administrator-only, including
         // direct requests to native pages/APIs outside this dashboard.
         \App\Models\Server::created(function($server):void{
@@ -59,6 +63,7 @@ final class SimplifyProvider extends ServiceProvider
             Schedule::command('simplify:maintenance')->everyMinute()->withoutOverlapping(5);
             Schedule::command('simplify:plugin-updates')->everyMinute()->withoutOverlapping(60);
             Schedule::command('simplify:subdomains')->everyFiveMinutes()->withoutOverlapping(10);
+            Schedule::command('simplify:announcements')->everyMinute()->withoutOverlapping(10);
         });
     }
 }

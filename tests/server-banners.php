@@ -5,6 +5,7 @@ namespace App\Models {class Server {public function __construct(public string $u
 namespace App\Enums {enum SubuserPermission:string {case SettingsRename='settings.rename';}}
 namespace Simplify\Panel\Services {class Access {public static bool $allowed=true;public static function permission($s,$p){if(!self::$allowed)throw new \RuntimeException('403');}}}
 namespace {
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/UploadLimits.php';require __DIR__.'/../src/Services/ServerBanners.php';require __DIR__.'/../src/Services/ServerArtwork.php';
 use Simplify\Panel\Services\ServerBanners as B;use Illuminate\Support\Facades\Storage as S;
 $root=true;function user(){return new class {function isRootAdmin(){return $GLOBALS['root'];}};}

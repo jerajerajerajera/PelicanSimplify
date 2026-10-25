@@ -5,7 +5,7 @@ namespace Filament\Pages { class Page {} }
 namespace Filament\Forms\Contracts { interface HasForms {} }
 namespace Filament\Forms\Concerns { trait InteractsWithForms {} }
 namespace Illuminate\Support\Facades {
- class Storage { public static array $files=[]; public static function disk($disk){return new self;} public function exists($p){return isset(self::$files[$p]);} public function get($p){return self::$files[$p];} public function put($p,$v){self::$files[$p]=$v;return true;} }
+ class Storage { public static array $files=[]; public static function disk($disk){return new self;} public function exists($p){return isset(self::$files[$p]);} public function get($p){return self::$files[$p]??null;} public function put($p,$v){self::$files[$p]=$v;return true;} }
  class Crypt { public static function encryptString($v){return 'encrypted:'.base64_encode($v);} public static function decryptString($v){return base64_decode(substr($v,10));} }
  class Cache { public static function lock($key,$seconds){return new self;} public function block($seconds,$callback){return $callback();} }
 }

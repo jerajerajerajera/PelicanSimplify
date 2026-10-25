@@ -27,7 +27,6 @@
 :where(.ps, .ps-ui) a { color: inherit; text-decoration: none; }
 :where(.ps, .ps-ui) button { cursor: pointer; }
 :where(.ps, .ps-ui) :is(h1, h2, h3, h4, p, dl, dd, ul) { margin: 0; }
-.ps-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Buttons -------------------------------------------------------------------------------- */
 .ps-btn {
@@ -68,9 +67,7 @@
 .ps-btn.is-lg { min-height: var(--ps-h-lg); padding: 0 20px; font-size: 14px; }
 .ps-btn.is-icon { width: var(--ps-h); padding: 0; flex: none; }
 .ps-btn.is-icon.is-sm { width: var(--ps-h-sm); }
-.ps-btn.is-block { width: 100%; }
 .ps-btn[aria-pressed="true"],
-.ps-btn.is-selected { border-color: var(--ps-accent); color: var(--ps-ink); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-surface)); }
 
 /* Pills used for filters. */
 .ps-chip {
@@ -194,9 +191,6 @@ input[type="file"].ps-input::file-selector-button {
 :is(.ps-switch, .ps-check input):disabled { opacity: .45; cursor: not-allowed; }
 .ps-check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--ps-h-sm); color: var(--ps-ink); font: 500 13px/1.35 var(--ps-font); cursor: pointer; }
 .ps-checks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
-/* A full-width toggle row: label on the left, switch on the right. */
-.ps-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: var(--ps-h-sm); padding: 4px 0; border: 0; background: transparent; color: var(--ps-ink); font: 500 13px/1.35 var(--ps-font); text-align: left; cursor: pointer; }
-.ps-toggle:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; border-radius: var(--ps-radius-sm); }
 
 /* Colour swatches, used by every colour picker. */
 .ps-swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -221,7 +215,6 @@ input[type="file"].ps-input::file-selector-button {
 .ps-rows > * > :first-child { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
 .ps-rows small { display: block; color: var(--ps-muted); font-size: 12px; }
 .ps-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-.ps-grid-2 > .is-wide { grid-column: 1 / -1; }
 @media (max-width: 640px) { .ps-grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
 /* Badges and status ---------------------------------------------------------------------- */
@@ -333,10 +326,10 @@ input[type="file"].ps-input::file-selector-button {
 .ps-modal.is-md { --ps-modal-w: 760px; --ps-modal-h: 680px; }
 .ps-modal.is-lg { --ps-modal-w: 1120px; --ps-modal-h: 880px; }
 .ps-modal-head { display: flex; flex: none; align-items: center; gap: 12px; min-height: 60px; padding: 10px 12px 10px 22px; border-bottom: 1px solid var(--ps-line); }
-.ps-modal-head > h2, .ps-modal-head > .ps-modal-title { flex: 1 1 auto; min-width: 0; margin: 0; font: 700 18px/1.3 var(--ps-font); overflow-wrap: anywhere; }
+.ps-modal-head > h2 { flex: 1 1 auto; min-width: 0; margin: 0; font: 700 18px/1.3 var(--ps-font); overflow-wrap: anywhere; }
 .ps-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 22px; }
 .ps-modal-body.is-flush { display: flex; flex-direction: column; padding: 0; overflow: hidden; scrollbar-gutter: auto; }
-.ps-modal-body.is-flush > iframe, .ps-frame-fill { display: block; flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; border: 0; background: var(--ps-surface); }
+.ps-modal-body.is-flush > iframe { display: block; flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; border: 0; background: var(--ps-surface); }
 .ps-modal-foot { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--ps-line); background: color-mix(in srgb, var(--ps-raised) 45%, var(--ps-surface)); }
 .ps-modal-foot > .is-start { margin-right: auto; color: var(--ps-muted); font-size: 12px; }
 .ps-modal.is-sm .ps-modal-body { scrollbar-gutter: auto; }
@@ -348,7 +341,20 @@ input[type="file"].ps-input::file-selector-button {
   .ps-modal-head { padding-left: 16px; min-height: 56px; }
   .ps-modal-body { padding: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .ps-modal { animation: none; } }
+/* Phones: popups are sheets that slide up from the bottom, with a drag handle and the footer (the save
+   bar) above the home indicator. */
+@media (max-width: 600px) {
+  .ps-modal-layer { place-items: end stretch; padding: 12px 0 0; }
+  .ps-modal, .ps-modal:is(.is-md, .is-lg) { width: 100%; height: calc(100dvh - 12px); border-bottom: 0; border-radius: 18px 18px 0 0; transition: transform .2s ease; animation: ps-sheet-in .22s cubic-bezier(.2, .8, .2, 1); }
+  .ps-modal.is-sm { height: auto; max-height: calc(100dvh - 12px); }
+  .ps-modal::before { content: ""; flex: none; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--ps-line-strong); }
+  .ps-modal-head { min-height: 52px; touch-action: none; }
+  .ps-modal-foot { padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .ps-modal-foot > .is-start { flex: 1 0 100%; margin: 0; }
+  .ps-modal-foot > .ps-btn { flex: 1 1 0; min-height: 44px; }
+}
+@keyframes ps-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ps-modal { animation: none; transition: none; } }
 /* Body scrolling stops while a popup is open. */
 html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidden; }
 /* Confirmation dialogs stack above an open workspace popup. */
@@ -411,6 +417,12 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ps-plugin-widgets { flex: none; margin-bottom: 12px; overflow: hidden; border-radius: var(--ps-radius-lg); }
+.ps-plugin-widgets iframe { display: block; width: 100%; height: var(--ps-widgets-height, 0); border: 0; background: transparent; }
+.ps-plugin-widgets.is-empty { height: 0; margin: 0; }
+.ps-plugin-pages { width: min(320px, calc(100vw - 24px)); }
+.ps-plugin-pages .ps-notify-item { width: 100%; border: 0; background: transparent; font-family: inherit; cursor: pointer; }
+.ps-plugin-pages .ps-notify-item:is(:hover, :focus-visible) { background: var(--ps-raised); }
 .ps-admin-menu { width: min(520px, calc(100vw - 24px)); max-height: min(78vh, 640px); overflow-y: auto; }
 .ps-admin-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .ps-admin-group { display: grid; align-content: start; gap: 1px; padding: 8px; border: 1px solid color-mix(in srgb, var(--ps-tone) 22%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-tone) 5%, var(--ps-surface)); }
@@ -494,3 +506,8 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 @keyframes ps-savebar-draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .ps-savebar { transition: opacity .2s ease, visibility 0s linear .2s; transform: none; } .ps-savebar-check { animation: none !important; stroke-dashoffset: 0; } }
 .ps-error { color: var(--ps-danger); font-weight: 600; }
+
+/* Installed web app (home screen): no browser bar, so the page keeps clear of the notch on the sides itself;
+   the bottom bars already keep clear of the home indicator (env(safe-area-inset-bottom)). */
+html.ps-standalone body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+html.ps-standalone { -webkit-tap-highlight-color: transparent; }

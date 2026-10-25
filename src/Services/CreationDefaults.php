@@ -15,17 +15,14 @@ final class CreationDefaults
     public static function all(): array
     {
         $defaults = self::defaults();
-        try {
-            $disk = Storage::disk('local');
-            $saved = $disk->exists(self::FILE) ? json_decode($disk->get(self::FILE), true, 32, JSON_THROW_ON_ERROR) : [];
-            foreach ($defaults as $type => &$profile) foreach ($profile as $key => &$value) {
+        $saved = JsonFile::read(self::FILE);
+        foreach ($defaults as $type => &$profile) foreach ($profile as $key => &$value) {
                 $candidate = $saved[$type][$key] ?? null;
                 $max = ['cpu'=>1600,'ram_gb'=>128,'disk_mb'=>10485760][$key];
                 $min = $key === 'disk_mb' ? 1024 : 1;
                 if (is_int($candidate) && $candidate >= $min && $candidate <= $max) $value = $candidate;
-            }
-            unset($profile, $value);
-        } catch (\Throwable $e) { report($e); }
+        }
+        unset($profile, $value);
         return $defaults;
     }
     public static function forType(string $type): array

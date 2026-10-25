@@ -1,10 +1,11 @@
 <?php
-namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path];}public function put($path,$value){self::$records[$path]=$value;return true;}}}
+namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}}}
 namespace Illuminate\Support\Facades {class Cache {public static function lock(...$args){return new self;}public function block($seconds,$callback){return $callback();}}}
 namespace App\Models {class Server {public static array $servers=[];public function __construct(public string $uuid){}public static function query(){return new self('query');}public function orderBy($column){return $this;}public function get($columns=null){return self::$servers;}}}
 namespace {
 function user(){return new class{function isRootAdmin(){return true;}};}
 function abort_unless($ok,$code){if(!$ok)throw new \RuntimeException((string)$code);}
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/ServerAppearance.php';
 use Simplify\Panel\Services\ServerAppearance as Colors;
 use App\Models\Server;

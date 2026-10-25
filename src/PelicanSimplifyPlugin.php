@@ -25,16 +25,19 @@ final class PelicanSimplifyPlugin implements Plugin
                 ->visible(fn()=>(bool)user()?->isRootAdmin()),
         ]);
         if($panel->getId()==='app'){
-            $panel->pages([Dashboard::class,CreateServer::class,SimplifySettings::class]);
+            $panel->pages([Dashboard::class,CreateServer::class,SimplifySettings::class,Filament\App\Pages\PluginWidgets::class,Filament\App\Pages\PluginActions::class]);
             $panel->middleware([Http\Middleware\Home::class]);
             $panel->homeUrl(fn()=>FeatureSettings::enabled('dashboard')?Dashboard::getUrl(panel:'app'):route(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()));
         }
         if($panel->getId()==='admin'){
             $panel->topbar(true);
             $panel->middleware([Http\Middleware\PluginsHome::class]);
-            $panel->pages([SimplifySettings::class,CreateMinecraftServer::class,\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::class,\Simplify\Panel\Filament\Admin\Pages\ManagePeople::class]);
+            $panel->pages([SimplifySettings::class,CreateMinecraftServer::class,\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::class,\Simplify\Panel\Filament\Admin\Pages\ManagePeople::class,\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class]);
         }
-        if($panel->getId()==='server')$panel->middleware([Http\Middleware\ServerHome::class]);
+        if($panel->getId()==='server'){
+            $panel->middleware([Http\Middleware\ServerHome::class]);
+            $panel->pages([Filament\Server\Pages\PluginWidgets::class,Filament\Server\Pages\PluginActions::class]);
+        }
     }
     public function boot(Panel $panel): void { app('view')->addNamespace($this->getId(),plugin_path($this->getId(),'resources/views')); }
 }
