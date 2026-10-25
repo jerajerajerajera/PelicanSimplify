@@ -17,8 +17,7 @@ final class Software
     }
     private static function requestedSubdomain(Server $s): string
     {
-        $raw=\Illuminate\Support\Facades\Storage::disk('local')->get('ssc/website-visibility/'.$s->uuid.'.json');
-        return $raw?(string)(json_decode($raw,true,512,JSON_THROW_ON_ERROR)['requested_subdomain']??''):'';
+        return (string)(JsonFile::read('ssc/website-visibility/'.$s->uuid.'.json')['requested_subdomain']??'');
     }
     public static function change(Server $s,array $state,string $confirm): void
     {

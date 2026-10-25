@@ -66,12 +66,7 @@
                                 <div class="ps-admin-health">
                                     <button type="button" class="ps-admin-health-title" x-on:click="openAdminPage(adminHealthPage())"><svg aria-hidden="true"><use href="#ps-heart"/></svg><span>Host health checks</span></button>
                                     <div class="ps-health-grid">
-                                        <template x-for="check in healthChecks()" :key="check.label">
-                                            <button type="button" class="ps-health-check" :class="'is-'+check.status" x-on:click="openAdminPage(adminHealthPage())"
-                                                    :data-tip="check.label+(check.status==='ok' ? ': OK' : ': '+(check.message || check.status))" :aria-label="check.label+': '+check.status">
-                                                <svg aria-hidden="true"><use :href="check.status==='ok' ? '#ps-check' : '#ps-alert'"/></svg>
-                                            </button>
-                                        </template>
+                                        @include('pelican-simplify::health-checks', ['open' => 'openAdminPage(adminHealthPage())'])
                                     </div>
                                 </div>
                             </template>
@@ -381,12 +376,7 @@
                         </button>
                     </template>
                     <div class="ps-health-grid" x-show="healthChecks().length" role="group" aria-label="Current health checks">
-                        <template x-for="check in healthChecks()" :key="check.label">
-                            <button type="button" class="ps-health-check" :class="'is-'+check.status" x-on:click="openHostSection(hostSections().find((x) => x.key === 'health'))"
-                                    :data-tip="check.label+(check.status==='ok' ? ': OK' : ': '+(check.message || check.status))" :aria-label="check.label+': '+check.status">
-                                <svg aria-hidden="true"><use :href="check.status==='ok' ? '#ps-check' : '#ps-alert'"/></svg>
-                            </button>
-                        </template>
+                        @include('pelican-simplify::health-checks', ['open' => 'openHostSection(hostSections().find((x) => x.key === \'health\'))'])
                     </div>
                 </nav>
                 {{-- A server picked on the left opens here, over the admin pages; the cross or another server closes it. --}}

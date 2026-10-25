@@ -56,10 +56,7 @@ final class FeatureSettings
     private function load(): array
     {
         if($this->loaded!==null)return $this->loaded;
-        $disk=Storage::disk('local');
-        try{$saved=$disk->exists(self::FILE)?json_decode($disk->get(self::FILE),true,32,JSON_THROW_ON_ERROR):[];}
-        catch(\Throwable $exception){report($exception);$saved=[];}
-        $data=array_intersect_key(is_array($saved)?$saved:[],self::defaults());
+        $data=array_intersect_key(JsonFile::read(self::FILE),self::defaults());
         return $this->loaded=array_replace(self::defaults(),array_map(fn($v):bool=>$v===true,$data));
     }
     public static function enabled(string $feature): bool

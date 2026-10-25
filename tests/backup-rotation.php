@@ -31,6 +31,7 @@ namespace {
     function app($c){return new $c;}
     function now(){return new class{public function format($f){return date($f);}};}
     function check($c,$m){if(!$c)throw new \RuntimeException($m);echo "PASS $m\n";}
+    require_once __DIR__.'/../src/Services/JsonFile.php';
     require __DIR__.'/../src/Services/PerformanceSettings.php';
     require __DIR__.'/../src/Services/AutomaticBackups.php';
     use Simplify\Panel\Services\AutomaticBackups as A;

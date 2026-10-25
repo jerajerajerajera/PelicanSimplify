@@ -7,7 +7,6 @@ namespace Simplify\Panel\Services;
 use App\Filament\Admin\Resources\Servers\ServerResource;
 use App\Models\Egg;
 use App\Models\Node;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /** Explicit self-service grants, separate from Pelican administration permissions. */
@@ -27,15 +26,7 @@ final class CreatorAccess
     public static function configuration(): array
     {
         $instance=app(self::class);if($instance->cached!==null)return $instance->cached;
-        try {
-            if(!Storage::disk('local')->exists(self::FILE))return $instance->cached=self::defaults();
-            $raw = Storage::disk('local')->get(self::FILE);
-            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : [];
-            return $instance->cached=array_replace(self::defaults(), is_array($data) ? $data : []);
-        } catch (\Throwable $exception) {
-            report($exception);
-            return $instance->cached=self::defaults();
-        }
+        return $instance->cached=array_replace(self::defaults(), JsonFile::read(self::FILE));
     }
 
     /** Limits come from the user's roles (RoleAccess); individual grants from earlier versions still win. */

@@ -1,7 +1,8 @@
 <?php
-namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path];}public function put($path,$value){self::$records[$path]=$value;return true;}}}
+namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}}}
 namespace {
 function report($e){}
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/OverviewGroups.php';
 use Simplify\Panel\Services\OverviewGroups as Groups;
 use Illuminate\Support\Facades\Storage;

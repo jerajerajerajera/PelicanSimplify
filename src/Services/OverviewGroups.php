@@ -18,12 +18,9 @@ final class OverviewGroups
 
     public static function get(object $user): ?array
     {
-        $disk=Storage::disk('local');
         $path=self::path($user);
-        if(!$disk->exists($path))return null;
-        try{$saved=json_decode((string)$disk->get($path),true,8,JSON_THROW_ON_ERROR);}
-        catch(\Throwable $e){report($e);return ['groups'=>[],'order'=>'name'];}
-        $saved=is_array($saved)?$saved:[];
+        if(!Storage::disk('local')->exists($path))return null;
+        $saved=JsonFile::read($path); // A damaged file reads as no groups.
         // Up to 0.5.0-snapshot.13 the file held only the list of groups.
         return array_is_list($saved)?['groups'=>self::clean($saved),'order'=>'name']:['groups'=>self::clean(is_array($saved['groups']??null)?$saved['groups']:[]),'order'=>self::order($saved['order']??null)];
     }

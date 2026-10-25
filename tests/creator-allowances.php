@@ -2,11 +2,12 @@
 declare(strict_types=1);
 namespace Illuminate\Validation {class ValidationException extends \RuntimeException {public static function withMessages($messages){return new self(json_encode($messages));}}}
 namespace Illuminate\Support\Facades {
- class Storage {public static array $files=[];public static function disk($d){return new self;}public function exists($k){return isset(self::$files[$k]);}public function get($k){return self::$files[$k];}public function put($k,$v){self::$files[$k]=$v;return true;}}
+ class Storage {public static array $files=[];public static function disk($d){return new self;}public function exists($k){return isset(self::$files[$k]);}public function get($k){return self::$files[$k]??null;}public function put($k,$v){self::$files[$k]=$v;return true;}}
  class Cache {public static function lock(...$a){return new self;}public function block($s,$c){return $c();}}
 }
 namespace Simplify\Panel\Services {class FeatureSettings {public static function all(){return [];}}}
 namespace {
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/RoleAccess.php';
 require __DIR__.'/../src/Services/CreatorAccess.php';
 use Simplify\Panel\Services\CreatorAccess as A;
