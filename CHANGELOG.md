@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.1-snapshot.2 (snapshot channel)
+App notifications: announcements and updates can arrive as notifications on your phone or computer.
+- Account menu → Notifications: turn notifications on for this device, send a test notification, choose announcements and (administrators) updates, and remove other devices.
+- Administrators can send an announcement as an app notification; it is sent once, when the announcement starts.
+- A new version of Simplify, another plugin, Wings or Pelican notifies administrators once.
+- Devices that no longer accept notifications are removed automatically.
+
 ## 0.5.1-snapshot.1 (snapshot channel)
 Announcements: tell everyone on the panel what is going on, and see updates for the panel in one place.
 - Admin tools → Announcements: Info, Warning or Success, with a title, a message, an optional start and end time, everyone or administrators only, and an optional button to a server or a link.
