@@ -1,6 +1,6 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 24 October 2026 (stable 0.4.7, beta 0.5.0-beta.4, snapshot 0.5.0-snapshot.9).
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 25 October 2026 (stable 0.4.7, beta 0.5.0-beta.8, snapshot 0.5.0-snapshot.18).
 
 ## The project in short
 
@@ -20,7 +20,7 @@ Three channels, each on its own branch (decided 20 October 2026):
 | Beta | `beta` | `update-beta.json` | `0.5.0-beta.N`, `0.5.0-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
 | Snapshot | `snapshot` | `update-snapshot.json` | `0.5.0-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.7, beta 0.5.0-beta.4 and snapshot 0.5.0-snapshot.9, all for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2. On an untested Pelican release the setup check warns instead of blocking (from 0.4.7 and 0.5.0-beta.4). Beta 0.5.0-beta.3 was tested on fresh panels: beta38 with PHP 8.3, 8.4 and 8.5, rc.1 and rc.2 with PHP 8.4 and 8.5 (the compatibility table in the README and INSTALLATION). The beta adds Simplify on phones, the panel as an installable app and support for other plugins.
+- **Current:** stable 0.4.7, beta 0.5.0-beta.8 and snapshot 0.5.0-snapshot.18, all for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2. On an untested Pelican release the setup check warns instead of blocking (from 0.4.7 and 0.5.0-beta.4). Beta 0.5.0-beta.3 was tested on fresh panels: beta38 with PHP 8.3, 8.4 and 8.5, rc.1 and rc.2 with PHP 8.4 and 8.5 (the compatibility table in the README and INSTALLATION). The beta adds Simplify on phones, the panel as an installable app and support for other plugins.
 - **Documentation on `main`:** the README's "Now in beta" section and channel table, CHANGELOG, ROADMAP and these docs are kept up to date on `main` (documentation only, no version or plugin files). The CHANGELOG on `main` has one summary entry per beta that links to the full beta changelog; when the beta becomes stable, that summary is replaced by the stable entry.
 - **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
@@ -76,7 +76,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Grid or list view. Create buttons and filters on the toolbar row.
   - Grouping by node (Auto/Always/Off).
   - Host health tile.
-  - "Customize overview" menu (simple mode only).
+  - "Customize overview" menu (simple mode only). From 0.5.0-beta.5: own server groups (saved per account, Server groups button), server order, layouts Cards/Compact/List with columns and card width, quick actions Off/On/Hover, full screen width.
 - **Host mode:** for admins. A server list per node and the admin menu with pages in a pane. Clicking a server opens its page in the pane; an arrow or ✕ closes it.
 - **Server page:**
   - Banner (image, colour or broken heart when offline).
@@ -84,7 +84,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Power, players and resources on the right.
   - A status bar appears when you scroll.
 - **Creators:** Easy Minecraft server creator, and the Easy server creator with 170+ games. Includes Steam art and automatic Steam tokens.
-- **Appearance:** themes, accent colour, panel name/logo editor, automatic scaling (1440p = 100%, about 80% on 1080p).
+- **Appearance:** themes, accent colour, panel name/logo editor, automatic scaling (in stable: 1440p = 100%, about 80% on 1080p; from 0.5.0-beta.7: normal size, only scaled down to at least 75% when the page would not fit).
 - **Account menu:** profile, theme (unfolds Light/Dark/System), host/simple switch, sign out.
 - **People & roles, plugin manager:** safe updates with rollback; update channels.
 - **Other plugins:**

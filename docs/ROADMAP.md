@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.4.7; the beta channel has 0.5.0-beta.4. Both support Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2.
+Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.4.7; the beta channel has 0.5.0-beta.8. Both support Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2.
 
 ## Easy server creator
 A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
@@ -26,6 +26,11 @@ A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.
 - In beta 0.5.0-beta.1: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
 - In beta 0.5.0-beta.2: buttons that plugins add to Pelican's server list and console (for example Create server from User Creatable Servers), shown and run in Simplify. Tabs and form fields plugins add to Pelican's own forms show in the embedded pages.
 - Still open: installing, updating and switching plugins on or off from Simplify's plugin manager.
+
+## Overview
+- In beta 0.5.0-beta.5 to beta.8: your own server groups (with their own button, saved per account), server order (Name, Created, Port, or your own order per group), layouts (Cards, Compact, List) with 2 to 6 columns and three card widths, quick actions Off, On or Hover, and a full screen width overview.
+- In beta 0.5.0-beta.7: the interface keeps its normal size below 1440p and only scales down (never below 75%) when the page would not fit.
+- Still open: extra information fields on the cards.
 
 ## Phone experience
 - In beta 0.5.0-beta.1: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
