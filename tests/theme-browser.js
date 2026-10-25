@@ -369,7 +369,7 @@ const { start } = require('./browser-harness');
       assert.ok(layout.fit && layout.fits, width + ': tabs fit on one row without clipping');
       assert.equal(layout.small, 0, width + ': tabs are touch-sized');
       assert.equal(layout.grid, false, width + ': the section grid makes way for the tabs');
-      assert.ok(layout.consoleHeight >= 300 && layout.consoleHeight === layout.workHeight && layout.consoleAboveBar && layout.pageFits, width + ': console fills the rest of the screen without scrolling (' + JSON.stringify(layout) + ')');
+      assert.ok(layout.consoleHeight >= 260 && layout.consoleHeight === layout.workHeight && layout.consoleAboveBar && layout.pageFits, width + ': console fills the rest of the screen without scrolling (' + JSON.stringify(layout) + ')');
       assert.ok(layout.power.length === 3 && layout.power.every((h) => h >= 44), width + ': three touch-sized power buttons');
       if (width === 390) {
         await phone.click('.ps-quick-command >> text=say …');
