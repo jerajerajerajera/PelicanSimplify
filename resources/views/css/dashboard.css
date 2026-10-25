@@ -99,6 +99,9 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters .ps-chip svg { width: 13px; height: 13px; }
+.ps-owner-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--ps-line); }
+.ps-overview-toolbar > .ps-owner-filters { order: 2; }
+.ps-owner-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-node-search { width: 170px; min-height: var(--ps-h-sm); padding: 4px 10px; font-size: 13px; }
 /* Node groups: a heading row spanning the grid (or list) before each node's servers. */
 .ps-server-entry.is-node-heading { grid-column: 1 / -1; display: flex; align-items: end; min-height: 0; }
@@ -1127,8 +1130,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-overview-toolbar { flex-wrap: nowrap; justify-content: flex-start; gap: 8px; margin: 0 -14px 12px; padding: 2px 14px 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
   .ps .ps-overview-toolbar::-webkit-scrollbar { display: none; }
   .ps .ps-overview-toolbar > .ps-create-tiles, .ps .ps-node-search { display: none !important; }
-  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
-  .ps .ps-overview-toolbar > .ps-node-filters { padding-left: 8px; border-left: 1px solid var(--ps-line); }
+  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
+  .ps .ps-overview-toolbar > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
   .ps .ps-overview-toolbar .ps-chip { min-height: 40px; padding-inline: 14px; white-space: nowrap; }
 
   /* Host health: one summary line above the servers; tapping still opens the node details. */

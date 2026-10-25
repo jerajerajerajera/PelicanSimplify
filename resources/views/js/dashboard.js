@@ -4,10 +4,10 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal' };
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all' };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
   // Overview settings that pick one of a fixed set of values.
-  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'] };
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
@@ -782,7 +782,13 @@
         return [...games].map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
       },
       visibleServers() {
-        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter));
+        const scope = this.ownerFilterShown() ? this.overviewPreferences.serverScope : 'all';
+        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter) && (scope === 'all' || !!s.mine === (scope === 'mine')));
+      },
+      /** My servers / Others only means something when the overview holds both (administrators, or everyone in friends mode). */
+      ownerFilterShown() {
+        const servers = this.boot.servers || [];
+        return servers.some((s) => s.mine) && servers.some((s) => !s.mine);
       },
       /** Nodes that have servers in the overview (names from the listing, else the health data). */
       nodeOptions() {
