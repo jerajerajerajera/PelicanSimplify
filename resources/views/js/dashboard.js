@@ -4,8 +4,8 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all' };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
   const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
@@ -40,6 +40,9 @@
       notifyMenu: false,
       noticeHistory: [],
       panelNotices: [],
+      announcements: [],
+      // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
+      push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
       incomingNotice: null,
       incomingShown: false,
       incomingQueue: [],
@@ -51,6 +54,11 @@
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
+      // The console alone, in its own browser window (opened from the console's title bar).
+      consoleWindow: /[?&]simplify_console=/.test(globalThis.location?.search || ''),
+      consolePeek: false,
+      consoleFocus: false,
+      infoMenu: false,
       adminPage: null,
       overviewCompact: false,
       phone: false,
@@ -190,6 +198,7 @@
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
         });
+        if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
         this.restoreOverviewGroups();
@@ -201,6 +210,7 @@
         if (this.$nextTick) this.$nextTick(() => this.initOverviewDock());
         if (this.$nextTick) this.$nextTick(() => this.openFromLink());
         if (!this.server) {
+          setTimeout(() => this.releaseBats(), 600);
           this.recordOverview(this.boot.servers);
           this.refreshTimer = setInterval(() => this.modal || this.refreshOverview(), this.intervals.overview);
           return;
@@ -268,6 +278,45 @@
         }
       },
 
+      /* Halloween ---------------------------------------------------------------------------- */
+      /** 25 October to 2 November, every year. */
+      halloweenSeason(date = new Date()) {
+        const month = date.getMonth(), day = date.getDate();
+        return (month === 9 && day >= 25) || (month === 10 && day <= 2);
+      },
+      /** The Halloween touches show in season, unless the panel or this person turned them off. */
+      halloween(date = new Date()) {
+        return this.boot.appearance?.seasonal !== false && this.overviewPreferences.halloween !== false && this.halloweenSeason(date);
+      },
+      /** A few bats leave one server card when the overview opens, once per visit. */
+      releaseBats() {
+        if (this.server || !this.halloween() || typeof document === 'undefined' || !document.body.animate) return;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        try {
+          if (sessionStorage.getItem('pelicanSimplify.bats')) return;
+          sessionStorage.setItem('pelicanSimplify.bats', '1');
+        } catch {}
+        const card = [...this.$root.querySelectorAll('.ps-server-card')].map((el) => el.getBoundingClientRect()).find((r) => r.width > 80 && r.top >= 0 && r.bottom <= innerHeight);
+        if (!card) return;
+        const ink = getComputedStyle(this.$root).getPropertyValue('--ps-ink').trim();
+        [[0, .62, -1], [180, .5, .3], [340, .72, 1]].forEach(([delay, across, side], i) => {
+          const bat = document.createElement('span');
+          bat.className = 'ps-hw-bat';
+          bat.setAttribute('aria-hidden', 'true');
+          bat.style.color = ink;
+          bat.innerHTML = '<svg viewBox="0 0 44 22"><path d="M22 6c1-2 2-3 2-3l1 3c2 0 3 1 3 2 3-3 8-5 14-4-3 2-4 5-4 8-2-2-5-2-7 0-1-2-3-3-5-2l-2 6-2-6c-2-1-4 0-5 2-2-2-5-2-7 0 0-3-1-6-4-8 6-1 11 1 14 4 0-1 1-2 3-2l1-3s1 1 2 3z"/></svg>';
+          document.body.appendChild(bat);
+          const x = card.left + card.width * across - 20, y = card.top + card.height * .35;
+          const dx = side * (120 + i * 40) + 60, dy = -(y + 60);
+          bat.animate([
+            { transform: `translate(${x}px, ${y}px) scale(.4)`, opacity: 0 },
+            { transform: `translate(${x + dx * .15}px, ${y - 40}px) scale(.9)`, opacity: .85, offset: .15 },
+            { transform: `translate(${x + dx * .55}px, ${y + dy * .5 + 20}px)`, opacity: .85, offset: .55 },
+            { transform: `translate(${x + dx}px, ${y + dy}px) scale(.8)`, opacity: 0 },
+          ], { duration: 2400 + i * 250, delay: delay + 300, easing: 'cubic-bezier(.3, .6, .4, 1)', fill: 'both' }).finished.then(() => bat.remove(), () => bat.remove());
+        });
+      },
+
       /* Colours ---------------------------------------------------------------------------- */
       creationAccent(game) {
         if (game === 'minecraft' && this.overviewPreferences.minecraftAlwaysGreen) {
@@ -283,6 +332,9 @@
         if (String(id).startsWith('group-')) return {};
         const appearance = this.boot.appearance || {};
         const common = appearance.accent_color;
+        // Halloween turns the overview's neutral accent orange; a panel accent of your own stays.
+        if (id === 'overview' && this.halloween() && (common || '#878787').toLowerCase() === '#878787')
+          return { '--ps-accent': this.themeDark ? '#f0a35a' : '#c2621a', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
         if (/^#[0-9a-f]{6}$/i.test(common || '') && (id === 'overview' || appearance.individual_colors === false))
           return { '--ps-accent': common, '--ps-on-accent': accentInk(common) };
         if (id === 'overview') return { '--ps-accent': this.themeDark ? '#c0c0c5' : '#55555f', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
@@ -317,15 +369,63 @@
           this.statusBarVisible = !entry.isIntersecting && entry.boundingClientRect.bottom < 0;
         }).observe(el);
       },
-      /** In the host mode pane the workspace gets exactly the height left in the frame, so nothing scrolls. */
-      fitEmbedded(el) {
+      /** The section menu and the console (or open section) share the height left on the screen: what sits
+       *  above them is measured, and whatever still ends up below (footer, page padding) is taken off too,
+       *  so the page never scrolls just for the work area. Phones keep the console the height of the screen. */
+      fitWorkspace(el) {
         const fit = () => {
+          if (!this.server || typeof window === 'undefined') return;
+          const scale = this.uiScale || 1;
+          const bar = this.$root.querySelector('.ps-phone-sections');
+          const barHeight = bar && getComputedStyle(bar).position === 'fixed' ? bar.offsetHeight : 0;
           const top = el.getBoundingClientRect().top + window.scrollY;
-          el.style.setProperty('--ps-embed-height', Math.max(320, (window.innerHeight - top) / (this.uiScale || 1)) + 'px');
+          const min = window.innerHeight < 500 ? 120 : window.innerWidth <= 600 ? 220 : 300;
+          let height = Math.max(min, Math.floor((window.innerHeight - top - barHeight) / scale - (this.embedded ? 0 : 16)));
+          el.style.setProperty('--ps-work-height', height + 'px');
+          for (let pass = 0; pass < 2; pass++) {
+            const over = Math.ceil(document.documentElement.scrollHeight - window.innerHeight);
+            const next = Math.max(min, height - over);
+            if (over <= 0 || next === height) break;
+            height = next;
+            el.style.setProperty('--ps-work-height', height + 'px');
+          }
         };
-        fit();
+        this.fitWorkspaceNow = fit;
+        this.$nextTick?.(fit);
+        document.fonts?.ready?.then(fit); // the header is measured again once the web font has swapped in
         window.addEventListener('resize', fit);
-        if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(this.$root.querySelector('.ps-server-info') || el);
+        if (typeof ResizeObserver === 'function') {
+          const watch = new ResizeObserver(fit);
+          for (const part of ['.ps-server-info', '.ps-server-stats', '.ps-pending']) {
+            const node = this.$root.querySelector(part);
+            if (node) watch.observe(node);
+          }
+        }
+      },
+      /** Measures the work area again after a layout change (console size, workspace open or closed). */
+      refitWorkspace() {
+        this.$nextTick?.(() => this.fitWorkspaceNow?.());
+      },
+      /** The power button that fits the state: Stop while the server runs, Start otherwise. */
+      mainPower() {
+        return ['running', 'starting'].includes(this.status) ? { action: 'stop', label: 'Stop', icon: 'stop' } : { action: 'start', label: 'Start', icon: 'play' };
+      },
+      /** "Paper 1.21.4", "Valheim" or "Not reported" for the line under the server name. */
+      softwareLabel() {
+        const software = this.server?.software || 'Not reported';
+        if (!this.server?.minecraft) return software;
+        const version = this.minecraftVersion();
+        return version === 'Not reported' ? software : software + ' ' + version;
+      },
+      /** The console in a window of its own: the same page with only the console showing. */
+      openConsoleWindow() {
+        const url = new URL(location.href);
+        url.searchParams.set('simplify_console', '1');
+        let popup = null;
+        try {
+          popup = window.open(url.toString(), 'simplify-console-' + (this.server?.uuid || ''), 'popup,width=960,height=640');
+        } catch {}
+        if (!popup) this.toast('The browser blocked the new window. Allow pop-ups for this panel to open the console separately.', 'warn');
       },
       openHostServer(s) {
         this.hostServer = s;
@@ -392,6 +492,8 @@
       initNotices() {
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
+        this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
+        this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
         if (typeof wire.panelNotifications === 'function') this.noticeTimer = setInterval(() => this.pollPanelNotices(), Math.max(15000, Number(this.intervals?.overview) || 30000));
@@ -422,13 +524,213 @@
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        const update = this.boot.update;
-        if (update?.available) {
-          items.push({ id: 'update', tone: 'info', title: 'Simplify ' + update.version + ' is available', text: 'You are running ' + (update.current || 'an older version') + '. Update from the Plugins page.', action: update.url ? { label: 'Open plugins', url: update.url } : null });
+        // Announcements (also the Panel's update announcements); hidden bars stay here until they end.
+        for (const item of this.announcements) {
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
         return items;
+      },
+      /** The bell's count: everything except announcements this account already hid. */
+      unreadNotifications() {
+        return this.notifications().filter((item) => !item.dismissed).length;
+      },
+      /** Announcement bars above the overview: live and not hidden by this account. */
+      announcementBars() {
+        return this.announcements.filter((item) => !item.dismissed);
+      },
+      announcementMeta(item) {
+        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
+        // The category only as context for other details; the colour already says it.
+        const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
+        return (details.length && category ? [category, ...details] : details).join(' · ');
+      },
+      externalLink(url) {
+        try {
+          return new URL(url, location.origin).origin !== location.origin;
+        } catch {
+          return false;
+        }
+      },
+      /** Hides an announcement bar for this account (kept with the account, so every device follows). */
+      async dismissAnnouncement(key) {
+        const before = this.announcements;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: true } : item));
+        if (typeof wire.dismissAnnouncement !== 'function') return;
+        try {
+          const items = await wire.dismissAnnouncement(key);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          this.announcements = before;
+          this.toast('The announcement could not be hidden.', 'warn');
+        }
+      },
+      /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
+      pushSupported() {
+        return !!(globalThis.isSecureContext && globalThis.navigator?.serviceWorker && 'PushManager' in globalThis && 'Notification' in globalThis);
+      },
+      pushNeedsInstall() {
+        const nav = globalThis.navigator || {};
+        const ios = /iPad|iPhone|iPod/.test(nav.userAgent || '') || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1);
+        const standalone = nav.standalone === true || !!globalThis.matchMedia?.('(display-mode: standalone)').matches;
+        return ios && !standalone;
+      },
+      pushBlocked() {
+        return globalThis.Notification?.permission === 'denied';
+      },
+      /** The bell offers notifications once per device, until they are on or the offer is dismissed. */
+      pushOffer() {
+        return this.push.checked && !this.push.endpoint && !this.push.optInHidden && !this.pushBlocked() && (this.pushSupported() || this.pushNeedsInstall());
+      },
+      hidePushOffer() {
+        this.push.optInHidden = true;
+        try {
+          localStorage.setItem('pelicanSimplify.pushOffer', 'hidden');
+        } catch {}
+      },
+      async pushRegistration() {
+        const worker = globalThis.navigator.serviceWorker;
+        const existing = await worker.getRegistration().catch(() => null);
+        if (existing) return existing;
+        // core.js registers the worker after the page load; wait for it a little.
+        return Promise.race([worker.ready, new Promise((resolve) => setTimeout(() => resolve(null), 8000))]);
+      },
+      async checkPush() {
+        try {
+          this.push.optInHidden = localStorage.getItem('pelicanSimplify.pushOffer') === 'hidden';
+        } catch {}
+        if (!this.pushSupported()) return (this.push.checked = true);
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          const subscription = await registration?.pushManager.getSubscription();
+          this.push.endpoint = subscription?.endpoint || null;
+        } catch {}
+        this.push.checked = true;
+      },
+      openNotifications() {
+        this.openPopup('notifications');
+        this.loadPush();
+      },
+      async loadPush() {
+        this.push.error = '';
+        await this.checkPush();
+        try {
+          this.push.settings = await wire.pushSettings(this.push.endpoint);
+        } catch {
+          this.push.error = 'Notification settings could not be loaded.';
+        }
+      },
+      pushOn() {
+        return !!this.push.endpoint && !!this.push.settings?.devices?.some((device) => device.current);
+      },
+      deviceLabel() {
+        const agent = globalThis.navigator?.userAgent || '';
+        const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /SamsungBrowser/.test(agent) ? 'Samsung Internet' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : 'Browser';
+        const system = /iPhone/.test(agent) ? 'iPhone' : /iPad/.test(agent) ? 'iPad' : /Android/.test(agent) ? 'Android' : /Windows/.test(agent) ? 'Windows' : /Mac OS X/.test(agent) ? 'Mac' : /Linux/.test(agent) ? 'Linux' : '';
+        const app = globalThis.matchMedia?.('(display-mode: standalone)').matches || globalThis.navigator?.standalone === true;
+        return browser + (system ? ' on ' + system : '') + (app ? ' · installed app' : '');
+      },
+      async enablePush() {
+        if (this.push.busy) return;
+        this.push.busy = true;
+        this.push.error = '';
+        try {
+          const permission = await globalThis.Notification.requestPermission();
+          if (permission !== 'granted') {
+            this.push.error = permission === 'denied' ? 'Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.' : 'Notifications were not allowed.';
+            return;
+          }
+          const registration = await this.pushRegistration();
+          if (!registration) {
+            this.push.error = 'The app is still starting. Reload the page and try again.';
+            return;
+          }
+          const key = this.push.settings?.key || (await wire.pushSettings(null)).key;
+          const bytes = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (key.length % 4)) % 4)), (c) => c.charCodeAt(0));
+          let subscription = await registration.pushManager.getSubscription();
+          // A subscription made with another key (after the panel's keys changed) cannot be used.
+          const current = subscription?.options?.applicationServerKey;
+          if (subscription && current && !new Uint8Array(current).every((value, index) => value === bytes[index])) {
+            await subscription.unsubscribe();
+            subscription = null;
+          }
+          subscription ||= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+          const result = await wire.savePushSubscription(subscription.toJSON(), this.deviceLabel());
+          if (!result?.ok) {
+            await subscription.unsubscribe().catch(() => {});
+            this.push.error = result?.message || 'Notifications could not be turned on.';
+            return;
+          }
+          this.push.endpoint = subscription.endpoint;
+          this.push.settings = { ...this.push.settings, ...result };
+          this.toast('Notifications are on for this device.', 'ok');
+        } catch {
+          this.push.error = 'Notifications could not be turned on in this browser.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async disablePush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        const endpoint = this.push.endpoint;
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          await (await registration?.pushManager.getSubscription())?.unsubscribe();
+        } catch {}
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(endpoint)) };
+          this.push.endpoint = null;
+          this.toast('Notifications are off for this device.', 'info');
+        } catch {
+          this.push.error = 'Notifications could not be turned off.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async testPush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        try {
+          const result = await wire.sendTestPush(this.push.endpoint);
+          this.toast(result?.message || 'Test sent.', result?.ok ? 'ok' : 'warn');
+        } catch {
+          this.toast('The test could not be sent.', 'warn');
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async removePushDevice(id) {
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(id)) };
+        } catch {
+          this.toast('The device could not be removed.', 'warn');
+        }
+      },
+      async setPushPreference(kind, value) {
+        const before = this.push.settings?.preferences || {};
+        this.push.settings = { ...this.push.settings, preferences: { ...before, [kind]: value } };
+        try {
+          this.push.settings.preferences = await wire.savePushPreferences({ [kind]: value });
+        } catch {
+          this.push.settings = { ...this.push.settings, preferences: before };
+          this.toast('Your choice could not be saved.', 'warn');
+        }
+      },
+      pushDeviceTime(device) {
+        if (!device.last_sent_at) return 'No notification sent yet';
+        const seconds = Math.max(0, Date.now() / 1000 - device.last_sent_at);
+        const days = Math.round(seconds / 86400);
+        const ago = seconds < 3600 ? Math.max(1, Math.round(seconds / 60)) + ' min ago' : seconds < 86400 ? Math.round(seconds / 3600) + ' h ago' : days === 1 ? 'yesterday' : days + ' days ago';
+        return 'Last notification ' + ago;
+      },
+      async refreshAnnouncements() {
+        if (typeof wire.announcements !== 'function') return;
+        try {
+          const items = await wire.announcements();
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {}
       },
       adminPages() {
         return Array.isArray(this.boot.admin_pages) ? this.boot.admin_pages : [];
@@ -527,6 +829,7 @@
         this.appearanceMenu = false;
         this.groupsMenu = false;
         this.accountMenu = false;
+        if (this.notifyMenu) this.refreshAnnouncements();
         if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
         try {
           const items = await wire.panelNotifications();
@@ -535,6 +838,7 @@
       },
       async pollPanelNotices() {
         if (globalThis.document?.hidden || this.destroyed || this.notifyMenu) return;
+        this.refreshAnnouncements();
         try {
           const items = await wire.panelNotifications();
           if (!Array.isArray(items)) return;
@@ -1541,6 +1845,7 @@
         if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
         if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
         if (this.modal === 'account') return 'Profile';
+        if (this.modal === 'notifications') return 'Notifications';
         if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
         if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
@@ -1548,7 +1853,7 @@
       },
       /** Every popup has a fixed size: small for short forms, large for embedded or list workspaces. */
       modalSize() {
-        if (['alias', 'restart'].includes(this.modal)) return 'is-sm';
+        if (['alias', 'restart', 'notifications'].includes(this.modal)) return 'is-sm';
         if (['create', 'panel-settings', 'admin-page', 'account', 'files', 'schedules', 'activity', 'backups', 'software', 'settings', 'plugins', 'mods', 'external'].includes(this.modal)) return 'is-lg';
         return 'is-md';
       },

@@ -129,6 +129,7 @@ final class ManagePlugins extends Page
                 ->action(function (): void {
                     \Simplify\Panel\Services\UpdateCheck::forget();
                     $count = count(PluginUpdater::available(true));
+                    \Simplify\Panel\Services\PanelUpdates::refresh();
                     Notification::make()->title($count ? $count.' update(s) available' : 'Everything is up to date')->success()->send();
                 }),
             \Filament\Actions\Action::make('importUrl')->label('Import from URL')->tooltip('Import from URL')->icon('tabler-world-download')

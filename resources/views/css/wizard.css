@@ -405,3 +405,28 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ssc-wizard .fi-sc-wizard-footer .ssc-back-button { flex: 0 0 auto; }
   .ssc-wizard :is(.fi-sc-wizard-footer .fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { justify-content: center; min-width: 0; min-height: 48px; }
 }
+
+/* Announcements page ----------------------------------------------------------------------------- */
+.ps-announcements { display: grid; gap: 16px; }
+.ps-announcements .ps-people-bar .ps-ico { width: 16px; height: 16px; }
+.ps-announcement-list { overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+.ps-announcement-list > .ps-empty { margin: 0; padding: 16px; }
+.ps-announcement { --ps-tone: var(--ps-info); display: grid; grid-template-columns: 20px minmax(0, 1fr) auto auto; align-items: center; gap: 10px 14px; padding: 12px 16px; }
+.ps-announcement + .ps-announcement { border-top: 1px solid var(--ps-line); }
+.ps-announcement.is-warn { --ps-tone: var(--ps-warn); }
+.ps-announcement.is-ok { --ps-tone: var(--ps-ok); }
+.ps-announcement.is-danger { --ps-tone: var(--ps-danger); }
+.ps-announcement > .ps-ico { align-self: start; width: 20px; height: 20px; margin-top: 1px; color: var(--ps-tone); }
+.ps-announcement-main { display: grid; gap: 3px; min-width: 0; }
+.ps-announcement-main strong { font-size: 14px; }
+.ps-announcement-main p { margin: 0; color: var(--ps-ink); font-size: 13px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+.ps-announcement-main small { color: var(--ps-muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.ps-announcement .ps-badge.is-muted { color: var(--ps-muted); }
+.ps-announcement .ps-person-actions { justify-content: flex-end; min-width: 156px; }
+.ps-announcement-section { display: grid; gap: 8px; }
+.ps-announcement-section .ps-section-title { margin: 8px 0 0; }
+.ps-announcement-section .ps-help { margin: 0; }
+@media (max-width: 640px) {
+  .ps-announcement { grid-template-columns: 20px minmax(0, 1fr) auto; }
+  .ps-announcement .ps-person-actions { grid-column: 2 / -1; justify-content: flex-start; min-width: 0; }
+}

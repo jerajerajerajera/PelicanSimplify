@@ -73,6 +73,6 @@ final class WebApp
         $source = (string) file_get_contents(plugin_path('pelican-simplify', 'resources/web-app/worker.js'));
         // The name lands in HTML inside a JavaScript template string: escaped for both.
         $name = strtr(htmlspecialchars(self::name(), ENT_QUOTES), ['`' => '&#96;', '$' => '&#36;', '\\' => '&#92;']);
-        return strtr($source, ['__VERSION__' => self::version(), '__NAME__' => $name]);
+        return strtr($source, ['__VERSION__' => self::version(), '__NAME__' => $name, '__ICON__' => str_replace(['\\', "'"], ['', ''], self::icon(192))]);
     }
 }
