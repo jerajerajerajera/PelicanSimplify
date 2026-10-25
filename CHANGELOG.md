@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.0-beta.10 (beta channel)
+Fixes the panel name with "a fade between two colors": it showed a solid colour block over the name instead of coloured letters (since 0.5.0-beta.9).
+
+## 0.5.0-snapshot.20 (snapshot channel)
+Fixes the panel name with "a fade between two colors": it showed a solid colour block over the name instead of coloured letters (since 0.5.0-snapshot.19).
+
 ## 0.5.0-beta.9 (beta channel)
 Everything planned for 0.5.0 (0.5.0-snapshot.18 and 19 below): a calmer look, Pelican theme plugins, group colours, an owner filter, phone fixes and a faster overview.
 - A calmer look with icons from Tabler, like the rest of the Pelican panel.
