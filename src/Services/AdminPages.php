@@ -15,6 +15,7 @@ final class AdminPages
         'NodeResource' => ['Infrastructure', 'monitor'], 'DatabaseHostResource' => ['Infrastructure', 'database'], 'BackupHostResource' => ['Infrastructure', 'backups'],
         'UserResource' => ['People & access', 'players'], 'RoleResource' => ['People & access', 'lock'], 'ApiKeyResource' => ['People & access', 'key'],
         'PluginResource' => ['Panel', 'plugins'], 'Settings' => ['Panel', 'gear'], 'WebhookResource' => ['Panel', 'link'], 'Health' => ['Panel', 'heart'], 'ListLogs' => ['Panel', 'activity'],
+        'ManageAnnouncements' => ['Panel', 'bell'],
     ];
     private const GROUPS = ['Game servers', 'Infrastructure', 'People & access', 'Panel', 'External', 'Other'];
     /** Pages Simplify replaces or that need parameters. */

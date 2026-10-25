@@ -103,7 +103,7 @@
                         <button type="button" x-ref="notifyButton" class="ps-btn is-icon is-subtle" data-tip="Notifications" aria-label="Notifications" aria-controls="ps-notify-menu" :aria-expanded="notifyMenu"
                                 x-on:click="toggleNotifications()">
                             <svg aria-hidden="true"><use href="#ps-bell"/></svg><span class="ps-mobile-label">Notifications</span>
-                            <span class="ps-notify-count" x-show="notifications().length" x-text="notifications().length"></span>
+                            <span class="ps-notify-count" x-show="unreadNotifications()" x-text="unreadNotifications()"></span>
                         </button>
                         <div id="ps-notify-menu" class="ps-dropdown is-end ps-notify-menu" x-show="notifyMenu" x-cloak x-transition.opacity>
                             <div class="ps-notify-head">
@@ -117,11 +117,12 @@
                                         <strong x-text="item.title"></strong>
                                         <small x-text="item.text" x-show="item.text"></small>
                                         <small class="ps-notify-time" x-show="item.time" x-text="item.time"></small>
-                                        <span class="ps-notify-actions" x-show="item.action || item.pelican">
+                                        <span class="ps-notify-actions" x-show="item.action || item.pelican || (item.announcement && !item.dismissed)">
                                             <template x-if="item.action">
-                                                <a class="ps-btn is-sm" :href="item.action.url" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
+                                                <a class="ps-btn is-sm" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
                                             </template>
                                             <button type="button" class="ps-btn is-sm is-subtle" x-show="item.pelican" x-on:click="markPanelNoticesRead([item.key])">Mark read</button>
+                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Hide</button>
                                         </span>
                                     </div>
                                 </template>
@@ -425,6 +426,23 @@
         <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
+                    {{-- Announcements: live ones this account did not hide (Admin tools → Announcements, the Panel's update notices). --}}
+                    <div class="ps-announcement-bars" x-show="announcementBars().length" x-cloak>
+                        <template x-for="item in announcementBars()" :key="item.key">
+                            <div class="ps-alert ps-announcement-bar" :class="'is-'+item.tone" role="status">
+                                <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
+                                <div class="ps-announcement-copy">
+                                    <strong x-text="item.title"></strong>
+                                    <span x-show="item.text" x-text="item.text"></span>
+                                    <small x-show="announcementMeta(item)" x-text="announcementMeta(item)"></small>
+                                </div>
+                                <template x-if="item.action">
+                                    <a class="ps-btn is-sm ps-announcement-action" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
+                                </template>
+                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-announcement-hide" data-tip="Hide" :aria-label="'Hide '+item.title" x-on:click="dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                            </div>
+                        </template>
+                    </div>
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
                             <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
