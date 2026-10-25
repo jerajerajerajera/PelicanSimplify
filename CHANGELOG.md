@@ -1,5 +1,40 @@
 # Changes
 
+## 0.5.1-beta.1 (beta channel)
+Everything planned for 0.5.1 (0.5.1-snapshot.1 to 4 below): announcements, app notifications, a reworked server page and Halloween touches.
+- Announcements: Info, Warning or Success bars above the server overview, managed under Admin tools → Announcements, plus notices when Simplify, a plugin, Wings or Pelican has a new version.
+- App notifications: turn them on per device under Account menu → Notifications, with a test button; announcements and updates can arrive as notifications.
+- A reworked server page: a compact header with the power buttons, a row with players and usage, and a console that fits the screen; phones get a bottom bar.
+- Halloween touches from 25 October to 2 November, easy to turn off.
+- Includes everything from 0.5.0-beta.10 below.
+
+## 0.5.1-snapshot.4 (snapshot channel)
+Halloween: from 25 October to 2 November the dashboard gets a few small seasonal touches.
+- A flickering jack-o'-lantern next to the panel name, a faint web with a spider in the corner, bats that fly off a server card once per visit, a pumpkin New button on phones and an orange overview accent (your own panel, group and server colours stay).
+- Nothing takes space or gets in the way of a click; with reduced motion there are no bats and no flicker.
+- Turn it off for yourself at the top of Customize overview, or for the whole panel under Simplify settings → Appearance → Seasonal touches.
+
+## 0.5.1-snapshot.3 (snapshot channel)
+A reworked server page: a compact header with the power buttons and the MOTD, a row with players and usage, and a console as tall as the menu that fits the screen without scrolling.
+- The header shows the icon, name, status, software and address on one line; one power button follows the status, with Restart next to it and the other actions under ⋯.
+- An open workspace keeps a one-line mini console; the console can also be made bigger or opened in its own window.
+- Phones get a bottom bar with Console, Players, Files and More; landscape keeps a one-line header.
+- Host mode uses the same layout.
+
+## 0.5.1-snapshot.2 (snapshot channel)
+App notifications: announcements and updates can arrive as notifications on your phone or computer.
+- Account menu → Notifications: turn notifications on for this device, send a test notification, choose announcements and (administrators) updates, and remove other devices.
+- Administrators can send an announcement as an app notification; it is sent once, when the announcement starts.
+- A new version of Simplify, another plugin, Wings or Pelican notifies administrators once.
+- Devices that no longer accept notifications are removed automatically.
+
+## 0.5.1-snapshot.1 (snapshot channel)
+Announcements: tell everyone on the panel what is going on, and see updates for the panel in one place.
+- Admin tools → Announcements: Info, Warning or Success, with a title, a message, an optional start and end time, everyone or administrators only, and an optional button to a server or a link.
+- Live announcements show as a bar above the server overview. Everyone can hide a bar for their own account; it stays in the bell until it ends.
+- From the Panel (administrators): a new version of Simplify, another plugin, Wings on a node or Pelican shows as a notice and disappears once updated. A scheduled check runs every ten minutes, so pages never wait for a slow node. This replaces the separate "Simplify x is available" item and notification.
+- Announcements from the Hub plugin "Announcements" show in Simplify too.
+
 ## 0.5.0-beta.10 (beta channel)
 Fixes the panel name with "a fade between two colors": it showed a solid colour block over the name instead of coloured letters (since 0.5.0-beta.9).
 

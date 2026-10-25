@@ -149,6 +149,7 @@ final class PluginUpdater
                 $boot = Process::path(base_path())->timeout(120)->run([self::php(), 'artisan', 'list', '--raw']);
                 if (!$boot->successful()) throw new \RuntimeException('The panel does not start with the new version: '.self::output($boot));
                 $result = ['ok' => true, 'message' => $plugin->name.' updated from '.$from.' to '.$to.'.'];
+                PanelUpdates::forget();
             } catch (\Throwable $exception) {
                 self::restore($directory, $backup);
                 report($exception);
@@ -205,15 +206,16 @@ final class PluginUpdater
     }
 
     /** Result in the Simplify bell (Pelican database notification) for the starter or all root admins. */
-    /** Tells root admins once per version that an update is available (and whether it is being installed). */
+    /** Tells root admins once per version that an update is being installed. An available update shows as a Panel announcement (PanelUpdates). */
     public static function announce(Plugin $plugin, bool $installing): void
     {
+        if (!$installing) return;
         $latest = self::latestVersion($plugin);
         if (!$latest || !\Illuminate\Support\Facades\Cache::add('simplify.plugin-announced.'.$plugin->id.'.'.$latest, true, now()->addDays(60))) return;
         try {
             $notification = \Filament\Notifications\Notification::make()->info()
                 ->title($plugin->name.' '.$latest.' is available')
-                ->body($installing ? 'Installing it now with a backup and automatic rollback. You get another notification when it is done.' : 'You are running '.$plugin->version.'. Install it from the Plugins page.')
+                ->body('Installing it now with a backup and automatic rollback. You get another notification when it is done.')
                 ->actions([\Filament\Actions\Action::make('open')->label('Open plugins')->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
             foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin()) as $user) $user->notifyNow($notification->toDatabase());
         } catch (\Throwable $exception) {

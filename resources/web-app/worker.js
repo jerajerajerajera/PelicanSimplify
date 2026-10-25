@@ -1,7 +1,9 @@
 /* Simplify web app service worker (version __VERSION__).
    Pages always come from the network; nothing is cached except one small offline page, shown when a page
-   cannot be loaded at all. Navigation preload keeps the worker from slowing page loads down. */
+   cannot be loaded at all. Navigation preload keeps the worker from slowing page loads down.
+   App notifications (announcements, updates) arrive as push messages; a tap opens the panel on that page. */
 const OFFLINE = 'simplify-offline-__VERSION__';
+const ICON = '__ICON__';
 const OFFLINE_URL = new URL('./?simplify-offline=__VERSION__', self.registration.scope).href;
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>__NAME__</title><style>
@@ -36,5 +38,41 @@ self.addEventListener('fetch', (event) => {
     } catch {
       return (await caches.match(OFFLINE_URL)) || Response.error();
     }
+  })());
+});
+
+self.addEventListener('push', (event) => {
+  let message = {};
+  try {
+    message = event.data ? event.data.json() : {};
+  } catch {
+    message = { body: event.data ? event.data.text() : '' };
+  }
+  const scope = self.registration.scope;
+  let url = scope;
+  try {
+    const target = new URL(message.url || scope, scope);
+    if (target.origin === new URL(scope).origin) url = target.href;
+  } catch {}
+  event.waitUntil(self.registration.showNotification(String(message.title || '__NAME__'), {
+    body: String(message.body || ''),
+    icon: ICON,
+    badge: ICON,
+    tag: message.tag ? String(message.tag) : undefined,
+    data: { url },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || self.registration.scope;
+  event.waitUntil((async () => {
+    for (const client of await self.clients.matchAll({ type: 'window', includeUncontrolled: true })) {
+      if (!client.url.startsWith(self.registration.scope) || !('focus' in client)) continue;
+      await client.focus();
+      if ('navigate' in client) await client.navigate(url).catch(() => {});
+      return;
+    }
+    await self.clients.openWindow(url);
   })());
 });

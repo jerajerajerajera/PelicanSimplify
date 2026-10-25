@@ -42,10 +42,21 @@ if(($argv[1]??'')==='livewire'){
     try{
         Filament::setCurrentPanel(Filament::getPanel('app'));
         $overview=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\App\Pages\Dashboard::class);
-        foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth']] as $call){
+        foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth'],['announcements'],['dismissAnnouncement','own-0000000000000000'],['pushSettings',null],['savePushPreferences',['updates'=>false]]] as $call){
             $name=array_shift($call);$overview->call($name,...$call);
         }
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications and hostHealth');
+        // Announcements: the Panel's update check against Pelican's real version service, then one written in the admin page.
+        \Simplify\Panel\Services\PanelUpdates::refresh();
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        // Opening the form builds every field; callAction() itself needs PHPUnit, so the save goes through the same service.
+        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->call('mountAction','addAnnouncement');
+        \Simplify\Panel\Services\Announcements::save(['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open','push'=>true],null,(string)$admin->username);
+        $shown=array_column(\Simplify\Panel\Services\Announcements::forUser($admin),'title');
+        if(!in_array('Smoke test',$shown,true))throw new \RuntimeException('the new announcement is not shown on the overview');
+        // The scheduler's run: refreshes the Panel's updates and sends the new announcement as app notification (nobody subscribed here).
+        if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed');
+        if(\Simplify\Panel\Services\Announcements::duePush()!==[])throw new \RuntimeException('the announcement was not marked as sent');
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; Panel update check runs; the announcement form opens and a saved announcement shows and is sent by simplify:announcements');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 

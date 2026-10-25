@@ -99,7 +99,7 @@ const { start } = require('./browser-harness');
     await editorFrame.waitForFunction(() => document.documentElement.dataset.psEditorActions === 'external');
     const editor = await editorFrame.evaluate(() => ({
       footer: getComputedStyle(document.querySelector('.fi-section-footer')).display,
-      fills: document.querySelector('.fme-wrapper').getBoundingClientRect().height > 300,
+      fills: (() => { const box = document.querySelector('.fme-wrapper').getBoundingClientRect(); return box.height > 200 && box.bottom >= innerHeight - 48; })(), // the code area reaches the bottom of the editor
       bodyScrolls: document.body.scrollHeight > document.body.clientHeight + 1,
     }));
     assert.deepEqual(editor, { footer: 'none', fills: true, bodyScrolls: false });
@@ -228,18 +228,20 @@ const { start } = require('./browser-harness');
     await network.close();
     console.log('PASS network subdomain row and status badge');
 
-    // 10. Website listing: a switch next to the server color when the website plugin is installed, hidden otherwise.
+    // 10. Website listing: a switch in the server's more menu when the website plugin is installed, hidden otherwise.
     const listing = await open('/?mode=server&theme=dark');
+    await listing.click('.ps-info-more-button');
+    await listing.waitForSelector('#ps-info-menu', { state: 'visible' });
     assert.equal(await listing.locator('.ps-web-listing').isVisible(), false, 'no switch without the website plugin');
     await listing.evaluate(() => { window.__wire.saveListing = async (v) => v; Alpine.$data(document.querySelector('.ps')).server.website_listing = { visible: false }; });
     await listing.waitForSelector('.ps-web-listing', { state: 'visible' });
     await listing.click('.ps-web-listing');
     await listing.waitForFunction(() => document.querySelector('.ps-web-listing').getAttribute('aria-checked') === 'true');
-    const place = await listing.evaluate(() => { const b = document.querySelector('.ps-web-listing').getBoundingClientRect(), d = document.querySelector('.ps-color-dot').getBoundingClientRect(); return Math.abs((b.top + b.height / 2) - (d.top + d.height / 2)) <= 1 && b.right <= d.left; });
-    assert.ok(place, 'the switch sits next to the server color');
+    const place = await listing.evaluate(() => { const b = document.querySelector('.ps-web-listing').getBoundingClientRect(), menu = document.querySelector('#ps-info-menu').getBoundingClientRect(), kill = document.querySelector('#ps-info-menu .is-danger').getBoundingClientRect(); return b.top >= menu.top && b.bottom <= kill.top && !!document.querySelector('.ps-web-listing .ps-switch.is-on'); });
+    assert.ok(place, 'the switch sits in the more menu above Force stop');
     if (process.env.SCREENSHOT_DIR) await listing.locator('.ps-server-info').screenshot({ path: process.env.SCREENSHOT_DIR + '/website-listing.png' });
     await listing.close();
-    console.log('PASS website listing switch next to the server color');
+    console.log('PASS website listing switch in the server menu');
 
     // 11. MOTD editor: the lines are edited in place, and the toolbar writes clean codes into the settings.
     const motd = await open('/?mode=server&theme=dark');
@@ -349,23 +351,26 @@ const { start } = require('./browser-harness');
     for (const width of [360, 390, 430]) {
       const phone = await open('/?mode=server&theme=dark', { width, height: 800 });
       await data(phone, (d) => { d.connected = true; });
+      await phone.waitForFunction(() => document.documentElement.scrollHeight <= innerHeight); // the work area is measured again after fonts and the connection settle
       const layout = await phone.evaluate(() => {
         const tabs = [...document.querySelectorAll('.ps-phone-sections .ps-phone-section')].filter((b) => b.offsetParent);
         const bar = document.querySelector('.ps-phone-sections').getBoundingClientRect();
         const consoleBox = document.querySelector('.ps-console').getBoundingClientRect();
-        const power = [...document.querySelectorAll('.ps-power-tile .ps-btn')].map((b) => b.offsetHeight);
+        const power = [...document.querySelectorAll('.ps-info-power > .ps-btn')].map((b) => b.offsetHeight);
+        const workHeight = parseInt(getComputedStyle(document.querySelector('.ps-server-workspace')).getPropertyValue('--ps-work-height'), 10);
         return {
           tabs: tabs.map((b) => b.textContent.trim()), fit: tabs.every((b) => b.scrollWidth <= b.clientWidth && b.getBoundingClientRect().right <= bar.right + 1),
           small: tabs.filter((b) => b.offsetHeight < 44).length, grid: !!document.querySelector('.ps-widget-grid').offsetParent,
-          consoleHeight: Math.round(consoleBox.height), power, fits: document.documentElement.scrollWidth <= innerWidth,
+          consoleHeight: Math.round(consoleBox.height), workHeight, consoleAboveBar: consoleBox.bottom <= bar.top + 1, power, fits: document.documentElement.scrollWidth <= innerWidth,
+          pageFits: document.documentElement.scrollHeight <= innerHeight,
         };
       });
       assert.deepEqual(layout.tabs, ['Console', 'Players', 'Files', 'More'], width + ': four tabs');
       assert.ok(layout.fit && layout.fits, width + ': tabs fit on one row without clipping');
       assert.equal(layout.small, 0, width + ': tabs are touch-sized');
       assert.equal(layout.grid, false, width + ': the section grid makes way for the tabs');
-      assert.ok(layout.consoleHeight >= 600, width + ': console fills the screen (' + layout.consoleHeight + ' px)');
-      assert.ok(layout.power.length === 4 && layout.power.every((h) => h >= 48), width + ': large power buttons');
+      assert.ok(layout.consoleHeight >= 260 && layout.consoleHeight === layout.workHeight && layout.consoleAboveBar && layout.pageFits, width + ': console fills the rest of the screen without scrolling (' + JSON.stringify(layout) + ')');
+      assert.ok(layout.power.length === 3 && layout.power.every((h) => h >= 44), width + ': three touch-sized power buttons');
       if (width === 390) {
         await phone.click('.ps-quick-command >> text=say …');
         assert.equal(await data(phone, (d) => d.command), 'say ');
@@ -485,8 +490,8 @@ const { start } = require('./browser-harness');
       assert.equal(await reachable(), true, 'landscape after turning back');
       await side.close();
       const console_ = await open('/?mode=server&theme=dark', viewport);
-      const height = await console_.evaluate(() => document.querySelector('.ps-console').getBoundingClientRect().height);
-      assert.ok(height >= 260 && height <= viewport.height, 'console fits a low screen: ' + height);
+      const low = await console_.evaluate(() => { const box = document.querySelector('.ps-console').getBoundingClientRect(); return { height: Math.round(box.height), bottom: Math.round(box.bottom), scroll: document.documentElement.scrollHeight <= innerHeight }; });
+      assert.ok(low.height >= 120 && low.bottom <= viewport.height && low.scroll, 'console fits a low screen without scrolling: ' + JSON.stringify(low));
       await data(console_, (d) => d.open('settings'));
       await console_.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).docked());
       const dock = await console_.evaluate(() => document.querySelector('.ps-dock').getBoundingClientRect().height);

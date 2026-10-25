@@ -250,6 +250,7 @@ class SimplifySettings extends Page implements HasForms
                 Section::make('Colours')->columns(2)->schema([
                     ColorPicker::make('appearance.accent_color')->view('pelican-simplify::filament.admin.accent-picker')->label('Panel accent color')->hex()->required()->rules(['regex:/^#[0-9a-fA-F]{6}$/'])->helperText('Used throughout the shared interface and by every server when separate colors are off.')->columnSpanFull(),
                     Toggle::make('appearance.individual_colors')->label('Use separate server colors')->helperText('On assigns a color to every server without one. Off makes all servers use the panel accent; saved colors are retained.')->columnSpanFull(),
+                    Toggle::make('appearance.seasonal')->label('Seasonal touches')->helperText('A few small Halloween decorations for everyone from 25 October to 2 November. Each person can still turn them off under Customize overview.')->columnSpanFull(),
                 ]),
                 Section::make('Panel name & logo')->description('How your panel name looks in the top-left corner. The default is your name with the accent color fading in toward the right.')->columns(2)->schema([
                     \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.brand-editor')->columnSpanFull(),
