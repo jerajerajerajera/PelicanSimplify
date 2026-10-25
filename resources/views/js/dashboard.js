@@ -19,14 +19,8 @@
   // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
   const PHONE_SECTIONS = ['players', 'files'];
   const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
-  const accentInk = (color) => {
-    if (window.SimplifyTheme?.accentInk) return window.SimplifyTheme.accentInk(color);
-    const [r, g, b] = color.slice(1).match(/../g).map((v) => {
-      const x = parseInt(v, 16) / 255;
-      return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
-    });
-    return r * 0.2126 + g * 0.7152 + b * 0.0722 > 0.179 ? '#111118' : '#ffffff';
-  };
+  // core.js (loaded in <head> on every panel page) owns the contrast calculation.
+  const accentInk = (color) => window.SimplifyTheme.accentInk(color);
   const seconds = (value, fallback, min) => Math.max(min, Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : fallback) * 1000;
 
   window.pelicanSimplify = function (wire, boot) {
@@ -470,11 +464,6 @@
         try {
           localStorage.setItem(this.hostModeKey(), this.hostMode ? '1' : '0');
         } catch {}
-      },
-      hostPages() {
-        const items = this.adminPages().flatMap((group) => group.items);
-        const health = items.find((item) => item.key === 'health');
-        return health ? [health, ...items.filter((item) => item !== health)] : items;
       },
       /** Admin pages merged into a few colour-coded sections; pages from other plugins go to Extensions. */
       hostSections() {
@@ -1047,12 +1036,6 @@
         const n = s.usage?.cpu_percent;
         return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(1) + '%' : '—';
       },
-      cpuFill(s) {
-        const n = s.usage?.cpu_percent;
-        if (typeof n !== 'number' || !Number.isFinite(n)) return 0;
-        const limit = s.usage?.cpu_limit > 0 ? s.usage.cpu_limit : 100;
-        return Math.min(100, Math.max(0, (n / limit) * 100));
-      },
       memoryLabel(s) {
         const n = s.usage?.memory_bytes;
         if (typeof n !== 'number' || !Number.isFinite(n)) return '—';
@@ -1360,9 +1343,6 @@
           ...(index ? [{ text: '\n', style: {} }] : []),
           ...window.psMotd.runs(line).map(({ text, style, obfuscated }) => ({ text: obfuscated ? text.replace(/\S/g, '▒') : text, style })),
         ]);
-      },
-      cleanMotd(s) {
-        return String(s).replace(/§[0-9A-FK-OR]/gi, '').replace(/\\n/g, ' ').trim();
       },
       safeImage(s) {
         if (typeof s !== 'string' || !s.trim()) return '';
@@ -1946,10 +1926,6 @@
         if (!listing) return;
         const result = await this.run(() => wire.saveListing(value), value ? 'Shown on the website' : 'Hidden from the website');
         if (result !== SKIPPED) listing.visible = result === true;
-      },
-      async toggleWeb(s, value) {
-        const result = await this.run(() => wire.saveWebsite({ visible: value }, s.uuid), 'Website visibility updated');
-        s.visible = result === SKIPPED ? !value : value;
       },
       async saveWebsite() {
         const state = { ...this.website };

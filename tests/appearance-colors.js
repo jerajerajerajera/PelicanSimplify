@@ -1,5 +1,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const context={window:{}};vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/../resources/views/js/dashboard.js','utf8'),context);
+// The page loads core.js (contrast colour for accents) before dashboard.js.
+const context={window:{dispatchEvent(){},addEventListener(){}},document:{documentElement:{style:{setProperty(){}},dataset:{},classList:{toggle(){},add(){},remove(){},contains:()=>false}},addEventListener(){},querySelectorAll:()=>[],body:null},localStorage:{getItem:()=>null,setItem(){}},matchMedia:()=>({matches:false,addEventListener(){}}),CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail}},getComputedStyle:()=>({getPropertyValue:()=>''}),setTimeout,clearTimeout};
+context.window.parent=context.window;vm.createContext(context);
+for(const file of ['core.js','dashboard.js'])vm.runInContext(fs.readFileSync(__dirname+'/../resources/views/js/'+file,'utf8'),context);
 const state=context.window.pelicanSimplify({}, {appearance:{accent_color:'#446688',individual_colors:true},servers:[{uuid:'a',color:'#aa2233'},{uuid:'b',color:'#44bb66'}]});
 assert.equal(state.accentStyle('overview')['--ps-accent'],'#446688');
 assert.equal(state.accentStyle('a')['--ps-accent'],'#aa2233');
