@@ -172,6 +172,7 @@
                                     <div class="ps-group-edit" :class="{'is-open': groupEditing===group.id}">
                                         <div class="ps-group-row">
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-toggle" x-on:click="groupEditing = groupEditing===group.id ? null : group.id" :aria-expanded="groupEditing===group.id" :data-tip="groupEditing===group.id ? 'Done' : 'Servers and order'" :aria-label="'Servers and order for '+group.name"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                            <span class="ps-group-dot" x-show="group.color" :style="{'background-color': group.color}" aria-hidden="true"></span>
                                             <input type="text" class="ps-input ps-group-name" :value="group.name" maxlength="40" aria-label="Group name" x-on:keydown.enter.prevent="$el.blur()" x-on:change="$el.value = renameOverviewGroup(group.id, $el.value)">
                                             <small class="ps-group-count" x-text="groupCount(group)+(groupCount(group)===1 ? ' server' : ' servers')"></small>
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-up" :disabled="index===0" x-on:click="moveOverviewGroup(group.id, -1)" data-tip="Move up" :aria-label="'Move '+group.name+' up'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
@@ -179,6 +180,13 @@
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle" x-on:click="removeOverviewGroup(group.id)" data-tip="Remove group" :aria-label="'Remove '+group.name"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
                                         </div>
                                         <div class="ps-group-servers" x-show="groupEditing===group.id">
+                                            <div class="ps-group-order ps-group-color"><span>Group color</span>
+                                                <span class="ps-group-color-choice">
+                                                    <label class="ps-swatch ps-group-swatch" :class="{'is-empty': !group.color}" :style="group.color ? {'background-color': group.color} : {}" :data-tip="group.color ? 'Change group color' : 'Pick a group color'"><input type="color" class="ps-color-input" :value="group.color || '#878787'" x-on:change="setGroupColor(group.id, $el.value)" :aria-label="'Color for '+group.name"></label>
+                                                    <button type="button" class="ps-btn is-sm is-subtle" x-show="group.color" x-on:click="setGroupColor(group.id, null)">Remove color</button>
+                                                    <small x-show="!group.color">Off: every server keeps its own color</small>
+                                                </span>
+                                            </div>
                                             <label class="ps-group-order"><span>Order in this group</span>
                                                 <select class="ps-input" :value="group.sort" x-on:change="setGroupOrder(group.id, $el.value)">
                                                     <template x-for="order in GROUP_ORDERS" :key="order.key"><option :value="order.key" x-text="order.label" :selected="group.sort===order.key"></option></template>
@@ -284,6 +292,11 @@
                                                 <button type="button" :aria-pressed="overviewPreferences.quickActions===mode.key" x-on:click="setOverviewPreference('quickActions', mode.key)" x-text="mode.label"></button>
                                             </template>
                                         </div>
+                                    </div>
+                                    {{-- Server colours are a panel setting; point administrators at it from here. Group colours live with each group. --}}
+                                    <div class="ps-customize-row" x-show="boot.settings_url">
+                                        <div><strong>Server colors</strong><small>One color for every server, or a color per server, for everyone on the panel. A color per group is under Server groups.</small></div>
+                                        <button type="button" class="ps-btn is-sm" x-on:click="appearanceMenu=false; openPanelSettings('appearance')">Open settings</button>
                                     </div>
                                 </div>
                             </template>
@@ -477,7 +490,7 @@
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': quickActionsMode()!=='off' && s.linked && Object.values(s.permissions || {}).some(Boolean), 'power-shown': quickActionsMode()==='on', 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
-                                    <h2 class="ps-node-heading"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
+                                    <h2 class="ps-node-heading" :class="{'has-color': !!s.color}"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
                                 </template>
                                 <template x-if="!s.isNodeHeader">
                                 <article class="ps-server-card" :class="{'locked': !s.linked}">
@@ -709,6 +722,7 @@
                     <button type="button" class="ps-btn is-icon is-sm" :disabled="busy || !server?.permissions['settings.rename']" aria-label="Change server background" data-tip="Server background" aria-haspopup="dialog" x-on:click="openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg></button>
                     <div class="ps-dropdown is-fixed ps-color-dropdown" x-show="colorMenu" x-cloak :style="colorMenuStyle" x-on:click.stop>
                         <span class="ps-label">Server color</span>
+                        <small class="ps-color-group-note" x-show="serverGroup(server?.uuid)?.color" x-text="'You see the color of your group '+serverGroup(server?.uuid)?.name+'. This color is what everyone else sees.'"></small>
                         <div class="ps-swatches ps-color-presets">
                             <template x-for="(name,color) in (boot.available_colors || {})" :key="color">
                                 <button type="button" class="ps-swatch" :style="{'background-color': color}" :data-tip="name" :aria-label="'Select '+name+' server color'" :aria-pressed="colorDraft===color" :disabled="busy" x-on:click="colorDraft=color"></button>

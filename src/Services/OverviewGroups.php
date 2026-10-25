@@ -40,7 +40,7 @@ final class OverviewGroups
         return in_array($order,self::ORDERS,true)?$order:'name';
     }
 
-    /** Same rules as the dashboard: unique ids, a name, at most one group per server. */
+    /** Same rules as the dashboard: unique ids, a name, at most one group per server, a colour only when it is a hex colour. */
     public static function clean(array $input): array
     {
         $groups=[];$ids=[];$seen=[];
@@ -56,7 +56,10 @@ final class OverviewGroups
                 $seen[$uuid]=true;$servers[]=$uuid;
             }
             $ids[$group['id']]=true;
-            $groups[]=['id'=>$group['id'],'name'=>$name,'servers'=>$servers,'sort'=>in_array($group['sort']??null,self::GROUP_ORDERS,true)?$group['sort']:'overview'];
+            $clean=['id'=>$group['id'],'name'=>$name,'servers'=>$servers,'sort'=>in_array($group['sort']??null,self::GROUP_ORDERS,true)?$group['sort']:'overview'];
+            // Optional colour: the servers in the group take it on this account's overview and server pages.
+            if(is_string($group['color']??null)&&preg_match('/^#[0-9a-fA-F]{6}$/',$group['color']))$clean['color']=strtolower($group['color']);
+            $groups[]=$clean;
         }
         return $groups;
     }

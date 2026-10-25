@@ -276,6 +276,10 @@
         return this.accentStyle('overview');
       },
       accentStyle(id) {
+        // A colour on one of your own groups wins for its servers (and its heading), over the common and the server's own colour.
+        const group = String(id).startsWith('group-') ? this.overviewGroups.find((g) => 'group-' + g.id === id) : this.serverGroup(id);
+        if (group?.color) return { '--ps-accent': group.color, '--ps-on-accent': accentInk(group.color) };
+        if (String(id).startsWith('group-')) return {};
         const appearance = this.boot.appearance || {};
         const common = appearance.accent_color;
         if (/^#[0-9a-f]{6}$/i.test(common || '') && (id === 'overview' || appearance.individual_colors === false))
@@ -802,7 +806,7 @@
           const members = this.groupMembers(group, servers).filter((s) => !placed.has(s.uuid));
           if (!members.length) continue;
           members.forEach((s) => placed.add(s.uuid));
-          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length }, ...members);
+          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length, color: group.color || null }, ...members);
         }
         const rest = servers.filter((s) => !placed.has(s.uuid));
         if (this.groupedByNode()) {
@@ -841,7 +845,8 @@
           const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
           const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
           const sort = GROUP_ORDERS.some((o) => o.key === group.sort) ? group.sort : 'overview';
-          groups.push({ id: group.id.slice(0, 40), name, servers, sort });
+          const color = typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color) ? group.color.toLowerCase() : null;
+          groups.push({ id: group.id.slice(0, 40), name, servers, sort, ...(color ? { color } : {}) });
         }
         return groups;
       },
@@ -934,6 +939,15 @@
         this.saveOverviewGroups(this.overviewGroups.map((g) => {
           const servers = g.servers.filter((x) => x !== uuid);
           return { ...g, servers: g.id === id && !inGroup ? [...servers, uuid] : servers };
+        }));
+      },
+      /** A group's colour, or null to go back to each server's own colour. */
+      setGroupColor(id, color) {
+        const clean = typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : null;
+        this.saveOverviewGroups(this.overviewGroups.map((g) => {
+          if (g.id !== id) return { ...g };
+          const { color: _old, ...rest } = g;
+          return clean ? { ...rest, color: clean } : rest;
         }));
       },
       serverGroup(uuid) {
@@ -1221,9 +1235,9 @@
       },
       panelSettingsUrl() {
         const url = this.frameUrl(this.boot.settings_url);
-        if (!url || this.settingsSection !== 'banners') return url;
+        if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', 'banners');
+        target.searchParams.set('section', this.settingsSection);
         return target.href;
       },
       openPanelSettings(section = 'settings') {
