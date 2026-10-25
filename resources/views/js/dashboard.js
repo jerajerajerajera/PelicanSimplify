@@ -417,6 +417,10 @@
         const version = this.minecraftVersion();
         return version === 'Not reported' ? software : software + ' ' + version;
       },
+      modpackLabel() {
+        const pack = this.server?.pack || {};
+        return (pack.modpack_name || '') + (pack.modpack_version ? ' ' + pack.modpack_version : '');
+      },
       /** The console in a window of its own: the same page with only the console showing. */
       openConsoleWindow() {
         const url = new URL(location.href);
