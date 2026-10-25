@@ -127,6 +127,12 @@
                                     </div>
                                 </template>
                                 <p class="ps-empty" x-show="!notifications().length">You are all caught up.</p>
+                                <div class="ps-push-offer" x-show="pushOffer()">
+                                    <svg aria-hidden="true"><use href="#ps-bell"/></svg>
+                                    <span>Get announcements as notifications on this device.</span>
+                                    <button type="button" class="ps-btn is-sm" x-on:click="openNotifications()">Turn on</button>
+                                    <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="Not now" aria-label="Not now" x-on:click="hidePushOffer()"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                                </div>
                             </div>
                             <div class="ps-dropdown-section" x-show="noticeHistory.length">
                                 <span class="ps-label">Recent messages</span>
@@ -307,10 +313,13 @@
                             </span>
                             <span class="ps-account-username" x-text="boot.user"></span>
                         </button>
-                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 4 : 3) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
+                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 5 : 4) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
                             <div class="ps-account-actions-inner">
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="Profile settings" aria-label="Profile settings" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
+                                </button>
+                                <button type="button" class="ps-btn is-icon" x-on:click="openNotifications()" data-tip="Notifications on your devices" aria-label="Notifications on your devices" aria-haspopup="dialog">
+                                    <svg aria-hidden="true"><use href="#ps-bell"/></svg>
                                 </button>
                                 {{-- Account-level pages other plugins add (such as Legal Pages), listed below the menu. --}}
                                 <button type="button" class="ps-btn is-icon" x-show="pluginPages().length" x-on:click="pluginMenu=!pluginMenu; themeOpen=false" data-tip="Plugin pages" aria-label="Plugin pages" aria-controls="ps-plugin-pages" :aria-expanded="pluginMenu">
@@ -938,6 +947,49 @@
                 </template>
 
                 {{-- Alias --}}
+                {{-- App notifications on this and the account's other devices (Web Push through the installed app or browser). --}}
+                <div x-show="modal==='notifications'" class="ps-customize ps-push">
+                    <p class="ps-help" x-show="pushNeedsInstall()">On iPhone and iPad, notifications only work in the installed app: tap Share, then Add to Home Screen, and open the panel from there.</p>
+                    <p class="ps-help" x-show="!pushSupported() && !pushNeedsInstall()">This browser cannot show notifications from the panel. Try Chrome, Edge, Firefox or Safari, over https.</p>
+                    <p class="ps-error" x-show="push.error" x-text="push.error"></p>
+                    <template x-if="pushSupported()">
+                        <div>
+                            <span class="ps-label">This device</span>
+                            <button type="button" class="ps-customize-switch" role="switch" :aria-checked="pushOn()" :disabled="push.busy || !push.settings" x-on:click="pushOn() ? disablePush() : enablePush()">
+                                <span><strong>Notifications on this device</strong><small x-text="pushBlocked() ? 'Blocked in the browser\'s site settings' : deviceLabel()"></small></span>
+                                <span class="ps-switch" :class="{'is-on': pushOn()}" aria-hidden="true"></span>
+                            </button>
+                            <div class="ps-customize-row">
+                                <div><strong>Test notification</strong><small>Sends a test to this device right now, so you can see that it works.</small></div>
+                                <button type="button" class="ps-btn is-sm" x-on:click="testPush()" :disabled="!pushOn() || push.busy">Send test</button>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="push.settings">
+                        <div>
+                            <span class="ps-label">What you get</span>
+                            <button type="button" class="ps-customize-switch" role="switch" :aria-checked="!!push.settings.preferences.announcements" x-on:click="setPushPreference('announcements', !push.settings.preferences.announcements)">
+                                <span><strong>Announcements</strong><small>Info, Warning and Success messages that admins send as app notification.</small></span>
+                                <span class="ps-switch" :class="{'is-on': push.settings.preferences.announcements}" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="ps-customize-switch" role="switch" x-show="push.settings.admin" :aria-checked="!!push.settings.preferences.updates" x-on:click="setPushPreference('updates', !push.settings.preferences.updates)">
+                                <span><strong>Updates</strong><small>A new version of Simplify, a plugin, Wings or Pelican (root admins).</small></span>
+                                <span class="ps-switch" :class="{'is-on': push.settings.preferences.updates}" aria-hidden="true"></span>
+                            </button>
+                            <template x-if="push.settings.devices.some((device) => !device.current)">
+                                <div>
+                                    <span class="ps-label">Your other devices</span>
+                                    <template x-for="device in push.settings.devices.filter((device) => !device.current)" :key="device.id">
+                                        <div class="ps-customize-row">
+                                            <div><strong x-text="device.label"></strong><small x-text="pushDeviceTime(device)"></small></div>
+                                            <button type="button" class="ps-btn is-sm is-subtle" x-on:click="removePushDevice(device.id)">Remove</button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
                 <template x-if="modal==='alias'">
                     <div>
                         <label class="ps-field">Server alias<input x-model="aliasDraft" maxlength="80" placeholder="Leave empty to use the server name" x-on:keydown.enter="saveAlias()"></label>

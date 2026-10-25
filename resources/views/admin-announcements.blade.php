@@ -21,6 +21,7 @@
                             @if($row['starts_at'] !== null) · from {{ $this->date($row['starts_at']) }}@endif
                             @if($row['ends_at'] !== null) · until {{ $this->date($row['ends_at']) }}@else · no end date @endif
                             @if($row['target']) · button “{{ $row['button']['label'] }}” → {{ $row['target'] }}@endif
+                            @if($row['push']) · {{ $row['pushed_at'] !== null ? 'sent as app notification' : 'app notification when it starts' }}@endif
                             @if($row['created_by'] !== '') · by {{ $row['created_by'] }}@endif
                         </small>
                     </div>

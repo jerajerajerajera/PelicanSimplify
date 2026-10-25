@@ -61,6 +61,15 @@ check(A::dismissedKeys($person)===['own-'.$link['id']],'one entry per hidden ann
 $mine=A::forUser($person,$now);
 check($mine[array_search('New modpack',array_column($mine,'title'))]['dismissed']===true&&!array_filter(A::forUser($admin,$now),fn($i)=>$i['dismissed']),'hidden for this account only');
 
+// App notifications: due once live and only when asked for; marked once sent, and editing keeps that mark.
+$pushed=A::save(['title'=>'Server restart','push'=>true,'starts_at'=>$now+600],null,'jera',$now);
+check(!in_array($pushed['id'],array_column(A::duePush($now),'id'),true)&&in_array($pushed['id'],array_column(A::duePush($now+600),'id'),true),'a scheduled announcement is pushed when it starts');
+check(!in_array($edited['id'],array_column(A::duePush($now),'id'),true),'announcements without push are never sent');
+A::markPushed($pushed['id'],$now+600);
+A::save(['title'=>'Server restart moved','push'=>true],$pushed['id'],'jera',$now+700);
+check(A::duePush($now+800)===[]&&A::find($pushed['id'])['pushed_at']===$now+600,'sent once; editing does not send it again');
+A::delete($pushed['id']);
+
 // Deleting, broken files and limits.
 A::delete($link['id']);check(count(A::all())===2,'delete removes it');
 Storage::$records[A::FILE]='{broken';check(A::all()===[],'a broken file reads as no announcements');
@@ -69,5 +78,5 @@ check(count(A::all())===1&&A::all()[0]['button']===null,'damaged rows are skippe
 Storage::$records[A::FILE]=json_encode(array_map(fn($i)=>['id'=>sprintf('%016x',$i),'title'=>'T'.$i,'created_at'=>$i],range(1,A::LIMIT)));
 check(fails(fn()=>A::save(['title'=>'One more'],null,'jera',$now),'Delete an old one'),'at most '.A::LIMIT.' announcements');
 check(A::ago($now-30,$now)==='just now'&&A::ago($now-120,$now)==='2 minutes ago'&&A::ago($now-3600,$now)==='1 hour ago'&&A::ago($now-86400,$now)==='yesterday'&&A::ago($now-3*86400,$now)==='3 days ago','relative times');
-echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, broken files and limits\n";
+echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, app notifications once, broken files and limits\n";
 }

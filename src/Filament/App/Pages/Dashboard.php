@@ -116,6 +116,21 @@ final class Dashboard extends Page
     /** Hides an announcement bar for this account; it stays under the bell. */
     #[Renderless]
     public function dismissAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::dismiss(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
+    /** App notifications: the panel's public key, this account's devices and choices. */
+    #[Renderless]
+    public function pushSettings(?string $endpoint=null): array { return ['key'=>\Simplify\Panel\Services\PushNotifications::publicKey(),'admin'=>(bool)user()->isRootAdmin(),...\Simplify\Panel\Services\PushNotifications::settings(user(),$endpoint)]; }
+    #[Renderless]
+    public function savePushSubscription(array $subscription,string $label=''): array
+    {
+        try{return ['ok'=>true,...\Simplify\Panel\Services\PushNotifications::subscribe(user(),$subscription,$label)];}
+        catch(\InvalidArgumentException $e){return ['ok'=>false,'message'=>$e->getMessage()];}
+    }
+    #[Renderless]
+    public function removePushDevice(string $id): array { return \Simplify\Panel\Services\PushNotifications::remove(user(),$id); }
+    #[Renderless]
+    public function savePushPreferences(array $preferences): array { return \Simplify\Panel\Services\PushNotifications::savePreferences(user(),$preferences); }
+    #[Renderless]
+    public function sendTestPush(string $endpoint): array { return \Simplify\Panel\Services\PushNotifications::test(user(),$endpoint); }
     /** Own server groups and the server order, kept with the account. */
     #[Renderless]
     public function saveOverviewGroups(array $groups,?string $order='name'): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups,$order); }
