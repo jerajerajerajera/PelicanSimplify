@@ -4,10 +4,10 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal' };
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all' };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
   // Overview settings that pick one of a fixed set of values.
-  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'] };
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
@@ -19,14 +19,8 @@
   // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
   const PHONE_SECTIONS = ['players', 'files'];
   const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
-  const accentInk = (color) => {
-    if (window.SimplifyTheme?.accentInk) return window.SimplifyTheme.accentInk(color);
-    const [r, g, b] = color.slice(1).match(/../g).map((v) => {
-      const x = parseInt(v, 16) / 255;
-      return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
-    });
-    return r * 0.2126 + g * 0.7152 + b * 0.0722 > 0.179 ? '#111118' : '#ffffff';
-  };
+  // core.js (loaded in <head> on every panel page) owns the contrast calculation.
+  const accentInk = (color) => window.SimplifyTheme.accentInk(color);
   const seconds = (value, fallback, min) => Math.max(min, Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : fallback) * 1000;
 
   window.pelicanSimplify = function (wire, boot) {
@@ -95,6 +89,7 @@
       navMenu: false,
       theme: 'system',
       themeDark: false,
+      themeForced: false,
       themeListener: null,
       installable: '',
       installListener: null,
@@ -282,6 +277,10 @@
         return this.accentStyle('overview');
       },
       accentStyle(id) {
+        // A colour on one of your own groups wins for its servers (and its heading), over the common and the server's own colour.
+        const group = String(id).startsWith('group-') ? this.overviewGroups.find((g) => 'group-' + g.id === id) : this.serverGroup(id);
+        if (group?.color) return { '--ps-accent': group.color, '--ps-on-accent': accentInk(group.color) };
+        if (String(id).startsWith('group-')) return {};
         const appearance = this.boot.appearance || {};
         const common = appearance.accent_color;
         if (/^#[0-9a-f]{6}$/i.test(common || '') && (id === 'overview' || appearance.individual_colors === false))
@@ -386,6 +385,8 @@
       },
       applyTheme() {
         this.themeDark = window.SimplifyTheme?.dark() ?? false;
+        // A panel theme that only comes in light or dark (such as Catppuccin) hides the theme choice.
+        this.themeForced = !!window.SimplifyTheme?.forced?.();
         this.$root?.querySelectorAll?.('iframe').forEach((frame) => window.SimplifyTheme?.frame(frame, frame.dataset.psFrame, this.currentAccentHex()));
       },
       initNotices() {
@@ -470,11 +471,6 @@
         try {
           localStorage.setItem(this.hostModeKey(), this.hostMode ? '1' : '0');
         } catch {}
-      },
-      hostPages() {
-        const items = this.adminPages().flatMap((group) => group.items);
-        const health = items.find((item) => item.key === 'health');
-        return health ? [health, ...items.filter((item) => item !== health)] : items;
       },
       /** Admin pages merged into a few colour-coded sections; pages from other plugins go to Extensions. */
       hostSections() {
@@ -764,6 +760,13 @@
         } catch {}
         if (available > 0 && needed > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / needed * 10) / 10) + 'px';
       },
+      /** Shrinks a MOTD box's text only as far as needed to show both full lines, never below 8px. */
+      fitMotd(box) {
+        if (!box) return;
+        box.style.fontSize = '';
+        let size = parseFloat(getComputedStyle(box).fontSize) || 12;
+        while (size > 8 && (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1)) box.style.fontSize = (size -= .5) + 'px';
+      },
       softwareTooltip(s) {
         const software = String(s.software || 'Server software').trim();
         const raw = String(s.reported_version || s.minecraft_version || '').trim();
@@ -782,7 +785,13 @@
         return [...games].map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
       },
       visibleServers() {
-        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter));
+        const scope = this.ownerFilterShown() ? this.overviewPreferences.serverScope : 'all';
+        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter) && (scope === 'all' || !!s.mine === (scope === 'mine')));
+      },
+      /** My servers / Others only means something when the overview holds both (administrators, or everyone in friends mode). */
+      ownerFilterShown() {
+        const servers = this.boot.servers || [];
+        return servers.some((s) => s.mine) && servers.some((s) => !s.mine);
       },
       /** Nodes that have servers in the overview (names from the listing, else the health data). */
       nodeOptions() {
@@ -807,7 +816,7 @@
           const members = this.groupMembers(group, servers).filter((s) => !placed.has(s.uuid));
           if (!members.length) continue;
           members.forEach((s) => placed.add(s.uuid));
-          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length }, ...members);
+          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length, color: group.color || null }, ...members);
         }
         const rest = servers.filter((s) => !placed.has(s.uuid));
         if (this.groupedByNode()) {
@@ -846,7 +855,8 @@
           const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
           const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
           const sort = GROUP_ORDERS.some((o) => o.key === group.sort) ? group.sort : 'overview';
-          groups.push({ id: group.id.slice(0, 40), name, servers, sort });
+          const color = typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color) ? group.color.toLowerCase() : null;
+          groups.push({ id: group.id.slice(0, 40), name, servers, sort, ...(color ? { color } : {}) });
         }
         return groups;
       },
@@ -941,6 +951,15 @@
           return { ...g, servers: g.id === id && !inGroup ? [...servers, uuid] : servers };
         }));
       },
+      /** A group's colour, or null to go back to each server's own colour. */
+      setGroupColor(id, color) {
+        const clean = typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : null;
+        this.saveOverviewGroups(this.overviewGroups.map((g) => {
+          if (g.id !== id) return { ...g };
+          const { color: _old, ...rest } = g;
+          return clean ? { ...rest, color: clean } : rest;
+        }));
+      },
       serverGroup(uuid) {
         return this.overviewGroups.find((g) => g.servers.includes(uuid)) || null;
       },
@@ -1003,6 +1022,23 @@
           if (OVERVIEW_VIEWS.includes(view)) this.overviewView = view;
         } catch {}
       },
+      /** Marks a sideways scrolling strip with the edges that hide more items, so the cut-off side fades out. */
+      scrollHint(el) {
+        const update = () => {
+          const max = el.scrollWidth - el.clientWidth;
+          const hint = max > 1 ? [el.scrollLeft > 1 && 'start', el.scrollLeft < max - 1 && 'end'].filter(Boolean).join(' ') : '';
+          if ((el.dataset.psMore || '') === hint) return;
+          if (hint) el.dataset.psMore = hint;
+          else delete el.dataset.psMore;
+        };
+        el.addEventListener('scroll', update, { passive: true });
+        if (typeof ResizeObserver === 'function') {
+          const observer = new ResizeObserver(update);
+          observer.observe(el);
+          for (const child of el.children) observer.observe(child);
+        }
+        this.$nextTick?.(update);
+      },
       setOverviewView(view) {
         if (!OVERVIEW_VIEWS.includes(view)) return;
         this.overviewView = view;
@@ -1046,12 +1082,6 @@
       cpuLabel(s) {
         const n = s.usage?.cpu_percent;
         return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(1) + '%' : '—';
-      },
-      cpuFill(s) {
-        const n = s.usage?.cpu_percent;
-        if (typeof n !== 'number' || !Number.isFinite(n)) return 0;
-        const limit = s.usage?.cpu_limit > 0 ? s.usage.cpu_limit : 100;
-        return Math.min(100, Math.max(0, (n / limit) * 100));
       },
       memoryLabel(s) {
         const n = s.usage?.memory_bytes;
@@ -1232,9 +1262,9 @@
       },
       panelSettingsUrl() {
         const url = this.frameUrl(this.boot.settings_url);
-        if (!url || this.settingsSection !== 'banners') return url;
+        if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', 'banners');
+        target.searchParams.set('section', this.settingsSection);
         return target.href;
       },
       openPanelSettings(section = 'settings') {
@@ -1360,9 +1390,6 @@
           ...(index ? [{ text: '\n', style: {} }] : []),
           ...window.psMotd.runs(line).map(({ text, style, obfuscated }) => ({ text: obfuscated ? text.replace(/\S/g, '▒') : text, style })),
         ]);
-      },
-      cleanMotd(s) {
-        return String(s).replace(/§[0-9A-FK-OR]/gi, '').replace(/\\n/g, ' ').trim();
       },
       safeImage(s) {
         if (typeof s !== 'string' || !s.trim()) return '';
@@ -1946,10 +1973,6 @@
         if (!listing) return;
         const result = await this.run(() => wire.saveListing(value), value ? 'Shown on the website' : 'Hidden from the website');
         if (result !== SKIPPED) listing.visible = result === true;
-      },
-      async toggleWeb(s, value) {
-        const result = await this.run(() => wire.saveWebsite({ visible: value }, s.uuid), 'Website visibility updated');
-        s.visible = result === SKIPPED ? !value : value;
       },
       async saveWebsite() {
         const state = { ...this.website };

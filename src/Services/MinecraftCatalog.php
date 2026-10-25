@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Simplify\Panel\Services;
 
 use App\Models\Egg;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Throwable;
 
 final class MinecraftCatalog
 {

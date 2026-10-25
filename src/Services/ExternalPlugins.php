@@ -363,13 +363,7 @@ final class ExternalPlugins
     /** Keys of plugin pages an administrator chose to hide in Simplify. */
     public static function hidden(): array
     {
-        try {
-            $disk = \Illuminate\Support\Facades\Storage::disk('local');
-            $data = $disk->exists(self::HIDDEN_FILE) ? json_decode((string) $disk->get(self::HIDDEN_FILE), true) : [];
-        } catch (\Throwable) {
-            $data = [];
-        }
-        return array_values(array_filter((array) ($data['hidden'] ?? []), 'is_string'));
+        return array_values(array_filter((array) (JsonFile::read(self::HIDDEN_FILE)['hidden'] ?? []), 'is_string'));
     }
 
     public static function isHidden(string $panel, string $class): bool

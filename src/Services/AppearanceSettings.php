@@ -12,10 +12,7 @@ final class AppearanceSettings
     private function load(): array
     {
         if($this->loaded!==null)return $this->loaded;
-        $disk=Storage::disk('local');
-        try{$saved=$disk->exists(self::FILE)?json_decode($disk->get(self::FILE),true,16,JSON_THROW_ON_ERROR):[];}
-        catch(\Throwable $e){report($e);$saved=[];}
-        $saved=is_array($saved)?$saved:[];
+        $saved=JsonFile::read(self::FILE);
         return $this->loaded=['accent_color'=>is_string($saved['accent_color']??null)&&preg_match('/^#[0-9a-fA-F]{6}$/',$saved['accent_color'])?strtolower($saved['accent_color']):self::defaults()['accent_color'],'individual_colors'=>array_key_exists('individual_colors',$saved)?$saved['individual_colors']===true:true,'brand'=>BrandSettings::normalize($saved['brand']??[])];
     }
     public static function save(array $input): void

@@ -121,11 +121,8 @@ final class SteamAccount
 
     private static function read(object $user): ?array
     {
-        $disk = Storage::disk('local');
-        $path = self::path($user);
-        if (!$disk->exists($path)) return null;
-        $data = json_decode((string) $disk->get($path), true);
-        return is_array($data) && is_string($data['key'] ?? null) ? $data : null;
+        $data = JsonFile::read(self::path($user));
+        return is_string($data['key'] ?? null) ? $data : null;
     }
 
     private static function path(object $user): string

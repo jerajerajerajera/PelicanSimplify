@@ -18,12 +18,9 @@ final class OverviewGroups
 
     public static function get(object $user): ?array
     {
-        $disk=Storage::disk('local');
         $path=self::path($user);
-        if(!$disk->exists($path))return null;
-        try{$saved=json_decode((string)$disk->get($path),true,8,JSON_THROW_ON_ERROR);}
-        catch(\Throwable $e){report($e);return ['groups'=>[],'order'=>'name'];}
-        $saved=is_array($saved)?$saved:[];
+        if(!Storage::disk('local')->exists($path))return null;
+        $saved=JsonFile::read($path); // A damaged file reads as no groups.
         // Up to 0.5.0-snapshot.13 the file held only the list of groups.
         return array_is_list($saved)?['groups'=>self::clean($saved),'order'=>'name']:['groups'=>self::clean(is_array($saved['groups']??null)?$saved['groups']:[]),'order'=>self::order($saved['order']??null)];
     }
@@ -40,7 +37,7 @@ final class OverviewGroups
         return in_array($order,self::ORDERS,true)?$order:'name';
     }
 
-    /** Same rules as the dashboard: unique ids, a name, at most one group per server. */
+    /** Same rules as the dashboard: unique ids, a name, at most one group per server, a colour only when it is a hex colour. */
     public static function clean(array $input): array
     {
         $groups=[];$ids=[];$seen=[];
@@ -56,7 +53,10 @@ final class OverviewGroups
                 $seen[$uuid]=true;$servers[]=$uuid;
             }
             $ids[$group['id']]=true;
-            $groups[]=['id'=>$group['id'],'name'=>$name,'servers'=>$servers,'sort'=>in_array($group['sort']??null,self::GROUP_ORDERS,true)?$group['sort']:'overview'];
+            $clean=['id'=>$group['id'],'name'=>$name,'servers'=>$servers,'sort'=>in_array($group['sort']??null,self::GROUP_ORDERS,true)?$group['sort']:'overview'];
+            // Optional colour: the servers in the group take it on this account's overview and server pages.
+            if(is_string($group['color']??null)&&preg_match('/^#[0-9a-fA-F]{6}$/',$group['color']))$clean['color']=strtolower($group['color']);
+            $groups[]=$clean;
         }
         return $groups;
     }

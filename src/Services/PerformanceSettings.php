@@ -28,14 +28,7 @@ final class PerformanceSettings
     private function load(): array
     {
         if ($this->loaded !== null) return $this->loaded;
-        try {
-            $disk = Storage::disk('local');
-            $saved = $disk->exists(self::FILE) ? json_decode((string) $disk->get(self::FILE), true, 8, JSON_THROW_ON_ERROR) : [];
-        } catch (\Throwable $exception) {
-            report($exception);
-            $saved = [];
-        }
-        return $this->loaded = self::normalize(is_array($saved) ? $saved : []);
+        return $this->loaded = self::normalize(JsonFile::read(self::FILE));
     }
 
     private static function normalize(array $input): array

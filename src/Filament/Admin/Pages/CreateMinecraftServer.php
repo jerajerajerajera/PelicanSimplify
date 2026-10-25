@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Simplify\Panel\Filament\Admin\Pages;
 
 use App\Enums\TablerIcon;
-use App\Filament\Admin\Resources\Servers\ServerResource;
 use App\Models\Allocation;
 use App\Models\Egg;
 use App\Models\Node;

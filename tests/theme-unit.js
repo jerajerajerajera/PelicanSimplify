@@ -30,4 +30,13 @@ const native=page({...config,legacy_page:true});assert(!native.has('ps-theme'));
 dashboard.window.SimplifyTheme.configure({...config,global_theme:false,console_dark:false});assert(!dashboard.has('ps-theme'));assert(dashboard.has('ps-console-adaptive'));
 dashboard.window.SimplifyTheme.set('unsupported');assert.equal(dashboard.window.SimplifyTheme.preference(),'dark');
 assert.equal(typeof dashboard.window.Simplify.confirm,'function');assert.equal(typeof dashboard.window.Simplify.toast,'function');
+// A Pelican theme plugin: Simplify takes its palette, follows a forced mode and leaves Pelican pages to a theme stylesheet.
+storage.set('pelicanSimplify.theme','light');
+const themed=page({...config,panel_theme:{active:true,mode:'dark',own_css:true}});
+assert(themed.has('ps-panel-theme'));assert(themed.has('dark'),'a dark-only theme wins over the saved light choice');assert.equal(themed.window.SimplifyTheme.forced(),'dark');
+assert.equal(themed.style['--ps-accent'],'#446688','a chosen accent stays');
+const themedNative=page({...config,panel_theme:{active:true,mode:null,own_css:true}},{dataset:{psFrame:'files'}});assert(!themedNative.has('ps-theme'),'a theme stylesheet keeps Pelican pages');assert(themedNative.has('ps-panel-theme'));
+const themedCreator=page({...config,panel_theme:{active:true,mode:null,own_css:true}},{dataset:{psFrame:'create'}});assert(themedCreator.has('ps-theme'),'Simplify screens stay themed');
+const plain=page({...config,panel_theme:{active:false,mode:null,own_css:false}});assert(!plain.has('ps-panel-theme'));assert.equal(plain.window.SimplifyTheme.forced(),'');
+console.log('PASS panel themes: palette class, forced mode, chosen accent kept, theme stylesheet keeps Pelican pages');
 console.log('PASS theme preference, accent, console modes, embedded frame detection, legacy opt-out, live sync and shared UI API');

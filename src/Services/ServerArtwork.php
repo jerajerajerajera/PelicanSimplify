@@ -57,9 +57,7 @@ final class ServerArtwork
             $id='auto'; // Deleted uploads fall back to bundled artwork.
         }
         if($id==='auto'){
-            $disk=Storage::disk('local');$path='server-directory/backgrounds/'.$server->uuid.'.json';
-            $raw=$disk->exists($path)?$disk->get($path):null;
-            $id=$raw?(json_decode($raw,true)['background_id']??''):'';
+            $id=JsonFile::read('server-directory/backgrounds/'.$server->uuid.'.json')['background_id']??'';
             if(!isset(self::BACKGROUNDS[$id]))$id=Extensions::webAdapter()?->backgroundFor($server)??'';
             if (!isset(self::BACKGROUNDS[$id]) && ManagedSettings::minecraft($server)) {
                 // Stable per server, including servers created before Simplify was installed.
@@ -82,10 +80,7 @@ final class ServerArtwork
     }
     public static function selection(Server $server): ?string
     {
-        $disk = Storage::disk('local');
-        $path = 'simplify/backgrounds/'.$server->uuid.'.json';
-        $data = $disk->exists($path) ? json_decode($disk->get($path), true) : [];
-        $id = is_array($data) ? ($data['background_id'] ?? null) : null;
+        $id = JsonFile::read('simplify/backgrounds/'.$server->uuid.'.json')['background_id'] ?? null;
         return is_string($id) && ($id === 'auto' || $id === 'none' || self::isColor($id) || isset(self::BACKGROUNDS[$id]) || ServerBanners::belongsTo($id,$server)) ? $id : null;
     }
     /** Selects a banner without a permission check (creator only; save() is the user-facing path). */
