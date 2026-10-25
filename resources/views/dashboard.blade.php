@@ -6,7 +6,7 @@
 <div class="ps" data-simplify-root x-cloak wire:ignore.self
      x-data="pelicanSimplify($wire, @js($this->initial()))"
      x-on:resize.window.debounce.150ms="applyScale(); restoreOverviewView()"
-     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-full-width': overviewPreferences.fullWidth}"
+     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
 
@@ -18,7 +18,7 @@
                     <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span></h1></a>
                 </div>
                 <a x-show="server" :href="boot.list_url" class="ps-btn ps-back-overview">
-                    <svg aria-hidden="true"><use href="#ps-back"/></svg><span>Back to server overview</span>
+                    <svg aria-hidden="true"><use href="#ps-back"/></svg><span>All servers</span>
                 </a>
             </div>
             <nav class="ps-top-actions" aria-label="Panel navigation" :class="{'nav-open': navMenu}"
@@ -702,15 +702,11 @@
                 <span class="ps-offline-artwork" x-show="status==='offline'" aria-label="Server offline"><svg aria-hidden="true"><use href="#ps-offline"/></svg></span>
                 <span class="ps-server-banner ps-banner-color" :class="{'is-auto': server?.background_id==='color'}" x-show="bannerColor(server) && status!=='offline'" :style="bannerColor(server)" aria-hidden="true"></span>
                 <img class="ps-server-banner" x-show="server?.background && status!=='offline'" :src="safeImage(server?.background)" alt="" x-on:error="$el.style.visibility='hidden'">
-                <div class="ps-info-badges ps-identity-badges">
-                    <span class="ps-badge is-strong ps-list-game"><svg aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="server?.minecraft ? 'Minecraft' : (server?.software || 'Other game')"></span></span>
-                    <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
-                </div>
                 <span class="ps-info-icons">
                     <span class="ps-info-icon ps-custom-server-icon" x-show="server?.server_icon" data-tip="server-icon.png"><img :src="safeImage(server?.server_icon)" alt="Custom server icon" x-on:load="$el.style.visibility=''" x-on:error="$el.style.visibility='hidden'"></span>
-                    <span class="ps-info-icon ps-software-icon" data-tip-label="Server software" :data-tip="server?.pack?.modpack_name || server?.software || 'Server software'">
+                    <span class="ps-info-icon ps-software-icon" :class="{'is-badge': server?.server_icon}" data-tip-label="Server software" :data-tip="server?.pack?.modpack_name || server?.software || 'Server software'">
                         <img x-show="server?.software_icon" :src="safeImage(server?.software_icon)" alt="Server software icon" x-on:load="$el.style.visibility=''" x-on:error="$el.style.visibility='hidden'">
-                        <svg x-show="!server?.software_icon" aria-hidden="true"><use href="#ps-cube"/></svg>
+                        <svg x-show="!server?.software_icon" aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg>
                     </span>
                 </span>
                 <div class="ps-info-content">
@@ -719,23 +715,30 @@
                         <small class="ps-real-server-name" x-show="server?.alias" x-text="'('+server?.name+')'"></small>
                         <button type="button" class="ps-btn is-icon is-sm is-subtle ps-alias-button" x-show="server?.permissions['settings.rename']" x-on:click="openAlias()" data-tip="Change alias" aria-label="Change alias" aria-haspopup="dialog"><svg aria-hidden="true"><use href="#ps-edit"/></svg></button>
                     </div>
-                    <dl class="ps-info-details">
-                        <div><dt>Software</dt><dd x-text="server?.software || 'Not reported'"></dd></div>
-                        <div x-show="server?.minecraft"><dt>Minecraft version</dt><dd x-text="minecraftVersion()"></dd></div>
-                        <div x-show="server?.pack?.modpack_name"><dt>Modpack</dt><dd x-text="server?.pack?.modpack_name"></dd></div>
-                        <div x-show="server?.pack?.modpack_name"><dt>Modpack version</dt><dd x-text="server?.pack?.modpack_version || 'Not reported'"></dd></div>
-                    </dl>
-                    <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="server?.properties?.motd; server?.pack?.motd; $nextTick(()=>fitMotd($el))"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
-                    <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
-                        <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
-                    </button>
+                    {{-- One line: status, software and version, modpack, address. --}}
+                    <div class="ps-info-meta">
+                        <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
+                        <span class="ps-info-meta-item" data-tip-label="Server software" :data-tip="server?.software || 'Not reported'"><svg aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="softwareLabel()"></span></span>
+                        <span class="ps-info-meta-item" x-show="server?.pack?.modpack_name" data-tip="Modpack"><svg aria-hidden="true"><use href="#ps-packages"/></svg><span x-text="server?.pack?.modpack_name + (server?.pack?.modpack_version ? ' ' + server.pack.modpack_version : '')"></span></span>
+                        <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
+                            <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="ps-color-control" x-on:click.outside="colorMenu=false" x-on:keydown.escape.stop="colorMenu=false">
-                    <button type="button" class="ps-web-listing" x-show="server?.website_listing" x-cloak role="switch" :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)" aria-label="Show on website" :data-tip="server?.website_listing?.visible ? 'Shown on the website' : 'Hidden from the website'">
-                        <svg aria-hidden="true"><use href="#ps-web"/></svg><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="ps-swatch ps-color-dot" :disabled="busy || !server?.permissions['settings.rename']" :aria-expanded="colorMenu" aria-label="Change server color" data-tip="Server color" x-on:click="toggleColorMenu($el)"></button>
-                    <button type="button" class="ps-btn is-icon is-sm" :disabled="busy || !server?.permissions['settings.rename']" aria-label="Change server background" data-tip="Server background" aria-haspopup="dialog" x-on:click="openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg></button>
+                <div class="ps-motd-preview ps-motd-display ps-info-motd" x-show="server?.properties?.motd || server?.pack?.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="server?.properties?.motd; server?.pack?.motd; $nextTick(()=>fitMotd($el))" aria-label="Message of the day"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                {{-- Power: one button that follows the state (Start or Stop), Restart, and the rest under ⋯. --}}
+                <div class="ps-info-power" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}" x-on:click.outside="colorMenu=false; infoMenu=false" x-on:keydown.escape.stop="colorMenu=false; infoMenu=false">
+                    <button type="button" class="ps-btn ps-power-main" :class="{'is-primary': mainPower().action==='start'}" x-on:click="power(mainPower().action)" :disabled="busy || !server?.permissions['control.'+mainPower().action] || ['starting','stopping'].includes(status)" :aria-label="mainPower().label+' server'"><svg aria-hidden="true"><use :href="'#ps-'+mainPower().icon"/></svg><span x-text="mainPower().label"></span></button>
+                    <button type="button" class="ps-btn ps-power-restart" x-on:click="power('restart')" :disabled="busy || !server?.permissions['control.restart'] || status!=='running'" aria-label="Restart server"><svg aria-hidden="true"><use href="#ps-restart"/></svg><span>Restart</span></button>
+                    <button type="button" class="ps-btn is-icon ps-info-more-button" x-ref="infoMore" aria-label="More server options" aria-controls="ps-info-menu" :aria-expanded="infoMenu" x-on:click="infoMenu=!infoMenu; colorMenu=false"><svg aria-hidden="true"><use href="#ps-dots"/></svg></button>
+                    <div id="ps-info-menu" class="ps-dropdown is-end ps-info-menu" x-show="infoMenu" x-cloak x-transition.opacity role="menu">
+                        <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; toggleColorMenu($refs.infoMore)"><span class="ps-color-dot" aria-hidden="true"></span><span>Server color</span></button>
+                        <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg><span>Server background</span></button>
+                        <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.permissions['settings.rename']" x-on:click="infoMenu=false; openAlias()"><svg aria-hidden="true"><use href="#ps-edit"/></svg><span>Change alias</span></button>
+                        <button type="button" class="ps-menu-item ps-web-listing" role="menuitemcheckbox" x-show="server?.website_listing" x-cloak :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)"><svg aria-hidden="true"><use href="#ps-web"/></svg><span>Show on the website</span><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span></button>
+                        <hr>
+                        <button type="button" class="ps-menu-item is-danger" role="menuitem" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" x-on:click="infoMenu=false; power('kill')"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>Force stop</span></button>
+                    </div>
                     <div class="ps-dropdown is-fixed ps-color-dropdown" x-show="colorMenu" x-cloak :style="colorMenuStyle" x-on:click.stop>
                         <span class="ps-label">Server color</span>
                         <small class="ps-color-group-note" x-show="serverGroup(server?.uuid)?.color" x-text="'You see the color of your group '+serverGroup(server?.uuid)?.name+'. This color is what everyone else sees.'"></small>
@@ -752,6 +755,27 @@
                     </div>
                 </div>
             </article>
+
+            {{-- Live numbers in one row: players and the resource metrics. --}}
+            <section class="ps-server-stats" aria-label="Server status">
+                <article class="ps-card ps-stat ps-players-stat" x-show="server?.minecraft">
+                    <div class="ps-stat-top"><span>Players</span><svg aria-hidden="true"><use href="#ps-players"/></svg></div>
+                    <strong><span x-text="server?.players ?? '—'"></span><span class="ps-stat-total" x-text="server?.max_players ? ' / '+server.max_players : ''"></span></strong>
+                    <ul class="ps-online-players" aria-label="Online players" x-show="server?.player_names?.length">
+                        <template x-for="p in (server?.player_names || []).slice(0, 6)" :key="p.name"><li :data-tip="p.name"><img :src="head(p)" :alt="p.name" loading="lazy" x-on:error="$el.style.visibility='hidden'"></li></template>
+                        <li class="ps-online-more" x-show="(server?.players || 0) > Math.min(6, server?.player_names?.length || 0)" x-text="'+'+((server?.players || 0) - Math.min(6, server?.player_names?.length || 0))"></li>
+                    </ul>
+                    <small class="ps-player-empty" x-show="!server?.player_names?.length" x-text="server?.players>0 ? 'Names not available' : 'No players online'"></small>
+                </article>
+                <template x-for="metric in metrics" :key="metric.key">
+                    <article class="ps-card ps-stat">
+                        <div class="ps-stat-top"><span x-text="metric.label"></span><svg aria-hidden="true"><use :href="'#ps-'+metric.icon"/></svg></div>
+                        <strong x-text="metricValue(metric.key)"></strong>
+                        <small x-text="metricLimit(metric.key)"></small>
+                        <svg class="ps-spark" viewBox="0 0 200 36" preserveAspectRatio="none" aria-hidden="true"><path :d="spark(metric.key)"/></svg>
+                    </article>
+                </template>
+            </section>
 
             {{-- Widgets other plugins add above Pelican's console (such as Player Counter), sized to their content. --}}
             <template x-if="server?.plugin_widgets_url">
@@ -770,7 +794,7 @@
                 </div>
             </div>
 
-            <div class="ps-server-workspace" :class="{'has-dock': docked()}" x-init="embedded && fitEmbedded($el)">
+            <div class="ps-server-workspace" :class="{'has-dock': docked(), 'is-peek': consolePeek, 'is-focus': consoleFocus && !docked()}" x-init="fitWorkspace($el)" x-effect="docked(); consolePeek; consoleFocus; refitWorkspace()">
                 {{-- A workspace opens in this block; the console then shrinks to a read-only view at the bottom right. --}}
                 <div class="ps-dock" x-effect="syncDock($el, docked())"></div>
                 <div class="ps-settings-column" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}">
@@ -798,12 +822,12 @@
                     </nav>
                     {{-- Phones: four tabs that always fit. Console and the two most used sections, the rest under More. --}}
                     <nav class="ps-phone-sections" aria-label="Server sections" x-on:click.outside="phoneMore=false" x-on:keydown.escape.stop="phoneMore=false">
-                        <button type="button" class="ps-phone-section" :aria-current="modal ? null : 'page'" x-on:click="phoneMore=false; modal ? close() : $refs.output.closest('.ps-console').scrollIntoView({behavior: 'smooth', block: 'start'})">Console</button>
+                        <button type="button" class="ps-phone-section" :aria-current="modal ? null : 'page'" x-on:click="phoneMore=false; modal ? close() : $refs.output.closest('.ps-console').scrollIntoView({behavior: 'smooth', block: 'start'})"><svg class="ps-phone-section-icon" aria-hidden="true"><use href="#ps-terminal"/></svg><span>Console</span></button>
                         <template x-for="widget in widgets.filter((w) => PHONE_SECTIONS.includes(w.key))" :key="widget.key">
-                            <button type="button" class="ps-phone-section" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)" x-text="widget.key==='players' ? 'Players' : widgetTitle(widget)"></button>
+                            <button type="button" class="ps-phone-section" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)"><svg class="ps-phone-section-icon" aria-hidden="true"><use :href="'#ps-'+widget.icon"/></svg><span x-text="widget.key==='players' ? 'Players' : widgetTitle(widget)"></span></button>
                         </template>
                         <div class="ps-phone-more">
-                            <button type="button" class="ps-phone-section" aria-controls="ps-phone-more-menu" :aria-expanded="phoneMore" :aria-current="phoneMoreActive() ? 'page' : null" x-on:click="phoneMore=!phoneMore">More<svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                            <button type="button" class="ps-phone-section" aria-controls="ps-phone-more-menu" :aria-expanded="phoneMore" :aria-current="phoneMoreActive() ? 'page' : null" x-on:click="phoneMore=!phoneMore"><svg class="ps-phone-section-icon" aria-hidden="true"><use href="#ps-dots"/></svg><span>More</span></button>
                             <div id="ps-phone-more-menu" class="ps-dropdown is-end ps-phone-more-menu" x-show="phoneMore" x-cloak x-transition.opacity>
                                 <template x-for="widget in widgets.filter((w) => !PHONE_SECTIONS.includes(w.key))" :key="widget.key">
                                     <button type="button" class="ps-menu-item" x-show="showWidget(widget.key)" :aria-current="modal===widget.key ? 'page' : null" x-on:click="phoneMore=false; modal===widget.key || open(widget.key)">
@@ -833,6 +857,10 @@
                                 </button>
                             </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="consoleFocus=!consoleFocus" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-window" x-show="!docked() && !consoleWindow && !embedded" x-on:click="openConsoleWindow()" data-tip="Open in a new window" aria-label="Open the console in a new window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="consolePeek=!consolePeek; renderLogs()" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-full" x-show="docked()" x-on:click="close()"><svg aria-hidden="true"><use href="#ps-expand"/></svg><span>Full console</span></button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
                         <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands" x-init="scrollHint($el)">
@@ -846,31 +874,6 @@
                             <button type="submit" :disabled="!connected || !server?.permissions['control.console']" aria-label="Send command">↵</button>
                         </form>
                     </aside>
-                    <article class="ps-card ps-stat ps-players-stat" x-show="server?.minecraft">
-                        <div class="ps-stat-top"><span>Players</span><svg aria-hidden="true"><use href="#ps-players"/></svg></div>
-                        <strong><span x-text="server?.players ?? '—'"></span><span class="ps-stat-total" x-text="server?.max_players ? ' / '+server.max_players : ''"></span></strong>
-                        <small>Online right now</small>
-                        <ul class="ps-online-players" aria-label="Online players">
-                            <template x-for="p in server?.player_names || []" :key="p.name"><li><img :src="head(p)" alt="" loading="lazy" x-on:error="$el.style.visibility='hidden'"><span x-text="p.name"></span></li></template>
-                        </ul>
-                        <p class="ps-player-empty" x-show="!server?.player_names?.length" x-text="server?.players>0 ? 'Player names are not available.' : 'No players online.'"></p>
-                    </article>
-                    <div class="ps-card ps-resource-tile">
-                        <template x-for="metric in metrics" :key="metric.key">
-                            <article class="ps-stat">
-                                <div class="ps-stat-top"><span x-text="metric.label"></span><svg aria-hidden="true"><use :href="'#ps-'+metric.icon"/></svg></div>
-                                <strong x-text="metricValue(metric.key)"></strong>
-                                <small x-text="metricLimit(metric.key)"></small>
-                                <svg class="ps-spark" viewBox="0 0 200 36" preserveAspectRatio="none" aria-hidden="true"><path :d="spark(metric.key)"/></svg>
-                            </article>
-                        </template>
-                    </div>
-                    <div class="ps-card ps-power-tile" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}">
-                        <button type="button" class="ps-btn is-primary" x-on:click="power('start')" :disabled="busy || !server?.permissions['control.start'] || status==='running'" aria-label="Start server"><svg aria-hidden="true"><use href="#ps-play"/></svg><span>Start</span></button>
-                        <button type="button" class="ps-btn" x-on:click="power('restart')" :disabled="busy || !server?.permissions['control.restart']" aria-label="Restart server"><svg aria-hidden="true"><use href="#ps-restart"/></svg><span>Restart</span></button>
-                        <button type="button" class="ps-btn" x-on:click="power('stop')" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" aria-label="Stop server"><svg aria-hidden="true"><use href="#ps-stop"/></svg><span>Stop</span></button>
-                        <button type="button" class="ps-btn is-danger" x-on:click="power('kill')" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" aria-label="Force stop server"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>Kill</span></button>
-                    </div>
                 </div>
             </div>
             <article x-show="server?.pack?.modpack_name" class="ps-card ps-pack-summary">

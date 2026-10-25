@@ -54,6 +54,11 @@
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
+      // The console alone, in its own browser window (opened from the console's title bar).
+      consoleWindow: /[?&]simplify_console=/.test(globalThis.location?.search || ''),
+      consolePeek: false,
+      consoleFocus: false,
+      infoMenu: false,
       adminPage: null,
       overviewCompact: false,
       phone: false,
@@ -193,6 +198,7 @@
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
         });
+        if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
         this.restoreOverviewGroups();
@@ -320,15 +326,63 @@
           this.statusBarVisible = !entry.isIntersecting && entry.boundingClientRect.bottom < 0;
         }).observe(el);
       },
-      /** In the host mode pane the workspace gets exactly the height left in the frame, so nothing scrolls. */
-      fitEmbedded(el) {
+      /** The section menu and the console (or open section) share the height left on the screen: what sits
+       *  above them is measured, and whatever still ends up below (footer, page padding) is taken off too,
+       *  so the page never scrolls just for the work area. Phones keep the console the height of the screen. */
+      fitWorkspace(el) {
         const fit = () => {
+          if (!this.server || typeof window === 'undefined') return;
+          const scale = this.uiScale || 1;
+          const bar = this.$root.querySelector('.ps-phone-sections');
+          const barHeight = bar && getComputedStyle(bar).position === 'fixed' ? bar.offsetHeight : 0;
           const top = el.getBoundingClientRect().top + window.scrollY;
-          el.style.setProperty('--ps-embed-height', Math.max(320, (window.innerHeight - top) / (this.uiScale || 1)) + 'px');
+          const min = window.innerHeight < 500 ? 120 : window.innerWidth <= 600 ? 220 : 300;
+          let height = Math.max(min, Math.floor((window.innerHeight - top - barHeight) / scale - (this.embedded ? 0 : 16)));
+          el.style.setProperty('--ps-work-height', height + 'px');
+          for (let pass = 0; pass < 2; pass++) {
+            const over = Math.ceil(document.documentElement.scrollHeight - window.innerHeight);
+            const next = Math.max(min, height - over);
+            if (over <= 0 || next === height) break;
+            height = next;
+            el.style.setProperty('--ps-work-height', height + 'px');
+          }
         };
-        fit();
+        this.fitWorkspaceNow = fit;
+        this.$nextTick?.(fit);
+        document.fonts?.ready?.then(fit); // the header is measured again once the web font has swapped in
         window.addEventListener('resize', fit);
-        if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(this.$root.querySelector('.ps-server-info') || el);
+        if (typeof ResizeObserver === 'function') {
+          const watch = new ResizeObserver(fit);
+          for (const part of ['.ps-server-info', '.ps-server-stats', '.ps-pending']) {
+            const node = this.$root.querySelector(part);
+            if (node) watch.observe(node);
+          }
+        }
+      },
+      /** Measures the work area again after a layout change (console size, workspace open or closed). */
+      refitWorkspace() {
+        this.$nextTick?.(() => this.fitWorkspaceNow?.());
+      },
+      /** The power button that fits the state: Stop while the server runs, Start otherwise. */
+      mainPower() {
+        return ['running', 'starting'].includes(this.status) ? { action: 'stop', label: 'Stop', icon: 'stop' } : { action: 'start', label: 'Start', icon: 'play' };
+      },
+      /** "Paper 1.21.4", "Valheim" or "Not reported" for the line under the server name. */
+      softwareLabel() {
+        const software = this.server?.software || 'Not reported';
+        if (!this.server?.minecraft) return software;
+        const version = this.minecraftVersion();
+        return version === 'Not reported' ? software : software + ' ' + version;
+      },
+      /** The console in a window of its own: the same page with only the console showing. */
+      openConsoleWindow() {
+        const url = new URL(location.href);
+        url.searchParams.set('simplify_console', '1');
+        let popup = null;
+        try {
+          popup = window.open(url.toString(), 'simplify-console-' + (this.server?.uuid || ''), 'popup,width=960,height=640');
+        } catch {}
+        if (!popup) this.toast('The browser blocked the new window. Allow pop-ups for this panel to open the console separately.', 'warn');
       },
       openHostServer(s) {
         this.hostServer = s;
