@@ -48,11 +48,12 @@ if(($argv[1]??'')==='livewire'){
         // Announcements: the Panel's update check against Pelican's real version service, then one written in the admin page.
         \Simplify\Panel\Services\PanelUpdates::refresh();
         Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)
-            ->callAction('addAnnouncement',data:['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open'])->assertHasNoActionErrors();
+        // Opening the form builds every field; callAction() itself needs PHPUnit, so the save goes through the same service.
+        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->call('mountAction','addAnnouncement');
+        \Simplify\Panel\Services\Announcements::save(['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open'],null,(string)$admin->username);
         $shown=array_column(\Simplify\Panel\Services\Announcements::forUser($admin),'title');
         if(!in_array('Smoke test',$shown,true))throw new \RuntimeException('the new announcement is not shown on the overview');
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth and announcements; Panel update check runs; an announcement added in the admin page shows');
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth and announcements; Panel update check runs; the announcement form opens and a saved announcement shows');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 
