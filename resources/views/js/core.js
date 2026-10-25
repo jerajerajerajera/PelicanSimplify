@@ -528,7 +528,7 @@
     };
     if (brand?.color_style !== 'gradient') return { ...style, background: 'none', color: ink, '-webkit-text-fill-color': ink };
     const end = hex(brand?.color2) || hex(accent) || 'var(--ps-brand, var(--ps-accent, #2563eb))';
-    return { ...style, 'background-image': `linear-gradient(110deg, ${ink} 40%, ${end} 100%)` };
+    return { ...style, 'background-image': `linear-gradient(110deg, ${ink} 40%, ${end} 100%)`, 'background-clip': 'text', '-webkit-background-clip': 'text', color: 'transparent', '-webkit-text-fill-color': 'transparent' };
   };
 
   /* Web app ------------------------------------------------------------------------------------
