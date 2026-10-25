@@ -1,5 +1,16 @@
 # Changes
 
+## 0.5.0-snapshot.19 (snapshot channel)
+Everything planned for 0.5.0 in one snapshot: a calmer look, Pelican theme plugins, group colours, an owner filter, phone fixes and a faster overview.
+- A calmer look: server names in one color, plain menu icons, hearts in Host health only when something needs attention, "Enhanced by" only at the bottom, no shine on the New server button, and icons from Tabler like the rest of the Pelican panel.
+- Simplify follows Pelican theme plugins (Nord, Catppuccin, Theme Customizer, ...): colours, font and forced light/dark mode.
+- Server groups can have their own colour, and the group settings link to the panel's server colours.
+- Administrators can filter the overview: All servers, My servers (owner or subuser) or Others. The filter only shows when both kinds are there and is remembered per device.
+- Phones: the page scrolls again in landscape (the server list was squeezed to a sliver), the console and workspaces fit low screens, long server names use a second line, swipeable rows fade where more items are hidden, and the settings page uses the full width instead of leaving an empty menu column.
+- Faster overview: one Wings call per node for status and usage instead of one per server.
+- The MOTD box on the overview no longer shows a scrollbar.
+- Behind the scenes: unused code removed, repeated code merged (a damaged settings file now reads as empty instead of giving an error), and every change is tested in a real Pelican panel (beta38 and rc.2) before it is released.
+
 ## 0.5.0-snapshot.18 (snapshot channel)
 Fixes the Simplify page answering with a server error (500): "Attribute Livewire\Attributes\Renderless must not be repeated" (same fix as 0.5.0-beta.8).
 - One action carried the same marker twice; it now has it once, and a new check stops a repeated attribute from being released again.
