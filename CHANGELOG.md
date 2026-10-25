@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.1-snapshot.1 (snapshot channel)
+Announcements: tell everyone on the panel what is going on, and see updates for the panel in one place.
+- Admin tools → Announcements: Info, Warning or Success, with a title, a message, an optional start and end time, everyone or administrators only, and an optional button to a server or a link.
+- Live announcements show as a bar above the server overview. Everyone can hide a bar for their own account; it stays in the bell until it ends.
+- From the Panel (administrators): a new version of Simplify, another plugin, Wings on a node or Pelican shows as a notice and disappears once updated. A scheduled check runs every ten minutes, so pages never wait for a slow node. This replaces the separate "Simplify x is available" item and notification.
+- Announcements from the Hub plugin "Announcements" show in Simplify too.
+
 ## 0.5.0-snapshot.20 (snapshot channel)
 Fixes the panel name with "a fade between two colors": it showed a solid colour block over the name instead of coloured letters (since 0.5.0-snapshot.19).
 
