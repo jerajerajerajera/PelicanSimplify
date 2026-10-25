@@ -1294,3 +1294,35 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-push-offer > svg { flex: none; width: 18px; height: 18px; color: var(--ps-accent); }
 .ps-push-offer > span { flex: 1; min-width: 0; }
 .ps-push-offer .ps-btn { flex: none; }
+
+/* Halloween (25 October to 2 November, .ps-halloween): small touches that never take space or catch a click. */
+.ps-halloween { --ps-hw-orange: #d9731f; --ps-hw-line: rgb(38 38 46 / .1); --ps-hw-glow: #ffc63a; --ps-hw-carve: #5a2a0c; }
+.ps-halloween.dark { --ps-hw-orange: #e88a3a; --ps-hw-line: rgb(237 237 242 / .12); --ps-hw-carve: #3a1a06; }
+.ps-halloween .ps-account-button { position: relative; z-index: 1; }
+.ps-hw-corner { position: fixed; top: 0; right: 0; z-index: 0; pointer-events: none; }
+.ps-hw-web { display: block; width: 120px; height: 120px; fill: none; stroke: var(--ps-hw-line); stroke-width: 1; }
+.ps-hw-web path { vector-effect: non-scaling-stroke; }
+.ps-hw-spider { position: absolute; top: 0; right: 14px; display: flex; flex-direction: column; align-items: center; color: var(--ps-muted); opacity: .65; }
+.ps-hw-spider::before { content: ""; width: 1px; height: 66px; background: currentColor; opacity: .7; }
+.ps-hw-spider svg { width: 14px; height: 14px; fill: currentColor; stroke: currentColor; stroke-width: .9; }
+.ps-hw-lantern { flex: none; width: 1.3em; height: 1.3em; max-width: 32px; max-height: 32px; margin-left: .2em; stroke: none; }
+.ps-hw-body { fill: var(--ps-hw-orange); stroke: none; }
+.ps-hw-ribs { fill: none; stroke: rgb(0 0 0 / .14); stroke-width: .9; }
+.ps-hw-stem { fill: none; stroke: #5b7a3a; stroke-width: 1.6; stroke-linecap: round; }
+.ps-hw-face { fill: var(--ps-hw-glow); filter: drop-shadow(0 0 .8px #ff9d1a); animation: ps-hw-flicker 3.2s infinite; }
+.ps-hw-carve { fill: none; stroke: var(--ps-hw-carve); stroke-width: 2.2; stroke-linecap: round; }
+@keyframes ps-hw-flicker {
+  0%, 100% { opacity: .95; } 8% { opacity: .7; } 12% { opacity: 1; } 30% { opacity: .82; } 34% { opacity: .98; }
+  52% { opacity: .75; } 55% { opacity: .92; } 70% { opacity: .86; } 78% { opacity: 1; } 90% { opacity: .78; }
+}
+.ps-hw-bat { position: fixed; top: 0; left: 0; z-index: var(--ps-z-toast); width: 40px; height: 20px; pointer-events: none; opacity: 0; }
+.ps-hw-bat svg { display: block; width: 100%; height: 100%; fill: currentColor; animation: ps-hw-flap .2s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+@keyframes ps-hw-flap { to { transform: scaleY(.55); } }
+@media (max-width: 600px) {
+  .ps-hw-web { width: 84px; height: 84px; }
+  .ps-hw-spider { right: 48px; }
+  .ps-hw-spider::before { height: 32px; }
+  .ps-tab-plus.is-pumpkin { width: 46px; height: 34px; background: none; }
+  .ps-tab-plus.is-pumpkin .ps-hw-tab { width: 46px; height: 34px; }
+}
+@media (prefers-reduced-motion: reduce) { .ps-hw-face { animation: none; } .ps-hw-bat { display: none; } }

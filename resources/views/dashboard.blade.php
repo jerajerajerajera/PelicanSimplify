@@ -6,16 +6,23 @@
 <div class="ps" data-simplify-root x-cloak wire:ignore.self
      x-data="pelicanSimplify($wire, @js($this->initial()))"
      x-on:resize.window.debounce.150ms="applyScale(); restoreOverviewView()"
-     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth}"
+     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'ps-halloween': halloween()}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
+    {{-- Halloween (25 October to 2 November): a faint web with a spider in the corner. Clicks pass through. --}}
+    <template x-if="halloween()">
+        <div class="ps-hw-corner" aria-hidden="true">
+            <svg class="ps-hw-web" viewBox="0 0 100 100"><path d="M100 0H0M100 0 10 45M100 0 40 80M100 0V100M100 0 72 95M78 0Q81.1 7 80.2 9.9Q85.5 15.8 86.8 17.6Q92.3 21.3 93.8 20.9Q98.9 23.4 100 22M60 0Q64 11 64 18Q72 27 76 32Q84.4 37 88.8 38Q96.4 41 100 40M40 0Q45 15.5 46 27Q57 39.5 64 48Q75.6 54.5 83.2 57Q93.6 60.5 100 60M20 0Q26 20 28 36Q42 52 52 64Q66.8 72 77.6 76Q90.8 80 100 80"/></svg>
+            <span class="ps-hw-spider"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="3.2"/><path d="M4 5 1 2M4 7H0M4 9l-3 3M10 5l3-3M10 7h4M10 9l3 3"/></svg></span>
+        </div>
+    </template>
 
     <main class="ps-main">
         {{-- Header ------------------------------------------------------------------------------ --}}
         <header class="ps-top">
             <div class="ps-heading">
                 <div class="ps-identity">
-                    <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span></h1></a>
+                    <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span><template x-if="halloween()"><svg class="ps-hw-lantern" viewBox="0 0 24 24" aria-hidden="true"><path class="ps-hw-body" d="M12 6.5c-1.6-.9-3.6-1-5.3-.2C3.8 7.6 2.5 10.7 3.3 14c.8 3.4 3.6 5.6 6.4 5.4.8 0 1.6-.3 2.3-.7.7.4 1.5.7 2.3.7 2.8.2 5.6-2 6.4-5.4.8-3.3-.5-6.4-3.4-7.7-1.7-.8-3.7-.7-5.3.2z"/><path class="ps-hw-ribs" d="M8.2 7.2c-1.4 3-1.4 7.5.6 11.6M15.8 7.2c1.4 3 1.4 7.5-.6 11.6"/><path class="ps-hw-stem" d="M12 6.5c0-1.6.6-2.8 2-3.6"/><g class="ps-hw-face"><path d="M7.4 11.6 9.6 10l.9 2.4z"/><path d="M16.6 11.6 14.4 10l-.9 2.4z"/><path d="M7 14.6c1.4 2.2 8.6 2.2 10 0-.9.5-1.6.6-2.2.6l-.5-.9-.7 1.1c-.8.1-1.4.1-2.2 0l-.7-1.1-.5.9c-.7 0-1.3-.1-2.2-.6z"/></g></svg></template></h1></a>
                 </div>
                 <a x-show="server" :href="boot.list_url" class="ps-btn ps-back-overview">
                     <svg aria-hidden="true"><use href="#ps-back"/></svg><span>All servers</span>
@@ -225,6 +232,10 @@
                             <p class="ps-dropdown-hint">Only for you, on this device.</p>
                             <template x-if="!server">
                                 <div class="ps-customize">
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
+                                        <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
+                                    </button>
                                     <div class="ps-customize-row">
                                         <div><strong>Layout</strong><small>Cards, small cards or rows</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Layout">
@@ -891,7 +902,7 @@
         </button>
         <div class="ps-tab-create" x-show="boot.can_create">
             <button type="button" class="ps-tab" aria-haspopup="dialog" :aria-expanded="createMenu" x-on:click="navMenu=false; createChoices().length===1 ? openCreate(createChoices()[0].key) : (createMenu=!createMenu)">
-                <span class="ps-tab-plus"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span><span>New</span>
+                <span class="ps-tab-plus" :class="{'is-pumpkin': halloween()}"><svg aria-hidden="true" x-show="!halloween()"><use href="#ps-plus"/></svg><svg class="ps-hw-tab" viewBox="0 3 24 18" aria-hidden="true" x-show="halloween()" x-cloak><path class="ps-hw-body" d="M12 6.5c-1.6-.9-3.6-1-5.3-.2C3.8 7.6 2.5 10.7 3.3 14c.8 3.4 3.6 5.6 6.4 5.4.8 0 1.6-.3 2.3-.7.7.4 1.5.7 2.3.7 2.8.2 5.6-2 6.4-5.4.8-3.3-.5-6.4-3.4-7.7-1.7-.8-3.7-.7-5.3.2z"/><path class="ps-hw-ribs" d="M8.2 7.2c-1.4 3-1.4 7.5.6 11.6M15.8 7.2c1.4 3 1.4 7.5-.6 11.6"/><path class="ps-hw-stem" d="M12 6.5c0-1.6.6-2.8 2-3.6"/><path class="ps-hw-carve" d="M12 9.6v6.4M8.8 12.8h6.4"/></svg></span><span>New</span>
             </button>
             <div class="ps-dropdown ps-tab-create-menu" x-show="createMenu" x-cloak x-transition.opacity role="menu">
                 <template x-for="choice in createChoices()" :key="choice.key">
