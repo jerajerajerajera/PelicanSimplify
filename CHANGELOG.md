@@ -1,5 +1,12 @@
 # Changes
 
+## 0.5.1-snapshot.3 (snapshot channel)
+A reworked server page: a compact header with the power buttons and the MOTD, a row with players and usage, and a console as tall as the menu that fits the screen without scrolling.
+- The header shows the icon, name, status, software and address on one line; one power button follows the status, with Restart next to it and the other actions under ⋯.
+- An open workspace keeps a one-line mini console; the console can also be made bigger or opened in its own window.
+- Phones get a bottom bar with Console, Players, Files and More; landscape keeps a one-line header.
+- Host mode uses the same layout.
+
 ## 0.5.1-snapshot.2 (snapshot channel)
 App notifications: announcements and updates can arrive as notifications on your phone or computer.
 - Account menu → Notifications: turn notifications on for this device, send a test notification, choose announcements and (administrators) updates, and remove other devices.
