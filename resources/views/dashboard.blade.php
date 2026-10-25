@@ -16,7 +16,6 @@
             <div class="ps-heading">
                 <div class="ps-identity">
                     <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span></h1></a>
-                    <small>Enhanced by <a class="ps-project-link" href="https://github.com/jerajerajerajera/PelicanSimplify" target="_blank" rel="noopener noreferrer">Simplify</a></small>
                 </div>
                 <a x-show="server" :href="boot.list_url" class="ps-btn ps-back-overview">
                     <svg aria-hidden="true"><use href="#ps-back"/></svg><span>Back to server overview</span>
