@@ -464,6 +464,46 @@ const { start } = require('./browser-harness');
     await listWidgets.close();
     console.log('PASS plugin widgets as tiles sized to their content, hidden when a server has none');
 
+    // 17. Phone on its side (wide but low): the overview scrolls as one page instead of leaving a sliver
+    // for the server list, the console fits the screen, and turning the phone back keeps the page scrolling.
+    for (const viewport of [{ width: 740, height: 360 }, { width: 844, height: 390 }, { width: 932, height: 430 }]) {
+      const side = await open('/?mode=overview&theme=light', viewport);
+      // The last server card can be scrolled fully into view (it used to sit in a 24 px high list).
+      const reachable = () => side.evaluate(() => {
+        const cards = document.querySelectorAll('.ps-server-entry'), last = cards[cards.length - 1];
+        last.scrollIntoView({ block: 'end' });
+        const box = last.getBoundingClientRect();
+        scrollTo(0, 0);
+        return box.top >= 0 && box.bottom <= innerHeight + 1 ? true : JSON.stringify({ top: box.top, bottom: box.bottom, height: innerHeight });
+      });
+      assert.equal(await reachable(), true, 'landscape overview at ' + viewport.width);
+      await side.setViewportSize({ width: viewport.height, height: viewport.width });
+      await side.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).phone);
+      assert.equal(await reachable(), true, 'portrait after turning');
+      await side.setViewportSize(viewport);
+      await side.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).phone);
+      assert.equal(await reachable(), true, 'landscape after turning back');
+      await side.close();
+      const console_ = await open('/?mode=server&theme=dark', viewport);
+      const height = await console_.evaluate(() => document.querySelector('.ps-console').getBoundingClientRect().height);
+      assert.ok(height >= 260 && height <= viewport.height, 'console fits a low screen: ' + height);
+      await data(console_, (d) => d.open('settings'));
+      await console_.waitForFunction(() => Alpine.$data(document.querySelector('.ps')).docked());
+      const dock = await console_.evaluate(() => document.querySelector('.ps-dock').getBoundingClientRect().height);
+      assert.ok(dock <= viewport.height, 'docked workspace fits a low screen: ' + dock);
+      await console_.close();
+    }
+    // Sideways strips show which side hides more items.
+    const strip = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
+    await strip.waitForFunction(() => document.querySelector('.ps-overview-toolbar').dataset.psMore === 'end');
+    await strip.evaluate(() => { const bar = document.querySelector('.ps-overview-toolbar'); bar.scrollLeft = bar.scrollWidth; });
+    await strip.waitForFunction(() => document.querySelector('.ps-overview-toolbar').dataset.psMore === 'start');
+    // A long name gets a second line on phones instead of "…".
+    const name = await strip.evaluate(() => { const h = [...document.querySelectorAll('.ps-card-title-row h3')].find((el) => el.textContent.includes('very long name')); return h.scrollHeight <= h.clientHeight + 1 && h.getBoundingClientRect().height > 30; });
+    assert.ok(name, 'long name on two lines in the phone list');
+    await strip.close();
+    console.log('PASS phone on its side: page scroll, console and workspace fit, turning back, swipe hints, two-line names');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

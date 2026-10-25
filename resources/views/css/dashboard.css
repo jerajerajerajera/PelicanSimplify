@@ -1239,3 +1239,35 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-command button { min-width: 44px; height: 44px; }
 }
 @media (max-width: 480px) { .ps-customize-row > .ps-segmented { display: flex; width: 100%; } .ps-customize-row > .ps-segmented > button { flex: 1 1 0; justify-content: center; } .ps-customize-row > .ps-segmented svg { display: none; } }
+
+/* Sideways scrolling strips (filters, sections, quick commands): the side that hides more items fades
+   out, so a half-visible chip reads as "swipe for more" instead of cut-off text. Set by scrollHint(). */
+[data-ps-more="end"] { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+[data-ps-more="start"] { mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent); }
+[data-ps-more="start end"] { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
+
+/* Phones: a long server name uses a second line before it gets smaller or ends in "…" (list and the
+   two-column compact cards; a compact card grows a little for it). */
+@media (max-width: 600px) {
+  .ps .ps-server-grid.is-compact .ps-server-open { height: auto !important; min-height: calc(var(--ps-compact-h) + var(--ps-power-room, 0px)); }
+  .ps .ps-server-grid.is-compact .ps-card-title-row { height: auto; min-height: 40px; }
+  .ps .ps-server-grid.is-compact .ps-card-title-row h3,
+  .ps .ps-server-grid.is-list .ps-card-title-row h3 { display: -webkit-box; height: auto; max-height: 2.5em; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+}
+
+/* Low screens (a phone on its side): the page scrolls as a whole. The overview no longer squeezes the
+   server list between the header and the health dock, and the console and workspaces fit the screen. */
+@media (max-height: 500px) {
+  body:has(.ps:not(.server-active)), body:has(.ps:not(.server-active)) :is(.fi-layout, .fi-main-ctn) { height: auto; overflow: visible; }
+  body:has(.ps:not(.server-active)) :is(.fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content), .ps:not(.server-active), .ps:not(.server-active) .ps-main { flex: 1 0 auto; min-height: auto; overflow: visible; }
+  .ps .ps-overview, .ps .ps-server-scroll { flex: none; min-height: auto; overflow: visible; mask-image: none; }
+  .ps .ps-health-drawer { --ps-health-details-height: min(320px, calc(100dvh - 40px)); }
+  .ps-main { padding-top: 16px; }
+  /* Room for the status bar that slides in once the server card scrolls away. */
+  .ps:not(.is-embedded) .ps-server-workspace:not(.has-dock) .ps-console { min-height: 0; height: max(260px, calc(100dvh - 76px)); scroll-margin-top: 72px; }
+  .ps:not(.is-embedded) .ps-server-workspace .ps-dock { height: max(260px, calc(100dvh - 76px)); scroll-margin-top: 72px; }
+  .ps-modal-layer { --ps-modal-gap: 8px; }
+}
+@media (max-height: 500px) and (max-width: 1100px) {
+  .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
+}
