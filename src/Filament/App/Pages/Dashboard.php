@@ -119,8 +119,9 @@ final class Dashboard extends Page
     public function listing(): array
     {
         $list=[];
-        $query=Access::overviewQuery();
-        foreach($query->get() as $s){
+        $servers=Access::overviewQuery()->get();
+        \Simplify\Panel\Services\WingsServers::warm($servers); // One Wings request per node feeds retrieveStatus() and the usage below.
+        foreach($servers as $s){
             $linked=user()->isAdmin()||(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned;$m=Extensions::web()?Extensions::webAdapter()->metadata($s):[];
             $status=$s->retrieveStatus()->value;$mc=$status==='offline'?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
