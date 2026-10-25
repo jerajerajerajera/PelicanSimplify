@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks what the Pelican Hub checks before it accepts a sync, so a release is not blocked there.
 
-- No .php file in the repository calls a function the Hub bans as a file or process operation. The Hub scans the
+- No .php file in the repository uses a name the Hub bans as a file or process operation. The Hub scans the
   whole repository, tests and helper scripts included (.gitattributes export-ignore does not help), and matches names,
   Blade templates included.
 - plugin.json has every field Pelican's plugin documentation marks as required (read live from pelican-dev/docs,
@@ -14,12 +14,16 @@ import json, re, subprocess, sys, urllib.request
 root = Path(__file__).resolve().parent.parent
 HUB_UPDATE_URL = 'https://hub.pelican.dev/plugins/{id}/update.json'
 DOCS = 'https://raw.githubusercontent.com/pelican-dev/docs/main/docs/panel/advanced/plugins.mdx'
-# The Hub's "banned file or process operations" (from its rejection messages), plus PHP's other process functions.
-BANNED = ['file_put_contents', 'exec', 'unlink', 'fwrite', 'copy', 'rename', 'mkdir', 'rmdir',
-          'shell_exec', 'system', 'passthru', 'proc_open', 'popen']
+# The Hub's "banned file or process operations" (from its rejection messages), plus PHP's other functions that
+# change files or start processes. The Hub matches the name, so a method of our own with such a name is blocked too
+# (0.5.1 was refused for "private static function link(").
+BANNED = ['file_put_contents', 'exec', 'unlink', 'fwrite', 'copy', 'rename', 'mkdir', 'rmdir', 'link',
+          'symlink', 'chmod', 'chown', 'chgrp', 'lchown', 'lchgrp', 'touch', 'fputs', 'ftruncate',
+          'move_uploaded_file', 'shell_exec', 'system', 'passthru', 'proc_open', 'popen', 'pcntl_exec']
 REQUIRED_FALLBACK = ['id', 'name', 'author', 'category', 'namespace', 'class']
-# A plain call: not a method (->copy, ::copy) and not part of a longer name (fcopy, $copy).
-CALL = re.compile(r'(?<![\w$>:\\])(' + '|'.join(BANNED) + r')\s*\(')
+# Any use of the name followed by "(": plain calls, methods (->copy, ::copy) and declarations (function copy), but not
+# part of a longer name (fcopy) or a variable ($copy).
+CALL = re.compile(r'(?<![\w$])(' + '|'.join(BANNED) + r')\s*\(')
 
 failures = []
 
