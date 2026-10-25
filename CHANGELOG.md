@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.1-snapshot.4 (snapshot channel)
+Halloween: from 25 October to 2 November the dashboard gets a few small seasonal touches.
+- A flickering jack-o'-lantern next to the panel name, a faint web with a spider in the corner, bats that fly off a server card once per visit, a pumpkin New button on phones and an orange overview accent (your own panel, group and server colours stay).
+- Nothing takes space or gets in the way of a click; with reduced motion there are no bats and no flicker.
+- Turn it off for yourself at the top of Customize overview, or for the whole panel under Simplify settings → Appearance → Seasonal touches.
+
 ## 0.5.1-snapshot.3 (snapshot channel)
 A reworked server page: a compact header with the power buttons and the MOTD, a row with players and usage, and a console as tall as the menu that fits the screen without scrolling.
 - The header shows the icon, name, status, software and address on one line; one power button follows the status, with Restart next to it and the other actions under ⋯.
