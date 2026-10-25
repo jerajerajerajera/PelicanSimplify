@@ -757,6 +757,13 @@
         } catch {}
         if (available > 0 && needed > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / needed * 10) / 10) + 'px';
       },
+      /** Shrinks a MOTD box's text only as far as needed to show both full lines, never below 8px. */
+      fitMotd(box) {
+        if (!box) return;
+        box.style.fontSize = '';
+        let size = parseFloat(getComputedStyle(box).fontSize) || 12;
+        while (size > 8 && (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1)) box.style.fontSize = (size -= .5) + 'px';
+      },
       softwareTooltip(s) {
         const software = String(s.software || 'Server software').trim();
         const raw = String(s.reported_version || s.minecraft_version || '').trim();

@@ -16,7 +16,6 @@
             <div class="ps-heading">
                 <div class="ps-identity">
                     <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span></h1></a>
-                    <small>Enhanced by <a class="ps-project-link" href="https://github.com/jerajerajerajera/PelicanSimplify" target="_blank" rel="noopener noreferrer">Simplify</a></small>
                 </div>
                 <a x-show="server" :href="boot.list_url" class="ps-btn ps-back-overview">
                     <svg aria-hidden="true"><use href="#ps-back"/></svg><span>Back to server overview</span>
@@ -505,7 +504,7 @@
                                                 <h3 x-text="cardNames(s).large"></h3>
                                                 <small class="ps-card-real-name" :class="{'no-alias': !cardNames(s).small}" x-text="cardNames(s).small ? '('+cardNames(s).small+')' : ' '"></small>
                                             </div>
-                                            <div class="ps-card-motd ps-motd-preview ps-motd-display" x-show="overviewPreferences.showMotd && s.game==='minecraft' && s.motd"><template x-for="(part,index) in motdPreview(s.motd)" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                                            <div class="ps-card-motd ps-motd-preview ps-motd-display" x-show="overviewPreferences.showMotd && s.game==='minecraft' && s.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="s.motd; overviewPreferences.showMotd; $nextTick(()=>fitMotd($el))"><template x-for="(part,index) in motdPreview(s.motd)" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
                                         </div>
                                         <div class="ps-card-usage" x-show="overviewMetrics().length" :class="{'single-metric': overviewMetrics().length===1}">
                                             <template x-for="metric in overviewMetrics()" :key="metric.key">
@@ -699,7 +698,7 @@
                         <div x-show="server?.pack?.modpack_name"><dt>Modpack</dt><dd x-text="server?.pack?.modpack_name"></dd></div>
                         <div x-show="server?.pack?.modpack_name"><dt>Modpack version</dt><dd x-text="server?.pack?.modpack_version || 'Not reported'"></dd></div>
                     </dl>
-                    <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                    <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="server?.properties?.motd; server?.pack?.motd; $nextTick(()=>fitMotd($el))"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
                     <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
                         <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
                     </button>
