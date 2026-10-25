@@ -1271,3 +1271,20 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 @media (max-height: 500px) and (max-width: 1100px) {
   .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
 }
+
+/* Announcement bars above the overview (Admin tools → Announcements and the Panel's update notices). */
+.ps-announcement-bars { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
+.ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
+.ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
+.ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ps-announcement-copy strong { display: inline; margin-right: 6px; }
+.ps-announcement-copy span { white-space: pre-line; }
+.ps-announcement-copy small { display: block; margin-top: 1px; }
+.ps-announcement-bar .ps-btn { flex: none; }
+@media (max-width: 600px) {
+  .ps-announcement-bar { position: relative; flex-wrap: wrap; padding-right: 44px; }
+  .ps-announcement-copy { flex-basis: calc(100% - 40px); }
+  .ps-announcement-copy strong { display: block; margin: 0; }
+  .ps-announcement-action { margin-left: 32px; }
+  .ps-announcement-hide { position: absolute; top: 6px; right: 6px; }
+}

@@ -40,6 +40,7 @@
       notifyMenu: false,
       noticeHistory: [],
       panelNotices: [],
+      announcements: [],
       incomingNotice: null,
       incomingShown: false,
       incomingQueue: [],
@@ -392,6 +393,7 @@
       initNotices() {
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
+        this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
         if (typeof wire.panelNotifications === 'function') this.noticeTimer = setInterval(() => this.pollPanelNotices(), Math.max(15000, Number(this.intervals?.overview) || 30000));
@@ -422,13 +424,54 @@
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        const update = this.boot.update;
-        if (update?.available) {
-          items.push({ id: 'update', tone: 'info', title: 'Simplify ' + update.version + ' is available', text: 'You are running ' + (update.current || 'an older version') + '. Update from the Plugins page.', action: update.url ? { label: 'Open plugins', url: update.url } : null });
+        // Announcements (also the Panel's update announcements); hidden bars stay here until they end.
+        for (const item of this.announcements) {
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
         return items;
+      },
+      /** The bell's count: everything except announcements this account already hid. */
+      unreadNotifications() {
+        return this.notifications().filter((item) => !item.dismissed).length;
+      },
+      /** Announcement bars above the overview: live and not hidden by this account. */
+      announcementBars() {
+        return this.announcements.filter((item) => !item.dismissed);
+      },
+      announcementMeta(item) {
+        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
+        // The category only as context for other details; the colour already says it.
+        const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
+        return (details.length && category ? [category, ...details] : details).join(' · ');
+      },
+      externalLink(url) {
+        try {
+          return new URL(url, location.origin).origin !== location.origin;
+        } catch {
+          return false;
+        }
+      },
+      /** Hides an announcement bar for this account (kept with the account, so every device follows). */
+      async dismissAnnouncement(key) {
+        const before = this.announcements;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: true } : item));
+        if (typeof wire.dismissAnnouncement !== 'function') return;
+        try {
+          const items = await wire.dismissAnnouncement(key);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          this.announcements = before;
+          this.toast('The announcement could not be hidden.', 'warn');
+        }
+      },
+      async refreshAnnouncements() {
+        if (typeof wire.announcements !== 'function') return;
+        try {
+          const items = await wire.announcements();
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {}
       },
       adminPages() {
         return Array.isArray(this.boot.admin_pages) ? this.boot.admin_pages : [];
@@ -527,6 +570,7 @@
         this.appearanceMenu = false;
         this.groupsMenu = false;
         this.accountMenu = false;
+        if (this.notifyMenu) this.refreshAnnouncements();
         if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
         try {
           const items = await wire.panelNotifications();
@@ -535,6 +579,7 @@
       },
       async pollPanelNotices() {
         if (globalThis.document?.hidden || this.destroyed || this.notifyMenu) return;
+        this.refreshAnnouncements();
         try {
           const items = await wire.panelNotifications();
           if (!Array.isArray(items)) return;
