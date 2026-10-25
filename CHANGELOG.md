@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.2 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+Hotfix for 0.5.1, so the release is accepted on the Pelican Hub. Nothing changes in how Simplify works.
+- The announcement button helper has a new name; the Hub refused the old one.
+- The release check now also catches method names the Hub does not allow.
+
 ## 0.5.1 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 The first stable release since 0.4.7. It brings everything from the 0.5.0 and 0.5.1 betas. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Announcements:** Info, Warning or Success bars above the server overview, managed under Admin tools → Announcements, with a start and end time, everyone or administrators only, and an optional button. Administrators also see a notice when Simplify, another plugin, Wings or Pelican has a new version.
