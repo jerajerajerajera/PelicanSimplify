@@ -63,7 +63,7 @@ final class SimplifyProvider extends ServiceProvider
             Schedule::command('simplify:maintenance')->everyMinute()->withoutOverlapping(5);
             Schedule::command('simplify:plugin-updates')->everyMinute()->withoutOverlapping(60);
             Schedule::command('simplify:subdomains')->everyFiveMinutes()->withoutOverlapping(10);
-            Schedule::command('simplify:announcements')->everyTenMinutes()->withoutOverlapping(10);
+            Schedule::command('simplify:announcements')->everyMinute()->withoutOverlapping(10);
         });
     }
 }

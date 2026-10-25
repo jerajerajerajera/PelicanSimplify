@@ -41,6 +41,8 @@
       noticeHistory: [],
       panelNotices: [],
       announcements: [],
+      // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
+      push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
       incomingNotice: null,
       incomingShown: false,
       incomingQueue: [],
@@ -394,6 +396,7 @@
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
         this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
+        this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
         if (typeof wire.panelNotifications === 'function') this.noticeTimer = setInterval(() => this.pollPanelNotices(), Math.max(15000, Number(this.intervals?.overview) || 30000));
@@ -465,6 +468,165 @@
           this.announcements = before;
           this.toast('The announcement could not be hidden.', 'warn');
         }
+      },
+      /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
+      pushSupported() {
+        return !!(globalThis.isSecureContext && globalThis.navigator?.serviceWorker && 'PushManager' in globalThis && 'Notification' in globalThis);
+      },
+      pushNeedsInstall() {
+        const nav = globalThis.navigator || {};
+        const ios = /iPad|iPhone|iPod/.test(nav.userAgent || '') || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1);
+        const standalone = nav.standalone === true || !!globalThis.matchMedia?.('(display-mode: standalone)').matches;
+        return ios && !standalone;
+      },
+      pushBlocked() {
+        return globalThis.Notification?.permission === 'denied';
+      },
+      /** The bell offers notifications once per device, until they are on or the offer is dismissed. */
+      pushOffer() {
+        return this.push.checked && !this.push.endpoint && !this.push.optInHidden && !this.pushBlocked() && (this.pushSupported() || this.pushNeedsInstall());
+      },
+      hidePushOffer() {
+        this.push.optInHidden = true;
+        try {
+          localStorage.setItem('pelicanSimplify.pushOffer', 'hidden');
+        } catch {}
+      },
+      async pushRegistration() {
+        const worker = globalThis.navigator.serviceWorker;
+        const existing = await worker.getRegistration().catch(() => null);
+        if (existing) return existing;
+        // core.js registers the worker after the page load; wait for it a little.
+        return Promise.race([worker.ready, new Promise((resolve) => setTimeout(() => resolve(null), 8000))]);
+      },
+      async checkPush() {
+        try {
+          this.push.optInHidden = localStorage.getItem('pelicanSimplify.pushOffer') === 'hidden';
+        } catch {}
+        if (!this.pushSupported()) return (this.push.checked = true);
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          const subscription = await registration?.pushManager.getSubscription();
+          this.push.endpoint = subscription?.endpoint || null;
+        } catch {}
+        this.push.checked = true;
+      },
+      openNotifications() {
+        this.openPopup('notifications');
+        this.loadPush();
+      },
+      async loadPush() {
+        this.push.error = '';
+        await this.checkPush();
+        try {
+          this.push.settings = await wire.pushSettings(this.push.endpoint);
+        } catch {
+          this.push.error = 'Notification settings could not be loaded.';
+        }
+      },
+      pushOn() {
+        return !!this.push.endpoint && !!this.push.settings?.devices?.some((device) => device.current);
+      },
+      deviceLabel() {
+        const agent = globalThis.navigator?.userAgent || '';
+        const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /SamsungBrowser/.test(agent) ? 'Samsung Internet' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : 'Browser';
+        const system = /iPhone/.test(agent) ? 'iPhone' : /iPad/.test(agent) ? 'iPad' : /Android/.test(agent) ? 'Android' : /Windows/.test(agent) ? 'Windows' : /Mac OS X/.test(agent) ? 'Mac' : /Linux/.test(agent) ? 'Linux' : '';
+        const app = globalThis.matchMedia?.('(display-mode: standalone)').matches || globalThis.navigator?.standalone === true;
+        return browser + (system ? ' on ' + system : '') + (app ? ' · installed app' : '');
+      },
+      async enablePush() {
+        if (this.push.busy) return;
+        this.push.busy = true;
+        this.push.error = '';
+        try {
+          const permission = await globalThis.Notification.requestPermission();
+          if (permission !== 'granted') {
+            this.push.error = permission === 'denied' ? 'Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.' : 'Notifications were not allowed.';
+            return;
+          }
+          const registration = await this.pushRegistration();
+          if (!registration) {
+            this.push.error = 'The app is still starting. Reload the page and try again.';
+            return;
+          }
+          const key = this.push.settings?.key || (await wire.pushSettings(null)).key;
+          const bytes = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (key.length % 4)) % 4)), (c) => c.charCodeAt(0));
+          let subscription = await registration.pushManager.getSubscription();
+          // A subscription made with another key (after the panel's keys changed) cannot be used.
+          const current = subscription?.options?.applicationServerKey;
+          if (subscription && current && !new Uint8Array(current).every((value, index) => value === bytes[index])) {
+            await subscription.unsubscribe();
+            subscription = null;
+          }
+          subscription ||= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+          const result = await wire.savePushSubscription(subscription.toJSON(), this.deviceLabel());
+          if (!result?.ok) {
+            await subscription.unsubscribe().catch(() => {});
+            this.push.error = result?.message || 'Notifications could not be turned on.';
+            return;
+          }
+          this.push.endpoint = subscription.endpoint;
+          this.push.settings = { ...this.push.settings, ...result };
+          this.toast('Notifications are on for this device.', 'ok');
+        } catch {
+          this.push.error = 'Notifications could not be turned on in this browser.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async disablePush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        const endpoint = this.push.endpoint;
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          await (await registration?.pushManager.getSubscription())?.unsubscribe();
+        } catch {}
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(endpoint)) };
+          this.push.endpoint = null;
+          this.toast('Notifications are off for this device.', 'info');
+        } catch {
+          this.push.error = 'Notifications could not be turned off.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async testPush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        try {
+          const result = await wire.sendTestPush(this.push.endpoint);
+          this.toast(result?.message || 'Test sent.', result?.ok ? 'ok' : 'warn');
+        } catch {
+          this.toast('The test could not be sent.', 'warn');
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async removePushDevice(id) {
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(id)) };
+        } catch {
+          this.toast('The device could not be removed.', 'warn');
+        }
+      },
+      async setPushPreference(kind, value) {
+        const before = this.push.settings?.preferences || {};
+        this.push.settings = { ...this.push.settings, preferences: { ...before, [kind]: value } };
+        try {
+          this.push.settings.preferences = await wire.savePushPreferences({ [kind]: value });
+        } catch {
+          this.push.settings = { ...this.push.settings, preferences: before };
+          this.toast('Your choice could not be saved.', 'warn');
+        }
+      },
+      pushDeviceTime(device) {
+        if (!device.last_sent_at) return 'No notification sent yet';
+        const seconds = Math.max(0, Date.now() / 1000 - device.last_sent_at);
+        const days = Math.round(seconds / 86400);
+        const ago = seconds < 3600 ? Math.max(1, Math.round(seconds / 60)) + ' min ago' : seconds < 86400 ? Math.round(seconds / 3600) + ' h ago' : days === 1 ? 'yesterday' : days + ' days ago';
+        return 'Last notification ' + ago;
       },
       async refreshAnnouncements() {
         if (typeof wire.announcements !== 'function') return;
@@ -1586,6 +1748,7 @@
         if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
         if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
         if (this.modal === 'account') return 'Profile';
+        if (this.modal === 'notifications') return 'Notifications';
         if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
         if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
@@ -1593,7 +1756,7 @@
       },
       /** Every popup has a fixed size: small for short forms, large for embedded or list workspaces. */
       modalSize() {
-        if (['alias', 'restart'].includes(this.modal)) return 'is-sm';
+        if (['alias', 'restart', 'notifications'].includes(this.modal)) return 'is-sm';
         if (['create', 'panel-settings', 'admin-page', 'account', 'files', 'schedules', 'activity', 'backups', 'software', 'settings', 'plugins', 'mods', 'external'].includes(this.modal)) return 'is-lg';
         return 'is-md';
       },

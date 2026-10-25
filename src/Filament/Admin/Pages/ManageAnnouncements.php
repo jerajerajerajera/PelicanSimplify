@@ -6,6 +6,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -65,6 +66,8 @@ final class ManageAnnouncements extends Page
             Select::make('server')->label('Server')->options(fn () => $this->serverOptions())->searchable()->visible(fn ($get) => $get('link_type') === 'server')->required(fn ($get) => $get('link_type') === 'server'),
             TextInput::make('url')->label('Link')->placeholder('https://… or /path on this panel')->maxLength(2048)->visible(fn ($get) => $get('link_type') === 'url')->required(fn ($get) => $get('link_type') === 'url'),
             TextInput::make('button_label')->label('Button text')->placeholder('Open')->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
+            Toggle::make('push')->label('Also send as app notification')
+                ->helperText('To everyone who turned on notifications (account menu → Notifications). Sent once, when the announcement starts.'),
         ];
     }
 
