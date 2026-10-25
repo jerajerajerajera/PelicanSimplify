@@ -476,7 +476,7 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
   background: var(--ps-surface);
 }
 .ps-server-info:has(.ps-info-menu:not([style*="display: none"])) { overflow: visible; }
-.ps-server-info:has(.ps-info-menu:not([style*="display: none"])) .ps-server-banner { border-radius: var(--ps-radius-lg); }
+.ps-info-decor { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: calc(var(--ps-radius-lg) - 1px); pointer-events: none; }
 .ps-server-banner { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .5; filter: blur(6px); pointer-events: none; transform: scale(1.04); mask-image: linear-gradient(to right, transparent 45%, #000 100%); }
 .ps.dark .ps-server-banner { opacity: .55; }
 .ps-server-info .ps-offline-artwork { width: 100%; opacity: .42; filter: blur(1px); mask-image: linear-gradient(to right, transparent 30%, #000 78%); }
@@ -500,6 +500,10 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
 .ps-info-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-width: 0; color: var(--ps-muted); font-size: 13px; }
 .ps-info-meta-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .ps-info-meta-item > span { overflow-wrap: anywhere; }
+a.ps-info-modpack { color: var(--ps-ink); font-weight: 600; text-decoration: none; }
+a.ps-info-modpack:hover { color: var(--ps-accent); }
+a.ps-info-modpack:hover > span { text-decoration: underline; text-underline-offset: 3px; }
+.ps-info-modpack-out { width: 13px; height: 13px; opacity: .7; }
 .ps-info-meta svg { flex: none; width: 15px; height: 15px; }
 .ps-address { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; border: 0; background: none; color: var(--ps-ink); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
 .ps-address > span { min-width: 0; overflow-wrap: anywhere; }
@@ -586,11 +590,6 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
 .ps-stat > small { position: relative; z-index: 1; color: var(--ps-muted); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 .ps-stat-total { color: var(--ps-muted); font-size: 15px; font-weight: 500; }
 .ps-spark { position: absolute; bottom: 0; left: 0; width: 100%; height: 22px; stroke: var(--ps-accent); stroke-width: 1.7; opacity: .3; }
-.ps-pack-summary { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 15px; }
-.ps-pack-summary img { width: 42px; height: 42px; border-radius: 12px; object-fit: contain; }
-.ps-pack-summary > div { flex: 1; min-width: 0; }
-.ps-pack-summary h3 { margin: 0 0 3px; font-size: 15px; }
-.ps-pack-summary p { color: var(--ps-muted); font-size: 11px; }
 
 @media (min-width: 1700px) { .ps-main { padding-inline: 60px; } }
 
@@ -909,7 +908,7 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
   .ps-info-motd { display: none !important; }
 }
 /* The console alone in its own window: nothing but the console, edge to edge. */
-.ps.is-console-window :is(.ps-top, .ps-server-info, .ps-server-stats, .ps-widget-grid, .ps-phone-sections, .ps-pack-summary, .ps-plugin-widgets, .ps-statusbar, .ps-tabbar) { display: none !important; }
+.ps.is-console-window :is(.ps-top, .ps-server-info, .ps-server-stats, .ps-widget-grid, .ps-phone-sections, .ps-plugin-widgets, .ps-statusbar, .ps-tabbar) { display: none !important; }
 .ps.is-console-window .ps-main { padding: 10px; }
 .ps.is-console-window .ps-server-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "main"; height: calc(100dvh - 20px); }
 body:has(.ps.is-console-window) :is(.fi-topbar, .fi-sidebar, .fi-footer, [data-ps-footer]) { display: none !important; }
@@ -1185,6 +1184,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-game-title h2 { font-size: 20px; }
   .ps .ps-info-meta { gap: 4px 12px; font-size: 12px; }
   .ps .ps-info-meta-item { display: none; }
+  .ps .ps-info-meta-item.ps-info-modpack { display: inline-flex; }
   .ps .ps-info-power { gap: 8px; }
   .ps .ps-info-power > .ps-power-main, .ps .ps-info-power > .ps-power-restart { flex: 1; min-height: 44px; }
   .ps .ps-info-power > .ps-info-more-button { width: 44px; height: 44px; }

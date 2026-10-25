@@ -232,6 +232,9 @@ const { start } = require('./browser-harness');
     const listing = await open('/?mode=server&theme=dark');
     await listing.click('.ps-info-more-button');
     await listing.waitForSelector('#ps-info-menu', { state: 'visible' });
+    // The card lets the menu overflow while it is open, but the blurred background stays inside the card.
+    const decor = await listing.evaluate(() => { const card = document.querySelector('.ps-server-info').getBoundingClientRect(), layer = document.querySelector('.ps-info-decor'), box = layer.getBoundingClientRect(); return { clips: getComputedStyle(layer).overflow === 'hidden', banners: [...document.querySelectorAll('.ps-server-info .ps-server-banner')].every((b) => layer.contains(b)), inside: box.left >= card.left && box.right <= card.right && box.top >= card.top && box.bottom <= card.bottom }; });
+    assert.deepEqual(decor, { clips: true, banners: true, inside: true }, 'the background stays inside the card while the menu is open');
     assert.equal(await listing.locator('.ps-web-listing').isVisible(), false, 'no switch without the website plugin');
     await listing.evaluate(() => { window.__wire.saveListing = async (v) => v; Alpine.$data(document.querySelector('.ps')).server.website_listing = { visible: false }; });
     await listing.waitForSelector('.ps-web-listing', { state: 'visible' });
@@ -241,7 +244,19 @@ const { start } = require('./browser-harness');
     assert.ok(place, 'the switch sits in the more menu above Force stop');
     if (process.env.SCREENSHOT_DIR) await listing.locator('.ps-server-info').screenshot({ path: process.env.SCREENSHOT_DIR + '/website-listing.png' });
     await listing.close();
-    console.log('PASS website listing switch in the server menu');
+    console.log('PASS website listing switch in the server menu, background stays inside the card');
+
+    // 10b. Modpack: a link in the header line, no separate card under the console.
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const pack = await open('/?mode=server&theme=dark', viewport);
+      await data(pack, (d) => { d.server.pack = { ...d.server.pack, modpack_name: 'FTB Evolution 2', modpack_version: '1.5.1', modpack_url: 'https://example.com/pack' }; });
+      await pack.waitForSelector('a.ps-info-modpack', { state: 'visible' });
+      assert.equal(await pack.getAttribute('a.ps-info-modpack', 'href'), 'https://example.com/pack');
+      assert.equal((await pack.textContent('a.ps-info-modpack')).trim(), 'FTB Evolution 2 1.5.1');
+      assert.equal(await pack.locator('.ps-pack-summary').count(), 0, 'no modpack card under the console');
+      await pack.close();
+    }
+    console.log('PASS modpack link in the server header');
 
     // 11. MOTD editor: the lines are edited in place, and the toolbar writes clean codes into the settings.
     const motd = await open('/?mode=server&theme=dark');
