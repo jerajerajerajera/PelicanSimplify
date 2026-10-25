@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.0-beta.5 to 0.5.0-beta.8 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+Available on the beta channel: a more flexible server overview. Everything from 0.5.0-beta.4 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **Server groups:** make your own groups from the Server groups button in the top bar, each with its own order; groups are saved with your account, so every device shows the same. (beta.5, beta.6, beta.7)
+- **Layout and order:** Customize overview → Layout offers Cards, Compact (new, small cards without graphs) or List, with 2 to 6 columns and Narrow, Normal or Wide cards; the overview can be ordered by Name, Created or Port. Phones can pick their own layout. (beta.7)
+- **Quick actions:** Off, On or Hover (beta.7). **Full screen width:** a switch to let the overview use the whole screen (beta.5).
+- **Size:** the interface keeps its normal size below 1440p and only scales down, never below 75%, when the page would not fit; long server names use two lines. (beta.7)
+- Fixed in beta.8: the overview and server pages answered with a server error (500) on beta.7.
+
 ## 0.5.0-beta.4 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Available on the beta channel. The same change as stable 0.4.7: on a Pelican release Simplify was not tested on, the setup check "Tested Pelican release" is a warning and installing continues. Everything from 0.5.0-beta.3 below is included. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 
