@@ -306,7 +306,7 @@
                             </span>
                             <span class="ps-account-username" x-text="boot.user"></span>
                         </button>
-                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 4 : 3) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
+                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 4 : 3) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
                             <div class="ps-account-actions-inner">
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="Profile settings" aria-label="Profile settings" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
@@ -316,7 +316,7 @@
                                     <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
                                 </button>
                                 {{-- Theme: the current choice; clicking it unfolds Light, Dark and System. --}}
-                                <button type="button" class="ps-btn is-icon" x-show="!themeOpen" x-on:click="themeOpen=true" :data-tip="'Theme: '+(theme==='light' ? 'Light' : theme==='dark' ? 'Dark' : 'System')" aria-label="Choose theme" :aria-expanded="themeOpen">
+                                <button type="button" class="ps-btn is-icon" x-show="!themeOpen && !themeForced" x-on:click="themeOpen=true" :data-tip="'Theme: '+(theme==='light' ? 'Light' : theme==='dark' ? 'Dark' : 'System')" aria-label="Choose theme" :aria-expanded="themeOpen">
                                     <svg aria-hidden="true"><use :href="theme==='light' ? '#ps-sun' : theme==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
                                 </button>
                                 <template x-for="t in ['light','dark','system']" :key="t">

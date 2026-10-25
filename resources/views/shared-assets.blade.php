@@ -4,6 +4,7 @@
         ...\Simplify\Panel\Services\FeatureSettings::all(),
         ...\Simplify\Panel\Services\AppearanceSettings::all(),
         'web_app' => ['worker' => route('simplify.worker').'?v='.\Simplify\Panel\Services\WebApp::version(), 'scope' => \Simplify\Panel\Services\WebApp::scope()],
+        'panel_theme' => \Simplify\Panel\Services\PanelTheme::state(),
         'legacy_page' => !$ownPage || (request()->routeIs('*.pages.pelican-simplify-settings') && !request()->boolean('simplify_embed')),
     ];
 @endphp

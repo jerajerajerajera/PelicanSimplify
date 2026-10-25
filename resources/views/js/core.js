@@ -29,7 +29,9 @@
     }
   } catch {}
 
-  const dark = () => preference === 'dark' || (preference === 'system' && media.matches);
+  // A theme plugin can force one mode (Catppuccin is dark only); then the choice in the menu has no effect.
+  const forced = () => options.panel_theme?.mode || '';
+  const dark = () => (forced() ? forced() === 'dark' : preference === 'dark' || (preference === 'system' && media.matches));
   const hex = (value) => (/^#[0-9a-f]{6}$/i.test(value || '') ? value : '');
   const accentInk = (color) => {
     const [r, g, b] = color.slice(1).match(/../g).map((v) => {
@@ -39,12 +41,34 @@
     return r * 0.2126 + g * 0.7152 + b * 0.0722 > 0.179 ? '#111118' : '#ffffff';
   };
 
+  // Any CSS colour (Filament stores oklch) as #rrggbb, so the accent ink can be worked out from it.
+  const toHex = (color) => {
+    try {
+      const ctx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d');
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      return '#' + [...ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)].map((v) => v.toString(16).padStart(2, '0')).join('');
+    } catch {
+      return '';
+    }
+  };
+  // With a panel theme the default (grey) accent becomes the theme's primary colour; a chosen accent stays.
+  const themeAccent = () => {
+    if (!options.panel_theme?.active || (options.accent_color || '#878787') !== '#878787') return '';
+    const value = getComputedStyle(root).getPropertyValue(dark() ? '--primary-400' : '--primary-600').trim();
+    return value ? hex(toHex(value)) : '';
+  };
+
   const apply = () => {
     const ownPage = !frameKind && !options.legacy_page;
-    const themed = !!options.global_theme && (frameKind ? !!options.legacy_theme || ['create', 'settings'].includes(frameKind) : ownPage);
+    const panelTheme = options.panel_theme || {};
+    // A theme with its own stylesheet keeps styling Pelican's pages; Simplify only styles its own screens then.
+    const legacy = frameKind ? !['create', 'settings'].includes(frameKind) : !ownPage;
+    const themed = !!options.global_theme && !(panelTheme.own_css && legacy) && (frameKind ? !!options.legacy_theme || !legacy : ownPage);
     root.classList.toggle('ps-theme', themed);
+    root.classList.toggle('ps-panel-theme', !!panelTheme.active);
     if (themed || ownPage) root.classList.toggle('dark', dark());
-    const accent = hex(frameAccent) || hex(options.accent_color);
+    const accent = hex(frameAccent) || themeAccent() || hex(options.accent_color);
     if (accent) {
       root.style.setProperty('--ps-accent', accent);
       root.style.setProperty('--ps-on-accent', accentInk(accent));
@@ -57,13 +81,17 @@
     }
     ui.layer?.classList.toggle('dark', dark());
     // The phone's status bar follows the chosen theme, not only the system one.
-    if (!frameKind) document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute('content', dark() ? '#101012' : '#f4f4f5'));
+    if (!frameKind) {
+      const bar = (panelTheme.active && hex(toHex(getComputedStyle(root).getPropertyValue('--ps-bg').trim()))) || (dark() ? '#101012' : '#f4f4f5');
+      document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute('content', bar));
+    }
     window.dispatchEvent(new CustomEvent('simplify:theme', { detail: { preference, dark: dark() } }));
   };
 
   window.SimplifyTheme = {
     accentInk,
     dark,
+    forced,
     preference: () => preference,
     set(value) {
       if (!CHOICES.includes(value)) return;
