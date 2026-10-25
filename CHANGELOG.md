@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.1-snapshot.5 (snapshot channel)
+Fixes the server page header: opening the ⋯ menu made the header background grow and stick out on the right (since 0.5.1-snapshot.3).
+- The modpack card under the console is gone; the modpack name and version in the header now link to the modpack page, also on phones.
+
 ## 0.5.1-snapshot.4 (snapshot channel)
 Halloween: from 25 October to 2 November the dashboard gets a few small seasonal touches.
 - A flickering jack-o'-lantern next to the panel name, a faint web with a spider in the corner, bats that fly off a server card once per visit, a pumpkin New button on phones and an orange overview accent (your own panel, group and server colours stay).
