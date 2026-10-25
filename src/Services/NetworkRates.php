@@ -12,8 +12,10 @@ final class NetworkRates
         return Cache::lock('simplify.network-rate-lock.'.$key, 5)->block(3, function () use ($key, $counters, $timestamp): array {
             $cacheKey = 'simplify.network-rate.'.$key;
             $previous = Cache::get($cacheKey);
+            // The same sample again (a shared node list that was still cached) keeps the rates it produced.
+            if (is_array($previous) && (float) ($previous['at'] ?? 0) >= $timestamp && is_array($previous['rates'] ?? null)) return $previous['rates'];
             $rates = self::calculate($counters, $timestamp, is_array($previous) ? $previous : null);
-            Cache::put($cacheKey, ['at'=>$timestamp, 'counters'=>$counters], 120);
+            Cache::put($cacheKey, ['at'=>$timestamp, 'counters'=>$counters, 'rates'=>$rates], 120);
             return $rates;
         });
     }

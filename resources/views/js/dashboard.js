@@ -4,17 +4,23 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, showQuickActions: true, minecraftAlwaysGreen: true };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'showQuickActions', 'minecraftAlwaysGreen'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton', 'halloween'];
+  // Overview settings that pick one of a fixed set of values.
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
+  const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
+  // Own server groups in the overview: at most this many groups, names at most this long.
+  const GROUP_LIMIT = 30;
+  const GROUP_NAME_LENGTH = 40;
+  // Server order for the overview, and per group (Overview follows the overview's order, Manual uses the arrows).
+  const SERVER_ORDERS = [{ key: 'name', label: 'Name' }, { key: 'created', label: 'Created' }, { key: 'port', label: 'Port' }];
+  const GROUP_ORDERS = [{ key: 'overview', label: 'Same as the overview' }, { key: 'manual', label: 'My own order' }, ...SERVER_ORDERS.map((o) => ({ ...o, label: { name: 'Name (A to Z)', created: 'Oldest first', port: 'Port (lowest first)' }[o.key] }))];
   const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
-  const accentInk = (color) => {
-    if (window.SimplifyTheme?.accentInk) return window.SimplifyTheme.accentInk(color);
-    const [r, g, b] = color.slice(1).match(/../g).map((v) => {
-      const x = parseInt(v, 16) / 255;
-      return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
-    });
-    return r * 0.2126 + g * 0.7152 + b * 0.0722 > 0.179 ? '#111118' : '#ffffff';
-  };
+  // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
+  const PHONE_SECTIONS = ['players', 'files'];
+  const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
+  // core.js (loaded in <head> on every panel page) owns the contrast calculation.
+  const accentInk = (color) => window.SimplifyTheme.accentInk(color);
   const seconds = (value, fallback, min) => Math.max(min, Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : fallback) * 1000;
 
   window.pelicanSimplify = function (wire, boot) {
@@ -34,6 +40,9 @@
       notifyMenu: false,
       noticeHistory: [],
       panelNotices: [],
+      announcements: [],
+      // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
+      push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
       incomingNotice: null,
       incomingShown: false,
       incomingQueue: [],
@@ -45,9 +54,21 @@
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
+      // The console alone, in its own browser window (opened from the console's title bar).
+      consoleWindow: /[?&]simplify_console=/.test(globalThis.location?.search || ''),
+      consolePeek: false,
+      consoleFocus: false,
+      infoMenu: false,
       adminPage: null,
       overviewCompact: false,
+      phone: false,
+      sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
+      overviewGroups: [],
+      overviewGroupsTimer: null,
+      overviewServerOrder: 'name',
+      groupsMenu: false,
+      groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
       healthOpenNodes: [],
@@ -67,10 +88,20 @@
       overviewView: typeof innerWidth !== 'undefined' && innerWidth <= 600 ? 'list' : 'grid',
       // Shell
       accountMenu: false,
+      createMenu: false,
+      phoneMore: false,
+      PHONE_SECTIONS,
+      SERVER_ORDERS,
+      GROUP_ORDERS,
+      QUICK_COMMANDS,
       navMenu: false,
       theme: 'system',
       themeDark: false,
+      themeForced: false,
       themeListener: null,
+      installable: '',
+      installListener: null,
+      pluginActionListener: null,
       noticeListener: null,
       started: false,
       destroyed: false,
@@ -161,12 +192,16 @@
         if (this.started) return;
         this.started = true;
         this.applyScale();
+        // Measure again once the page has its content.
+        this.$nextTick?.(() => this.applyScale());
         this.widgets = this.widgets.filter((w) => {
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
         });
+        if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
+        this.restoreOverviewGroups();
         this.restoreHostMode();
         this.initTheme();
         this.initNotices();
@@ -175,6 +210,7 @@
         if (this.$nextTick) this.$nextTick(() => this.initOverviewDock());
         if (this.$nextTick) this.$nextTick(() => this.openFromLink());
         if (!this.server) {
+          setTimeout(() => this.releaseBats(), 600);
           this.recordOverview(this.boot.servers);
           this.refreshTimer = setInterval(() => this.modal || this.refreshOverview(), this.intervals.overview);
           return;
@@ -229,6 +265,9 @@
         this.destroyed = true;
         window.removeEventListener?.('simplify:theme', this.themeListener);
         window.removeEventListener?.('simplify:notice', this.noticeListener);
+        window.removeEventListener?.('simplify:installable', this.installListener);
+        window.removeEventListener?.('message', this.pluginActionListener);
+        clearTimeout(this.pluginActionTimer);
         clearInterval(this.noticeTimer);
         clearTimeout(this.incomingTimer);
         clearTimeout(this.reconnect);
@@ -237,6 +276,45 @@
           this.ws.onclose = null;
           this.ws.close();
         }
+      },
+
+      /* Halloween ---------------------------------------------------------------------------- */
+      /** 25 October to 2 November, every year. */
+      halloweenSeason(date = new Date()) {
+        const month = date.getMonth(), day = date.getDate();
+        return (month === 9 && day >= 25) || (month === 10 && day <= 2);
+      },
+      /** The Halloween touches show in season, unless the panel or this person turned them off. */
+      halloween(date = new Date()) {
+        return this.boot.appearance?.seasonal !== false && this.overviewPreferences.halloween !== false && this.halloweenSeason(date);
+      },
+      /** A few bats leave one server card when the overview opens, once per visit. */
+      releaseBats() {
+        if (this.server || !this.halloween() || typeof document === 'undefined' || !document.body.animate) return;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        try {
+          if (sessionStorage.getItem('pelicanSimplify.bats')) return;
+          sessionStorage.setItem('pelicanSimplify.bats', '1');
+        } catch {}
+        const card = [...this.$root.querySelectorAll('.ps-server-card')].map((el) => el.getBoundingClientRect()).find((r) => r.width > 80 && r.top >= 0 && r.bottom <= innerHeight);
+        if (!card) return;
+        const ink = getComputedStyle(this.$root).getPropertyValue('--ps-ink').trim();
+        [[0, .62, -1], [180, .5, .3], [340, .72, 1]].forEach(([delay, across, side], i) => {
+          const bat = document.createElement('span');
+          bat.className = 'ps-hw-bat';
+          bat.setAttribute('aria-hidden', 'true');
+          bat.style.color = ink;
+          bat.innerHTML = '<svg viewBox="0 0 44 22"><path d="M22 6c1-2 2-3 2-3l1 3c2 0 3 1 3 2 3-3 8-5 14-4-3 2-4 5-4 8-2-2-5-2-7 0-1-2-3-3-5-2l-2 6-2-6c-2-1-4 0-5 2-2-2-5-2-7 0 0-3-1-6-4-8 6-1 11 1 14 4 0-1 1-2 3-2l1-3s1 1 2 3z"/></svg>';
+          document.body.appendChild(bat);
+          const x = card.left + card.width * across - 20, y = card.top + card.height * .35;
+          const dx = side * (120 + i * 40) + 60, dy = -(y + 60);
+          bat.animate([
+            { transform: `translate(${x}px, ${y}px) scale(.4)`, opacity: 0 },
+            { transform: `translate(${x + dx * .15}px, ${y - 40}px) scale(.9)`, opacity: .85, offset: .15 },
+            { transform: `translate(${x + dx * .55}px, ${y + dy * .5 + 20}px)`, opacity: .85, offset: .55 },
+            { transform: `translate(${x + dx}px, ${y + dy}px) scale(.8)`, opacity: 0 },
+          ], { duration: 2400 + i * 250, delay: delay + 300, easing: 'cubic-bezier(.3, .6, .4, 1)', fill: 'both' }).finished.then(() => bat.remove(), () => bat.remove());
+        });
       },
 
       /* Colours ---------------------------------------------------------------------------- */
@@ -248,8 +326,15 @@
         return this.accentStyle('overview');
       },
       accentStyle(id) {
+        // A colour on one of your own groups wins for its servers (and its heading), over the common and the server's own colour.
+        const group = String(id).startsWith('group-') ? this.overviewGroups.find((g) => 'group-' + g.id === id) : this.serverGroup(id);
+        if (group?.color) return { '--ps-accent': group.color, '--ps-on-accent': accentInk(group.color) };
+        if (String(id).startsWith('group-')) return {};
         const appearance = this.boot.appearance || {};
         const common = appearance.accent_color;
+        // Halloween turns the overview's neutral accent orange; a panel accent of your own stays.
+        if (id === 'overview' && this.halloween() && (common || '#878787').toLowerCase() === '#878787')
+          return { '--ps-accent': this.themeDark ? '#f0a35a' : '#c2621a', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
         if (/^#[0-9a-f]{6}$/i.test(common || '') && (id === 'overview' || appearance.individual_colors === false))
           return { '--ps-accent': common, '--ps-on-accent': accentInk(common) };
         if (id === 'overview') return { '--ps-accent': this.themeDark ? '#c0c0c5' : '#55555f', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
@@ -261,19 +346,20 @@
       },
       /** Panel name gradient: the common accent, else the page accent (blue on an uncoloured overview). */
       /**
-       * Interface size follows the window: designed for a 1440p screen (scale 1) and scaled down in
-       * proportion on smaller ones (a 1080p screen gets about 0.75). Phones keep their own layout.
+       * Interface size: normal size whenever it fits. Only when the page would get wider than the
+       * window is it scaled down, just enough to fit (never below 75%). Phones keep their own layout.
        * Inside the host mode pane nothing extra is applied: the frame is scaled with the page around it.
        */
       uiScale: 1,
       applyScale() {
         if (typeof window === 'undefined' || !this.$root?.style) return;
+        const root = this.$root;
+        root.style.zoom = '';
         let scale = 1;
-        // Inside the host mode pane the frame is already scaled with the page around it.
-        if (!this.embedded && window.innerWidth > 900) scale = Math.min(1, Math.max(0.75, Math.min(window.innerWidth / 2300, window.innerHeight / 1200)));
-        scale = Math.round(scale * 100) / 100;
+        if (!this.embedded && window.innerWidth > 900 && root.scrollWidth > root.clientWidth + 1)
+          scale = Math.max(0.75, Math.floor((root.clientWidth / root.scrollWidth) * 100) / 100);
         this.uiScale = scale;
-        this.$root.style.zoom = scale === 1 ? '' : String(scale);
+        root.style.zoom = scale === 1 ? '' : String(scale);
         document.documentElement.style.setProperty('--ps-ui-scale', String(scale));
       },
       /** Shows the status bar while the server card is scrolled out of view. */
@@ -283,15 +369,63 @@
           this.statusBarVisible = !entry.isIntersecting && entry.boundingClientRect.bottom < 0;
         }).observe(el);
       },
-      /** In the host mode pane the workspace gets exactly the height left in the frame, so nothing scrolls. */
-      fitEmbedded(el) {
+      /** The section menu and the console (or open section) share the height left on the screen: what sits
+       *  above them is measured, and whatever still ends up below (footer, page padding) is taken off too,
+       *  so the page never scrolls just for the work area. Phones keep the console the height of the screen. */
+      fitWorkspace(el) {
         const fit = () => {
+          if (!this.server || typeof window === 'undefined') return;
+          const scale = this.uiScale || 1;
+          const bar = this.$root.querySelector('.ps-phone-sections');
+          const barHeight = bar && getComputedStyle(bar).position === 'fixed' ? bar.offsetHeight : 0;
           const top = el.getBoundingClientRect().top + window.scrollY;
-          el.style.setProperty('--ps-embed-height', Math.max(320, (window.innerHeight - top) / (this.uiScale || 1)) + 'px');
+          const min = window.innerHeight < 500 ? 120 : window.innerWidth <= 600 ? 220 : 300;
+          let height = Math.max(min, Math.floor((window.innerHeight - top - barHeight) / scale - (this.embedded ? 0 : 16)));
+          el.style.setProperty('--ps-work-height', height + 'px');
+          for (let pass = 0; pass < 2; pass++) {
+            const over = Math.ceil(document.documentElement.scrollHeight - window.innerHeight);
+            const next = Math.max(min, height - over);
+            if (over <= 0 || next === height) break;
+            height = next;
+            el.style.setProperty('--ps-work-height', height + 'px');
+          }
         };
-        fit();
+        this.fitWorkspaceNow = fit;
+        this.$nextTick?.(fit);
+        document.fonts?.ready?.then(fit); // the header is measured again once the web font has swapped in
         window.addEventListener('resize', fit);
-        if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(this.$root.querySelector('.ps-server-info') || el);
+        if (typeof ResizeObserver === 'function') {
+          const watch = new ResizeObserver(fit);
+          for (const part of ['.ps-server-info', '.ps-server-stats', '.ps-pending']) {
+            const node = this.$root.querySelector(part);
+            if (node) watch.observe(node);
+          }
+        }
+      },
+      /** Measures the work area again after a layout change (console size, workspace open or closed). */
+      refitWorkspace() {
+        this.$nextTick?.(() => this.fitWorkspaceNow?.());
+      },
+      /** The power button that fits the state: Stop while the server runs, Start otherwise. */
+      mainPower() {
+        return ['running', 'starting'].includes(this.status) ? { action: 'stop', label: 'Stop', icon: 'stop' } : { action: 'start', label: 'Start', icon: 'play' };
+      },
+      /** "Paper 1.21.4", "Valheim" or "Not reported" for the line under the server name. */
+      softwareLabel() {
+        const software = this.server?.software || 'Not reported';
+        if (!this.server?.minecraft) return software;
+        const version = this.minecraftVersion();
+        return version === 'Not reported' ? software : software + ' ' + version;
+      },
+      /** The console in a window of its own: the same page with only the console showing. */
+      openConsoleWindow() {
+        const url = new URL(location.href);
+        url.searchParams.set('simplify_console', '1');
+        let popup = null;
+        try {
+          popup = window.open(url.toString(), 'simplify-console-' + (this.server?.uuid || ''), 'popup,width=960,height=640');
+        } catch {}
+        if (!popup) this.toast('The browser blocked the new window. Allow pop-ups for this panel to open the console separately.', 'warn');
       },
       openHostServer(s) {
         this.hostServer = s;
@@ -330,6 +464,19 @@
         };
         window.addEventListener('simplify:theme', this.themeListener);
         this.applyTheme();
+        // "Install app" in the panel menu on phones and tablets, only while the browser can add the panel to the home screen.
+        this.pluginActionListener = (event) => {
+          if (event.origin === location.origin && event.data?.type === 'simplify:plugin-action') this.pluginActionMessage(event.data);
+        };
+        window.addEventListener('message', this.pluginActionListener);
+        this.installListener = () => { this.installable = matchMedia('(pointer: coarse)').matches ? window.SimplifyApp?.installable() || '' : ''; };
+        window.addEventListener('simplify:installable', this.installListener);
+        if (!this.embedded) this.installListener();
+      },
+      async installApp() {
+        this.navMenu = false;
+        await window.SimplifyApp?.install();
+        this.installListener?.();
       },
       setTheme(value) {
         window.SimplifyTheme?.set(value);
@@ -338,11 +485,15 @@
       },
       applyTheme() {
         this.themeDark = window.SimplifyTheme?.dark() ?? false;
+        // A panel theme that only comes in light or dark (such as Catppuccin) hides the theme choice.
+        this.themeForced = !!window.SimplifyTheme?.forced?.();
         this.$root?.querySelectorAll?.('iframe').forEach((frame) => window.SimplifyTheme?.frame(frame, frame.dataset.psFrame, this.currentAccentHex()));
       },
       initNotices() {
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
+        this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
+        this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
         if (typeof wire.panelNotifications === 'function') this.noticeTimer = setInterval(() => this.pollPanelNotices(), Math.max(15000, Number(this.intervals?.overview) || 30000));
@@ -373,13 +524,213 @@
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        const update = this.boot.update;
-        if (update?.available) {
-          items.push({ id: 'update', tone: 'info', title: 'Simplify ' + update.version + ' is available', text: 'You are running ' + (update.current || 'an older version') + '. Update from the Plugins page.', action: update.url ? { label: 'Open plugins', url: update.url } : null });
+        // Announcements (also the Panel's update announcements); hidden bars stay here until they end.
+        for (const item of this.announcements) {
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
         return items;
+      },
+      /** The bell's count: everything except announcements this account already hid. */
+      unreadNotifications() {
+        return this.notifications().filter((item) => !item.dismissed).length;
+      },
+      /** Announcement bars above the overview: live and not hidden by this account. */
+      announcementBars() {
+        return this.announcements.filter((item) => !item.dismissed);
+      },
+      announcementMeta(item) {
+        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
+        // The category only as context for other details; the colour already says it.
+        const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
+        return (details.length && category ? [category, ...details] : details).join(' · ');
+      },
+      externalLink(url) {
+        try {
+          return new URL(url, location.origin).origin !== location.origin;
+        } catch {
+          return false;
+        }
+      },
+      /** Hides an announcement bar for this account (kept with the account, so every device follows). */
+      async dismissAnnouncement(key) {
+        const before = this.announcements;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: true } : item));
+        if (typeof wire.dismissAnnouncement !== 'function') return;
+        try {
+          const items = await wire.dismissAnnouncement(key);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          this.announcements = before;
+          this.toast('The announcement could not be hidden.', 'warn');
+        }
+      },
+      /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
+      pushSupported() {
+        return !!(globalThis.isSecureContext && globalThis.navigator?.serviceWorker && 'PushManager' in globalThis && 'Notification' in globalThis);
+      },
+      pushNeedsInstall() {
+        const nav = globalThis.navigator || {};
+        const ios = /iPad|iPhone|iPod/.test(nav.userAgent || '') || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1);
+        const standalone = nav.standalone === true || !!globalThis.matchMedia?.('(display-mode: standalone)').matches;
+        return ios && !standalone;
+      },
+      pushBlocked() {
+        return globalThis.Notification?.permission === 'denied';
+      },
+      /** The bell offers notifications once per device, until they are on or the offer is dismissed. */
+      pushOffer() {
+        return this.push.checked && !this.push.endpoint && !this.push.optInHidden && !this.pushBlocked() && (this.pushSupported() || this.pushNeedsInstall());
+      },
+      hidePushOffer() {
+        this.push.optInHidden = true;
+        try {
+          localStorage.setItem('pelicanSimplify.pushOffer', 'hidden');
+        } catch {}
+      },
+      async pushRegistration() {
+        const worker = globalThis.navigator.serviceWorker;
+        const existing = await worker.getRegistration().catch(() => null);
+        if (existing) return existing;
+        // core.js registers the worker after the page load; wait for it a little.
+        return Promise.race([worker.ready, new Promise((resolve) => setTimeout(() => resolve(null), 8000))]);
+      },
+      async checkPush() {
+        try {
+          this.push.optInHidden = localStorage.getItem('pelicanSimplify.pushOffer') === 'hidden';
+        } catch {}
+        if (!this.pushSupported()) return (this.push.checked = true);
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          const subscription = await registration?.pushManager.getSubscription();
+          this.push.endpoint = subscription?.endpoint || null;
+        } catch {}
+        this.push.checked = true;
+      },
+      openNotifications() {
+        this.openPopup('notifications');
+        this.loadPush();
+      },
+      async loadPush() {
+        this.push.error = '';
+        await this.checkPush();
+        try {
+          this.push.settings = await wire.pushSettings(this.push.endpoint);
+        } catch {
+          this.push.error = 'Notification settings could not be loaded.';
+        }
+      },
+      pushOn() {
+        return !!this.push.endpoint && !!this.push.settings?.devices?.some((device) => device.current);
+      },
+      deviceLabel() {
+        const agent = globalThis.navigator?.userAgent || '';
+        const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /SamsungBrowser/.test(agent) ? 'Samsung Internet' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : 'Browser';
+        const system = /iPhone/.test(agent) ? 'iPhone' : /iPad/.test(agent) ? 'iPad' : /Android/.test(agent) ? 'Android' : /Windows/.test(agent) ? 'Windows' : /Mac OS X/.test(agent) ? 'Mac' : /Linux/.test(agent) ? 'Linux' : '';
+        const app = globalThis.matchMedia?.('(display-mode: standalone)').matches || globalThis.navigator?.standalone === true;
+        return browser + (system ? ' on ' + system : '') + (app ? ' · installed app' : '');
+      },
+      async enablePush() {
+        if (this.push.busy) return;
+        this.push.busy = true;
+        this.push.error = '';
+        try {
+          const permission = await globalThis.Notification.requestPermission();
+          if (permission !== 'granted') {
+            this.push.error = permission === 'denied' ? 'Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.' : 'Notifications were not allowed.';
+            return;
+          }
+          const registration = await this.pushRegistration();
+          if (!registration) {
+            this.push.error = 'The app is still starting. Reload the page and try again.';
+            return;
+          }
+          const key = this.push.settings?.key || (await wire.pushSettings(null)).key;
+          const bytes = Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (key.length % 4)) % 4)), (c) => c.charCodeAt(0));
+          let subscription = await registration.pushManager.getSubscription();
+          // A subscription made with another key (after the panel's keys changed) cannot be used.
+          const current = subscription?.options?.applicationServerKey;
+          if (subscription && current && !new Uint8Array(current).every((value, index) => value === bytes[index])) {
+            await subscription.unsubscribe();
+            subscription = null;
+          }
+          subscription ||= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+          const result = await wire.savePushSubscription(subscription.toJSON(), this.deviceLabel());
+          if (!result?.ok) {
+            await subscription.unsubscribe().catch(() => {});
+            this.push.error = result?.message || 'Notifications could not be turned on.';
+            return;
+          }
+          this.push.endpoint = subscription.endpoint;
+          this.push.settings = { ...this.push.settings, ...result };
+          this.toast('Notifications are on for this device.', 'ok');
+        } catch {
+          this.push.error = 'Notifications could not be turned on in this browser.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async disablePush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        const endpoint = this.push.endpoint;
+        try {
+          const registration = await globalThis.navigator.serviceWorker.getRegistration();
+          await (await registration?.pushManager.getSubscription())?.unsubscribe();
+        } catch {}
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(endpoint)) };
+          this.push.endpoint = null;
+          this.toast('Notifications are off for this device.', 'info');
+        } catch {
+          this.push.error = 'Notifications could not be turned off.';
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async testPush() {
+        if (this.push.busy || !this.push.endpoint) return;
+        this.push.busy = true;
+        try {
+          const result = await wire.sendTestPush(this.push.endpoint);
+          this.toast(result?.message || 'Test sent.', result?.ok ? 'ok' : 'warn');
+        } catch {
+          this.toast('The test could not be sent.', 'warn');
+        } finally {
+          this.push.busy = false;
+        }
+      },
+      async removePushDevice(id) {
+        try {
+          this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(id)) };
+        } catch {
+          this.toast('The device could not be removed.', 'warn');
+        }
+      },
+      async setPushPreference(kind, value) {
+        const before = this.push.settings?.preferences || {};
+        this.push.settings = { ...this.push.settings, preferences: { ...before, [kind]: value } };
+        try {
+          this.push.settings.preferences = await wire.savePushPreferences({ [kind]: value });
+        } catch {
+          this.push.settings = { ...this.push.settings, preferences: before };
+          this.toast('Your choice could not be saved.', 'warn');
+        }
+      },
+      pushDeviceTime(device) {
+        if (!device.last_sent_at) return 'No notification sent yet';
+        const seconds = Math.max(0, Date.now() / 1000 - device.last_sent_at);
+        const days = Math.round(seconds / 86400);
+        const ago = seconds < 3600 ? Math.max(1, Math.round(seconds / 60)) + ' min ago' : seconds < 86400 ? Math.round(seconds / 3600) + ' h ago' : days === 1 ? 'yesterday' : days + ' days ago';
+        return 'Last notification ' + ago;
+      },
+      async refreshAnnouncements() {
+        if (typeof wire.announcements !== 'function') return;
+        try {
+          const items = await wire.announcements();
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {}
       },
       adminPages() {
         return Array.isArray(this.boot.admin_pages) ? this.boot.admin_pages : [];
@@ -423,11 +774,6 @@
           localStorage.setItem(this.hostModeKey(), this.hostMode ? '1' : '0');
         } catch {}
       },
-      hostPages() {
-        const items = this.adminPages().flatMap((group) => group.items);
-        const health = items.find((item) => item.key === 'health');
-        return health ? [health, ...items.filter((item) => item !== health)] : items;
-      },
       /** Admin pages merged into a few colour-coded sections; pages from other plugins go to Extensions. */
       hostSections() {
         const plan = [
@@ -454,6 +800,8 @@
         this.hostSection = section;
         this.hostPage = section.pages[0] || null;
         this.rememberHostPlace();
+        // Phones show the sections as one sideways row: keep the open one in view.
+        if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
@@ -479,7 +827,9 @@
       async toggleNotifications() {
         this.notifyMenu = !this.notifyMenu;
         this.appearanceMenu = false;
+        this.groupsMenu = false;
         this.accountMenu = false;
+        if (this.notifyMenu) this.refreshAnnouncements();
         if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
         try {
           const items = await wire.panelNotifications();
@@ -488,6 +838,7 @@
       },
       async pollPanelNotices() {
         if (globalThis.document?.hidden || this.destroyed || this.notifyMenu) return;
+        this.refreshAnnouncements();
         try {
           const items = await wire.panelNotifications();
           if (!Array.isArray(items)) return;
@@ -661,7 +1012,7 @@
       },
       canOverviewPower(s, action) {
         const permission = { start: 'control.start', stop: 'control.stop', kill: 'control.stop', restart: 'control.restart' }[action];
-        return this.overviewPreferences.showQuickActions && !!permission && !!s.linked && !!s.permissions?.[permission]
+        return this.quickActionsMode() !== 'off' && !!permission && !!s.linked && !!s.permissions?.[permission]
           && !['installing', 'restoring'].includes(s.status)
           && (action !== 'start' || s.status === 'offline')
           && (!['stop', 'kill', 'restart'].includes(action) || s.status !== 'offline');
@@ -693,12 +1044,32 @@
       fitCardTitle(row, name) {
         const title = row.querySelector('h3');
         if (!title) return;
-        const base = this.overviewView === 'list' ? 21 : 23;
+        const base = { list: 21, compact: 18 }[this.overviewView] || 23;
         title.style.fontSize = base + 'px';
+        if (this.overviewView !== 'list') {
+          // Grid: the name may use two lines; only a name that still does not fit gets smaller.
+          let size = base;
+          while (size > 12 && (title.scrollHeight > title.clientHeight + 1 || title.scrollWidth > title.clientWidth + 1)) title.style.fontSize = --size + 'px';
+          return;
+        }
         const original = row.querySelector('.ps-card-real-name');
         const reserve = this.overviewView === 'list' && typeof innerWidth !== 'undefined' && innerWidth > 700 && original && !original.classList.contains('no-alias') ? original.getBoundingClientRect().width + 8 : 0;
-        const available = Math.max(0, row.clientWidth - reserve);
-        if (available > 0 && title.scrollWidth > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / title.scrollWidth)) + 'px';
+        const available = Math.max(0, row.getBoundingClientRect().width - reserve);
+        // Measure the text itself: scrollWidth rounds, so a name a fraction too wide would get "…" instead of fitting.
+        let needed = title.scrollWidth;
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(title);
+          needed = range.getBoundingClientRect().width;
+        } catch {}
+        if (available > 0 && needed > available) title.style.fontSize = Math.max(10, Math.floor((base * available) / needed * 10) / 10) + 'px';
+      },
+      /** Shrinks a MOTD box's text only as far as needed to show both full lines, never below 8px. */
+      fitMotd(box) {
+        if (!box) return;
+        box.style.fontSize = '';
+        let size = parseFloat(getComputedStyle(box).fontSize) || 12;
+        while (size > 8 && (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1)) box.style.fontSize = (size -= .5) + 'px';
       },
       softwareTooltip(s) {
         const software = String(s.software || 'Server software').trim();
@@ -718,7 +1089,13 @@
         return [...games].map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
       },
       visibleServers() {
-        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter));
+        const scope = this.ownerFilterShown() ? this.overviewPreferences.serverScope : 'all';
+        return (this.boot.servers || []).filter((s) => (this.gameFilter === 'all' || this.gameKey(s) === this.gameFilter) && (this.nodeFilter === 'all' || Number(s.node_id) === this.nodeFilter) && (scope === 'all' || !!s.mine === (scope === 'mine')));
+      },
+      /** My servers / Others only means something when the overview holds both (administrators, or everyone in friends mode). */
+      ownerFilterShown() {
+        const servers = this.boot.servers || [];
+        return servers.some((s) => s.mine) && servers.some((s) => !s.mine);
       },
       /** Nodes that have servers in the overview (names from the listing, else the health data). */
       nodeOptions() {
@@ -734,17 +1111,165 @@
         const mode = this.overviewPreferences.groupByNode;
         return mode === 'always' || (mode === 'auto' && this.nodeOptions().length > 1);
       },
-      /** Servers, with a heading row before each node when grouping is on. */
+      /** Servers, with a heading row before each own group, then each node when grouping by node is on. */
       overviewItems() {
-        const servers = this.visibleServers();
-        if (!this.groupedByNode()) return servers;
-        const items = [];
-        for (const node of this.nodeOptions()) {
-          const members = servers.filter((s) => Number(s.node_id) === node.id);
+        // The listing already comes sorted by name.
+        const servers = this.overviewServerOrder === 'name' ? this.visibleServers() : this.sortServers(this.visibleServers(), this.overviewServerOrder);
+        const items = [], placed = new Set();
+        for (const group of this.overviewGroups) {
+          const members = this.groupMembers(group, servers).filter((s) => !placed.has(s.uuid));
           if (!members.length) continue;
-          items.push({ isNodeHeader: true, uuid: 'node-' + node.id, name: node.name, count: members.length }, ...members);
+          members.forEach((s) => placed.add(s.uuid));
+          items.push({ isNodeHeader: true, icon: 'files', uuid: 'group-' + group.id, name: group.name, count: members.length, color: group.color || null }, ...members);
         }
-        return items;
+        const rest = servers.filter((s) => !placed.has(s.uuid));
+        if (this.groupedByNode()) {
+          for (const node of this.nodeOptions()) {
+            const members = rest.filter((s) => Number(s.node_id) === node.id);
+            if (members.length) items.push({ isNodeHeader: true, uuid: 'node-' + node.id, name: node.name, count: members.length }, ...members);
+          }
+          return items;
+        }
+        if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: 'Other servers', count: rest.length });
+        return items.concat(rest);
+      },
+      /** Name sorts by server name (A to Z, like Pelican's list); Created is oldest first and Port lowest first, then by name. */
+      sortServers(list, order) {
+        const key = { created: 'created', port: 'port' }[order];
+        const name = (a, b) => String(a.name || '').localeCompare(String(b.name || ''));
+        if (!key) return order === 'name' ? [...list].sort(name) : list;
+        const value = (s) => (s[key] !== null && s[key] !== '' && Number.isFinite(Number(s[key])) ? Number(s[key]) : Infinity);
+        return [...list].sort((a, b) => value(a) - value(b) || name(a, b));
+      },
+      /** A group's servers among list (already in the overview's order), in the group's own order. */
+      groupMembers(group, list) {
+        const members = list.filter((s) => group.servers.includes(s.uuid));
+        if (group.sort === 'manual') return members.sort((a, b) => group.servers.indexOf(a.uuid) - group.servers.indexOf(b.uuid));
+        return group.sort === 'overview' ? members : this.sortServers(members, group.sort);
+      },
+      /** Where groups lived before they were saved with the account (0.5.0-snapshot.11 and .12, beta.5). */
+      overviewGroupsKey() {
+        return 'pelicanSimplify.overviewGroups.' + encodeURIComponent(this.boot.user || 'default');
+      },
+      /** A server sits in at most one group; the server checks the same rules. */
+      cleanOverviewGroups(list) {
+        const groups = [], seen = new Set();
+        for (const group of Array.isArray(list) ? list : []) {
+          if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
+          const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
+          const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
+          const sort = GROUP_ORDERS.some((o) => o.key === group.sort) ? group.sort : 'overview';
+          const color = typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color) ? group.color.toLowerCase() : null;
+          groups.push({ id: group.id.slice(0, 40), name, servers, sort, ...(color ? { color } : {}) });
+        }
+        return groups;
+      },
+      /** Groups and order come with the account; an account that never saved any takes over the groups this browser kept. */
+      restoreOverviewGroups() {
+        const account = this.boot.overview_groups;
+        if (account && typeof account === 'object') {
+          this.overviewGroups = this.cleanOverviewGroups(account.groups);
+          this.overviewServerOrder = SERVER_ORDERS.some((o) => o.key === account.order) ? account.order : 'name';
+          return;
+        }
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(this.overviewGroupsKey()) || 'null');
+        } catch {}
+        const groups = this.cleanOverviewGroups(saved);
+        this.overviewGroups = groups;
+        if (groups.length) this.saveOverviewGroups(groups, true);
+      },
+      /** Shows the change at once and saves it shortly after, so quick clicks become one save. */
+      saveOverviewGroups(groups, handover = false) {
+        this.overviewGroups = groups;
+        clearTimeout(this.overviewGroupsTimer);
+        this.overviewGroupsTimer = setTimeout(async () => {
+          try {
+            await wire.saveOverviewGroups(this.overviewGroups, this.overviewServerOrder);
+            if (handover) localStorage.removeItem(this.overviewGroupsKey());
+          } catch {
+            if (!handover) this.toast('Your groups could not be saved. Try again in a moment.', 'danger');
+          }
+        }, handover ? 0 : 400);
+      },
+      setServerOrder(order) {
+        if (!SERVER_ORDERS.some((o) => o.key === order) || order === this.overviewServerOrder) return;
+        this.overviewServerOrder = order;
+        this.saveOverviewGroups(this.overviewGroups);
+      },
+      setGroupOrder(id, order) {
+        if (!GROUP_ORDERS.some((o) => o.key === order)) return;
+        const group = this.overviewGroups.find((g) => g.id === id);
+        if (!group || group.sort === order) return;
+        // Switching to My own order starts from the order shown right now.
+        const servers = order === 'manual' ? [...this.groupMembers(group, this.sortServers(this.boot.servers || [], this.overviewServerOrder)).map((s) => s.uuid), ...group.servers.filter((uuid) => !(this.boot.servers || []).some((s) => s.uuid === uuid))] : group.servers;
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id ? { ...g, sort: order, servers } : g)));
+      },
+      /** Arrows in My own order: swaps a server with the one shown above or below it. */
+      moveGroupServer(id, uuid, step) {
+        const group = this.overviewGroups.find((g) => g.id === id);
+        if (!group || group.sort !== 'manual') return;
+        const shown = this.groupMembers(group, this.boot.servers || []), at = shown.findIndex((s) => s.uuid === uuid), other = shown[at + step];
+        if (at < 0 || !other) return;
+        const servers = [...group.servers], a = servers.indexOf(uuid), b = servers.indexOf(other.uuid);
+        [servers[a], servers[b]] = [servers[b], servers[a]];
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id ? { ...g, servers } : g)));
+      },
+      /** The group's servers first, in its order, then every other server by name. */
+      groupServerList(group) {
+        const all = this.boot.servers || [];
+        const members = this.groupMembers(group, this.sortServers(all, this.overviewServerOrder));
+        const others = all.filter((s) => !group.servers.includes(s.uuid)).sort((a, b) => this.cardNames(a).large.localeCompare(this.cardNames(b).large));
+        return [...members, ...others];
+      },
+      addOverviewGroup() {
+        if (this.overviewGroups.length >= GROUP_LIMIT) return;
+        let number = this.overviewGroups.length + 1;
+        while (this.overviewGroups.some((g) => g.name === 'Group ' + number)) number++;
+        const id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        this.saveOverviewGroups([...this.overviewGroups, { id, name: 'Group ' + number, servers: [], sort: 'overview' }]);
+        this.groupEditing = id;
+      },
+      renameOverviewGroup(id, name) {
+        const clean = String(name || '').trim().slice(0, GROUP_NAME_LENGTH);
+        // An empty name keeps the old one (the field shows it again).
+        this.saveOverviewGroups(this.overviewGroups.map((g) => (g.id === id && clean ? { ...g, name: clean } : { ...g })));
+        return this.overviewGroups.find((g) => g.id === id)?.name || '';
+      },
+      removeOverviewGroup(id) {
+        this.saveOverviewGroups(this.overviewGroups.filter((g) => g.id !== id));
+        if (this.groupEditing === id) this.groupEditing = null;
+      },
+      moveOverviewGroup(id, step) {
+        const groups = [...this.overviewGroups], from = groups.findIndex((g) => g.id === id), to = from + step;
+        if (from < 0 || to < 0 || to >= groups.length) return;
+        [groups[from], groups[to]] = [groups[to], groups[from]];
+        this.saveOverviewGroups(groups);
+      },
+      /** Puts a server in this group (taking it out of any other), or takes it out again. */
+      toggleGroupServer(id, uuid) {
+        const inGroup = this.overviewGroups.some((g) => g.id === id && g.servers.includes(uuid));
+        this.saveOverviewGroups(this.overviewGroups.map((g) => {
+          const servers = g.servers.filter((x) => x !== uuid);
+          return { ...g, servers: g.id === id && !inGroup ? [...servers, uuid] : servers };
+        }));
+      },
+      /** A group's colour, or null to go back to each server's own colour. */
+      setGroupColor(id, color) {
+        const clean = typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : null;
+        this.saveOverviewGroups(this.overviewGroups.map((g) => {
+          if (g.id !== id) return { ...g };
+          const { color: _old, ...rest } = g;
+          return clean ? { ...rest, color: clean } : rest;
+        }));
+      },
+      serverGroup(uuid) {
+        return this.overviewGroups.find((g) => g.servers.includes(uuid)) || null;
+      },
+      /** Servers in a group that still exist (a removed server simply stops counting). */
+      groupCount(group) {
+        return (this.boot.servers || []).filter((s) => group.servers.includes(s.uuid)).length;
       },
       setGameFilter(key) {
         if (key === 'all' || this.gameOptions().some((g) => g.key === key)) this.gameFilter = key;
@@ -758,9 +1283,9 @@
           const saved = JSON.parse(localStorage.getItem(this.overviewPreferencesKey()) || 'null');
           if (saved && typeof saved === 'object') {
             for (const key of OVERVIEW_SWITCHES) if (typeof saved[key] === 'boolean') preferences[key] = saved[key];
-            if (['server', 'egg'].includes(saved.largeIcon)) preferences.largeIcon = saved.largeIcon;
-            if (['alias', 'name'].includes(saved.largeName)) preferences.largeName = saved.largeName;
-            if (['auto', 'always', 'off'].includes(saved.groupByNode)) preferences.groupByNode = saved.groupByNode;
+            // Before Off/On/Hover, quick actions were a switch that meant "on hover".
+            if (typeof saved.showQuickActions === 'boolean') preferences.quickActions = saved.showQuickActions ? 'hover' : 'off';
+            for (const [key, values] of Object.entries(OVERVIEW_CHOICES)) if (values.includes(saved[key])) preferences[key] = saved[key];
           }
         } catch {}
         this.overviewPreferences = preferences;
@@ -768,12 +1293,18 @@
       setOverviewPreference(key, value) {
         if (OVERVIEW_SWITCHES.includes(key)) {
           if (typeof value !== 'boolean') return;
-        } else if (!({ largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'] }[key] || []).includes(value)) return;
+        } else if (!(OVERVIEW_CHOICES[key] || []).includes(value)) return;
         this.overviewPreferences = { ...this.overviewPreferences, [key]: value };
-        if (key === 'showQuickActions' && !value) this.powerConfirmation = null;
+        if (key === 'quickActions' && value === 'off') this.powerConfirmation = null;
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
+      quickActionsMode() {
+        const mode = this.overviewPreferences.quickActions;
+        if (mode !== 'hover') return mode === 'on' ? 'on' : 'off';
+        return typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches ? 'on' : 'hover';
       },
       overviewMetrics() {
         return [
@@ -782,28 +1313,54 @@
         ].filter((metric) => metric.show);
       },
       overviewViewKey() {
-        return 'pelicanSimplify.overviewView.' + encodeURIComponent(this.boot.user || 'default');
+        const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
+        return 'pelicanSimplify.overviewView.' + (phone ? 'phone.' : '') + encodeURIComponent(this.boot.user || 'default');
       },
       restoreOverviewView() {
         const phone = typeof innerWidth !== 'undefined' && innerWidth <= 600;
         this.overviewCompact = phone;
-        this.overviewView = 'grid';
+        this.phone = phone;
+        this.overviewView = phone ? 'list' : 'grid';
         try {
           const view = localStorage.getItem(this.overviewViewKey());
-          if (['grid', 'list'].includes(view)) this.overviewView = view;
+          if (OVERVIEW_VIEWS.includes(view)) this.overviewView = view;
         } catch {}
-        if (phone) this.overviewView = 'list';
+      },
+      /** Marks a sideways scrolling strip with the edges that hide more items, so the cut-off side fades out. */
+      scrollHint(el) {
+        const update = () => {
+          const max = el.scrollWidth - el.clientWidth;
+          const hint = max > 1 ? [el.scrollLeft > 1 && 'start', el.scrollLeft < max - 1 && 'end'].filter(Boolean).join(' ') : '';
+          if ((el.dataset.psMore || '') === hint) return;
+          if (hint) el.dataset.psMore = hint;
+          else delete el.dataset.psMore;
+        };
+        el.addEventListener('scroll', update, { passive: true });
+        if (typeof ResizeObserver === 'function') {
+          const observer = new ResizeObserver(update);
+          observer.observe(el);
+          for (const child of el.children) observer.observe(child);
+        }
+        this.$nextTick?.(update);
       },
       setOverviewView(view) {
-        if (!['grid', 'list'].includes(view)) return;
-        if (typeof innerWidth !== 'undefined' && innerWidth <= 600) {
-          this.overviewView = 'list';
-          return;
-        }
+        if (!OVERVIEW_VIEWS.includes(view)) return;
         this.overviewView = view;
         try {
           localStorage.setItem(this.overviewViewKey(), view);
         } catch {}
+      },
+      /** Card width and column count for the grid views: a fixed count is the most per row, narrower screens wrap. */
+      overviewGridStyle() {
+        const compact = this.overviewView === 'compact';
+        const width = (compact ? { narrow: 170, normal: 210, wide: 270 } : { narrow: 210, normal: 260, wide: 330 })[this.overviewPreferences.cardWidth] || 260;
+        const fixed = Number(this.overviewPreferences.columns) || 0;
+        const most = fixed || (compact ? { narrow: 7, normal: 6, wide: 5 } : { narrow: 5, normal: 4, wide: 3 })[this.overviewPreferences.cardWidth] || 4;
+        const min = width - 30;
+        return {
+          '--ps-grid-width': `calc(${most} * ${width}px + ${most - 1} * 16px)`,
+          '--ps-grid-template': fixed ? `repeat(auto-fill, minmax(min(100%, max(${min}px, calc((100% - ${(fixed - 1) * 16}px) / ${fixed}))), 1fr))` : `repeat(auto-fill, minmax(min(100%, ${min}px), 1fr))`,
+        };
       },
       /** Keeps the health dock aligned with the rendered card grid (including scrollbar width). */
       initOverviewDock() {
@@ -829,12 +1386,6 @@
       cpuLabel(s) {
         const n = s.usage?.cpu_percent;
         return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(1) + '%' : '—';
-      },
-      cpuFill(s) {
-        const n = s.usage?.cpu_percent;
-        if (typeof n !== 'number' || !Number.isFinite(n)) return 0;
-        const limit = s.usage?.cpu_limit > 0 ? s.usage.cpu_limit : 100;
-        return Math.min(100, Math.max(0, (n / limit) * 100));
       },
       memoryLabel(s) {
         const n = s.usage?.memory_bytes;
@@ -956,6 +1507,14 @@
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
       },
+      /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
+      createChoices() {
+        return [
+          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
+          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'native', label: 'New server', icon: 'host' },
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
+      },
       openCreate(game = 'minecraft') {
         if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
@@ -967,6 +1526,7 @@
         this.navMenu = false;
         this.notifyMenu = false;
         this.appearanceMenu = false;
+        this.groupsMenu = false;
         this.modalRequest++;
         this.modal = key;
         this.loading = false;
@@ -1006,9 +1566,9 @@
       },
       panelSettingsUrl() {
         const url = this.frameUrl(this.boot.settings_url);
-        if (!url || this.settingsSection !== 'banners') return url;
+        if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', 'banners');
+        target.searchParams.set('section', this.settingsSection);
         return target.href;
       },
       openPanelSettings(section = 'settings') {
@@ -1029,6 +1589,83 @@
         } catch {
           this.toast('Settings could not be opened.', 'danger');
         }
+      },
+      /** Measured height of each plugin widget frame (app list, or per server uuid); 0 hides the tile. */
+      pluginWidgetHeights: {},
+      pluginWidgetsLoaded(frame, slot) {
+        this.styleFrame(frame, 'native');
+        try {
+          const box = frame.contentDocument?.querySelector('.simplify-plugin-widgets');
+          const measure = () => { this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: box && box.children.length ? Math.ceil(box.getBoundingClientRect().height) : 0 }; };
+          measure();
+          // Widgets poll and change size (a player list fills in): follow the content.
+          if (box) new frame.contentWindow.ResizeObserver(measure).observe(box);
+        } catch {
+          this.pluginWidgetHeights = { ...this.pluginWidgetHeights, [slot]: 0 };
+        }
+      },
+      /** Buttons other plugins add to the server list ('app') or the console ('server'), already checked by the server. */
+      pluginActions(scope) {
+        return (scope === 'server' ? this.server?.plugin_actions : this.boot.plugin_actions) || [];
+      },
+      pluginActionFrame: null,
+      pluginActionOpen: false,
+      pluginActionBusy: null,
+      pluginActionTimer: null,
+      /** A link opens like a plugin page; anything else runs in a transparent layer that shows only the plugin's dialog. */
+      runPluginAction(action) {
+        if (!action || action.disabled || this.pluginActionBusy || this.pluginActionOpen) return;
+        if (action.url) {
+          if (action.new_tab || !this.frameUrl(action.url)) return void window.open(action.url, '_blank', 'noopener');
+          return this.openPluginPage({ key: action.key, label: action.label, url: action.url });
+        }
+        const url = action.run_url && this.frameUrl(action.run_url);
+        if (!url) return;
+        this.pluginActionOpen = false;
+        this.pluginActionBusy = action.key;
+        this.pluginActionFrame = { key: action.key, url };
+        // A button that never reports back (an error page) does not block the others.
+        clearTimeout(this.pluginActionTimer);
+        this.pluginActionTimer = setTimeout(() => this.pluginActionMessage({ state: 'done' }), 30000);
+      },
+      pluginActionMessage(data) {
+        if (!this.pluginActionFrame) return;
+        this.pluginActionBusy = null;
+        if (data.state === 'modal') {
+          clearTimeout(this.pluginActionTimer);
+          this.pluginActionOpen = true;
+          this.$nextTick?.(() => this.$root?.querySelector?.('.ps-plugin-action-layer iframe')?.focus());
+          return;
+        }
+        // Done: its notifications arrive with the next request and still have to reach the toasts, so the
+        // (invisible) layer goes a few seconds later; another button may start meanwhile.
+        const frame = this.pluginActionFrame;
+        this.pluginActionOpen = false;
+        clearTimeout(this.pluginActionTimer);
+        this.pluginActionTimer = setTimeout(() => { if (this.pluginActionFrame === frame) this.pluginActionFrame = null; }, 5000);
+        if (this.server) this.refreshServerInfo();
+      },
+      /** A button that redirects (to a page of its plugin) takes the whole window there, like on Pelican's page. */
+      pluginActionLoaded(frame) {
+        this.styleFrame(frame, 'native');
+        try {
+          const target = new URL(frame.contentWindow.location.href);
+          if (target.pathname.endsWith('/simplify-actions')) return;
+          target.searchParams.delete('simplify_embed');
+          this.pluginActionFrame = null;
+          window.location.href = target.href;
+        } catch {}
+      },
+      /** Account-level pages other plugins add to the panel (hidden ones are left out by the server). */
+      pluginPages() {
+        return this.boot.plugin_pages || [];
+      },
+      openPluginPage(page) {
+        if (!page?.url || this.busy || this.modal) return;
+        this.accountMenu = false;
+        if (page.new_tab) return void window.open(page.url, '_blank', 'noopener');
+        this.adminPage = page;
+        this.openPopup('admin-page');
       },
       openAccount() {
         if (!this.boot.profile_url || this.busy || this.modal) return;
@@ -1057,9 +1694,6 @@
           ...(index ? [{ text: '\n', style: {} }] : []),
           ...window.psMotd.runs(line).map(({ text, style, obfuscated }) => ({ text: obfuscated ? text.replace(/\S/g, '▒') : text, style })),
         ]);
-      },
-      cleanMotd(s) {
-        return String(s).replace(/§[0-9A-FK-OR]/gi, '').replace(/\\n/g, ' ').trim();
       },
       safeImage(s) {
         if (typeof s !== 'string' || !s.trim()) return '';
@@ -1211,6 +1845,7 @@
         if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
         if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
         if (this.modal === 'account') return 'Profile';
+        if (this.modal === 'notifications') return 'Notifications';
         if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
         if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
@@ -1218,7 +1853,7 @@
       },
       /** Every popup has a fixed size: small for short forms, large for embedded or list workspaces. */
       modalSize() {
-        if (['alias', 'restart'].includes(this.modal)) return 'is-sm';
+        if (['alias', 'restart', 'notifications'].includes(this.modal)) return 'is-sm';
         if (['create', 'panel-settings', 'admin-page', 'account', 'files', 'schedules', 'activity', 'backups', 'software', 'settings', 'plugins', 'mods', 'external'].includes(this.modal)) return 'is-lg';
         return 'is-md';
       },
@@ -1241,7 +1876,8 @@
       },
       /** Server workspaces open inside the page instead of as a popup. */
       docked() {
-        return !!this.server && !!this.modal && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
+        // Phones open workspaces as sheets over the page instead of docking them next to the console.
+        return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
@@ -1277,7 +1913,7 @@
         if (this.busy || !page?.url) return;
         if (this.modal === 'external' && this.externalPage?.key === page.key) return;
         const change = () => { this.externalPage = page; this.modal = 'external'; };
-        if (this.docked()) change();
+        if (this.docked() || this.phone) change();
         else await this.layoutTransition(change);
         this.loading = true;
       },
@@ -1287,7 +1923,7 @@
       async open(key) {
         if (this.busy || !this.showWidget(key)) return;
         const request = ++this.modalRequest;
-        if (this.server && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
+        if (this.server && !this.phone && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
         else this.modal = key;
         this.loading = true;
         const current = () => !this.destroyed && this.modalRequest === request && this.modal === key;
@@ -1330,6 +1966,25 @@
             this.focusModal();
           }
         }
+      },
+      /** Phones: drag a sheet down by its header to close it (close() still asks about unsaved work). */
+      sheetStart(event) {
+        if (!this.phone || this.docked() || event.touches.length !== 1 || !event.target.closest('.ps-modal-head') || event.target.closest('button, a, input')) return;
+        this.sheetDrag = { y: event.touches[0].clientY, dy: 0, el: event.currentTarget };
+        this.sheetDrag.el.style.transition = 'none';
+      },
+      sheetMove(event) {
+        if (!this.sheetDrag) return;
+        this.sheetDrag.dy = Math.max(0, event.touches[0].clientY - this.sheetDrag.y);
+        this.sheetDrag.el.style.transform = this.sheetDrag.dy ? 'translateY(' + this.sheetDrag.dy + 'px)' : '';
+      },
+      sheetEnd() {
+        const drag = this.sheetDrag;
+        if (!drag) return;
+        this.sheetDrag = null;
+        drag.el.style.transition = '';
+        drag.el.style.transform = '';
+        if (drag.dy > 110) this.close();
       },
       async close() {
         if (this.busy || this.closingCreator) return;
@@ -1459,6 +2114,19 @@
         this.history = [cmd, ...this.history].slice(0, 50);
         this.historyIndex = -1;
         this.command = '';
+      },
+      /** Puts a quick command in the command bar (a trailing space means: type the rest), ready to send. */
+      useQuickCommand(text) {
+        if (!this.connected || !this.server?.permissions['control.console']) return;
+        this.command = text;
+        this.$nextTick(() => {
+          const input = this.$root.querySelector('.ps-command input');
+          input?.focus();
+          input?.setSelectionRange(text.length, text.length);
+        });
+      },
+      phoneMoreActive() {
+        return (!!this.modal && this.widgets.some((w) => w.key === this.modal && !PHONE_SECTIONS.includes(w.key))) || this.modal === 'external';
       },
       historyBack() {
         this.historyIndex = Math.min(this.historyIndex + 1, this.history.length - 1);
@@ -1610,10 +2278,6 @@
         if (!listing) return;
         const result = await this.run(() => wire.saveListing(value), value ? 'Shown on the website' : 'Hidden from the website');
         if (result !== SKIPPED) listing.visible = result === true;
-      },
-      async toggleWeb(s, value) {
-        const result = await this.run(() => wire.saveWebsite({ visible: value }, s.uuid), 'Website visibility updated');
-        s.visible = result === SKIPPED ? !value : value;
       },
       async saveWebsite() {
         const state = { ...this.website };

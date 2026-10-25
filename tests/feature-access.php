@@ -5,7 +5,7 @@ namespace Illuminate\Support\Facades {
   public static array $files=[];public static int $reads=0;
   public static function disk($disk){return new self;}
   public function exists($key){return isset(self::$files[$key]);}
-  public function get($key){self::$reads++;return self::$files[$key];}
+  public function get($key){self::$reads++;return self::$files[$key]??null;}
   public function put($key,$value){self::$files[$key]=$value;return true;}
  }
  class Cache {public static function lock(...$args){return new self;}public function block($seconds,$callback){return $callback();}}
@@ -31,6 +31,7 @@ namespace App\Models {
  }
 }
 namespace {
+ require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/FeatureSettings.php';
  require __DIR__.'/../src/Services/Access.php';
  require __DIR__.'/../src/Services/RoleAccess.php';

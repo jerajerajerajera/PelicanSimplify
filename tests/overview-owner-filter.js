@@ -1,0 +1,15 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const store={};const context={window:{},innerWidth:1440,URL,location:{origin:'https://panel.example'},localStorage:{getItem:(k)=>store[k]??null,setItem:(k,v)=>{store[k]=String(v)},removeItem:(k)=>{delete store[k]}}};
+vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/../resources/views/js/dashboard.js','utf8'),context);
+const mine={uuid:'mine',name:'A',game_label:'Minecraft',mine:true,linked:true},shared={uuid:'shared',name:'B',game_label:'Minecraft',mine:true,linked:true},other={uuid:'other',name:'C',game_label:'Valheim',mine:false,linked:true};
+const d=context.window.pelicanSimplify({listing:async()=>[],hostHealth:async()=>({})},{server:null,servers:[mine,shared,other],user:'admin'});
+const uuids=()=>d.visibleServers().map((s)=>s.uuid).join(',');
+assert.equal(d.overviewPreferences.serverScope,'all','All servers stays the default, so admins see what they saw before');
+assert.equal(d.ownerFilterShown(),true);assert.equal(uuids(),'mine,shared,other');
+d.setOverviewPreference('serverScope','mine');assert.equal(uuids(),'mine,shared','My servers: owner or subuser');
+d.setOverviewPreference('serverScope','others');assert.equal(uuids(),'other','Others: servers of other people');
+d.setGameFilter('minecraft');assert.equal(uuids(),'','owner and game filters combine');d.setGameFilter('all');
+d.setOverviewPreference('serverScope','everyone');assert.equal(d.overviewPreferences.serverScope,'others','unknown choices are ignored');
+d.boot.servers=[mine,shared];assert.equal(d.ownerFilterShown(),false,'hidden when every server is your own');assert.equal(uuids(),'mine,shared','a hidden filter never hides servers');
+d.boot.servers=[other];assert.equal(d.ownerFilterShown(),false);assert.equal(uuids(),'other');
+console.log('PASS owner filter: All servers default, My servers (owner or subuser), Others, combined with game filter, only shown when both kinds exist');

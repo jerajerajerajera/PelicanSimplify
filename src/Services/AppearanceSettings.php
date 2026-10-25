@@ -7,24 +7,21 @@ final class AppearanceSettings
 {
     public const FILE='simplify/appearance.json';
     private ?array $loaded=null;
-    public static function defaults(): array { return ['accent_color'=>'#878787','individual_colors'=>true,'brand'=>BrandSettings::defaults()]; }
+    public static function defaults(): array { return ['accent_color'=>'#878787','individual_colors'=>true,'seasonal'=>true,'brand'=>BrandSettings::defaults()]; }
     public static function all(): array { return app(self::class)->load(); }
     private function load(): array
     {
         if($this->loaded!==null)return $this->loaded;
-        $disk=Storage::disk('local');
-        try{$saved=$disk->exists(self::FILE)?json_decode($disk->get(self::FILE),true,16,JSON_THROW_ON_ERROR):[];}
-        catch(\Throwable $e){report($e);$saved=[];}
-        $saved=is_array($saved)?$saved:[];
-        return $this->loaded=['accent_color'=>is_string($saved['accent_color']??null)&&preg_match('/^#[0-9a-fA-F]{6}$/',$saved['accent_color'])?strtolower($saved['accent_color']):self::defaults()['accent_color'],'individual_colors'=>array_key_exists('individual_colors',$saved)?$saved['individual_colors']===true:true,'brand'=>BrandSettings::normalize($saved['brand']??[])];
+        $saved=JsonFile::read(self::FILE);
+        return $this->loaded=['accent_color'=>is_string($saved['accent_color']??null)&&preg_match('/^#[0-9a-fA-F]{6}$/',$saved['accent_color'])?strtolower($saved['accent_color']):self::defaults()['accent_color'],'individual_colors'=>array_key_exists('individual_colors',$saved)?$saved['individual_colors']===true:true,'seasonal'=>($saved['seasonal']??true)!==false,'brand'=>BrandSettings::normalize($saved['brand']??[])];
     }
     public static function save(array $input): void
     {
         abort_unless(user()?->isRootAdmin(),403);
-        $data=validator($input,['accent_color'=>'required|regex:/^#[0-9a-fA-F]{6}$/','individual_colors'=>'required|boolean'])->validate();
+        $data=validator($input,['accent_color'=>'required|regex:/^#[0-9a-fA-F]{6}$/','individual_colors'=>'required|boolean','seasonal'=>'sometimes|boolean'])->validate();
         $current=self::all()['brand']['logo']??null;
         $brand=isset($input['brand'])?validator((array)$input['brand'],BrandSettings::rules())->validate():self::all()['brand'];
-        $next=['accent_color'=>strtolower($data['accent_color']),'individual_colors'=>(bool)$data['individual_colors'],'brand'=>BrandSettings::normalize([...$brand,'logo'=>$current],$current)];
+        $next=['accent_color'=>strtolower($data['accent_color']),'individual_colors'=>(bool)$data['individual_colors'],'seasonal'=>array_key_exists('seasonal',$data)?(bool)$data['seasonal']:self::all()['seasonal'],'brand'=>BrandSettings::normalize([...$brand,'logo'=>$current],$current)];
         Cache::lock('simplify.appearance',10)->block(3,function()use($next):void{
             if ($next['individual_colors']) ServerAppearance::assignMissingColors();
             if(!Storage::disk('local')->put(self::FILE,json_encode($next,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save appearance settings.');

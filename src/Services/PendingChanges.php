@@ -12,8 +12,7 @@ final class PendingChanges
     private static function path(Server $s): string { return 'simplify/pending/'.$s->uuid.'.json'; }
     public static function read(Server $s): ?array
     {
-        $raw=Storage::disk('local')->get(self::path($s));
-        return $raw ? json_decode($raw,true,512,JSON_THROW_ON_ERROR) : null;
+        return JsonFile::read(self::path($s),null);
     }
     public static function stage(Server $s,array $state,?object $icon=null,bool $resourcesOnly=false): array
     {

@@ -8,13 +8,9 @@ final class CreatorFramePolicy
     public function handle(Request $request, Closure $next): mixed
     {
         $response=$next($request);
-        // Admin pages open in the dashboard's admin tools popup, including records clicked inside it.
-        if($request->isMethod('GET')&&user()&&($request->routeIs('filament.server.*','filament.admin.*')||$request->routeIs(
-            'filament.app.pages.simple-server-creator',
-            'filament.app.pages.simplify',
-            'filament.app.auth.profile',
-            'filament.app.pages.pelican-simplify-settings',
-        ))){
+        // Admin pages open in the dashboard's admin tools popup, including records clicked inside it; account pages
+        // (Simplify's own, profile, plugin pages and plugin widgets) open in popups and tiles.
+        if($request->isMethod('GET')&&user()&&($request->routeIs('filament.server.*','filament.admin.*','filament.app.auth.profile')||($request->routeIs('filament.app.*')&&!$request->routeIs('filament.app.auth.*')))){
             // The native SetSecurityHeaders middleware preserves an already set header.
             // Includes native server popups. Authorization remains enforced by the page; other origins remain blocked.
             $response->headers->set('X-Frame-Options','SAMEORIGIN');

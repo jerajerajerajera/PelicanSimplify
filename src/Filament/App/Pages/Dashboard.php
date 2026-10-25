@@ -52,7 +52,7 @@ final class Dashboard extends Page
             'legacy_create_url'=>\App\Filament\Admin\Resources\Servers\ServerResource::canCreate()?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('create',panel:'admin'):null,'create_url'=>Extensions::createUrl(),'game_create_url'=>\Simplify\Panel\Services\FeatureSettings::enabled('game_creator')&&Extensions::canCreate()?\Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel:'app'):null,'can_create'=>Extensions::canCreate(),'create_games'=>Extensions::createGames(),'web'=>Extensions::web(),
             'native_list_url'=>\Filament\Facades\Filament::getPanel('app')->getUrl(),
             'profile_url'=>\App\Filament\Pages\Auth\EditProfile::getUrl(panel:'app'),'appearance'=>(fn(array $appearance)=>[...$appearance,'brand'=>\Simplify\Panel\Services\BrandSettings::forDisplay($appearance['brand'])])(\Simplify\Panel\Services\AppearanceSettings::all()),'panel_name'=>(string)config('app.name','Pelican'),'features'=>array_replace(\Simplify\Panel\Services\FeatureSettings::all(),array_combine(['settings','files','players','backups','packages','software','resources','advanced','activity','schedules'],array_map(fn($key)=>Access::feature($key),['settings','files','players','backups','packages','software','resources','advanced','activity','schedules']))),'settings_url'=>user()?->isRootAdmin()?\Simplify\Panel\Filament\Admin\Pages\SimplifySettings::getUrl(panel:'app'):null,'website_url'=>Extensions::webAdapter()?->url(),'list_url'=>self::getUrl(panel:'app'),'server'=>null,'servers'=>[],'user'=>user()->username,'avatar'=>user()->getFilamentAvatarUrl(),'favicon_url'=>route('simplify.favicon').'?v='.\Simplify\Panel\Services\BuildInfo::hash('core.css'),
-            'performance'=>\Simplify\Panel\Services\PerformanceSettings::client(),'update'=>user()?->isRootAdmin()?\Simplify\Panel\Services\UpdateCheck::status():null,'panel_notifications'=>\Simplify\Panel\Services\PanelNotifications::unread(),'admin_pages'=>\Simplify\Panel\Services\AdminPages::menu(),'health_checks'=>\Simplify\Panel\Services\HealthChecks::latest(),'host_extras'=>\Simplify\Panel\Services\AdminPages::hostExtras(),'host_mode_auto'=>\Simplify\Panel\Services\FeatureSettings::enabled('host_mode')];
+            'performance'=>\Simplify\Panel\Services\PerformanceSettings::client(),'update'=>user()?->isRootAdmin()?\Simplify\Panel\Services\UpdateCheck::status():null,'panel_notifications'=>\Simplify\Panel\Services\PanelNotifications::unread(),'announcements'=>\Simplify\Panel\Services\Announcements::forUser(user()),'admin_pages'=>\Simplify\Panel\Services\AdminPages::menu(),'plugin_pages'=>\Simplify\Panel\Services\ExternalPlugins::appPages(),'plugin_widgets_url'=>PluginWidgets::hasWidgets()?PluginWidgets::getUrl(panel:'app'):null,'plugin_actions'=>\Simplify\Panel\Services\ExternalPlugins::actions('app'),'health_checks'=>\Simplify\Panel\Services\HealthChecks::latest(),'host_extras'=>\Simplify\Panel\Services\AdminPages::hostExtras(),'host_mode_auto'=>\Simplify\Panel\Services\FeatureSettings::enabled('host_mode'),'overview_groups'=>\Simplify\Panel\Services\OverviewGroups::get(user())];
         if(!$this->serverUuid){$base['servers']=$this->listing();$base['host_health']=$this->hostHealth();return$base;}
         $s=$this->server();$base['available_colors']=ServerAppearance::choices($s->uuid);$permissions=[];foreach(P::cases() as $p)$permissions[$p->value]=user()->can($p,$s);
         $meta=ManagedSettings::content($s);$mc=MinecraftStatus::get($s);
@@ -68,7 +68,7 @@ final class Dashboard extends Page
         $artworkMeta=Extensions::web()?Extensions::webAdapter()->metadata($s):$meta;
         $base['background_choices']=array_map(fn($id)=>['id'=>$id,'name'=>ucfirst($id),'url'=>ServerArtwork::backgroundUrl($id)],array_keys(ServerArtwork::BACKGROUNDS));
         $base['uploaded_backgrounds']=\Simplify\Panel\Services\ServerBanners::entries($s);
-        $base['server']=['external_pages'=>\Simplify\Panel\Services\ExternalPlugins::serverPages($s),'background_id'=>ServerArtwork::selection($s) ?? ($artworkMeta['background_id'] ?? 'auto'),'color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'short'=>$s->uuid_short,'name'=>$s->name,'address'=>\Simplify\Panel\Services\Subdomains::address($s) ?? $s->allocation?->display_address ?? $s->allocation?->address,
+        $base['server']=['external_pages'=>\Simplify\Panel\Services\ExternalPlugins::serverPages($s),'plugin_widgets_url'=>\Simplify\Panel\Filament\Server\Pages\PluginWidgets::hasWidgets()?\Simplify\Panel\Filament\Server\Pages\PluginWidgets::getUrl(panel:'server',tenant:$s):null,'plugin_actions'=>\Simplify\Panel\Services\ExternalPlugins::actions('server',$s),'background_id'=>ServerArtwork::selection($s) ?? ($artworkMeta['background_id'] ?? 'auto'),'color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'short'=>$s->uuid_short,'name'=>$s->name,'address'=>\Simplify\Panel\Services\Subdomains::address($s) ?? $s->allocation?->display_address ?? $s->allocation?->address,
             'memory'=>$s->memory,'disk'=>$s->disk,'cpu'=>$s->cpu,'software'=>$s->egg?->name,'image'=>user()->can(P::StartupRead,$s)?$s->image:'Restricted','startup'=>user()->can(P::StartupRead,$s)?$s->startup:'Restricted',
             'alias'=>\Simplify\Panel\Services\ServerMetadata::read($s)['server_alias']??'','sftp'=>\Simplify\Panel\Services\SftpDetails::forServer($s),'package_kind'=>Packages::capability($s),'native_sections'=>$this->nativeSections($s),
             'owner'=>user()->isRootAdmin() || (int)$s->owner_id===(int)user()->id,'minecraft'=>ManagedSettings::minecraft($s),'can_resources'=>ManagedResources::canEdit($s),'resources_admin'=>\Simplify\Panel\Services\CreatorAccess::admin(),'permissions'=>$permissions,
@@ -110,19 +110,44 @@ final class Dashboard extends Page
     public function panelNotifications(): array { return \Simplify\Panel\Services\PanelNotifications::unread(); }
     #[Renderless]
     public function markPanelNotificationsRead(array $ids): array { \Simplify\Panel\Services\PanelNotifications::markRead($ids); return \Simplify\Panel\Services\PanelNotifications::unread(); }
+    /** Announcements for this account (bars above the overview and the bell). */
+    #[Renderless]
+    public function announcements(): array { return \Simplify\Panel\Services\Announcements::forUser(user()); }
+    /** Hides an announcement bar for this account; it stays under the bell. */
+    #[Renderless]
+    public function dismissAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::dismiss(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
+    /** App notifications: the panel's public key, this account's devices and choices. */
+    #[Renderless]
+    public function pushSettings(?string $endpoint=null): array { return ['key'=>\Simplify\Panel\Services\PushNotifications::publicKey(),'admin'=>(bool)user()->isRootAdmin(),...\Simplify\Panel\Services\PushNotifications::settings(user(),$endpoint)]; }
+    #[Renderless]
+    public function savePushSubscription(array $subscription,string $label=''): array
+    {
+        try{return ['ok'=>true,...\Simplify\Panel\Services\PushNotifications::subscribe(user(),$subscription,$label)];}
+        catch(\InvalidArgumentException $e){return ['ok'=>false,'message'=>$e->getMessage()];}
+    }
+    #[Renderless]
+    public function removePushDevice(string $id): array { return \Simplify\Panel\Services\PushNotifications::remove(user(),$id); }
+    #[Renderless]
+    public function savePushPreferences(array $preferences): array { return \Simplify\Panel\Services\PushNotifications::savePreferences(user(),$preferences); }
+    #[Renderless]
+    public function sendTestPush(string $endpoint): array { return \Simplify\Panel\Services\PushNotifications::test(user(),$endpoint); }
+    /** Own server groups and the server order, kept with the account. */
+    #[Renderless]
+    public function saveOverviewGroups(array $groups,?string $order='name'): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups,$order); }
     #[Renderless]
     public function hostHealth(): array { return \Simplify\Panel\Services\FeatureSettings::enabled('host_health')?HostHealth::snapshot():[]; }
     #[Renderless]
     public function listing(): array
     {
         $list=[];
-        $query=Access::overviewQuery();
-        foreach($query->get() as $s){
+        $servers=Access::overviewQuery()->get();
+        \Simplify\Panel\Services\WingsServers::warm($servers); // One Wings request per node feeds retrieveStatus() and the usage below.
+        foreach($servers as $s){
             $linked=user()->isAdmin()||(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned;$m=Extensions::web()?Extensions::webAdapter()->metadata($s):[];
             $status=$s->retrieveStatus()->value;$mc=$status==='offline'?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
-            $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,
-                'node_id'=>(int)$s->node_id,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
+            $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,'mine'=>(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned,
+                'node_id'=>(int)$s->node_id,'created'=>$s->created_at?->getTimestamp(),'port'=>$s->allocation?->port!==null?(int)$s->allocation->port:null,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
                 'url'=>$linked?self::getUrl(['server'=>$s->uuid],panel:'app'):null,
                 'server_icon'=>$serverIcon,'software_icon'=>ServerArtwork::softwareIcon($s,$m),'egg_icon'=>$s->egg?->icon,
                 'icon'=>$serverIcon ?: ServerArtwork::icon($s,$m),'background'=>ServerArtwork::background($s,$m),'players'=>$mc['players']??null,'max_players'=>$mc['max_players']??null,

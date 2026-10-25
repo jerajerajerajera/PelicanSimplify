@@ -32,6 +32,7 @@ final class FeatureSettings
             'global_theme'=>['Shared appearance','Apply the same light or dark theme, surfaces, inputs and buttons throughout the panel and creator.',true,'Appearance'],
             'legacy_theme'=>['Style legacy workspaces','Apply the shared theme to embedded files, activity, account and advanced pages.',true,'Appearance'],
             'console_dark'=>['Always dark console','Keep the console black in both light and dark modes.',true,'Appearance'],
+            'follow_panel_theme'=>['Follow panel theme','When a Pelican theme plugin is installed (such as Nord, Catppuccin or Theme Customizer), use its colours, font and light or dark mode, so Simplify matches the rest of the panel.',true,'Appearance'],
             'resources'=>['Resource controls','Show the CPU, memory and storage editing workspace. Existing resource permissions and quotas still apply.',true,'Server features'],
             'players'=>['Player management','Show player lists and Minecraft moderation controls.',true,'Server features'],
             'packages'=>['Plugin and mod management','Show the search, installation and removal workspace for plugins and mods.',true,'Server features'],
@@ -56,16 +57,15 @@ final class FeatureSettings
     private function load(): array
     {
         if($this->loaded!==null)return $this->loaded;
-        $disk=Storage::disk('local');
-        try{$saved=$disk->exists(self::FILE)?json_decode($disk->get(self::FILE),true,32,JSON_THROW_ON_ERROR):[];}
-        catch(\Throwable $exception){report($exception);$saved=[];}
-        $data=array_intersect_key(is_array($saved)?$saved:[],self::defaults());
+        $data=array_intersect_key(JsonFile::read(self::FILE),self::defaults());
         return $this->loaded=array_replace(self::defaults(),array_map(fn($v):bool=>$v===true,$data));
     }
     public static function enabled(string $feature): bool
     {
         // A plugin that clashes with Simplify is enabled: hand the panel back to Pelican's own pages.
         if ($feature === 'dashboard' && ExternalPlugins::conflicts() !== []) return false;
+        // A plugin that does the same job is enabled (such as Subdomains): only that Simplify feature steps aside.
+        if (class_exists(ExternalPlugins::class) && ExternalPlugins::overlapFor($feature) !== null) return false;
         return self::all()[$feature]??false;
     }
     public static function save(array $input,bool $complete=false): void

@@ -27,7 +27,7 @@ final class BrandSettings
 
     public static function defaults(): array
     {
-        return ['mode' => 'text', 'text' => '', 'font' => 'inter', 'weight' => 700, 'color_style' => 'gradient', 'color1' => '', 'color2' => '',
+        return ['mode' => 'text', 'text' => '', 'font' => 'inter', 'weight' => 700, 'color_style' => 'solid', 'color1' => '', 'color2' => '',
             'spacing' => 0, 'uppercase' => false, 'suffix' => true, 'logo' => null, 'logo_height' => 32, 'logo_text' => false];
     }
 

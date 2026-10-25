@@ -17,6 +17,7 @@ class ServerProperties {public static function prepare($state,$flag){return ['pr
 }
 namespace {
 function user(){return (object)['id'=>7];}function app($class){return new $class;}function abort_if($condition,$code,$message=''){if($condition)throw new \RuntimeException($message);}function abort_unless($condition,$code){abort_if(!$condition,$code);}function validator($state,$rules){return new class($state){public function __construct(private array $state){}public function validate(){return array_intersect_key($this->state,array_flip(['memory_gb','disk_mb','cpu']));}};}
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/PropertiesReader.php';require __DIR__.'/../src/Services/SettingsDifference.php';require __DIR__.'/../src/Services/ResourceLimits.php';require __DIR__.'/../src/Services/PendingChanges.php';
 use Simplify\Panel\Services\SettingsDifference as D;use Simplify\Panel\Services\PendingChanges as P;use Illuminate\Support\Facades\Storage as S;
 function check($ok,$message){if(!$ok)throw new \RuntimeException($message);echo "PASS $message\n";}

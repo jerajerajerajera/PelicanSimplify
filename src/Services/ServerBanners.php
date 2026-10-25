@@ -12,12 +12,11 @@ final class ServerBanners
     public static function metadata(string $id): ?array
     {
         if (!self::validId($id)) return null;
-        $disk=Storage::disk('local');$path=self::ROOT.$id.'.json';
-        $data=$disk->exists($path)?json_decode($disk->get($path),true):null;
-        return is_array($data) && ($data['id']??null)===$id && is_string($data['server_uuid']??null)
+        $data=JsonFile::read(self::ROOT.$id.'.json',null);
+        return $data && ($data['id']??null)===$id && is_string($data['server_uuid']??null)
             && preg_match('/^[a-z0-9-]{1,64}$/D',$data['server_uuid']) && is_string($data['name']??null)
             && in_array($data['extension']??null,['png','jpg','webp'],true)
-            && $disk->exists(self::ROOT.$id.'.'.$data['extension']) ? $data : null;
+            && Storage::disk('local')->exists(self::ROOT.$id.'.'.$data['extension']) ? $data : null;
     }
     public static function belongsTo(string $id, Server $server): bool { $data=self::metadata($id);return $data && $data['server_uuid']===$server->uuid; }
     public static function entries(?Server $server=null): array
@@ -66,7 +65,7 @@ final class ServerBanners
         if($server)Access::permission($server,SubuserPermission::SettingsRename);else abort_unless(user()?->isRootAdmin(),403);
         $data=self::metadata($id);abort_unless($data && (!$server || $data['server_uuid']===$server->uuid),404);
         $selection='simplify/backgrounds/'.$data['server_uuid'].'.json';$disk=Storage::disk('local');
-        if($disk->exists($selection) && (json_decode($disk->get($selection),true)['background_id']??null)===$id){
+        if((JsonFile::read($selection)['background_id']??null)===$id){
             if(!$disk->put($selection,json_encode(['background_id'=>'auto'],JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not reset banner selection.');
         }
         // Removing custom artwork never removes bundled banners or running-server files.

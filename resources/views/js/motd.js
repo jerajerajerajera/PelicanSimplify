@@ -298,10 +298,6 @@
       editorRuns(index) {
         return runs(this.lines[index] || { chars: [], styles: [] });
       },
-      previewRuns(index) {
-        this.tick;
-        return runs(this.lines[index] || { chars: [], styles: [] }, true);
-      },
       scroll(index, event) {
         const mirror = this.$refs?.['mirror' + index];
         if (mirror) mirror.scrollLeft = event.target.scrollLeft;

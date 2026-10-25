@@ -87,39 +87,40 @@ final class SteamArt
         return $disk->exists($path) ? $disk->get($path) : null;
     }
 
-    /** First URL that downloads as an image, scaled down to $width as JPEG. */
-    private static function image(array $urls, int $width): ?string
+    /** The first URL that downloads as an image, rendered to bytes by $render(image, width, height). */
+    private static function firstImage(array $urls, \Closure $render): ?string
     {
         foreach (array_filter($urls) as $url) {
             $source = self::download((string) $url);
             if ($source === null) continue;
-            [$w, $h] = [imagesx($source), imagesy($source)];
-            $scale = min(1, $width / max(1, $w));
-            $target = imagescale($source, max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)));
             ob_start();
-            imagejpeg($target ?: $source, null, 84);
+            $render($source, imagesx($source), imagesy($source));
             return ob_get_clean() ?: null;
         }
         return null;
     }
 
+    /** Scaled down to $width as JPEG. */
+    private static function image(array $urls, int $width): ?string
+    {
+        return self::firstImage($urls, function (\GdImage $source, int $w, int $h) use ($width): void {
+            $scale = min(1, $width / max(1, $w));
+            $target = imagescale($source, max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)));
+            imagejpeg($target ?: $source, null, 84);
+        });
+    }
+
     /** A 128×128 PNG: the top square of the portrait capsule, else the middle of the header image. */
     private static function icon(array $urls): ?string
     {
-        foreach (array_filter($urls) as $url) {
-            $source = self::download((string) $url);
-            if ($source === null) continue;
-            [$w, $h] = [imagesx($source), imagesy($source)];
+        return self::firstImage($urls, function (\GdImage $source, int $w, int $h): void {
             $side = min($w, $h);
             $x = (int) (($w - $side) / 2);
             $y = $h > $w ? 0 : (int) (($h - $side) / 2);
             $icon = imagecreatetruecolor(128, 128);
             imagecopyresampled($icon, $source, 0, 0, $x, $y, 128, 128, $side, $side);
-            ob_start();
             imagepng($icon, null, 7);
-            return ob_get_clean() ?: null;
-        }
-        return null;
+        });
     }
 
     /** Only Steam's CDN, at most 6 MB, and only real images. */
