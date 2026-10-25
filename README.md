@@ -17,15 +17,18 @@ Simplify puts all your servers on one page, with their status, players, CPU and 
 
 For a few servers the simple mode is enough. Larger hosts can switch to host mode, with a server list per node and the admin pages next to it. You can choose a light or dark theme, give servers their own color and banner, and use your own logo or panel name. In friends mode everyone sees every server but only manages their own, and roles decide who may do what.
 
-## Now in beta (0.5.0-beta.8)
+## What's new in 0.5.0
 
-The next release is in beta. It adds Simplify on phones, support for other plugins and a more flexible overview on top of stable 0.4.7. Tested on Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.3 to 8.5 (see Compatibility):
+0.5.0 builds on stable 0.4.7 and is almost done. Beta 0.5.0-beta.8 has most of it; snapshot 0.5.0-snapshot.19 has all of it. Tested on Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 with PHP 8.3 to 8.5 (see Compatibility).
 
-- Simplify on your phone. The overview, the server page, popups and the server creator are made for small screens: one page that scrolls, compact server rows with one power button, a tab bar at the bottom, a full-height console with quick commands, and popups that slide up as sheets. Pelican's own pages inside Simplify (admin pages, account, server settings) get one column and larger touch targets, and host mode becomes one column with a server switcher. Wider screens do not change.
-- The panel as an app. Add the panel to your phone's home screen ("Install app" in the menu): its own icon, full screen without the browser bar, and a clear page when there is no connection. New in 0.5.0-beta.2.
-- Support for other plugins. Pages that plugins add for every account (such as Legal Pages or User Creatable Servers) are in the account menu. Widgets that plugins add (such as Player Counter on the server page, or the resource limits of User Creatable Servers above your servers) show up as tiles. A plugin that does part of what Simplify does switches off only that part: with the Subdomains plugin enabled, Simplify's own subdomains step aside instead of the whole dashboard. Buttons that plugins add to Pelican's server list and console (such as Create server from User Creatable Servers, or Upload logs from Mclogs Uploader) show and work in Simplify too. Every plugin page, widget and button can be switched on or off in Simplify settings.
-- Your overview, your way. Make your own server groups from the new Server groups button, saved with your account so every device shows them. Choose the server order (Name, Created, Port, or your own order per group), the layout (Cards, the new Compact cards, or List) with 2 to 6 columns and three card widths, quick actions Off, On or on Hover, and a full screen width overview. Phones can pick their own layout. New in 0.5.0-beta.5 to beta.8.
-- Normal size on every screen. The interface no longer shrinks on screens below 1440p; it only scales down, never below 75%, when the page would not fit. Long server names use two lines.
+- Simplify works on phones, upright and on its side: one page that scrolls, compact server rows, a tab bar at the bottom, a full-height console with quick commands, and popups that slide up as sheets. You can also add the panel to your home screen as an app.
+- Your own server groups, each with its own colour, saved with your account so every device shows the same. Choose the server order, including your own order per group.
+- Administrators can filter the overview on All servers, My servers or Others.
+- More ways to lay out the overview: Cards, Compact cards or List, 2 to 6 columns, three card widths, quick actions Off, On or on Hover, and a full screen width option.
+- Simplify follows Pelican theme plugins such as Nord, Catppuccin and Theme Customizer: their colours, font and light or dark mode.
+- Pages, widgets and buttons from other Pelican plugins show up inside Simplify, and each can be switched on or off.
+- A calmer look with the same icons as the rest of the Pelican panel.
+- A faster overview: one request per node for status and usage instead of one per server.
 
 **Try it:** in Simplify settings → Plugin manager, choose **Beta** under "Simplify versions"; the plugin manager installs it with a backup and automatic rollback. Or import `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`. Betas are less tested than stable releases; see the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) for every change.
 
@@ -36,7 +39,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 - It replaces a lot of the panel. The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode.
 - Everything can be switched off. Each part has its own switch in Simplify settings, and you can turn off the whole Simplify dashboard. Pelican's original panel always stays available: the Legacy links in Admin tools lead to it, and even if you hide those links the pages keep working.
 - It does not touch your running servers. Servers, eggs, nodes and permissions stay Pelican's own. Simplify is a different way to look at and manage them.
-- Other plugins are only partly supported inside stable Simplify. They keep working in Pelican's original panel. Simplify shows their admin and server pages under "External". Their account pages, widgets and buttons are supported in the beta (see Now in beta).
+- Other plugins are only partly supported inside stable Simplify. They keep working in Pelican's original panel. Simplify shows their admin and server pages under "External". Their account pages, widgets and buttons are supported in the beta (see What's new in 0.5.0).
 - **Make a backup before installing**, as with any plugin that changes this much.
 
 ## Getting started
@@ -50,7 +53,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 | Channel | Current version | What it has | Changelog |
 |---|---|---|---|
 | **Stable** (default) | 0.4.7 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
-| **Beta** | 0.5.0-beta.8 | Stable plus Simplify on phones, the panel as an app, support for other plugins and a more flexible overview (see Now in beta) | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
+| **Beta** | 0.5.0-beta.8 | Stable plus Simplify on phones, the panel as an app, support for other plugins and a more flexible overview (see What's new in 0.5.0) | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
 | **Snapshot** | 0.5.0-snapshot.18 | The newest development build; at the moment the same features as the beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
