@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.1-beta.2 (beta channel)
+Fixes the server page header: opening the ⋯ menu made the header background grow and stick out on the right (since 0.5.1-beta.1).
+- The modpack card under the console is gone; the modpack name and version in the header now link to the modpack page, also on phones.
+
+## 0.5.1-snapshot.5 (snapshot channel)
+Fixes the server page header: opening the ⋯ menu made the header background grow and stick out on the right (since 0.5.1-snapshot.3).
+- The modpack card under the console is gone; the modpack name and version in the header now link to the modpack page, also on phones.
+
 ## 0.5.1-beta.1 (beta channel)
 Everything planned for 0.5.1 (0.5.1-snapshot.1 to 4 below): announcements, app notifications, a reworked server page and Halloween touches.
 - Announcements: Info, Warning or Success bars above the server overview, managed under Admin tools → Announcements, plus notices when Simplify, a plugin, Wings or Pelican has a new version.

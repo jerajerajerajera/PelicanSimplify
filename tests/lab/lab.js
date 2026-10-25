@@ -74,11 +74,38 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const layout = async (label) => { for (const problem of await layoutProblems()) issues.push(label + ' layout: ' + problem); };
   const setTheme = async (theme) => { await page.evaluate((t) => { localStorage.setItem('pelicanSimplify.theme', t); localStorage.setItem('theme', t); }, theme); };
   const user = 'lab-admin';
+  // 0.5.1: one announcement made through the admin page; every viewport then checks the bar, the bell and the
+  // Notifications dialog in the account menu. The announcement is deleted again at the end (also on a crash).
+  const adminAnnouncements = info.pages['ManageAnnouncements (admin)'];
+  const deleteLabAnnouncements = async () => {
+    if (!adminAnnouncements) return;
+    await page.setViewportSize(viewports.desktop); await page.goto(adminAnnouncements).catch(() => null); await settle();
+    for (let i = 0; i < 10 && await page.locator('button[aria-label^="Delete Lab announcement"]').count(); i++) {
+      await page.locator('button[aria-label^="Delete Lab announcement"]').first().click(); await sleep(800);
+      await page.locator('.fi-modal-window:visible button').filter({ hasText: 'Delete' }).last().click(); await sleep(1200);
+    }
+  };
+  if (adminAnnouncements) {
+    current = 'announcements admin';
+    await deleteLabAnnouncements();
+    await shot('admin-announcements-empty');
+    await page.locator('button').filter({ hasText: 'New announcement' }).first().click(); await sleep(1200);
+    const modal = page.locator('.fi-modal-window:visible').last();
+    await modal.locator('input[id$=".title"]').fill('Lab announcement');
+    await modal.locator('textarea[id$=".text"]').fill('Maintenance tonight at 22:00; the lab servers restart once.');
+    await shot('admin-announcements-form');
+    await modal.locator('button[type="submit"]').first().click(); await sleep(1500);
+    const row = page.locator('.ps-announcement').filter({ hasText: 'Lab announcement' }).first();
+    ok('announcement saved and listed as live', await row.count() > 0 && /Live/.test(await row.innerText().catch(() => '')));
+    await shot('admin-announcements-list');
+  }
   for (const [vp, size] of Object.entries(viewports)) {
     await page.setViewportSize(size);
     const phoneKeys = size.width <= 600;
     for (const theme of themes) {
       const tag = vp + '-' + theme;
+      console.log(`[${new Date().toISOString().slice(11,19)}] ${tag}: ${checks.length} checks, ${issues.length} issues so far`);
+      fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify({ version: info.version, base, partial: tag, checks, issues }, null, 2));
       await page.goto(info.pages['Dashboard (app)']); await setTheme(theme);
       // Overview views: grid (cards), compact, list.
       for (const view of ['grid', 'compact', 'list']) {
@@ -130,6 +157,63 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       else ok(`server groups button present (${tag})`, phoneKeys, 'not visible');
       const customize = page.locator('[aria-label="Customize overview"]').first();
       if (await customize.count() && await customize.isVisible()) { await customize.click(); await sleep(400); await shot(`overview-customize-${tag}`); await page.keyboard.press('Escape'); await sleep(200); }
+      if (adminAnnouncements) {
+        current = `announcements ${tag}`;
+        await page.goto(info.pages['Dashboard (app)']); await settle();
+        const bar = page.locator('.ps-announcement-bar').filter({ hasText: 'Lab announcement' }).first();
+        ok(`announcement bar above the overview (${tag})`, await bar.isVisible().catch(() => false));
+        await shot(`announcement-bar-${tag}`);
+        // The bell: on phones it sits in the menu tab.
+        const menuTab = page.locator('button.ps-tab[aria-controls="ps-navigation-items"]');
+        if (phoneKeys && await menuTab.count()) { await menuTab.click(); await sleep(400); }
+        const bell = page.locator('.ps-notify button[aria-label="Notifications"]').first();
+        ok(`notification bell counts the announcement (${tag})`, /^[1-9]/.test((await bell.locator('.ps-notify-count').innerText().catch(() => '')).trim()));
+        if (await bell.isVisible().catch(() => false)) {
+          await bell.click(); await sleep(500);
+          ok(`bell menu lists the announcement (${tag})`, /Lab announcement/.test(await page.locator('#ps-notify-menu').innerText().catch(() => '')));
+          await shot(`announcement-bell-${tag}`);
+        } else ok(`notification bell visible (${tag})`, false, 'not visible');
+        await page.keyboard.press('Escape'); await sleep(200);
+        // Account menu → Notifications on your devices (push settings dialog).
+        await page.goto(info.pages['Dashboard (app)']); await settle();
+        if (phoneKeys && await menuTab.count()) { await menuTab.click(); await sleep(400); }
+        const account = page.locator('.ps-account-button').first();
+        if (await account.isVisible().catch(() => false)) {
+          await account.click(); await sleep(400);
+          await page.locator('button[aria-label="Notifications on your devices"]').first().click({ timeout: 5000 }).catch(() => {}); await sleep(1200);
+          const dialog = page.locator('.ps-push').first();
+          ok(`notifications dialog opens from the account menu (${tag})`, await dialog.isVisible().catch(() => false) && /Notifications on this device/.test(await dialog.innerText().catch(() => '')));
+          await shot(`notifications-dialog-${tag}`);
+          await closeSheet();
+        } else ok(`account button visible (${tag})`, false, 'not visible');
+      }
+      // 0.5.1 Halloween touches (25 October to 2 November): web with spider, lantern by the name, pumpkin New button,
+      // orange overview accent instead of the neutral grey; off per person through Customize overview.
+      if (await page.locator('.ps-hw-corner').count()) {
+        current = `halloween ${tag}`;
+        await page.goto(info.pages['Dashboard (app)']); await settle();
+        const season = await page.evaluate(() => { const m = new Date().getMonth(), d = new Date().getDate(); return (m === 9 && d >= 25) || (m === 10 && d <= 2); });
+        const on = await page.evaluate(() => !!document.querySelector('.ps.ps-halloween, .ps-halloween'));
+        ok(`halloween touches ${season ? 'on' : 'off'} by the date (${tag})`, on === season, 'today ' + new Date().toISOString().slice(0, 10));
+        if (on) {
+          ok(`halloween web and lantern visible (${tag})`, await page.locator('.ps-hw-corner').first().isVisible().catch(() => false) && await page.locator('.ps-hw-lantern').first().isVisible().catch(() => false));
+          ok(`halloween web never catches a click (${tag})`, await page.evaluate(() => getComputedStyle(document.querySelector('.ps-hw-corner')).pointerEvents === 'none'));
+          const accent = await page.evaluate(() => getComputedStyle(document.querySelector('.ps-overview, main, body')).getPropertyValue('--ps-accent').trim());
+          ok(`halloween orange overview accent (${tag})`, /#c2621a|#f0a35a|194,\s*98,\s*26|240,\s*163,\s*90/i.test(accent), accent || 'no accent');
+          await shot(`halloween-${tag}`);
+          // Off through Customize overview, and back on.
+          const customize = page.locator('[aria-label="Customize overview"]').first();
+          if (await customize.isVisible().catch(() => false)) {
+            await customize.click(); await sleep(400);
+            const sw = page.locator('.ps-customize-switch').filter({ hasText: 'Halloween theme' }).first();
+            ok(`halloween switch in Customize overview (${tag})`, await sw.isVisible().catch(() => false));
+            await sw.click().catch(() => {}); await sleep(400);
+            ok(`halloween off per person (${tag})`, !(await page.evaluate(() => !!document.querySelector('.ps.ps-halloween, .ps-halloween'))));
+            await shot(`halloween-off-${tag}`);
+            await sw.click().catch(() => {}); await sleep(300); await closeSheet();
+          }
+        }
+      }
       // Phone: menu tab.
       if (phoneKeys) { const menu = page.locator('button.ps-tab[aria-controls="ps-navigation-items"]'); if (await menu.count()) { await menu.click(); await sleep(400); await shot(`phone-menu-${tag}`); await page.keyboard.press('Escape'); } }
       // Server page and its workspaces.
@@ -137,6 +221,33 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       await page.goto(info.pages['Dashboard (app)'].split('?')[0] + '?server=' + info.server); await settle();
       ok(`server page opens (${tag})`, (await page.locator('body').innerText()).includes(info.server_name));
       await shot(`server-${tag}`);
+      // 0.5.1 server page: stats row, More menu, console fitted to the screen, bigger console, console in its own window.
+      if (await page.locator('.ps-server-stats').count()) {
+        current = `server page 0.5.1 ${tag}`;
+        const shortScreen = size.height <= 500;
+        if (!shortScreen) ok(`server page shows the stats row (${tag})`, await page.locator('.ps-server-stats').first().isVisible().catch(() => false));
+        const more = page.locator('.ps-info-more-button').first();
+        if (await more.isVisible().catch(() => false)) {
+          await more.click(); await sleep(400);
+          ok(`server More menu opens with Force stop (${tag})`, /Force stop/i.test(await page.locator('#ps-info-menu').innerText().catch(() => '')));
+          await shot(`server-more-menu-${tag}`); await page.keyboard.press('Escape'); await sleep(200);
+        }
+        if (!phoneKeys) {
+          ok(`server page fits the screen without scrolling (${tag})`, await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 24), await page.evaluate(() => document.documentElement.scrollHeight + ' > ' + innerHeight));
+          const grow = page.locator('.ps-console-grow').first();
+          if (await grow.isVisible().catch(() => false)) {
+            await grow.click(); await sleep(600);
+            ok(`bigger console hides the section menu (${tag})`, await page.locator('.ps-server-workspace.is-focus').count() > 0 && !(await page.locator('.ps-widget[aria-label]').first().isVisible().catch(() => false)));
+            await shot(`server-console-big-${tag}`); await grow.click(); await sleep(400);
+          }
+          const win = page.locator('.ps-console-window').first();
+          if (!shortScreen) ok(`console-in-new-window button present (${tag})`, await win.isVisible().catch(() => false));
+          await page.goto(info.pages['Dashboard (app)'].split('?')[0] + '?server=' + info.server + '&simplify_console=1'); await settle();
+          ok(`console window shows only the console (${tag})`, await page.evaluate(() => document.querySelector('.is-console-window') && document.querySelector('.ps-console')?.checkVisibility() && !document.querySelector('.ps-server-stats')?.checkVisibility()));
+          await shot(`server-console-window-${tag}`);
+          await page.goto(info.pages['Dashboard (app)'].split('?')[0] + '?server=' + info.server); await settle();
+        }
+      }
       // Every workspace: on desktop the section buttons beside the console, on phones the tabs plus the More menu.
       const motd = async (label) => {
         const tab = page.locator('button, [role="tab"]').filter({ hasText: /^\s*MOTD\s*$/ }).first();
@@ -146,6 +257,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         ok(`MOTD editor opens (${tag})`, await editor.isVisible().catch(() => false));
         await shot(`server-motd-${label}`);
       };
+      let checkedMini = false;
       if (!phoneKeys) {
         const labels = await page.locator('.ps-widget[aria-label]').evaluateAll((els) => els.filter((e) => e.checkVisibility()).map((e) => e.getAttribute('aria-label')).filter((l) => l && !/console/i.test(l)));
         ok(`server page lists its workspaces (${tag})`, labels.length >= 8, labels.length + ' workspaces');
@@ -156,6 +268,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           ok(`workspace ${key} opens (${tag})`, await page.locator('.ps-modal-layer[data-open="true"], .ps-server-workspace.has-dock').first().isVisible().catch(() => false));
           await shot(`server-${key}-${tag}`);
           if (/^game settings/i.test(label)) await motd(tag);
+          if (await page.locator('.ps-server-workspace.has-dock .ps-console-peek').count() && !checkedMini) {
+            checkedMini = true;
+            const peek = page.locator('.ps-console-peek').first();
+            ok(`mini console shows under the open workspace (${tag})`, await peek.isVisible().catch(() => false) && await page.locator('.ps-console-full').first().isVisible().catch(() => false));
+            await peek.click(); await sleep(500); ok(`mini console unfolds the log (${tag})`, await page.locator('.ps-server-workspace.is-peek').count() > 0); await shot(`server-mini-console-${tag}`); await peek.click(); await sleep(200);
+          }
           await closeSheet();
         }
       } else {
@@ -201,6 +319,33 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         await shot(`page-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${tag}`);
       }
     }
+  }
+  if (await page.locator('.ps-hw-corner').count() || await page.evaluate(() => !!document.querySelector('[x-data]'))) {
+    current = 'halloween dates';
+    const state = await context.storageState();
+    for (const [when, expect] of [['2026-10-24T12:00:00', false], ['2026-10-31T20:00:00', true], ['2026-11-02T23:00:00', true], ['2026-11-03T09:00:00', false]]) {
+      const ctx = await browser.newContext({ viewport: viewports.desktop, baseURL: base, storageState: state });
+      await ctx.clock.setFixedTime(new Date(when));
+      const p = await ctx.newPage();
+      await p.goto(info.pages['Dashboard (app)']).catch(() => null); await p.waitForLoadState('networkidle').catch(() => {}); await sleep(500);
+      const on = await p.evaluate(() => !!document.querySelector('.ps.ps-halloween, .ps-halloween'));
+      ok(`halloween ${expect ? 'on' : 'off'} on ${when.slice(0, 10)}`, on === expect);
+      if (when.startsWith('2026-10-31')) await p.screenshot({ path: path.join(out, 'halloween-31-oct.png') });
+      if (when.startsWith('2026-11-03')) await p.screenshot({ path: path.join(out, 'halloween-after.png') });
+      await ctx.close();
+    }
+  }
+  if (adminAnnouncements) {
+    current = 'announcement hide';
+    await page.setViewportSize(viewports.desktop); await page.goto(info.pages['Dashboard (app)']); await settle();
+    await page.locator('.ps-announcement-hide').first().click().catch(() => {}); await sleep(1200);
+    await page.reload(); await settle();
+    ok('hidden announcement stays hidden after a reload', !(await page.locator('.ps-announcement-bar').filter({ hasText: 'Lab announcement' }).first().isVisible().catch(() => false)));
+    await page.locator('.ps-notify button[aria-label="Notifications"]').first().click().catch(() => {}); await sleep(500);
+    ok('hidden announcement still listed under the bell', /Lab announcement/.test(await page.locator('#ps-notify-menu').innerText().catch(() => '')));
+    await page.keyboard.press('Escape');
+    await deleteLabAnnouncements();
+    ok('announcement deleted again', !(await page.locator('.ps-announcement').filter({ hasText: 'Lab announcement' }).count()));
   }
   await browser.close();
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify({ version: info.version, base, checks, issues }, null, 2));
