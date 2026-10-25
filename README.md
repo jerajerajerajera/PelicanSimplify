@@ -53,8 +53,8 @@ Simplify is a large change to how your panel looks and works. Please read this f
 | Channel | Current version | What it has | Changelog |
 |---|---|---|---|
 | **Stable** (default) | 0.5.1 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
-| **Beta** | 0.5.1-beta.1 | The next stable release, tested before it ships; at the moment the same as stable | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.5.1-snapshot.4 | The newest development build; at the moment the same features as stable | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Beta** | 0.5.1-beta.2 | The next stable release, tested before it ships; at the moment the same as stable | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
+| **Snapshot** | 0.5.1-snapshot.5 | The newest development build; at the moment the same features as stable | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
 

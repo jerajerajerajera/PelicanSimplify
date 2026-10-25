@@ -4,7 +4,7 @@
 The first stable release since 0.4.7. It brings everything from the 0.5.0 and 0.5.1 betas. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Announcements:** Info, Warning or Success bars above the server overview, managed under Admin tools → Announcements, with a start and end time, everyone or administrators only, and an optional button. Administrators also see a notice when Simplify, another plugin, Wings or Pelican has a new version.
 - **App notifications:** turn them on per device under Account menu → Notifications, with a test button; announcements and updates can arrive as notifications on your phone or computer.
-- **A reworked server page:** a compact header with the power buttons and the MOTD, a row with players and usage, and a console that fits the screen. Phones get a bottom bar with Console, Players, Files and More.
+- **A reworked server page:** a compact header with the power buttons and the MOTD (the modpack name links to its page), a row with players and usage, and a console that fits the screen. Phones get a bottom bar with Console, Players, Files and More.
 - **Phones:** the panel works as an app on your home screen, with an overview, server page and creator built for one hand, and Pelican's own pages fitted to small screens.
 - **Overview your way:** your own server groups with their own colour, layouts (Cards, Compact or List) with 2 to 6 columns and three card widths, sorting, quick actions Off, On or Hover, and for administrators a filter on All servers, My servers or Others.
 - **A calmer look** with icons from Tabler, and Simplify follows Pelican theme plugins (Nord, Catppuccin, Theme Customizer, ...).
