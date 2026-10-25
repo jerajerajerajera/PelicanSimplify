@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 namespace Illuminate\Support\Facades {
- class Storage {public static array $files=[];public static function disk($name){return new self;}public function exists($name){return isset(self::$files[$name]);}public function get($name){return self::$files[$name];}public function put($name,$value){self::$files[$name]=$value;return true;}}
+ class Storage {public static array $files=[];public static function disk($name){return new self;}public function exists($name){return isset(self::$files[$name]);}public function get($name){return self::$files[$name]??null;}public function put($name,$value){self::$files[$name]=$value;return true;}}
  class Cache {public static function lock(...$args){return new self;}public function block($seconds,$callback){$callback();}}
 }
 namespace {
+ require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/CreationDefaults.php';
  use Simplify\Panel\Services\CreationDefaults as D;
  use Illuminate\Support\Facades\Storage as S;

@@ -44,14 +44,7 @@ final class RoleAccess
     private function load(): array
     {
         if ($this->loaded !== null) return $this->loaded;
-        try {
-            $disk = Storage::disk('local');
-            $saved = $disk->exists(self::FILE) ? json_decode((string) $disk->get(self::FILE), true, 32, JSON_THROW_ON_ERROR) : null;
-        } catch (\Throwable $exception) {
-            report($exception);
-            $saved = null;
-        }
-        return $this->loaded = self::normalize(is_array($saved) ? $saved : self::migrate());
+        return $this->loaded = self::normalize(JsonFile::read(self::FILE, null) ?? self::migrate());
     }
 
     /** First run: build profiles from the earlier user toggles and creator grants. */

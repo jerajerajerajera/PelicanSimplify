@@ -67,7 +67,7 @@ final class Packages
         Access::permission($s,SubuserPermission::FileRead);
         $ctx=self::context($s);if(!$ctx['loader'])return[];
         try { $files=app(DaemonFileRepository::class)->setServer($s)->getDirectory($ctx['directory']); } catch(\Throwable) { $files=[]; }
-        $raw=Storage::disk('local')->get('simplify/packages/'.$s->uuid.'.json');$tracked=$raw?json_decode($raw,true,512,JSON_THROW_ON_ERROR):[];
+        $tracked=JsonFile::read('simplify/packages/'.$s->uuid.'.json');
         return ['context'=>$ctx,'tracked'=>$tracked,'files'=>array_values(array_filter($files,fn($f)=>str_ends_with(strtolower($f['name']??''),'.jar')))];
     }
     public static function install(Server $s,string $project,string $version): void
@@ -83,7 +83,7 @@ final class Packages
         abort_unless($release,422,'No compatible stable release was found.');
         $file=null;foreach($release['files']??[] as $f) if(($f['primary']??false) && str_ends_with(strtolower($f['filename']??''),'.jar')){$file=$f;break;}
         abort_unless($file && preg_match('/^[a-zA-Z0-9._+ -]+\.jar$/',$file['filename']) && parse_url($file['url'],PHP_URL_SCHEME)==='https' && parse_url($file['url'],PHP_URL_HOST)==='cdn.modrinth.com',422,'Unsupported package download.');
-        $path='simplify/packages/'.$s->uuid.'.json';$raw=Storage::disk('local')->get($path);$tracked=$raw?json_decode($raw,true,512,JSON_THROW_ON_ERROR):[];
+        $path='simplify/packages/'.$s->uuid.'.json';$tracked=JsonFile::read($path);
         $files=app(DaemonFileRepository::class)->setServer($s);
         // Dependencies are shown in the UI; refuse automatic install until required
         // dependencies are already tracked or are included by this package.
@@ -107,7 +107,7 @@ final class Packages
         $files=app(DaemonFileRepository::class)->setServer($s);
         try{$files->createDirectory('.simplify-package-backups','/')->throw();}catch(\Throwable){$files->getDirectory('/.simplify-package-backups');}
         $files->renameFiles('/',[['from'=>ltrim($ctx['directory'],'/').'/'.$filename,'to'=>'.simplify-package-backups/'.time().'-'.$filename]])->throw();
-        $path='simplify/packages/'.$s->uuid.'.json';$raw=Storage::disk('local')->get($path);$tracked=$raw?json_decode($raw,true,512,JSON_THROW_ON_ERROR):[];
+        $path='simplify/packages/'.$s->uuid.'.json';$tracked=JsonFile::read($path);
         foreach($tracked as $id=>$item)if($item['filename']===$filename)unset($tracked[$id]);
         Storage::disk('local')->put($path,json_encode($tracked,JSON_THROW_ON_ERROR));
     }

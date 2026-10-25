@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // Role permissions: migration from earlier settings, combining Everyone with roles, admins always allowed.
 namespace Illuminate\Support\Facades {
- class Storage {public static array $files=[];public static function disk($d){return new self;}public function exists($k){return isset(self::$files[$k]);}public function get($k){return self::$files[$k];}public function put($k,$v){self::$files[$k]=$v;return true;}}
+ class Storage {public static array $files=[];public static function disk($d){return new self;}public function exists($k){return isset(self::$files[$k]);}public function get($k){return self::$files[$k]??null;}public function put($k,$v){self::$files[$k]=$v;return true;}}
  class Cache {public static function lock(...$a){return new self;}public function block($s,$c){return $c();}}
 }
 namespace Simplify\Panel\Services {
@@ -10,6 +10,7 @@ namespace Simplify\Panel\Services {
  class CreatorAccess {public static array $config=[];public static function configuration(){return self::$config;}}
 }
 namespace {
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/RoleAccess.php';
 use Simplify\Panel\Services\RoleAccess as R;
 use Simplify\Panel\Services\FeatureSettings as F;

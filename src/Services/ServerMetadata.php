@@ -8,12 +8,9 @@ final class ServerMetadata
 {
     public static function read(Server $server): array
     {
-        $disk=Storage::disk('local');
         foreach(['simplify/server-metadata/','ssc/website-visibility/'] as $prefix){
-            $path=$prefix.$server->uuid.'.json';
-            if(!$disk->exists($path))continue;
-            $data=json_decode($disk->get($path),true,512,JSON_THROW_ON_ERROR);
-            return is_array($data)?$data:[];
+            $data=JsonFile::read($prefix.$server->uuid.'.json',null);
+            if($data!==null)return $data;
         }
         return [];
     }
