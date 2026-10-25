@@ -9,9 +9,7 @@ final class ServerAppearance
 {
     public static function color(Server $server): ?string
     {
-        $disk=Storage::disk('local');$path='simplify/appearance/'.$server->uuid.'.json';
-        if (!$disk->exists($path)) return null;
-        $data=json_decode($disk->get($path),true);$color=is_array($data)?($data['color']??null):null;
+        $color=JsonFile::read('simplify/appearance/'.$server->uuid.'.json')['color']??null;
         return is_string($color) && preg_match('/^#[0-9a-fA-F]{6}$/',$color) ? strtolower($color) : null;
     }
 

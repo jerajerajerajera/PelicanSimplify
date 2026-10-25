@@ -41,7 +41,7 @@ final class ApplyServerProperties implements ShouldQueue
         }
         $disk = Storage::disk('local');
         $marker = 'ssc/server-settings/' . $this->uuid . '.json';
-        $saved = $disk->exists($marker) ? json_decode($disk->get($marker), true) : [];
+        $saved = \Simplify\Panel\Services\JsonFile::read($marker);
         if (($saved['status'] ?? '') === 'complete') {
             return;
         }

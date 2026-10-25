@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Illuminate\Support\Facades {
  class Cache {public static array $store=[];public static function remember($key,$ttl,$fn){return self::$store[$key]??=$fn();}}
  class Http {public static $remote=null;public static function timeout($s){return new self;}public function connectTimeout($s){return $this;}public function get($u){if(self::$remote===null)throw new \RuntimeException('offline');return $this;}public function throw(){return $this;}public function json(){return self::$remote;}}
- class Storage {public static function disk($d){return new class{public function exists($p){return false;}};}}
+ class Storage {public static function disk($d){return new class{public function exists($p){return false;}public function get($p){return null;}};}}
 }
 namespace App\Models {class Plugin {public static array $rows=[];public static function all(){return self::$rows;}}}
 namespace Filament\Resources {class Resource {}}
@@ -17,6 +17,7 @@ namespace Vendor\Legal\Pages {
 }
 namespace {
  function class_basename($c){return basename(str_replace('\\','/',$c));}
+ require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/ExternalPlugins.php';
  use Simplify\Panel\Services\ExternalPlugins as X;
  $reset=function(array $plugins,$remote){

@@ -65,8 +65,7 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps.server-active .ps-heading { flex-direction: column; align-items: flex-start; gap: 12px; }
 .ps-identity { min-width: 0; }
 .ps h1 { font-size: 25px; font-weight: 750; line-height: 1.25; letter-spacing: -.8px; overflow-wrap: anywhere; }
-.ps-identity small { display: block; margin-top: 5px; color: var(--ps-muted); font-size: 10px; }
-.ps-panel-name { background: linear-gradient(110deg, var(--ps-ink) 8%, var(--ps-brand, var(--ps-accent)) 95%); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.ps-panel-name { color: var(--ps-ink); }
 .ps-title-pelican { color: var(--ps-muted); }
 .ps-brand { display: flex; align-items: center; gap: .3em; }
 .ps-brand .ps-brand-logo { max-width: 240px; width: auto; object-fit: contain; }
@@ -99,6 +98,9 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters .ps-chip svg { width: 13px; height: 13px; }
+.ps-owner-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--ps-line); }
+.ps-overview-toolbar > .ps-owner-filters { order: 2; }
+.ps-owner-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-node-search { width: 170px; min-height: var(--ps-h-sm); padding: 4px 10px; font-size: 13px; }
 /* Node groups: a heading row spanning the grid (or list) before each node's servers. */
 .ps-server-entry.is-node-heading { grid-column: 1 / -1; display: flex; align-items: end; min-height: 0; }
@@ -167,12 +169,7 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-card-title { flex: none; min-width: 0; }
 .ps-card-title-row { display: flex; flex-direction: column; height: 48px; min-width: 0; }
 .ps-card-title-row h3,
-.ps-game-title h2 {
-  background-image: linear-gradient(115deg, var(--ps-ink) 0%, var(--ps-accent) 75%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
+.ps-game-title h2 { color: var(--ps-ink); }
 .ps-card-title-row h3 { display: block; width: 100%; height: 30px; overflow: hidden; font-size: 23px; font-weight: 750; line-height: 30px; letter-spacing: -.5px; text-overflow: ellipsis; white-space: nowrap; }
 /* Grid cards: a long name wraps onto a second line before it gets smaller. */
 .ps-server-grid:not(.is-list) .ps-card-title-row { height: auto; min-height: 48px; }
@@ -220,8 +217,9 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.ps-motd-display { margin-top: 10px; padding: 8px 12px; font-size: 12px; min-height: calc(3em + 18px); max-height: calc(3em + 18px); }
-.ps-card-motd { width: 100%; height: 47px; min-height: 47px; max-height: 47px; margin-top: 8px; padding: 8px; font-size: 11px; line-height: 1.4; overscroll-behavior: contain; }
+/* A shown MOTD never scrolls and keeps its two lines as in Minecraft: it only gets smaller when they do not fit (fitMotd). */
+.ps-motd-display { margin-top: 10px; padding: 8px 12px; overflow: hidden; white-space: pre; font-size: 12px; min-height: calc(3em + 18px); max-height: calc(3em + 18px); }
+.ps-card-motd { width: 100%; height: 47px; min-height: 47px; max-height: 47px; margin-top: 8px; padding: 7px 8px; font-size: 11px; line-height: 1.4; }
 
 /* Quick power controls slide in from the card edge; the card keeps its footprint. */
 .ps-overview-power-wrap { position: absolute; right: 0; bottom: 0; left: 0; z-index: 4; visibility: hidden; pointer-events: none; transform: translateY(100%); transition: transform var(--ps-slow), visibility var(--ps-slow); }
@@ -262,7 +260,6 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-create-card:disabled { cursor: default; opacity: .65; }
 .ps-create-plus { position: relative; display: grid; place-items: center; flex: none; width: var(--ps-create-icon); height: var(--ps-create-icon); overflow: hidden; border-radius: var(--ps-radius-lg); background: var(--ps-raised); color: var(--ps-accent); transition: width var(--ps-slow), height var(--ps-slow); }
 .ps-create-plus > svg { width: 70%; height: 70%; }
-.ps-create-plus::after { content: ""; position: absolute; inset: -30%; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / .5) 50%, transparent 65%); opacity: 0; transform: translateX(-130%); pointer-events: none; }
 .ps-create-add { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ps-surface); border-radius: 50%; background: var(--ps-raised); color: var(--ps-accent); }
 .ps-create-add svg { width: 14px; height: 14px; }
 .ps-create-card h3 { text-align: left; display: flex; flex-direction: column; flex: none; max-width: 0; overflow: hidden; opacity: 0; transform: translateX(-8px); font-size: 16px; font-weight: 400; line-height: 1.35; white-space: nowrap; transition: max-width var(--ps-slow), opacity var(--ps-fast), transform var(--ps-slow); }
@@ -270,15 +267,13 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
 .ps-create-card:is(:hover, :focus-visible):not(:disabled) h3 { max-width: 120px; opacity: 1; transform: none; }
 .ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus > svg { animation: ps-logo-bump 1.8s ease-in-out infinite; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus::after { animation: ps-logo-shine 1.8s ease-in-out infinite; }
 @keyframes ps-logo-bump { 0%, 65%, 100% { transform: none; } 20% { transform: translateY(-4px) scale(1.06); } 35% { transform: translateY(1px) scale(.98); } }
-@keyframes ps-logo-shine { 0%, 12% { opacity: 0; transform: translateX(-130%); } 20% { opacity: .8; } 55%, 100% { opacity: 0; transform: translateX(130%); } }
 @media (hover: none) {
   .ps-create-card { gap: 12px; }
   .ps-create-card .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
   .ps-create-card h3 { max-width: 120px; opacity: 1; transform: none; }
 }
-@media (prefers-reduced-motion: reduce) { .ps-create-plus > svg, .ps-create-plus::after { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .ps-create-plus > svg { animation: none !important; } }
 
 /* Compact cards: icon, name, status and players only, so more servers fit on a screen. */
 .ps-server-grid.is-compact { --ps-compact-h: 156px; --ps-compact-pad: 14px; gap: 12px; }
@@ -379,6 +374,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-host-heading h3 { color: var(--ps-ink); font-size: 12px; font-weight: 650; line-height: 1.25; }
 .ps-host-heading > svg:not(.ps-health-expand) { width: 19px; height: 19px; }
 .ps-host-heading > .ps-health-heart { margin-left: auto; }
+/* A metric only shows its heart when something needs attention. */
+.ps-host-heading > .ps-health-heart.healthy { display: none; }
 .ps-health-expand { width: 16px; height: 16px; margin-left: auto; transform: rotate(-90deg); transition: transform var(--ps-slow); }
 .ps-health-expand.expanded { transform: rotate(90deg); }
 .ps-health-status { --ps-tone: var(--ps-muted); display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ps-tone); font-size: 17px; line-height: 22px; }
@@ -808,7 +805,6 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 .ps-host-serverpane { grid-column: 2 / -1; grid-row: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
 .ps-host.has-server > .ps-host-rail, .ps-host.has-server > .ps-host-main { display: none; }
 .ps-host-serverpane .ps-host-head { grid-template-columns: minmax(0, 1fr) auto; }
-.ps-host-serverpane-actions { display: flex; gap: 4px; margin-left: auto; }
 .ps-host-server[aria-current="page"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-raised)); }
 .ps.is-embedded .ps-top { display: none; }
 .ps.is-embedded .ps-main { padding: 0; }
@@ -896,8 +892,9 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
 .ps-server-workspace .ps-widget-grid { grid-area: nav; align-self: start; position: sticky; top: 76px; display: flex; flex-direction: column; gap: 3px; padding: 10px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
 .ps-server-workspace .ps-widget { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; height: auto; padding: 7px 8px; border: 1px solid transparent; border-radius: 10px; background: none; }
 .ps-server-workspace .ps-widget:is(:hover, :focus-visible) { border-color: transparent; background: var(--ps-raised); background-image: none; }
-.ps-server-workspace .ps-widget[aria-current="page"] { border-color: color-mix(in srgb, var(--ps-tone) 45%, transparent); background: color-mix(in srgb, var(--ps-tone) 12%, var(--ps-raised)); }
-.ps-server-workspace .ps-widget-icon { width: 30px; height: 30px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 18%, transparent); color: var(--ps-tone, var(--ps-accent)); font: 700 12px var(--ps-mono); }
+.ps-server-workspace .ps-widget[aria-current="page"] { border-color: var(--ps-line-strong); background: var(--ps-raised); }
+.ps-server-workspace .ps-widget-icon { width: 30px; height: 30px; border-radius: 9px; background: none; color: var(--ps-muted); font: 700 12px var(--ps-mono); }
+.ps-server-workspace .ps-widget[aria-current="page"] .ps-widget-icon { color: var(--ps-ink); }
 .ps-server-workspace .ps-widget-icon svg { width: 17px; height: 17px; }
 .ps-server-workspace .ps-widget strong { font-size: 14px; font-weight: 600; -webkit-line-clamp: 1; }
 .ps-server-workspace .ps-widget small { display: none; }
@@ -959,7 +956,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-create-card:is(:hover, :focus-visible):not(:disabled) { gap: 10px; background: none; }
 .ps-create-card .ps-create-plus { overflow: visible; border: 2px dashed color-mix(in srgb, var(--ps-accent) 55%, transparent); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-raised)); }
 .ps-create-card .ps-create-plus > svg { width: 58%; height: 58%; }
-.ps-create-card .ps-create-plus::after { inset: 0; border-radius: inherit; overflow: hidden; }
 .ps-create-card .ps-create-add { right: -6px; bottom: -6px; width: 22px; height: 22px; border: 3px solid var(--ps-bg, var(--ps-surface)); background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
 .ps-create-card .ps-create-add svg { width: 12px; height: 12px; stroke-width: 3; }
 .ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { border-style: solid; border-color: var(--ps-accent); }
@@ -1035,9 +1031,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps.is-embedded .ps-server-dashboard > .ps-server-info:first-of-type { margin-top: 0; }
 /* The create icon's shine sweeps inside the icon only (moving the gradient, not the layer), so it never
    reaches the label next to it. */
-.ps-create-card .ps-create-plus::after { inset: 0; border-radius: inherit; background: linear-gradient(110deg, transparent 40%, rgb(255 255 255 / .45) 50%, transparent 60%) no-repeat; background-size: 300% 100%; background-position: 150% 0; transform: none; opacity: 0; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus::after { animation: ps-create-shine 1.8s ease-in-out infinite; }
-@keyframes ps-create-shine { 0%, 12% { opacity: 0; background-position: 150% 0; } 20% { opacity: 1; } 55%, 100% { opacity: 0; background-position: -50% 0; } }
 .ps.is-embedded .ps-server-workspace.has-dock { grid-template-rows: auto auto auto minmax(0, 1fr); }
 /* In the pane, with a section open, the small console takes the players card's place (players stay in the status line of the section menu's Console). */
 .ps.is-embedded .ps-server-workspace.has-dock .ps-players-stat { display: none; }
@@ -1053,6 +1046,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-customize { display: grid; gap: 2px; }
 .ps-customize-row, .ps-customize-switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; padding: 10px 0; border: 0; border-top: 1px solid var(--ps-line); background: none; color: var(--ps-ink); text-align: left; }
 .ps-customize-row > div:first-child, .ps-customize-switch > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.ps-customize-row > .ps-btn { flex: none; white-space: nowrap; }
 .ps-customize strong { font-size: 13px; font-weight: 650; }
 .ps-customize small { color: var(--ps-muted); font-size: 11.5px; line-height: 1.35; }
 .ps-customize .ps-segmented { flex: none; padding: 3px; border-radius: 10px; }
@@ -1067,6 +1061,14 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-customize-head + .ps-group-edit, .ps-group-note + .ps-group-edit { border-top: 0; }
 .ps-group-note:has(+ .ps-group-edit) { padding-bottom: 8px; border-bottom: 1px solid var(--ps-line); }
 .ps-group-row { display: flex; align-items: center; gap: 4px; padding: 8px 0; }
+.ps-group-dot { flex: none; width: 10px; height: 10px; margin: 0 2px; border-radius: 50%; }
+.ps-group-color-choice { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ps-group-color-choice small { color: var(--ps-muted); font-size: 12px; }
+.ps-group-swatch { position: relative; flex: none; width: 26px; height: 26px; overflow: hidden; cursor: pointer; }
+.ps-group-swatch.is-empty { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--ps-line) 4px 6px); border: 1px dashed var(--ps-muted); }
+.ps-group-swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.ps-node-heading.has-color svg { color: var(--ps-accent); }
+.ps-color-group-note { display: block; margin: 2px 0 8px; color: var(--ps-muted); font-size: 12px; line-height: 1.35; }
 .ps-group-name.ps-input { flex: 1 1 auto; min-width: 0; min-height: 30px; padding: 4px 8px; font-size: 13px; font-weight: 650; }
 .ps-group-count { flex: none; margin: 0 4px; white-space: nowrap; }
 .ps-group-toggle svg { transition: transform .15s ease; }
@@ -1127,8 +1129,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-overview-toolbar { flex-wrap: nowrap; justify-content: flex-start; gap: 8px; margin: 0 -14px 12px; padding: 2px 14px 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
   .ps .ps-overview-toolbar::-webkit-scrollbar { display: none; }
   .ps .ps-overview-toolbar > .ps-create-tiles, .ps .ps-node-search { display: none !important; }
-  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
-  .ps .ps-overview-toolbar > .ps-node-filters { padding-left: 8px; border-left: 1px solid var(--ps-line); }
+  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
+  .ps .ps-overview-toolbar > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
   .ps .ps-overview-toolbar .ps-chip { min-height: 40px; padding-inline: 14px; white-space: nowrap; }
 
   /* Host health: one summary line above the servers; tapping still opens the node details. */
@@ -1237,3 +1239,35 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-command button { min-width: 44px; height: 44px; }
 }
 @media (max-width: 480px) { .ps-customize-row > .ps-segmented { display: flex; width: 100%; } .ps-customize-row > .ps-segmented > button { flex: 1 1 0; justify-content: center; } .ps-customize-row > .ps-segmented svg { display: none; } }
+
+/* Sideways scrolling strips (filters, sections, quick commands): the side that hides more items fades
+   out, so a half-visible chip reads as "swipe for more" instead of cut-off text. Set by scrollHint(). */
+[data-ps-more="end"] { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+[data-ps-more="start"] { mask-image: linear-gradient(to left, #000 calc(100% - 32px), transparent); }
+[data-ps-more="start end"] { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
+
+/* Phones: a long server name uses a second line before it gets smaller or ends in "…" (list and the
+   two-column compact cards; a compact card grows a little for it). */
+@media (max-width: 600px) {
+  .ps .ps-server-grid.is-compact .ps-server-open { height: auto !important; min-height: calc(var(--ps-compact-h) + var(--ps-power-room, 0px)); }
+  .ps .ps-server-grid.is-compact .ps-card-title-row { height: auto; min-height: 40px; }
+  .ps .ps-server-grid.is-compact .ps-card-title-row h3,
+  .ps .ps-server-grid.is-list .ps-card-title-row h3 { display: -webkit-box; height: auto; max-height: 2.5em; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+}
+
+/* Low screens (a phone on its side): the page scrolls as a whole. The overview no longer squeezes the
+   server list between the header and the health dock, and the console and workspaces fit the screen. */
+@media (max-height: 500px) {
+  body:has(.ps:not(.server-active)), body:has(.ps:not(.server-active)) :is(.fi-layout, .fi-main-ctn) { height: auto; overflow: visible; }
+  body:has(.ps:not(.server-active)) :is(.fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content), .ps:not(.server-active), .ps:not(.server-active) .ps-main { flex: 1 0 auto; min-height: auto; overflow: visible; }
+  .ps .ps-overview, .ps .ps-server-scroll { flex: none; min-height: auto; overflow: visible; mask-image: none; }
+  .ps .ps-health-drawer { --ps-health-details-height: min(320px, calc(100dvh - 40px)); }
+  .ps-main { padding-top: 16px; }
+  /* Room for the status bar that slides in once the server card scrolls away. */
+  .ps:not(.is-embedded) .ps-server-workspace:not(.has-dock) .ps-console { min-height: 0; height: max(260px, calc(100dvh - 76px)); scroll-margin-top: 72px; }
+  .ps:not(.is-embedded) .ps-server-workspace .ps-dock { height: max(260px, calc(100dvh - 76px)); scroll-margin-top: 72px; }
+  .ps-modal-layer { --ps-modal-gap: 8px; }
+}
+@media (max-height: 500px) and (max-width: 1100px) {
+  .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
+}

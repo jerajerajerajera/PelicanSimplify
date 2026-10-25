@@ -6,7 +6,7 @@ declare(strict_types=1);
 namespace Illuminate\Support\Facades {
  class Cache {public static function remember($k,$t,$f){return $f();}}
  class Http {}
- class Storage {public static array $files=[];public static function disk($d){return new class{public function exists($p){return isset(Storage::$files[$p]);}public function get($p){return Storage::$files[$p];}};}}
+ class Storage {public static array $files=[];public static function disk($d){return new class{public function exists($p){return isset(Storage::$files[$p]);}public function get($p){return Storage::$files[$p]??null;}};}}
 }
 namespace App\Models {class Plugin {public static function all(){return [(object)['id'=>'ucs','name'=>'User Creatable Servers','namespace'=>'Vendor\\Ucs','status'=>'enabled'],(object)['id'=>'mclogs','name'=>'Mclogs Uploader','namespace'=>'Vendor\\Mclogs','status'=>'enabled']];}}}
 namespace Filament\Facades {class Filament {public static $tenant='outer';public static array $seen=[];public static function getTenant(){return self::$tenant;}public static function setTenant($t,bool $isQuiet=false){self::$tenant=$t;}}}
@@ -36,6 +36,7 @@ namespace {
  function config($k,$d=null){return 'base64:secret';}
  function report($e){throw $e;}
  $GLOBALS['session']='abc';
+ require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/ExternalPlugins.php';
  use Simplify\Panel\Services\ExternalPlugins as X;
  $check=function(bool $ok,string $what){if(!$ok)throw new \RuntimeException($what);};

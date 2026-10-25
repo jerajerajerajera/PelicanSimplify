@@ -11,6 +11,7 @@ namespace {
  function abort_unless($ok,$code){if(!$ok)throw new \RuntimeException((string)$code);}
  function app($c){return new $c;}function route($name,$args){return $name==='simplify.server-icon'?'/simplify/server-icon/'.$args['uuid']:'/simplify/background/'.$args['id'];}
  function check($v,$message){if(!$v)throw new \RuntimeException($message);echo "PASS $message\n";}
+ require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/Remember.php';
  require __DIR__.'/../src/Services/ServerBanners.php';
  require __DIR__.'/../src/Services/SteamArt.php';

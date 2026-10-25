@@ -19,6 +19,15 @@ A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel)
 - **Make it yours:** light and dark themes, server colors, banners, and your own logo or styled panel name.
 - **Friends mode, people and roles:** everyone can see every server but only manage their own, and roles set clear permissions and limits.
 
+## New in 0.5.0 (now in beta)
+
+- **A calmer look:** plainer server names and menu icons, warnings only when something needs attention, and icons from Tabler like the rest of Pelican.
+- **Pelican theme plugins:** Simplify follows themes such as Nord, Catppuccin and Theme Customizer, including their colours, font and forced light or dark mode.
+- **Server groups:** make your own groups, give each group a colour, and choose the order of your servers.
+- **Overview your way:** cards, compact cards or a list, with your own number of columns and card width. Administrators can filter on All servers, My servers or Others.
+- **Better on phones:** works in portrait and landscape, with long names on two lines and pages that fit small screens.
+- **Faster:** the overview asks Wings once per node instead of once per server.
+
 ## Before you install
 
 Simplify is a large change to how your panel looks and works. Please read this first.

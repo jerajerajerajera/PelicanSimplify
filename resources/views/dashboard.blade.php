@@ -16,7 +16,6 @@
             <div class="ps-heading">
                 <div class="ps-identity">
                     <a :href="boot.list_url"><h1 class="ps-brand" :style="brandStyle()"><template x-if="brand().logo_url && brand().mode === 'logo'"><img class="ps-brand-logo" :src="brand().logo_url" alt="" :style="{ height: (Number(brand().logo_height) || 32) + 'px' }"></template><span class="ps-panel-name" x-show="!(brand().logo_url && brand().mode === 'logo') || brand().logo_text" :style="Simplify.brandTextStyle(brand(), brand().font_stack, boot.appearance?.accent_color)" x-text="(brand().text || '').trim() || boot.panel_name || 'Pelican'"></span><span class="ps-title-pelican" x-show="brand().suffix !== false">× Pelican</span><span class="ps-visually-hidden" x-show="brand().mode === 'logo' && !brand().logo_text" x-text="boot.panel_name || 'Pelican'"></span></h1></a>
-                    <small>Enhanced by <a class="ps-project-link" href="https://github.com/jerajerajerajera/PelicanSimplify" target="_blank" rel="noopener noreferrer">Simplify</a></small>
                 </div>
                 <a x-show="server" :href="boot.list_url" class="ps-btn ps-back-overview">
                     <svg aria-hidden="true"><use href="#ps-back"/></svg><span>Back to server overview</span>
@@ -66,12 +65,7 @@
                                 <div class="ps-admin-health">
                                     <button type="button" class="ps-admin-health-title" x-on:click="openAdminPage(adminHealthPage())"><svg aria-hidden="true"><use href="#ps-heart"/></svg><span>Host health checks</span></button>
                                     <div class="ps-health-grid">
-                                        <template x-for="check in healthChecks()" :key="check.label">
-                                            <button type="button" class="ps-health-check" :class="'is-'+check.status" x-on:click="openAdminPage(adminHealthPage())"
-                                                    :data-tip="check.label+(check.status==='ok' ? ': OK' : ': '+(check.message || check.status))" :aria-label="check.label+': '+check.status">
-                                                <svg aria-hidden="true"><use :href="check.status==='ok' ? '#ps-check' : '#ps-alert'"/></svg>
-                                            </button>
-                                        </template>
+                                        @include('pelican-simplify::health-checks', ['open' => 'openAdminPage(adminHealthPage())'])
                                     </div>
                                 </div>
                             </template>
@@ -172,6 +166,7 @@
                                     <div class="ps-group-edit" :class="{'is-open': groupEditing===group.id}">
                                         <div class="ps-group-row">
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-toggle" x-on:click="groupEditing = groupEditing===group.id ? null : group.id" :aria-expanded="groupEditing===group.id" :data-tip="groupEditing===group.id ? 'Done' : 'Servers and order'" :aria-label="'Servers and order for '+group.name"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                            <span class="ps-group-dot" x-show="group.color" :style="{'background-color': group.color}" aria-hidden="true"></span>
                                             <input type="text" class="ps-input ps-group-name" :value="group.name" maxlength="40" aria-label="Group name" x-on:keydown.enter.prevent="$el.blur()" x-on:change="$el.value = renameOverviewGroup(group.id, $el.value)">
                                             <small class="ps-group-count" x-text="groupCount(group)+(groupCount(group)===1 ? ' server' : ' servers')"></small>
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-up" :disabled="index===0" x-on:click="moveOverviewGroup(group.id, -1)" data-tip="Move up" :aria-label="'Move '+group.name+' up'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
@@ -179,6 +174,13 @@
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle" x-on:click="removeOverviewGroup(group.id)" data-tip="Remove group" :aria-label="'Remove '+group.name"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
                                         </div>
                                         <div class="ps-group-servers" x-show="groupEditing===group.id">
+                                            <div class="ps-group-order ps-group-color"><span>Group color</span>
+                                                <span class="ps-group-color-choice">
+                                                    <label class="ps-swatch ps-group-swatch" :class="{'is-empty': !group.color}" :style="group.color ? {'background-color': group.color} : {}" :data-tip="group.color ? 'Change group color' : 'Pick a group color'"><input type="color" class="ps-color-input" :value="group.color || '#878787'" x-on:change="setGroupColor(group.id, $el.value)" :aria-label="'Color for '+group.name"></label>
+                                                    <button type="button" class="ps-btn is-sm is-subtle" x-show="group.color" x-on:click="setGroupColor(group.id, null)">Remove color</button>
+                                                    <small x-show="!group.color">Off: every server keeps its own color</small>
+                                                </span>
+                                            </div>
                                             <label class="ps-group-order"><span>Order in this group</span>
                                                 <select class="ps-input" :value="group.sort" x-on:change="setGroupOrder(group.id, $el.value)">
                                                     <template x-for="order in GROUP_ORDERS" :key="order.key"><option :value="order.key" x-text="order.label" :selected="group.sort===order.key"></option></template>
@@ -285,6 +287,11 @@
                                             </template>
                                         </div>
                                     </div>
+                                    {{-- Server colours are a panel setting; point administrators at it from here. Group colours live with each group. --}}
+                                    <div class="ps-customize-row" x-show="boot.settings_url">
+                                        <div><strong>Server colors</strong><small>One color for every server, or a color per server, for everyone on the panel. A color per group is under Server groups.</small></div>
+                                        <button type="button" class="ps-btn is-sm" x-on:click="appearanceMenu=false; openPanelSettings('appearance')">Open settings</button>
+                                    </div>
                                 </div>
                             </template>
                         </div>
@@ -299,7 +306,7 @@
                             </span>
                             <span class="ps-account-username" x-text="boot.user"></span>
                         </button>
-                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 4 : 3) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
+                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 4 : 3) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
                             <div class="ps-account-actions-inner">
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="Profile settings" aria-label="Profile settings" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
@@ -309,7 +316,7 @@
                                     <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
                                 </button>
                                 {{-- Theme: the current choice; clicking it unfolds Light, Dark and System. --}}
-                                <button type="button" class="ps-btn is-icon" x-show="!themeOpen" x-on:click="themeOpen=true" :data-tip="'Theme: '+(theme==='light' ? 'Light' : theme==='dark' ? 'Dark' : 'System')" aria-label="Choose theme" :aria-expanded="themeOpen">
+                                <button type="button" class="ps-btn is-icon" x-show="!themeOpen && !themeForced" x-on:click="themeOpen=true" :data-tip="'Theme: '+(theme==='light' ? 'Light' : theme==='dark' ? 'Dark' : 'System')" aria-label="Choose theme" :aria-expanded="themeOpen">
                                     <svg aria-hidden="true"><use :href="theme==='light' ? '#ps-sun' : theme==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
                                 </button>
                                 <template x-for="t in ['light','dark','system']" :key="t">
@@ -366,7 +373,7 @@
                         <p class="ps-empty" x-show="!(boot.servers||[]).length">No servers yet.</p>
                     </div>
                 </aside>
-                <nav class="ps-host-rail" aria-label="Admin sections">
+                <nav class="ps-host-rail" aria-label="Admin sections" x-init="scrollHint($el)">
                     <span class="ps-label ps-host-rail-title">Admin</span>
                     <div class="ps-host-rail-items">
                         <template x-for="section in hostSections().filter((x) => x.key !== 'health')" :key="section.key">
@@ -381,12 +388,7 @@
                         </button>
                     </template>
                     <div class="ps-health-grid" x-show="healthChecks().length" role="group" aria-label="Current health checks">
-                        <template x-for="check in healthChecks()" :key="check.label">
-                            <button type="button" class="ps-health-check" :class="'is-'+check.status" x-on:click="openHostSection(hostSections().find((x) => x.key === 'health'))"
-                                    :data-tip="check.label+(check.status==='ok' ? ': OK' : ': '+(check.message || check.status))" :aria-label="check.label+': '+check.status">
-                                <svg aria-hidden="true"><use :href="check.status==='ok' ? '#ps-check' : '#ps-alert'"/></svg>
-                            </button>
-                        </template>
+                        @include('pelican-simplify::health-checks', ['open' => 'openHostSection(hostSections().find((x) => x.key === \'health\'))'])
                     </div>
                 </nav>
                 {{-- A server picked on the left opens here, over the admin pages; the cross or another server closes it. --}}
@@ -423,7 +425,7 @@
         <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
-                    <div class="ps-overview-toolbar">
+                    <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
                             <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
                                 <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-creeper"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
@@ -452,6 +454,12 @@
                                 <button type="button" class="ps-chip" :aria-pressed="nodeFilter===node.id" x-on:click="nodeFilter=node.id" x-text="node.name"></button>
                             </template>
                         </div>
+                        {{-- Administrators see everyone's servers; like Pelican's own list they can narrow it to their own (owner or subuser) or other people's. --}}
+                        <div class="ps-owner-filters" x-show="ownerFilterShown()" role="group" aria-label="Filter servers by owner">
+                            <template x-for="scope in [{ key: 'all', label: 'All servers' }, { key: 'mine', label: 'My servers' }, { key: 'others', label: 'Others' }]" :key="scope.key">
+                                <button type="button" class="ps-chip" :aria-pressed="overviewPreferences.serverScope===scope.key" x-on:click="setOverviewPreference('serverScope', scope.key)"><svg x-show="scope.key==='all'" aria-hidden="true"><use href="#ps-account"/></svg><span x-text="scope.label"></span></button>
+                            </template>
+                        </div>
                     </div>
                     {{-- Buttons other plugins add to Pelican's server list (such as Create server from User Creatable Servers). --}}
                     <div class="ps-plugin-actions" x-show="pluginActions('app').length" role="group" aria-label="Buttons from other plugins">
@@ -471,7 +479,7 @@
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': quickActionsMode()!=='off' && s.linked && Object.values(s.permissions || {}).some(Boolean), 'power-shown': quickActionsMode()==='on', 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
-                                    <h2 class="ps-node-heading"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
+                                    <h2 class="ps-node-heading" :class="{'has-color': !!s.color}"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
                                 </template>
                                 <template x-if="!s.isNodeHeader">
                                 <article class="ps-server-card" :class="{'locked': !s.linked}">
@@ -496,7 +504,7 @@
                                                 <h3 x-text="cardNames(s).large"></h3>
                                                 <small class="ps-card-real-name" :class="{'no-alias': !cardNames(s).small}" x-text="cardNames(s).small ? '('+cardNames(s).small+')' : ' '"></small>
                                             </div>
-                                            <div class="ps-card-motd ps-motd-preview ps-motd-display" x-show="overviewPreferences.showMotd && s.game==='minecraft' && s.motd"><template x-for="(part,index) in motdPreview(s.motd)" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                                            <div class="ps-card-motd ps-motd-preview ps-motd-display" x-show="overviewPreferences.showMotd && s.game==='minecraft' && s.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="s.motd; overviewPreferences.showMotd; $nextTick(()=>fitMotd($el))"><template x-for="(part,index) in motdPreview(s.motd)" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
                                         </div>
                                         <div class="ps-card-usage" x-show="overviewMetrics().length" :class="{'single-metric': overviewMetrics().length===1}">
                                             <template x-for="metric in overviewMetrics()" :key="metric.key">
@@ -690,7 +698,7 @@
                         <div x-show="server?.pack?.modpack_name"><dt>Modpack</dt><dd x-text="server?.pack?.modpack_name"></dd></div>
                         <div x-show="server?.pack?.modpack_name"><dt>Modpack version</dt><dd x-text="server?.pack?.modpack_version || 'Not reported'"></dd></div>
                     </dl>
-                    <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                    <div class="ps-motd-preview ps-motd-display" x-show="server?.properties?.motd || server?.pack?.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="server?.properties?.motd; server?.pack?.motd; $nextTick(()=>fitMotd($el))"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
                     <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
                         <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
                     </button>
@@ -703,6 +711,7 @@
                     <button type="button" class="ps-btn is-icon is-sm" :disabled="busy || !server?.permissions['settings.rename']" aria-label="Change server background" data-tip="Server background" aria-haspopup="dialog" x-on:click="openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg></button>
                     <div class="ps-dropdown is-fixed ps-color-dropdown" x-show="colorMenu" x-cloak :style="colorMenuStyle" x-on:click.stop>
                         <span class="ps-label">Server color</span>
+                        <small class="ps-color-group-note" x-show="serverGroup(server?.uuid)?.color" x-text="'You see the color of your group '+serverGroup(server?.uuid)?.name+'. This color is what everyone else sees.'"></small>
                         <div class="ps-swatches ps-color-presets">
                             <template x-for="(name,color) in (boot.available_colors || {})" :key="color">
                                 <button type="button" class="ps-swatch" :style="{'background-color': color}" :data-tip="name" :aria-label="'Select '+name+' server color'" :aria-pressed="colorDraft===color" :disabled="busy" x-on:click="colorDraft=color"></button>
@@ -738,7 +747,7 @@
                 {{-- A workspace opens in this block; the console then shrinks to a read-only view at the bottom right. --}}
                 <div class="ps-dock" x-effect="syncDock($el, docked())"></div>
                 <div class="ps-settings-column" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}">
-                    <nav class="ps-widget-grid" aria-label="Server sections">
+                    <nav class="ps-widget-grid" aria-label="Server sections" x-init="scrollHint($el)">
                         <button type="button" class="ps-widget is-console" style="--ps-tone: #9a9aa6" :aria-current="docked() ? null : 'page'" x-on:click="docked() && close()" aria-label="Live console">
                             <span class="ps-widget-icon" aria-hidden="true">›_</span>
                             <span><strong>Console</strong></span>
@@ -799,7 +808,7 @@
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
-                        <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands">
+                        <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands" x-init="scrollHint($el)">
                             <template x-for="quick in QUICK_COMMANDS" :key="quick">
                                 <button type="button" class="ps-quick-command" :disabled="!connected || !server?.permissions['control.console']" x-on:click="useQuickCommand(quick)" x-text="quick.endsWith(' ') ? quick+'…' : quick"></button>
                             </template>
@@ -959,7 +968,7 @@
 
                 {{-- Game settings: tabs on the left, one save action in the footer. --}}
                 <div x-show="modal==='settings' && !loading" class="ps-settings-workspace" :class="{'has-tabs': server?.minecraft}">
-                    <nav class="ps-tabs" x-show="server?.minecraft" aria-label="Settings sections">
+                    <nav class="ps-tabs" x-show="server?.minecraft" aria-label="Settings sections" x-init="scrollHint($el)">
                         <template x-for="tab in settingsTabs()" :key="tab.key">
                             <button type="button" :aria-pressed="settingsTab===tab.key" x-on:click="settingsTab=tab.key"><svg aria-hidden="true"><use :href="'#ps-'+tab.icon"/></svg><span x-text="tab.label"></span></button>
                         </template>

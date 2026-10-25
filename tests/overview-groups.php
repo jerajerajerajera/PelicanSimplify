@@ -1,7 +1,8 @@
 <?php
-namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path];}public function put($path,$value){self::$records[$path]=$value;return true;}}}
+namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}}}
 namespace {
 function report($e){}
+require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/OverviewGroups.php';
 use Simplify\Panel\Services\OverviewGroups as Groups;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,8 @@ check(count($many)===30 && mb_strlen($many[0]['name'])===40,'at most 30 groups, 
 check(Groups::save($jeroen,[])['groups']===[] && Groups::get($jeroen)===['groups'=>[],'order'=>'name'],'removing every group saves an empty list, not null');
 Storage::$records['simplify/overview-groups/7.json']=json_encode([['id'=>'old','name'=>'Old','servers'=>['a']]]);
 check(Groups::get($jeroen)===['groups'=>[['id'=>'old','name'=>'Old','servers'=>['a'],'sort'=>'overview']],'order'=>'name'],'files from 0.5.0-snapshot.13 / beta.6 (just a list) still load');
+$colored=Groups::save($jeroen,[['id'=>'c1','name'=>'Red','servers'=>[],'color'=>'#FF0000'],['id'=>'c2','name'=>'Bad','servers'=>[],'color'=>'red'],['id'=>'c3','name'=>'None','servers'=>[],'color'=>null]])['groups'];
+check(($colored[0]['color']??null)==='#ff0000' && !array_key_exists('color',$colored[1]) && !array_key_exists('color',$colored[2]),'a group colour is kept as lower-case hex; anything else means no colour');
 Storage::$records['simplify/overview-groups/8.json']='{bad';check(Groups::get($other)===['groups'=>[],'order'=>'name'],'a broken file reads as no groups');
-echo "PASS server groups saved per account: hand-over signal, cleaning, server and group order, limits, isolation, older files and broken files\n";
+echo "PASS server groups saved per account: hand-over signal, cleaning, server and group order, limits, isolation, group colours, older files and broken files\n";
 }

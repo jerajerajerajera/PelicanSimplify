@@ -23,9 +23,7 @@ final class Subdomains
     public static function settings(): array
     {
         if(self::$settings!==null)return self::$settings;
-        try{$saved=Storage::disk('local')->exists(self::FILE)?json_decode((string)Storage::disk('local')->get(self::FILE),true,8,JSON_THROW_ON_ERROR):[];}
-        catch(\Throwable $e){report($e);$saved=[];}
-        return self::$settings=array_replace(self::DEFAULTS,array_intersect_key(is_array($saved)?$saved:[],self::DEFAULTS));
+        return self::$settings=array_replace(self::DEFAULTS,array_intersect_key(JsonFile::read(self::FILE),self::DEFAULTS));
     }
     public static function save(array $input): void
     {
