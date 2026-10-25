@@ -376,9 +376,9 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 .ps-settings-tabs .fi-tabs-item:nth-child(9) { --ps-tone: #f5b84a; }
 .ps-settings-tabs .fi-section { border-radius: 16px !important; }
 @media (max-width: 900px) {
-  .ps-settings-tabs.fi-vertical { height: auto !important; }
+  .ps-settings-tabs.fi-vertical { height: auto !important; background: none !important; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { width: 100%; height: auto; }
-  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: auto; overflow: visible; }
+  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: auto; margin: 0 !important; overflow: visible; }
 }
 
 /* Phone layout (creator and first setup): "Step 1 of 4" with a progress bar instead of every step,
