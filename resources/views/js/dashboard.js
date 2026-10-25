@@ -4,8 +4,8 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all' };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
   const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
@@ -210,6 +210,7 @@
         if (this.$nextTick) this.$nextTick(() => this.initOverviewDock());
         if (this.$nextTick) this.$nextTick(() => this.openFromLink());
         if (!this.server) {
+          setTimeout(() => this.releaseBats(), 600);
           this.recordOverview(this.boot.servers);
           this.refreshTimer = setInterval(() => this.modal || this.refreshOverview(), this.intervals.overview);
           return;
@@ -277,6 +278,45 @@
         }
       },
 
+      /* Halloween ---------------------------------------------------------------------------- */
+      /** 25 October to 2 November, every year. */
+      halloweenSeason(date = new Date()) {
+        const month = date.getMonth(), day = date.getDate();
+        return (month === 9 && day >= 25) || (month === 10 && day <= 2);
+      },
+      /** The Halloween touches show in season, unless the panel or this person turned them off. */
+      halloween(date = new Date()) {
+        return this.boot.appearance?.seasonal !== false && this.overviewPreferences.halloween !== false && this.halloweenSeason(date);
+      },
+      /** A few bats leave one server card when the overview opens, once per visit. */
+      releaseBats() {
+        if (this.server || !this.halloween() || typeof document === 'undefined' || !document.body.animate) return;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        try {
+          if (sessionStorage.getItem('pelicanSimplify.bats')) return;
+          sessionStorage.setItem('pelicanSimplify.bats', '1');
+        } catch {}
+        const card = [...this.$root.querySelectorAll('.ps-server-card')].map((el) => el.getBoundingClientRect()).find((r) => r.width > 80 && r.top >= 0 && r.bottom <= innerHeight);
+        if (!card) return;
+        const ink = getComputedStyle(this.$root).getPropertyValue('--ps-ink').trim();
+        [[0, .62, -1], [180, .5, .3], [340, .72, 1]].forEach(([delay, across, side], i) => {
+          const bat = document.createElement('span');
+          bat.className = 'ps-hw-bat';
+          bat.setAttribute('aria-hidden', 'true');
+          bat.style.color = ink;
+          bat.innerHTML = '<svg viewBox="0 0 44 22"><path d="M22 6c1-2 2-3 2-3l1 3c2 0 3 1 3 2 3-3 8-5 14-4-3 2-4 5-4 8-2-2-5-2-7 0-1-2-3-3-5-2l-2 6-2-6c-2-1-4 0-5 2-2-2-5-2-7 0 0-3-1-6-4-8 6-1 11 1 14 4 0-1 1-2 3-2l1-3s1 1 2 3z"/></svg>';
+          document.body.appendChild(bat);
+          const x = card.left + card.width * across - 20, y = card.top + card.height * .35;
+          const dx = side * (120 + i * 40) + 60, dy = -(y + 60);
+          bat.animate([
+            { transform: `translate(${x}px, ${y}px) scale(.4)`, opacity: 0 },
+            { transform: `translate(${x + dx * .15}px, ${y - 40}px) scale(.9)`, opacity: .85, offset: .15 },
+            { transform: `translate(${x + dx * .55}px, ${y + dy * .5 + 20}px)`, opacity: .85, offset: .55 },
+            { transform: `translate(${x + dx}px, ${y + dy}px) scale(.8)`, opacity: 0 },
+          ], { duration: 2400 + i * 250, delay: delay + 300, easing: 'cubic-bezier(.3, .6, .4, 1)', fill: 'both' }).finished.then(() => bat.remove(), () => bat.remove());
+        });
+      },
+
       /* Colours ---------------------------------------------------------------------------- */
       creationAccent(game) {
         if (game === 'minecraft' && this.overviewPreferences.minecraftAlwaysGreen) {
@@ -292,6 +332,9 @@
         if (String(id).startsWith('group-')) return {};
         const appearance = this.boot.appearance || {};
         const common = appearance.accent_color;
+        // Halloween turns the overview's neutral accent orange; a panel accent of your own stays.
+        if (id === 'overview' && this.halloween() && (common || '#878787').toLowerCase() === '#878787')
+          return { '--ps-accent': this.themeDark ? '#f0a35a' : '#c2621a', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
         if (/^#[0-9a-f]{6}$/i.test(common || '') && (id === 'overview' || appearance.individual_colors === false))
           return { '--ps-accent': common, '--ps-on-accent': accentInk(common) };
         if (id === 'overview') return { '--ps-accent': this.themeDark ? '#c0c0c5' : '#55555f', '--ps-on-accent': this.themeDark ? '#111118' : '#ffffff' };
