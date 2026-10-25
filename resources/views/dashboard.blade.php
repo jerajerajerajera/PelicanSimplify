@@ -452,6 +452,12 @@
                                 <button type="button" class="ps-chip" :aria-pressed="nodeFilter===node.id" x-on:click="nodeFilter=node.id" x-text="node.name"></button>
                             </template>
                         </div>
+                        {{-- Administrators see everyone's servers; like Pelican's own list they can narrow it to their own (owner or subuser) or other people's. --}}
+                        <div class="ps-owner-filters" x-show="ownerFilterShown()" role="group" aria-label="Filter servers by owner">
+                            <template x-for="scope in [{ key: 'all', label: 'All servers' }, { key: 'mine', label: 'My servers' }, { key: 'others', label: 'Others' }]" :key="scope.key">
+                                <button type="button" class="ps-chip" :aria-pressed="overviewPreferences.serverScope===scope.key" x-on:click="setOverviewPreference('serverScope', scope.key)"><svg x-show="scope.key==='all'" aria-hidden="true"><use href="#ps-account"/></svg><span x-text="scope.label"></span></button>
+                            </template>
+                        </div>
                     </div>
                     {{-- Buttons other plugins add to Pelican's server list (such as Create server from User Creatable Servers). --}}
                     <div class="ps-plugin-actions" x-show="pluginActions('app').length" role="group" aria-label="Buttons from other plugins">
