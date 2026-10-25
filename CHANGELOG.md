@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.2-beta.1 (beta channel)
+Hotfix for the Pelican Hub: 0.5.1 was refused there because of a name in the announcements code (0.5.2-snapshot.1 below).
+
+## 0.5.2-snapshot.1 (snapshot channel)
+Hotfix for the Pelican Hub: 0.5.1 was refused there because of a name in the announcements code.
+- The announcement button helper has a new name; nothing changes in how announcements work.
+- The release check now also catches method names the Hub does not allow.
+
 ## 0.5.1-beta.2 (beta channel)
 Fixes the server page header: opening the ⋯ menu made the header background grow and stick out on the right (since 0.5.1-beta.1).
 - The modpack card under the console is gone; the modpack name and version in the header now link to the modpack page, also on phones.

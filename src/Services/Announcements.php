@@ -51,7 +51,7 @@ final class Announcements
         if($title==='')throw new \InvalidArgumentException('Give the announcement a title.');
         $starts=self::time($input['starts_at']??null);$ends=self::time($input['ends_at']??null);
         if($starts!==null&&$ends!==null&&$ends<=$starts)throw new \InvalidArgumentException('"Show until" must be after "Show from".');
-        $link=self::link($input);
+        $link=self::buttonTarget($input);
         if(($input['link_type']??'none')!=='none'&&$link===null)throw new \InvalidArgumentException(($input['link_type']??'')==='url'?'Use a link that starts with https:// or with / for a page of this panel.':'Pick a server for the button.');
         $row=self::clean([
             'id'=>$old['id']??bin2hex(random_bytes(8)),
@@ -208,7 +208,7 @@ final class Announcements
     }
 
     /** The button target from the form: a server (uuid) or a link, null without a button. */
-    private static function link(array $input): ?array
+    private static function buttonTarget(array $input): ?array
     {
         return match($input['link_type']??'none'){
             'server'=>is_string($input['server']??null)&&preg_match('/^[A-Za-z0-9-]{1,64}$/',$input['server'])?['server'=>$input['server']]:null,
