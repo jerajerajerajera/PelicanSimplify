@@ -373,7 +373,7 @@
                         <p class="ps-empty" x-show="!(boot.servers||[]).length">No servers yet.</p>
                     </div>
                 </aside>
-                <nav class="ps-host-rail" aria-label="Admin sections">
+                <nav class="ps-host-rail" aria-label="Admin sections" x-init="scrollHint($el)">
                     <span class="ps-label ps-host-rail-title">Admin</span>
                     <div class="ps-host-rail-items">
                         <template x-for="section in hostSections().filter((x) => x.key !== 'health')" :key="section.key">
@@ -425,7 +425,7 @@
         <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
-                    <div class="ps-overview-toolbar">
+                    <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
                             <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
                                 <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-creeper"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
@@ -747,7 +747,7 @@
                 {{-- A workspace opens in this block; the console then shrinks to a read-only view at the bottom right. --}}
                 <div class="ps-dock" x-effect="syncDock($el, docked())"></div>
                 <div class="ps-settings-column" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}">
-                    <nav class="ps-widget-grid" aria-label="Server sections">
+                    <nav class="ps-widget-grid" aria-label="Server sections" x-init="scrollHint($el)">
                         <button type="button" class="ps-widget is-console" style="--ps-tone: #9a9aa6" :aria-current="docked() ? null : 'page'" x-on:click="docked() && close()" aria-label="Live console">
                             <span class="ps-widget-icon" aria-hidden="true">›_</span>
                             <span><strong>Console</strong></span>
@@ -808,7 +808,7 @@
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
-                        <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands">
+                        <div class="ps-quick-commands" x-show="server?.minecraft" role="group" aria-label="Quick commands" x-init="scrollHint($el)">
                             <template x-for="quick in QUICK_COMMANDS" :key="quick">
                                 <button type="button" class="ps-quick-command" :disabled="!connected || !server?.permissions['control.console']" x-on:click="useQuickCommand(quick)" x-text="quick.endsWith(' ') ? quick+'…' : quick"></button>
                             </template>
@@ -968,7 +968,7 @@
 
                 {{-- Game settings: tabs on the left, one save action in the footer. --}}
                 <div x-show="modal==='settings' && !loading" class="ps-settings-workspace" :class="{'has-tabs': server?.minecraft}">
-                    <nav class="ps-tabs" x-show="server?.minecraft" aria-label="Settings sections">
+                    <nav class="ps-tabs" x-show="server?.minecraft" aria-label="Settings sections" x-init="scrollHint($el)">
                         <template x-for="tab in settingsTabs()" :key="tab.key">
                             <button type="button" :aria-pressed="settingsTab===tab.key" x-on:click="settingsTab=tab.key"><svg aria-hidden="true"><use :href="'#ps-'+tab.icon"/></svg><span x-text="tab.label"></span></button>
                         </template>

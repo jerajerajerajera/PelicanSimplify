@@ -1022,6 +1022,23 @@
           if (OVERVIEW_VIEWS.includes(view)) this.overviewView = view;
         } catch {}
       },
+      /** Marks a sideways scrolling strip with the edges that hide more items, so the cut-off side fades out. */
+      scrollHint(el) {
+        const update = () => {
+          const max = el.scrollWidth - el.clientWidth;
+          const hint = max > 1 ? [el.scrollLeft > 1 && 'start', el.scrollLeft < max - 1 && 'end'].filter(Boolean).join(' ') : '';
+          if ((el.dataset.psMore || '') === hint) return;
+          if (hint) el.dataset.psMore = hint;
+          else delete el.dataset.psMore;
+        };
+        el.addEventListener('scroll', update, { passive: true });
+        if (typeof ResizeObserver === 'function') {
+          const observer = new ResizeObserver(update);
+          observer.observe(el);
+          for (const child of el.children) observer.observe(child);
+        }
+        this.$nextTick?.(update);
+      },
       setOverviewView(view) {
         if (!OVERVIEW_VIEWS.includes(view)) return;
         this.overviewView = view;
