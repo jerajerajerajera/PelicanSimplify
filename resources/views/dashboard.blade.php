@@ -710,9 +710,12 @@
             </div>
 
             <article class="ps-server-info" aria-label="Server information" x-init="watchServerInfo($el)">
+                {{-- Artwork has its own clipping layer, so it stays inside the card while the ⋯ menu lets the card overflow. --}}
+                <span class="ps-info-decor">
                 <span class="ps-offline-artwork" x-show="status==='offline'" aria-label="Server offline"><svg aria-hidden="true"><use href="#ps-offline"/></svg></span>
                 <span class="ps-server-banner ps-banner-color" :class="{'is-auto': server?.background_id==='color'}" x-show="bannerColor(server) && status!=='offline'" :style="bannerColor(server)" aria-hidden="true"></span>
                 <img class="ps-server-banner" x-show="server?.background && status!=='offline'" :src="safeImage(server?.background)" alt="" x-on:error="$el.style.visibility='hidden'">
+                </span>
                 <span class="ps-info-icons">
                     <span class="ps-info-icon ps-custom-server-icon" x-show="server?.server_icon" data-tip="server-icon.png"><img :src="safeImage(server?.server_icon)" alt="Custom server icon" x-on:load="$el.style.visibility=''" x-on:error="$el.style.visibility='hidden'"></span>
                     <span class="ps-info-icon ps-software-icon" :class="{'is-badge': server?.server_icon}" data-tip-label="Server software" :data-tip="server?.pack?.modpack_name || server?.software || 'Server software'">
@@ -730,7 +733,9 @@
                     <div class="ps-info-meta">
                         <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
                         <span class="ps-info-meta-item" data-tip-label="Server software" :data-tip="server?.software || 'Not reported'"><svg aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="softwareLabel()"></span></span>
-                        <span class="ps-info-meta-item" x-show="server?.pack?.modpack_name" data-tip="Modpack"><svg aria-hidden="true"><use href="#ps-packages"/></svg><span x-text="server?.pack?.modpack_name + (server?.pack?.modpack_version ? ' ' + server.pack.modpack_version : '')"></span></span>
+                        {{-- The modpack links to its page; this replaced the separate modpack card under the console. --}}
+                        <a class="ps-info-meta-item ps-info-modpack" x-show="server?.pack?.modpack_name && safeLink(server?.pack?.modpack_url) !== '#'" :href="safeLink(server?.pack?.modpack_url)" target="_blank" rel="noopener noreferrer" data-tip="Modpack info"><svg aria-hidden="true"><use href="#ps-packages"/></svg><span x-text="modpackLabel()"></span><svg class="ps-info-modpack-out" aria-hidden="true"><use href="#ps-external"/></svg></a>
+                        <span class="ps-info-meta-item ps-info-modpack" x-show="server?.pack?.modpack_name && safeLink(server?.pack?.modpack_url) === '#'" data-tip="Modpack"><svg aria-hidden="true"><use href="#ps-packages"/></svg><span x-text="modpackLabel()"></span></span>
                         <button type="button" class="ps-address ps-info-address" x-on:click="copyText(server.address)" :disabled="!server?.address" data-tip="Copy server address">
                             <svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address || 'No address assigned'"></span><svg aria-hidden="true"><use href="#ps-copy"/></svg>
                         </button>
@@ -887,11 +892,6 @@
                     </aside>
                 </div>
             </div>
-            <article x-show="server?.pack?.modpack_name" class="ps-card ps-pack-summary">
-                <img :src="safeImage(server?.pack?.modpack_icon_url)" alt="Modpack icon">
-                <div><p class="ps-eyebrow">Your modpack</p><h3 x-text="server?.pack?.modpack_name"></h3><p x-text="server?.pack?.modpack_version"></p></div>
-                <a :href="safeLink(server?.pack?.modpack_url)" target="_blank" rel="noopener noreferrer" class="ps-btn is-icon is-subtle" data-tip="Modpack info" aria-label="Modpack info"><svg aria-hidden="true"><use href="#ps-link"/></svg></a>
-            </article>
         </section>
     </main>
 
