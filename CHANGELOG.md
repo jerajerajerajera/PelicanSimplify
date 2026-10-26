@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.3-snapshot.1 (snapshot channel)
+Server pages have a Customize button too, with a Full screen width switch of their own.
+- The switch is separate from the one on the overview, so both pages can be set differently; it is off by default.
+- While it is in season, the Halloween switch is in this menu too.
+- On low screens (a phone on its side) the server page shows only your avatar in the top bar, so the console keeps its height.
+
 ## 0.5.2-snapshot.1 (snapshot channel)
 Hotfix for the Pelican Hub: 0.5.1 was refused there because of a name in the announcements code.
 - The announcement button helper has a new name; nothing changes in how announcements work.
