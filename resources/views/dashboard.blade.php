@@ -6,7 +6,7 @@
 <div class="ps" data-simplify-root x-cloak wire:ignore.self
      x-data="pelicanSimplify($wire, @js($this->initial()))"
      x-on:resize.window.debounce.150ms="applyScale(); restoreOverviewView()"
-     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'ps-halloween': halloween()}"
+     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'is-server-full-width': overviewPreferences.serverFullWidth, 'ps-halloween': halloween()}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
     {{-- Halloween (25 October to 2 November): a faint web with a spider in the corner. Clicks pass through. --}}
@@ -129,7 +129,7 @@
                                                 <a class="ps-btn is-sm" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
                                             </template>
                                             <button type="button" class="ps-btn is-sm is-subtle" x-show="item.pelican" x-on:click="markPanelNoticesRead([item.key])">Mark read</button>
-                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Hide</button>
+                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Collapse</button>
                                         </span>
                                     </div>
                                 </template>
@@ -222,14 +222,35 @@
                     </div>
 
                     {{-- Personal appearance preferences. --}}
-                    <div class="ps-overview-appearance" x-show="!server && !hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
-                        <button type="button" x-ref="overviewAppearance" class="ps-btn is-icon is-subtle" data-tip="Customize overview" aria-label="Customize overview" aria-controls="ps-overview-appearance-menu" :aria-expanded="appearanceMenu"
+                    <div class="ps-overview-appearance" x-show="!hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
+                        <button type="button" x-ref="overviewAppearance" class="ps-btn is-icon is-subtle" :data-tip="server ? 'Customize server page' : 'Customize overview'" :aria-label="server ? 'Customize server page' : 'Customize overview'" aria-controls="ps-overview-appearance-menu" :aria-expanded="appearanceMenu"
                                 x-on:click="appearanceMenu=!appearanceMenu; groupsMenu=false; accountMenu=false; notifyMenu=false">
-                            <svg aria-hidden="true"><use href="#ps-wand"/></svg><span class="ps-mobile-label">Customize overview</span>
+                            <svg aria-hidden="true"><use href="#ps-wand"/></svg><span class="ps-mobile-label" x-text="server ? 'Customize server page' : 'Customize overview'">Customize overview</span>
                         </button>
                         <div id="ps-overview-appearance-menu" class="ps-dropdown is-end ps-overview-appearance-menu" x-show="appearanceMenu" x-cloak x-transition.opacity>
-                            <strong class="ps-dropdown-title">Customize overview</strong>
+                            <strong class="ps-dropdown-title" x-text="server ? 'Customize server page' : 'Customize overview'">Customize overview</strong>
                             <p class="ps-dropdown-hint">Only for you, on this device.</p>
+                            {{-- Server pages: the same personal preferences, stored with the overview ones. --}}
+                            <template x-if="server">
+                                <div class="ps-customize">
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
+                                        <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.serverFullWidth" x-on:click="setOverviewPreference('serverFullWidth', !overviewPreferences.serverFullWidth)">
+                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for server pages</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.serverFullWidth}" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consoleFocus" x-on:click="setConsoleFocus(!consoleFocus)">
+                                        <span><strong>Bigger console</strong><small>Open server pages with the large console, without the menu next to it</small></span>
+                                        <span class="ps-switch" :class="{'is-on': consoleFocus}" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consolePeek" x-on:click="setConsolePeek(!consolePeek)">
+                                        <span><strong>Log in the mini console</strong><small>While a section like Files is open, show the last log lines above the command field</small></span>
+                                        <span class="ps-switch" :class="{'is-on': consolePeek}" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </template>
                             <template x-if="!server">
                                 <div class="ps-customize">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
@@ -446,23 +467,7 @@
         <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
-                    {{-- Announcements: live ones this account did not hide (Admin tools → Announcements, the Panel's update notices). --}}
-                    <div class="ps-announcement-bars" x-show="announcementBars().length" x-cloak>
-                        <template x-for="item in announcementBars()" :key="item.key">
-                            <div class="ps-alert ps-announcement-bar" :class="'is-'+item.tone" role="status">
-                                <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
-                                <div class="ps-announcement-copy">
-                                    <strong x-text="item.title"></strong>
-                                    <span x-show="item.text" x-text="item.text"></span>
-                                    <small x-show="announcementMeta(item)" x-text="announcementMeta(item)"></small>
-                                </div>
-                                <template x-if="item.action">
-                                    <a class="ps-btn is-sm ps-announcement-action" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
-                                </template>
-                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-announcement-hide" data-tip="Hide" :aria-label="'Hide '+item.title" x-on:click="dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
-                            </div>
-                        </template>
-                    </div>
+                    @include('pelican-simplify::announcement-bars')
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
                             <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
@@ -696,6 +701,7 @@
                     <button type="button" class="ps-btn is-sm is-danger" x-on:click="power('kill')" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" aria-label="Force stop server" data-tip="Kill"><svg aria-hidden="true"><use href="#ps-kill"/></svg></button>
                 </div>
             </div>
+            @include('pelican-simplify::announcement-bars')
             <div class="ps-alert is-warn ps-pending" x-show="server?.pending" x-cloak>
                 <svg aria-hidden="true"><use href="#ps-alert"/></svg>
                 <div>
@@ -873,9 +879,9 @@
                                 </button>
                             </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
-                            <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="consoleFocus=!consoleFocus" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="setConsoleFocus(!consoleFocus)" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-window" x-show="!docked() && !consoleWindow && !embedded" x-on:click="openConsoleWindow()" data-tip="Open in a new window" aria-label="Open the console in a new window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>
-                            <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="consolePeek=!consolePeek; renderLogs()" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="setConsolePeek(!consolePeek)" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-full" x-show="docked()" x-on:click="close()"><svg aria-hidden="true"><use href="#ps-expand"/></svg><span>Full console</span></button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>

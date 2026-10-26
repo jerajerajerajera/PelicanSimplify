@@ -1,5 +1,20 @@
 # Changes
 
+## 0.5.3-beta.1 (beta channel)
+Customize server page and pinned announcements (0.5.3-snapshot.1 and 2 below).
+
+## 0.5.3-snapshot.2 (snapshot channel)
+Announcements stay pinned while they are live, and Customize server page remembers how you like the console.
+- Announcements now also show above server pages.
+- Collapsing an announcement leaves a small pin with its title; click it to open the announcement again. Pins disappear when the announcement ends.
+- Customize server page can also remember the bigger console and the log in the mini console; the buttons on the console change the same setting. Not on phones.
+
+## 0.5.3-snapshot.1 (snapshot channel)
+Server pages have a Customize button too, with a Full screen width switch of their own.
+- The switch is separate from the one on the overview, so both pages can be set differently; it is off by default.
+- While it is in season, the Halloween switch is in this menu too.
+- On low screens (a phone on its side) the server page shows only your avatar in the top bar, so the console keeps its height.
+
 ## 0.5.2-beta.1 (beta channel)
 Hotfix for the Pelican Hub: 0.5.1 was refused there because of a name in the announcements code (0.5.2-snapshot.1 below).
 

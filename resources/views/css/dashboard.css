@@ -441,8 +441,10 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-back-overview { align-self: flex-start; }
 .ps-server-dashboard { width: 100%; max-width: 1400px; min-width: 0; margin-inline: auto; }
 .ps-statusbar { position: fixed; top: 10px; left: 50%; z-index: var(--ps-z-sticky, 30); display: flex; align-items: center; gap: 14px; width: min(1400px, calc(100% - 32px)); padding: 8px 10px 8px 16px; border: 1px solid var(--ps-line); border-left: 3px solid var(--ps-accent); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 88%, transparent); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgb(0 0 0 / .18); opacity: 0; pointer-events: none; transform: translate(-50%, -16px); transition: opacity var(--ps-fast), transform var(--ps-slow); }
-/* Full screen width (Customize overview): only the overview drops its centred column; server pages and host mode keep theirs, phones are full width already. */
+/* Full screen width: the overview (Customize overview) and server pages (Customize server page) each have their own switch; host mode keeps its column, phones are full width already. */
 .ps.is-full-width:not(.server-active, .host-mode) :is(.ps-top, .ps-server-stage, .ps-server-stage.is-list) { max-width: none; }
+.ps.server-active.is-server-full-width :is(.ps-top, .ps-server-dashboard) { max-width: none; }
+.ps.server-active.is-server-full-width .ps-statusbar { width: calc(100% - 32px); }
 .ps-statusbar.is-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .ps-statusbar-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 700; color: var(--ps-accent); text-overflow: ellipsis; white-space: nowrap; }
 .ps-statusbar-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ps-muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
@@ -1248,6 +1250,9 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-main { padding-top: 16px; }
   /* Landscape phone: a one-line header with icon buttons, the menu as a narrow icon column. */
   .ps .ps-top { margin-bottom: 10px; }
+  /* Room for the Customize button on server pages: the avatar alone, so the panel name keeps one line. */
+  .ps.server-active .ps-account-username { display: none; }
+  .ps.server-active .ps-account-button { padding-right: 4px; }
   .ps .ps-server-info { grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: "icons content power"; gap: 12px; margin-bottom: 10px; padding: 10px 14px; }
   .ps .ps-info-icon { width: 36px; height: 36px; border-radius: 10px; }
   .ps .ps-software-icon.is-badge { display: none; }
@@ -1268,8 +1273,10 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
 }
 
-/* Announcement bars above the overview (Admin tools → Announcements and the Panel's update notices). */
-.ps-announcement-bars { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
+/* Announcements above the overview and server pages (Admin tools → Announcements and the Panel's update notices).
+   Collapsed ones stay as one-line pins until they end. */
+.ps-announcements-pinned { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
+.ps-server-dashboard > .ps-announcements-pinned { margin-bottom: 14px; }
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
 .ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
 .ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
@@ -1277,6 +1284,23 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-announcement-copy span { white-space: pre-line; }
 .ps-announcement-copy small { display: block; margin-top: 1px; }
 .ps-announcement-bar .ps-btn { flex: none; }
+.ps-announcement-hide svg { transform: rotate(-90deg); }
+.ps-announcement-pins { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.ps-announcement-pin {
+  --ps-tone: var(--ps-info);
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; height: 30px; padding: 0 8px 0 10px;
+  border: 1px solid color-mix(in srgb, var(--ps-tone) 35%, var(--ps-line)); border-radius: 999px;
+  background: color-mix(in srgb, var(--ps-tone) 9%, var(--ps-surface)); color: var(--ps-ink);
+  font: 550 12.5px/1 var(--ps-font); cursor: pointer;
+}
+.ps-announcement-pin:hover { background: color-mix(in srgb, var(--ps-tone) 16%, var(--ps-surface)); }
+.ps-announcement-pin:focus-visible { outline: 2px solid var(--ps-tone); outline-offset: 2px; }
+.ps-announcement-pin.is-warn { --ps-tone: var(--ps-warn); }
+.ps-announcement-pin.is-ok { --ps-tone: var(--ps-ok); }
+.ps-announcement-pin.is-danger { --ps-tone: var(--ps-danger); }
+.ps-announcement-pin svg { flex: none; width: 15px; height: 15px; color: var(--ps-tone); }
+.ps-announcement-pin span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-announcement-pin .ps-announcement-pin-open { width: 13px; height: 13px; color: var(--ps-muted); transform: rotate(90deg); }
 @media (max-width: 600px) {
   .ps-announcement-bar { position: relative; flex-wrap: wrap; padding-right: 44px; }
   .ps-announcement-copy { flex-basis: calc(100% - 40px); }
