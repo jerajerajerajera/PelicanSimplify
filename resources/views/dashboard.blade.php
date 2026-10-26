@@ -6,7 +6,7 @@
 <div class="ps" data-simplify-root x-cloak wire:ignore.self
      x-data="pelicanSimplify($wire, @js($this->initial()))"
      x-on:resize.window.debounce.150ms="applyScale(); restoreOverviewView()"
-     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'ps-halloween': halloween()}"
+     :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'is-server-full-width': overviewPreferences.serverFullWidth, 'ps-halloween': halloween()}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
     {{-- Halloween (25 October to 2 November): a faint web with a spider in the corner. Clicks pass through. --}}
@@ -222,14 +222,27 @@
                     </div>
 
                     {{-- Personal appearance preferences. --}}
-                    <div class="ps-overview-appearance" x-show="!server && !hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
-                        <button type="button" x-ref="overviewAppearance" class="ps-btn is-icon is-subtle" data-tip="Customize overview" aria-label="Customize overview" aria-controls="ps-overview-appearance-menu" :aria-expanded="appearanceMenu"
+                    <div class="ps-overview-appearance" x-show="!hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
+                        <button type="button" x-ref="overviewAppearance" class="ps-btn is-icon is-subtle" :data-tip="server ? 'Customize server page' : 'Customize overview'" :aria-label="server ? 'Customize server page' : 'Customize overview'" aria-controls="ps-overview-appearance-menu" :aria-expanded="appearanceMenu"
                                 x-on:click="appearanceMenu=!appearanceMenu; groupsMenu=false; accountMenu=false; notifyMenu=false">
-                            <svg aria-hidden="true"><use href="#ps-wand"/></svg><span class="ps-mobile-label">Customize overview</span>
+                            <svg aria-hidden="true"><use href="#ps-wand"/></svg><span class="ps-mobile-label" x-text="server ? 'Customize server page' : 'Customize overview'">Customize overview</span>
                         </button>
                         <div id="ps-overview-appearance-menu" class="ps-dropdown is-end ps-overview-appearance-menu" x-show="appearanceMenu" x-cloak x-transition.opacity>
-                            <strong class="ps-dropdown-title">Customize overview</strong>
+                            <strong class="ps-dropdown-title" x-text="server ? 'Customize server page' : 'Customize overview'">Customize overview</strong>
                             <p class="ps-dropdown-hint">Only for you, on this device.</p>
+                            {{-- Server pages: the same personal preferences, stored with the overview ones. --}}
+                            <template x-if="server">
+                                <div class="ps-customize">
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
+                                        <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.serverFullWidth" x-on:click="setOverviewPreference('serverFullWidth', !overviewPreferences.serverFullWidth)">
+                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for server pages</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.serverFullWidth}" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </template>
                             <template x-if="!server">
                                 <div class="ps-customize">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
