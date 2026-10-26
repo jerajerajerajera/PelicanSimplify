@@ -4,8 +4,8 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton', 'halloween'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, serverBiggerConsole: false, serverConsoleLog: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'serverFullWidth', 'serverBiggerConsole', 'serverConsoleLog', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
   const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
@@ -201,6 +201,8 @@
         if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
+        this.consoleFocus = this.overviewPreferences.serverBiggerConsole;
+        this.consolePeek = this.overviewPreferences.serverConsoleLog;
         this.restoreOverviewGroups();
         this.restoreHostMode();
         this.initTheme();
@@ -528,7 +530,7 @@
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        // Announcements (also the Panel's update announcements); hidden bars stay here until they end.
+        // Announcements (also the Panel's update announcements); collapsed ones stay here until they end.
         for (const item of this.announcements) {
           items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
         }
@@ -536,13 +538,17 @@
         for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
         return items;
       },
-      /** The bell's count: everything except announcements this account already hid. */
+      /** The bell's count: everything except announcements this account already collapsed. */
       unreadNotifications() {
         return this.notifications().filter((item) => !item.dismissed).length;
       },
-      /** Announcement bars above the overview: live and not hidden by this account. */
+      /** Announcement bars above the overview and server pages: live and not collapsed by this account. */
       announcementBars() {
         return this.announcements.filter((item) => !item.dismissed);
+      },
+      /** Collapsed announcements stay pinned as one-line pins while they are live. */
+      announcementPins() {
+        return this.announcements.filter((item) => item.dismissed);
       },
       announcementMeta(item) {
         const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
@@ -557,17 +563,25 @@
           return false;
         }
       },
-      /** Hides an announcement bar for this account (kept with the account, so every device follows). */
-      async dismissAnnouncement(key) {
+      /** Collapses an announcement bar to a pin for this account (kept with the account, so every device follows). */
+      dismissAnnouncement(key) {
+        return this.pinAnnouncement(key, true);
+      },
+      /** Opens a pinned announcement again. */
+      restoreAnnouncement(key) {
+        return this.pinAnnouncement(key, false);
+      },
+      async pinAnnouncement(key, collapsed) {
         const before = this.announcements;
-        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: true } : item));
-        if (typeof wire.dismissAnnouncement !== 'function') return;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: collapsed } : item));
+        const call = collapsed ? wire.dismissAnnouncement : wire.restoreAnnouncement;
+        if (typeof call !== 'function') return;
         try {
-          const items = await wire.dismissAnnouncement(key);
+          const items = await call.call(wire, key);
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           this.announcements = before;
-          this.toast('The announcement could not be hidden.', 'warn');
+          this.toast(collapsed ? 'The announcement could not be collapsed.' : 'The announcement could not be opened.', 'warn');
         }
       },
       /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
@@ -1303,6 +1317,16 @@
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Bigger console and the log in the mini console are remembered, so the next server page opens the same way. */
+      setConsoleFocus(on) {
+        this.consoleFocus = on;
+        this.setOverviewPreference('serverBiggerConsole', on);
+      },
+      setConsolePeek(on) {
+        this.consolePeek = on;
+        this.setOverviewPreference('serverConsoleLog', on);
+        this.renderLogs();
       },
       /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
       quickActionsMode() {

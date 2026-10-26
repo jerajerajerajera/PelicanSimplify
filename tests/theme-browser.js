@@ -126,23 +126,49 @@ const { start } = require('./browser-harness');
     }
     console.log('PASS phone layouts without horizontal scrolling');
 
-    // 7b. Full screen width (Customize overview): only the overview drops its centred column; server pages keep theirs.
+    // 7b. Full screen width: the overview and server pages each have their own switch (Customize overview / Customize server page).
     for (const url of ['/?mode=overview&theme=dark', '/?mode=server&theme=dark']) {
       const wide = await open(url, { width: 2400, height: 1100 });
-      const width = () => wide.evaluate((selector) => document.querySelector(selector).getBoundingClientRect().width / innerWidth, url.includes('server') ? '.ps-server-dashboard' : '.ps-server-stage');
+      const server = url.includes('server');
+      const width = () => wide.evaluate((selector) => document.querySelector(selector).getBoundingClientRect().width / innerWidth, server ? '.ps-server-dashboard' : '.ps-server-stage');
       const before = await width();
       await data(wide, (d) => d.setOverviewPreference('fullWidth', true));
       await wide.waitForTimeout(200);
-      const after = await width();
-      if (url.includes('server')) assert.ok(Math.abs(after - before) < 0.01, 'server page keeps its width: ' + before + ' -> ' + after);
-      else assert.ok(before < 0.7 && after > 0.9, 'overview uses the full width when switched on: ' + before + ' -> ' + after);
+      const overviewOnly = await width();
+      await data(wide, (d) => d.setOverviewPreference('serverFullWidth', true));
+      await wide.waitForTimeout(200);
+      const both = await width();
+      if (server) {
+        assert.ok(Math.abs(overviewOnly - before) < 0.01, 'the overview switch leaves server pages alone: ' + before + ' -> ' + overviewOnly);
+        assert.ok(before < 0.7 && both > 0.9, 'server page uses the full width when switched on: ' + before + ' -> ' + both);
+        assert.equal(await wide.evaluate(() => document.querySelector('[x-ref=overviewAppearance]').getAttribute('aria-label')), 'Customize server page');
+        assert.equal(await wide.evaluate(() => document.querySelector('[x-ref=overviewAppearance]').offsetParent !== null), true, 'Customize button shown on server pages');
+      } else {
+        assert.ok(before < 0.7 && overviewOnly > 0.9, 'overview uses the full width when switched on: ' + before + ' -> ' + overviewOnly);
+        await data(wide, (d) => d.setOverviewPreference('fullWidth', false));
+        await wide.waitForTimeout(200);
+        assert.ok(await width() < 0.7, 'the server page switch leaves the overview alone');
+      }
       await wide.close();
     }
+    // 7b2. Bigger console and the log in the mini console are remembered for the next server page.
+    const remember = await open('/?mode=server&theme=dark');
+    await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).click();
+    await remember.locator('.ps-customize-switch', { hasText: 'Log in the mini console' }).click();
+    assert.equal(await remember.evaluate(() => document.querySelector('.ps-server-workspace').classList.contains('is-focus')), true, 'bigger console right away');
+    await remember.reload();
+    await remember.waitForFunction(() => window.Alpine && document.querySelector('.ps') && !document.querySelector('.ps').hasAttribute('x-cloak'));
+    assert.deepEqual(await data(remember, (d) => [d.consoleFocus, d.consolePeek]), [true, true], 'remembered after a reload');
+    await remember.locator('.ps-console-grow').click();
+    assert.equal(await data(remember, (d) => d.overviewPreferences.serverBiggerConsole), false, 'the console button changes the same preference');
+    await data(remember, (d) => { d.setConsolePeek(false); });
+    await remember.close();
     const narrow = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
     await data(narrow, (d) => d.setOverviewPreference('fullWidth', true));
     assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'full width still fits a phone');
     await narrow.close();
-    console.log('PASS full screen width switch on the overview, server pages unchanged, phones fit');
+    console.log('PASS full screen width switches for the overview and server pages, each on its own, remembered bigger console and mini console log, phones fit');
 
     // 7c. Layout, columns and card width: a column count caps each row; compact cards are smaller; phones show two compact cards per row.
     const columns = await open('/?mode=overview&theme=dark', { width: 1600, height: 1000 });

@@ -42,7 +42,7 @@ if(($argv[1]??'')==='livewire'){
     try{
         Filament::setCurrentPanel(Filament::getPanel('app'));
         $overview=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\App\Pages\Dashboard::class);
-        foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth'],['announcements'],['dismissAnnouncement','own-0000000000000000'],['pushSettings',null],['savePushPreferences',['updates'=>false]]] as $call){
+        foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth'],['announcements'],['dismissAnnouncement','own-0000000000000000'],['restoreAnnouncement','own-0000000000000000'],['pushSettings',null],['savePushPreferences',['updates'=>false]]] as $call){
             $name=array_shift($call);$overview->call($name,...$call);
         }
         // Announcements: the Panel's update check against Pelican's real version service, then one written in the admin page.
