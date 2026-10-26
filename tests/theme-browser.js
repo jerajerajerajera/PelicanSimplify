@@ -151,11 +151,24 @@ const { start } = require('./browser-harness');
       }
       await wide.close();
     }
+    // 7b2. Bigger console and the log in the mini console are remembered for the next server page.
+    const remember = await open('/?mode=server&theme=dark');
+    await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).click();
+    await remember.locator('.ps-customize-switch', { hasText: 'Log in the mini console' }).click();
+    assert.equal(await remember.evaluate(() => document.querySelector('.ps-server-workspace').classList.contains('is-focus')), true, 'bigger console right away');
+    await remember.reload();
+    await remember.waitForFunction(() => window.Alpine && document.querySelector('.ps') && !document.querySelector('.ps').hasAttribute('x-cloak'));
+    assert.deepEqual(await data(remember, (d) => [d.consoleFocus, d.consolePeek]), [true, true], 'remembered after a reload');
+    await remember.locator('.ps-console-grow').click();
+    assert.equal(await data(remember, (d) => d.overviewPreferences.serverBiggerConsole), false, 'the console button changes the same preference');
+    await data(remember, (d) => { d.setConsolePeek(false); });
+    await remember.close();
     const narrow = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
     await data(narrow, (d) => d.setOverviewPreference('fullWidth', true));
     assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'full width still fits a phone');
     await narrow.close();
-    console.log('PASS full screen width switches for the overview and server pages, each on its own, phones fit');
+    console.log('PASS full screen width switches for the overview and server pages, each on its own, remembered bigger console and mini console log, phones fit');
 
     // 7c. Layout, columns and card width: a column count caps each row; compact cards are smaller; phones show two compact cards per row.
     const columns = await open('/?mode=overview&theme=dark', { width: 1600, height: 1000 });

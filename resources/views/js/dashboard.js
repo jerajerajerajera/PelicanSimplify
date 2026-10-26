@@ -4,8 +4,8 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'serverFullWidth', 'showGroupsButton', 'halloween'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, serverBiggerConsole: false, serverConsoleLog: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'serverFullWidth', 'serverBiggerConsole', 'serverConsoleLog', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
   const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
@@ -201,6 +201,8 @@
         if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
+        this.consoleFocus = this.overviewPreferences.serverBiggerConsole;
+        this.consolePeek = this.overviewPreferences.serverConsoleLog;
         this.restoreOverviewGroups();
         this.restoreHostMode();
         this.initTheme();
@@ -1303,6 +1305,16 @@
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Bigger console and the log in the mini console are remembered, so the next server page opens the same way. */
+      setConsoleFocus(on) {
+        this.consoleFocus = on;
+        this.setOverviewPreference('serverBiggerConsole', on);
+      },
+      setConsolePeek(on) {
+        this.consolePeek = on;
+        this.setOverviewPreference('serverConsoleLog', on);
+        this.renderLogs();
       },
       /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
       quickActionsMode() {

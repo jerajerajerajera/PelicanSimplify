@@ -241,6 +241,14 @@
                                         <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for server pages</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.serverFullWidth}" aria-hidden="true"></span>
                                     </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consoleFocus" x-on:click="setConsoleFocus(!consoleFocus)">
+                                        <span><strong>Bigger console</strong><small>Open server pages with the large console, without the menu next to it</small></span>
+                                        <span class="ps-switch" :class="{'is-on': consoleFocus}" aria-hidden="true"></span>
+                                    </button>
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consolePeek" x-on:click="setConsolePeek(!consolePeek)">
+                                        <span><strong>Log in the mini console</strong><small>While a section like Files is open, show the last log lines above the command field</small></span>
+                                        <span class="ps-switch" :class="{'is-on': consolePeek}" aria-hidden="true"></span>
+                                    </button>
                                 </div>
                             </template>
                             <template x-if="!server">
@@ -886,9 +894,9 @@
                                 </button>
                             </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
-                            <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="consoleFocus=!consoleFocus" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="setConsoleFocus(!consoleFocus)" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-window" x-show="!docked() && !consoleWindow && !embedded" x-on:click="openConsoleWindow()" data-tip="Open in a new window" aria-label="Open the console in a new window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>
-                            <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="consolePeek=!consolePeek; renderLogs()" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="setConsolePeek(!consolePeek)" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-full" x-show="docked()" x-on:click="close()"><svg aria-hidden="true"><use href="#ps-expand"/></svg><span>Full console</span></button>
                         </div>
                         <pre wire:ignore class="ps-console-output" x-ref="output" tabindex="0" aria-label="Server console output"></pre>
