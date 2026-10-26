@@ -55,11 +55,15 @@ check(A::forUser($admin,$now+40)[0]['title']==='Simplify 0.5.1 is available'&&!i
 $plugin=array_values(array_filter(A::forUser($person,$now),fn($i)=>$i['source']==='plugin'));
 check(count($plugin)===1&&$plugin[0]['title']==='From the plugin'&&$plugin[0]['tone']==='danger'&&$plugin[0]['action']===null&&$plugin[0]['key']==='plugin-3','the Announcements plugin shows too: app panel, live, plain text, safe links only');
 
-// Hiding is per account and survives a reload; unknown keys are ignored.
+// Collapsing is per account and survives a reload; unknown keys are ignored.
 A::dismiss($person,'own-'.$link['id']);A::dismiss($person,'own-'.$link['id']);A::dismiss($person,'<script>');
 check(A::dismissedKeys($person)===['own-'.$link['id']],'one entry per hidden announcement, junk keys refused');
 $mine=A::forUser($person,$now);
-check($mine[array_search('New modpack',array_column($mine,'title'))]['dismissed']===true&&!array_filter(A::forUser($admin,$now),fn($i)=>$i['dismissed']),'hidden for this account only');
+check($mine[array_search('New modpack',array_column($mine,'title'))]['dismissed']===true&&!array_filter(A::forUser($admin,$now),fn($i)=>$i['dismissed']),'collapsed for this account only');
+A::dismiss($person,'own-0000000000000000');A::restore($person,'own-0000000000000000');A::restore($person,'<script>');
+check(A::dismissedKeys($person)===['own-'.$link['id']],'opening a collapsed announcement again takes it off the list, other keys stay');
+A::restore($person,'own-'.$link['id']);A::dismiss($person,'own-'.$link['id']);
+check(A::dismissedKeys($person)===['own-'.$link['id']],'collapse, open, collapse again leaves one entry');
 
 // App notifications: due once live and only when asked for; marked once sent, and editing keeps that mark.
 $pushed=A::save(['title'=>'Server restart','push'=>true,'starts_at'=>$now+600],null,'jera',$now);

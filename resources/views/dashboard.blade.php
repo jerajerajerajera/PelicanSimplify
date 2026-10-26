@@ -129,7 +129,7 @@
                                                 <a class="ps-btn is-sm" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
                                             </template>
                                             <button type="button" class="ps-btn is-sm is-subtle" x-show="item.pelican" x-on:click="markPanelNoticesRead([item.key])">Mark read</button>
-                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Hide</button>
+                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Collapse</button>
                                         </span>
                                     </div>
                                 </template>
@@ -459,23 +459,7 @@
         <section x-show="!server && !hostMode" class="ps-overview" :class="{'is-list': overviewView==='list'}" :style="{'--grid-columns': overviewColumns(), ...overviewGridStyle()}">
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
-                    {{-- Announcements: live ones this account did not hide (Admin tools → Announcements, the Panel's update notices). --}}
-                    <div class="ps-announcement-bars" x-show="announcementBars().length" x-cloak>
-                        <template x-for="item in announcementBars()" :key="item.key">
-                            <div class="ps-alert ps-announcement-bar" :class="'is-'+item.tone" role="status">
-                                <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
-                                <div class="ps-announcement-copy">
-                                    <strong x-text="item.title"></strong>
-                                    <span x-show="item.text" x-text="item.text"></span>
-                                    <small x-show="announcementMeta(item)" x-text="announcementMeta(item)"></small>
-                                </div>
-                                <template x-if="item.action">
-                                    <a class="ps-btn is-sm ps-announcement-action" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
-                                </template>
-                                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-announcement-hide" data-tip="Hide" :aria-label="'Hide '+item.title" x-on:click="dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
-                            </div>
-                        </template>
-                    </div>
+                    @include('pelican-simplify::announcement-bars')
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
                             <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
@@ -709,6 +693,7 @@
                     <button type="button" class="ps-btn is-sm is-danger" x-on:click="power('kill')" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" aria-label="Force stop server" data-tip="Kill"><svg aria-hidden="true"><use href="#ps-kill"/></svg></button>
                 </div>
             </div>
+            @include('pelican-simplify::announcement-bars')
             <div class="ps-alert is-warn ps-pending" x-show="server?.pending" x-cloak>
                 <svg aria-hidden="true"><use href="#ps-alert"/></svg>
                 <div>
