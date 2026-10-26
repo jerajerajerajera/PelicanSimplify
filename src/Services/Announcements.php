@@ -4,8 +4,9 @@ namespace Simplify\Panel\Services;
 use Illuminate\Support\Facades\Storage;
 /**
  * Announcements: Info, Warning and Success messages root admins write under Admin tools → Announcements, shown as
- * bars above the server overview and in the bell. Also shows the announcements of the Hub plugin "Announcements"
- * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). Hiding one is per account.
+ * bars above the server overview and server pages and in the bell. Also shows the announcements of the Hub plugin "Announcements"
+ * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). While one is live it stays pinned:
+ * collapsing it (per account) leaves a one-line pin that opens it again.
  */
 final class Announcements
 {
@@ -112,14 +113,21 @@ final class Announcements
         return $items;
     }
 
-    /** Hides an announcement for this account (it stays under the bell). */
+    /** Collapses an announcement for this account to a one-line pin; it stays pinned until it ends. */
     public static function dismiss(object $user,string $key): void
     {
-        if(!preg_match('/^[a-z]+-[A-Za-z0-9._-]{1,120}$/',$key))return;
+        if(!self::validKey($key))return;
         $keys=array_values(array_diff(self::dismissedKeys($user),[$key]));
         $keys[]=$key;
-        $keys=array_slice($keys,-self::DISMISSED_LIMIT);
-        if(!Storage::disk('local')->put(self::DISMISSED_DIR.(int)$user->id.'.json',json_encode($keys,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not hide the announcement.');
+        self::saveDismissed($user,array_slice($keys,-self::DISMISSED_LIMIT));
+    }
+
+    /** Opens a collapsed announcement again for this account. */
+    public static function restore(object $user,string $key): void
+    {
+        if(!self::validKey($key))return;
+        $keys=self::dismissedKeys($user);
+        if(in_array($key,$keys,true))self::saveDismissed($user,array_values(array_diff($keys,[$key])));
     }
 
     public static function dismissedKeys(object $user): array
@@ -201,6 +209,13 @@ final class Announcements
     }
 
     private static function until(int $at): string { return 'until '.date('D j M H:i',$at); }
+
+    private static function validKey(string $key): bool { return (bool)preg_match('/^[a-z]+-[A-Za-z0-9._-]{1,120}$/',$key); }
+
+    private static function saveDismissed(object $user,array $keys): void
+    {
+        if(!Storage::disk('local')->put(self::DISMISSED_DIR.(int)$user->id.'.json',json_encode($keys,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save the announcement.');
+    }
 
     private static function write(array $rows): void
     {

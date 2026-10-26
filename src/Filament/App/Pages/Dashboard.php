@@ -110,12 +110,15 @@ final class Dashboard extends Page
     public function panelNotifications(): array { return \Simplify\Panel\Services\PanelNotifications::unread(); }
     #[Renderless]
     public function markPanelNotificationsRead(array $ids): array { \Simplify\Panel\Services\PanelNotifications::markRead($ids); return \Simplify\Panel\Services\PanelNotifications::unread(); }
-    /** Announcements for this account (bars above the overview and the bell). */
+    /** Announcements for this account (bars above the overview and server pages, and the bell). */
     #[Renderless]
     public function announcements(): array { return \Simplify\Panel\Services\Announcements::forUser(user()); }
-    /** Hides an announcement bar for this account; it stays under the bell. */
+    /** Collapses an announcement bar to a one-line pin for this account. */
     #[Renderless]
     public function dismissAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::dismiss(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
+    /** Opens a collapsed announcement again for this account. */
+    #[Renderless]
+    public function restoreAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::restore(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
     /** App notifications: the panel's public key, this account's devices and choices. */
     #[Renderless]
     public function pushSettings(?string $endpoint=null): array { return ['key'=>\Simplify\Panel\Services\PushNotifications::publicKey(),'admin'=>(bool)user()->isRootAdmin(),...\Simplify\Panel\Services\PushNotifications::settings(user(),$endpoint)]; }
