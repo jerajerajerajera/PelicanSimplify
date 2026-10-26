@@ -1250,6 +1250,9 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-main { padding-top: 16px; }
   /* Landscape phone: a one-line header with icon buttons, the menu as a narrow icon column. */
   .ps .ps-top { margin-bottom: 10px; }
+  /* Room for the Customize button on server pages: the avatar alone, so the panel name keeps one line. */
+  .ps.server-active .ps-account-username { display: none; }
+  .ps.server-active .ps-account-button { padding-right: 4px; }
   .ps .ps-server-info { grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: "icons content power"; gap: 12px; margin-bottom: 10px; padding: 10px 14px; }
   .ps .ps-info-icon { width: 36px; height: 36px; border-radius: 10px; }
   .ps .ps-software-icon.is-badge { display: none; }
