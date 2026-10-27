@@ -243,7 +243,17 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 
 /* Create buttons: one main button (the Server Maker) and, for administrators, Pelican's own forms. */
 .ps-create-buttons { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; }
-.ps-create-button svg { width: 16px; height: 16px; }
+/* The main button keeps the look of the old create tile: a server icon with a round plus at its corner. */
+.ps-create-icon { position: relative; display: inline-grid; flex: none; place-items: center; }
+.ps-create-icon > svg { width: 16px; height: 16px; }
+.ps-create-button.is-main { gap: 10px; padding-left: 8px; border-color: color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); color: var(--ps-ink); font-weight: 650; }
+.ps-create-button.is-main:hover:not(:disabled) { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-surface)); }
+.ps-create-button.is-main .ps-create-icon { width: 26px; height: 26px; border: 1.5px dashed color-mix(in srgb, var(--ps-accent) 55%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--ps-accent) 10%, var(--ps-raised)); color: var(--ps-accent); }
+.ps-create-button.is-main:hover:not(:disabled) .ps-create-icon { border-style: solid; border-color: var(--ps-accent); }
+.ps-create-badge { position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 15px; height: 15px; border: 2px solid var(--ps-surface); border-radius: 50%; background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
+.ps-create-badge svg { width: 8px; height: 8px; stroke-width: 3.4; }
+.ps-create-button.is-main:hover:not(:disabled) .ps-create-badge { transform: rotate(90deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .ps-create-badge { transition: none; } }
 
 /* Compact cards: icon, name, status and players only, so more servers fit on a screen. */
 .ps-server-grid.is-compact { --ps-compact-h: 156px; --ps-compact-pad: 14px; gap: 12px; }
@@ -336,7 +346,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps.dark .ps-health-panel { box-shadow: none; }
 .ps-overview { position: relative; }
 .ps-overview > .ps-health-panel.is-above { order: -1; margin-bottom: 4px; box-shadow: none; }
-.ps-health-panel.is-popover { position: absolute; top: 2px; right: 4px; z-index: var(--ps-z-dropdown); width: min(560px, calc(100% - 8px)); margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
+/* Opens like a dropdown: right under the Healthy button, left edges in line, moved left only as far as the screen needs. */
+.ps-health-panel.is-popover { position: fixed; top: var(--ps-pop-top, 72px); left: var(--ps-pop-left, 8px); z-index: var(--ps-z-dropdown); width: var(--ps-pop-width, 560px); margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
 .ps-health-panel.is-popover .ps-host-health { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; padding: 14px 16px; }
 .ps-health-panel.is-popover .ps-host-state { grid-column: 1 / -1; }
 .ps-health-panel.is-popover .ps-node-summary { grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -1120,6 +1131,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-server-scroll { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
 /* A clear gap between the (fading) server list and the health tile, so no card peeks past its corners. */
 .ps-overview > .ps-health-panel { margin-top: 10px; }
+.ps-overview > .ps-health-panel.is-popover { margin: 0; }
 .ps-server-scroll { mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent calc(100% - 4px)); }
 /* Customize overview: each option has a name, a one-line explanation and its control on the right. */
 .ps-overview-appearance-menu { width: 400px; padding: 16px; border-radius: 18px; }
@@ -1227,7 +1239,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-overview > .ps-health-panel { order: -1; margin: 0 0 14px; box-shadow: none; }
   /* At the bottom: after the servers, at the end of the page. In the top bar: a dropdown over the filter row. */
   .ps .ps-overview > .ps-health-panel:not(.is-above, .is-popover) { order: 1; margin: 14px 0 0; }
-  .ps .ps-overview > .ps-health-panel.is-popover { top: -6px; right: 0; width: 100%; margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
+  .ps .ps-overview > .ps-health-panel.is-popover { margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
   .ps .ps-host-health { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; }
   .ps .ps-host-health > .ps-host-metric, .ps .ps-host-state small:not(.ps-health-phone-summary), .ps .ps-host-server-badge, .ps .ps-host-state .ps-host-heading h3 { display: none; }
   .ps .ps-host-state { flex: 1; }

@@ -279,20 +279,32 @@ const { start } = require('./browser-harness');
       const shown = (el) => !!el && el.offsetParent !== null;
       const panel = document.querySelector('.ps-health-panel'), toolbar = document.querySelector('.ps-overview-toolbar');
       return {
-        pill: shown(document.querySelector('.ps-health-pill')), topCreate: shown(document.querySelector('.ps-top-overview .ps-create-button.is-primary')),
-        rowCreate: shown(document.querySelector('.ps-create-buttons .ps-create-button.is-primary')), panel: shown(panel),
+        pill: shown(document.querySelector('.ps-health-pill')), topCreate: shown(document.querySelector('.ps-top-overview .ps-create-button.is-main')),
+        rowCreate: shown(document.querySelector('.ps-create-buttons .ps-create-button.is-main')), panel: shown(panel),
         panelAbove: shown(panel) && panel.getBoundingClientRect().bottom <= toolbar.getBoundingClientRect().top,
       };
     });
-    assert.deepEqual(await where(), { pill: true, topCreate: true, rowCreate: false, panel: false, panelAbove: false }, 'top bar by default');
+    // Alpine and the dock observer update on the next frames, so wait for the expected state before asserting.
+    const expectPlace = async (expected, message) => {
+      let actual;
+      for (let i = 0; i < 30; i++) {
+        actual = await where();
+        if (JSON.stringify(actual) === JSON.stringify(expected)) break;
+        await healthPage.waitForTimeout(100);
+      }
+      assert.deepEqual(actual, expected, message + ': ' + JSON.stringify(actual));
+    };
+    await expectPlace({ pill: true, topCreate: true, rowCreate: false, panel: false, panelAbove: false }, 'top bar by default');
     await healthPage.click('.ps-health-pill');
     await healthPage.waitForSelector('.ps-health-panel.is-popover', { state: 'visible' });
-    await healthPage.click('.ps-server-grid', { position: { x: 5, y: 5 } });
+    const under = await healthPage.evaluate(() => { const pill = document.querySelector('.ps-health-pill').getBoundingClientRect(), panel = document.querySelector('.ps-health-panel').getBoundingClientRect(); return Math.abs(panel.left - pill.left) < 2 && panel.top >= pill.bottom && panel.top - pill.bottom < 16; });
+    assert.ok(under, 'the details open right under the Healthy button');
+    await healthPage.click('.ps-health-pill');
     await healthPage.waitForSelector('.ps-health-panel', { state: 'hidden' });
     await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'above'));
-    assert.deepEqual(await where(), { pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: true }, 'bar above the servers');
+    await expectPlace({ pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: true }, 'bar above the servers');
     await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'bottom'));
-    assert.deepEqual(await where(), { pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: false }, 'bar at the bottom');
+    await expectPlace({ pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: false }, 'bar at the bottom');
     const docked = await healthPage.evaluate(() => Math.round(innerHeight - document.querySelector('.ps-health-panel').getBoundingClientRect().bottom));
     assert.ok(docked < 80, 'the bottom bar stays at the bottom of the screen: ' + docked);
     await healthPage.close();
