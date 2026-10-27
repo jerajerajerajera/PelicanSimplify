@@ -976,7 +976,7 @@
         if (page) this.setHostPage(page);
       },
       setHostPage(item) {
-        if (this.runAdminAction(item)) return;
+        if (!item?.url && this.runAdminAction(item)) return;
         this.hostPage = item;
         this.rememberHostPlace();
       },
@@ -1018,7 +1018,8 @@
       /** Simplify's own tools that open a popup instead of an admin page; listed with the admin pages. */
       adminActions() {
         const items = [];
-        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Settings', icon: 'gear', action: 'settings' });
+        // Admin tools open the settings in a popup; host mode shows the same page in its workspace (url).
+        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Settings', icon: 'gear', action: 'settings', url: this.boot.settings_url });
         if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: 'Explain panel errors', icon: 'question', action: 'explain' });
         return items;
       },
@@ -1032,7 +1033,7 @@
       openHostSection(section) {
         if (!section) return;
         this.hostSection = section;
-        this.hostPage = section.pages.find((item) => !item.action) || null;
+        this.hostPage = section.pages.find((item) => item.url || !item.action) || null;
         this.rememberHostPlace();
         // Phones show the sections as one sideways row: keep the open one in view.
         if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
