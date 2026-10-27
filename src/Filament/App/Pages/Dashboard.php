@@ -374,7 +374,11 @@ final class Dashboard extends Page
     #[Renderless]
     public function installedPackages(): array {abort_unless(Access::feature('packages'),404); return Packages::installed($this->server()); }
     #[Renderless]
-    public function installPackage(string $id,string $version): void {abort_unless(Access::feature('packages'),404); Packages::install($this->server(),$id,$version); }
+    public function packageDetails(array $keys,string $version): array {abort_unless(Access::feature('packages'),404); return Packages::details($this->server(),$keys,$version); }
+    #[Renderless]
+    public function installPackage(string $id,string $version,bool $anyway=false,array $card=[]): array {abort_unless(Access::feature('packages'),404); return Packages::install($this->server(),$id,$version,$anyway,$card); }
+    #[Renderless]
+    public function togglePackage(string $filename,bool $on): void {abort_unless(Access::feature('packages'),404); Packages::toggle($this->server(),$filename,$on); }
     #[Renderless]
     public function removePackage(string $filename): void {abort_unless(Access::feature('packages'),404); Packages::remove($this->server(),$filename); }
     #[Renderless]

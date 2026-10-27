@@ -1280,34 +1280,75 @@
                     </template>
                 </div>
 
-                {{-- Plugins and mods --}}
-                <div x-show="isPackageModal() && !loading">
-                    <p class="ps-help">Install releases compatible with your Minecraft version and server loader. Stop the server before making changes.</p>
-                    <div class="ps-input-row ps-package-search">
-                        <input class="ps-input" x-model="packageQuery" x-on:keydown.enter="searchPackages()" :placeholder="modal==='plugins' ? 'Search plugins…' : 'Search mods…'">
-                        <input class="ps-input ps-version-input" x-model="packageVersion" placeholder="Minecraft version">
-                        <button type="button" class="ps-btn is-primary" x-on:click="searchPackages()" :disabled="busy"><svg aria-hidden="true"><use href="#ps-search"/></svg>Search</button>
+                {{-- Plugins and mods: what is installed, and one search over Modrinth, Hangar and SpigotMC. --}}
+                <div x-show="isPackageModal() && !loading" class="ps-packages">
+                    <div class="ps-package-head">
+                        <nav class="ps-segmented" aria-label="Plugin sections">
+                            <button type="button" :aria-pressed="packageTab==='installed'" x-on:click="packageTab='installed'"><span x-text="'Installed (' + (installed.items || []).length + ')'"></span></button>
+                            <button type="button" :aria-pressed="packageTab==='add'" x-on:click="openPackageSearch()"><svg aria-hidden="true"><use href="#ps-plus"/></svg><span x-text="modal==='plugins' ? 'Add plugin' : 'Add mod'"></span></button>
+                        </nav>
+                        <span class="ps-badge" x-show="installed.context?.version" data-tip="Results are matched to this version"><svg aria-hidden="true"><use :href="'#ps-'+modal"/></svg><span x-text="packageTarget()"></span></span>
+                        <input class="ps-input ps-version-input" x-show="!installed.context?.version" x-model="packageVersion" placeholder="Minecraft version" aria-label="Minecraft version">
                     </div>
-                    <div class="ps-package-grid">
-                        <template x-for="p in packageResults" :key="p.project_id">
-                            <article class="ps-package">
-                                <img :src="safeImage(p.icon_url)" alt="" loading="lazy">
-                                <div><strong x-text="p.title"></strong><p x-text="p.description"></p><small>Modrinth</small></div>
-                                <button type="button" class="ps-btn is-sm" x-on:click="installPackage(p.project_id)" :disabled="busy || status!=='offline'">Install</button>
-                            </article>
-                        </template>
-                    </div>
-                    <h3 class="ps-section-title" x-text="modal==='plugins' ? 'Installed plugins' : 'Installed mods'"></h3>
-                    <div class="ps-rows">
-                        <template x-for="f in installed.files || []" :key="f.name">
-                            <div>
-                                <span x-text="f.name"></span>
-                                <button type="button" class="ps-btn is-sm" x-show="tracked(f.name)" x-on:click="installPackage(tracked(f.name).project_id)" :disabled="busy || status!=='offline'">Update</button>
-                                <button type="button" class="ps-btn is-sm is-danger" x-on:click="removePackage(f.name)" :disabled="busy || status!=='offline'">Remove</button>
-                            </div>
-                        </template>
-                    </div>
-                    <p class="ps-help" x-show="!(installed.files || []).length">Nothing installed yet.</p>
+                    <p class="ps-alert is-warn" x-show="status!=='offline'"><svg aria-hidden="true"><use href="#ps-info"/></svg><span x-text="'Stop the server to add, update or remove ' + modal + '.'"></span></p>
+
+                    <section x-show="packageTab==='installed'">
+                        <div class="ps-package-list">
+                            <template x-for="f in installed.items || []" :key="f.file">
+                                <article class="ps-package is-installed" :class="{'is-off': !f.enabled}">
+                                    <img :src="f.icon ? safeImage(f.icon) : boot.favicon_url" alt="" loading="lazy" :class="{'is-placeholder': !f.icon}">
+                                    <div>
+                                        <strong x-text="f.title"></strong>
+                                        <small><span x-show="f.version" x-text="versionLabel(f.version)"></span><span x-show="f.version"> · </span><a x-show="safeLink(f.page) !== '#'" :href="safeLink(f.page)" target="_blank" rel="noopener noreferrer" x-text="f.label"></a><span x-show="safeLink(f.page) === '#'" x-text="f.label"></span><span x-show="!f.enabled"> · Off</span></small>
+                                    </div>
+                                    <button type="button" class="ps-switch" role="switch" :class="{'is-on': f.enabled}" :aria-checked="f.enabled" :aria-label="(f.enabled ? 'Turn off ' : 'Turn on ') + f.title" :data-tip="f.enabled ? 'On' : 'Off'" x-on:click="togglePackage(f)" :disabled="busy || status!=='offline'"></button>
+                                    <button type="button" class="ps-btn is-sm" x-show="f.key" x-on:click="installPackage({key: f.key, title: f.title, icon: f.icon, page: f.page}, true)" :disabled="busy || status!=='offline'">Update</button>
+                                    <button type="button" class="ps-btn is-sm is-icon is-danger" x-on:click="removePackage(f.file)" :disabled="busy || status!=='offline'" :aria-label="'Remove ' + f.title" data-tip="Remove"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                                </article>
+                            </template>
+                        </div>
+                        <div class="ps-empty" x-show="!(installed.items || []).length">
+                            <p class="ps-help" x-text="modal==='plugins' ? 'No plugins installed yet.' : 'No mods installed yet.'"></p>
+                            <button type="button" class="ps-btn is-primary" x-on:click="openPackageSearch()"><svg aria-hidden="true"><use href="#ps-plus"/></svg><span x-text="modal==='plugins' ? 'Add plugin' : 'Add mod'"></span></button>
+                        </div>
+                    </section>
+
+                    <section x-show="packageTab==='add'">
+                        <form class="ps-input-row ps-package-search" x-on:submit.prevent="searchPackages()">
+                            <input class="ps-input" type="search" x-model="packageQuery" :placeholder="modal==='plugins' ? 'Search plugins…' : 'Search mods…'" :aria-label="modal==='plugins' ? 'Search plugins' : 'Search mods'">
+                            <button type="submit" class="ps-btn is-primary" :disabled="busy"><svg aria-hidden="true"><use href="#ps-search"/></svg>Search</button>
+                        </form>
+                        <div class="ps-chips" x-show="modal==='plugins'" role="group" aria-label="Sites">
+                            <template x-for="site in packageSites()" :key="site.key">
+                                <button type="button" class="ps-chip" :aria-pressed="packageSite===site.key" x-on:click="packageSite=site.key" x-text="site.label"></button>
+                            </template>
+                        </div>
+                        <h3 class="ps-section-title" x-text="packageHeading()"></h3>
+                        <p class="ps-help" x-show="packageSearching">Searching…</p>
+                        <div class="ps-package-list">
+                            <template x-for="p in visiblePackages()" :key="p.key">
+                                <article class="ps-package">
+                                    <img :src="p.icon ? safeImage(p.icon) : boot.favicon_url" alt="" loading="lazy" :class="{'is-placeholder': !p.icon}">
+                                    <div>
+                                        <strong x-text="p.title"></strong><small x-show="p.author" x-text="' by ' + p.author"></small>
+                                        <p x-text="p.description"></p>
+                                        <div class="ps-package-meta">
+                                            <a class="ps-source" :class="'is-' + p.source" :href="safeLink(p.page)" target="_blank" rel="noopener noreferrer" x-text="packageDetail(p)?.via ? p.label + ' via GitHub' : p.label"></a>
+                                            <span x-show="packageDetail(p)?.version" x-text="versionLabel(packageDetail(p)?.version)"></span>
+                                            <span x-show="packageDetail(p)?.for" x-text="'for ' + packageDetail(p)?.for"></span>
+                                            <span class="ps-badge is-warn" x-show="packageDetail(p) && !packageDetail(p).fits"><svg aria-hidden="true"><use href="#ps-alert"/></svg><span x-text="'Not made for ' + packageVersion"></span></span>
+                                            <span class="ps-package-also" x-show="p.also.length">Also on <template x-for="(o, i) in p.also" :key="o.key"><span><button type="button" class="ps-link" x-on:click="useSource(p, o)" x-text="o.label"></button><span x-show="i < p.also.length - 1">, </span></span></template></span>
+                                        </div>
+                                    </div>
+                                    <span class="ps-badge is-ok" x-show="installedKey(p.key)"><svg aria-hidden="true"><use href="#ps-check"/></svg>Installed</span>
+                                    <button type="button" class="ps-btn is-sm" x-show="!installedKey(p.key) && packageDetail(p)?.installable !== false" :class="{'is-primary': packageDetail(p)?.fits}" x-on:click="installPackage(p)" :disabled="busy || status!=='offline' || !packageDetail(p)" x-text="packageDetail(p) && !packageDetail(p).fits ? 'Install anyway' : 'Install'"></button>
+                                    <a class="ps-btn is-sm" x-show="!installedKey(p.key) && packageDetail(p)?.installable === false" :href="safeLink(p.page)" target="_blank" rel="noopener noreferrer" :data-tip="packageDetail(p)?.reason">Website<svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                                </article>
+                            </template>
+                        </div>
+                        <p class="ps-help" x-show="!packageSearching && packageSearched && !visiblePackages().length">Nothing found. Try another name or site.</p>
+                        <p class="ps-help" x-show="packageOffline.length" x-text="'Not reachable right now: ' + packageOffline.join(', ') + '.'"></p>
+                    </section>
                 </div>
 
                 @if(\Simplify\Panel\Services\Extensions::web()) @include('server-directory::simplify.workspace') @endif
