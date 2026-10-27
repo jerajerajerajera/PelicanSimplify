@@ -118,6 +118,7 @@
                             <div class="ps-notify-head">
                                 <strong class="ps-dropdown-title">Notifications</strong>
                                 <button type="button" class="ps-btn is-sm is-subtle" x-show="unreadNotifications()" x-on:click="markAllNotificationsRead()">Mark all read</button>
+                                <button type="button" class="ps-btn is-sm is-subtle" x-show="canClearRead()" x-on:click="clearReadNotifications()">Clear read</button>
                                 <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="Show all" aria-label="Show all notifications" x-on:click="openAllNotifications()"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
                             </div>
                             @include('pelican-simplify::notification-items')
@@ -962,9 +963,10 @@
                         <span class="ps-help" x-text="unreadNotifications() ? unreadNotifications()+' unread' : 'Everything is read.'"></span>
                         <button type="button" class="ps-btn is-sm" x-show="announcementsPage()" x-on:click="newAnnouncement()"><svg aria-hidden="true"><use href="#ps-plus"/></svg>New announcement</button>
                         <button type="button" class="ps-btn is-sm is-subtle" x-show="unreadNotifications()" x-on:click="markAllNotificationsRead()"><svg aria-hidden="true"><use href="#ps-check"/></svg>Mark all read</button>
+                        <button type="button" class="ps-btn is-sm is-subtle" x-show="canClearRead()" x-on:click="clearReadNotifications()" data-tip="Moves read notifications to Archived; pinned ones stay">Clear read</button>
                     </div>
                     <template x-if="modal==='inbox'">
-                        <div>@include('pelican-simplify::notification-items')</div>
+                        <div>@include('pelican-simplify::notification-items', ['archive' => true])</div>
                     </template>
                 </div>
 

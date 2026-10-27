@@ -22,15 +22,22 @@ final class PanelNotifications
         }
     }
 
-    /** One page of all notifications (read and unread), newest first, for the bell and the full list. */
-    public static function page(int $page = 1, int $size = 20): array
+    /**
+     * One page of notifications, newest first, for the bell and the full list: the current ones (unread, and read after
+     * the last "Clear read" at $archivedAt) or, with $archived, the ones that Clear read moved to Archived.
+     */
+    public static function page(int $page = 1, int $size = 20, int $archivedAt = 0, bool $archived = false): array
     {
         $user = user();
         $page = max(1, min($page, 500));
         if (!$user || !method_exists($user, 'notifications')) return ['items' => [], 'more' => false, 'unread' => 0];
         try {
+            $query = $user->notifications()->latest();
+            $cutoff = date('Y-m-d H:i:s', $archivedAt);
+            if ($archived) $query->whereNotNull('read_at')->where('read_at', '<=', $cutoff);
+            elseif ($archivedAt > 0) $query->where(fn ($q) => $q->whereNull('read_at')->orWhere('read_at', '>', $cutoff));
             // One row more than asked tells whether there is another page, without counting them all.
-            $rows = $user->notifications()->latest()->skip(($page - 1) * $size)->limit($size + 1)->get();
+            $rows = $query->skip(($page - 1) * $size)->limit($size + 1)->get();
             $items = $rows->take($size)->map(fn ($notification): ?array => self::present($notification))->filter()->values()->all();
             return ['items' => $items, 'more' => $rows->count() > $size, 'unread' => self::unreadCount()];
         } catch (\Throwable) {
