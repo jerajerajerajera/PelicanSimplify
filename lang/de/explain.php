@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => ':host war vom Panel aus nicht erreichbar. Prüfe, ob der Panel-Server ins Internet verbinden darf.',
+        'no_key' => 'Gib zuerst einen API-Schlüssel ein.',
+        'not_set_up' => 'Fehlererklärungen sind auf diesem Panel nicht eingerichtet.',
+        'unknown_log' => 'Unbekanntes Log.',
+        'read_panel' => 'Das Panel-Log konnte nicht gelesen werden.',
+        'read_wings' => 'Das Wings-Log konnte nicht von Wings gelesen werden. Versuche es erneut, wenn die Node erreichbar ist.',
+        'read_console' => 'Die Konsole konnte nicht von Wings gelesen werden. Versuche es erneut, wenn die Node erreichbar ist.',
+        'too_many' => 'Du hast in kurzer Zeit viele Fragen gestellt. Versuche es in :count Minute erneut.|Du hast in kurzer Zeit viele Fragen gestellt. Versuche es in :count Minuten erneut.',
+        'daily_limit' => 'Dieses Panel hat sein Tageslimit von :count Erklärungen erreicht. Versuche es morgen erneut.',
+        'no_answer' => ':model konnte diese Zeilen nicht erklären. Versuche es erneut, wenn der Fehler wieder auftritt.',
+    ],
+    'test' => [
+        'works' => 'Der Schlüssel funktioniert mit :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsole',
+            'empty' => 'Die Konsole ist leer, es gibt also noch nichts zu erklären.',
+        ],
+        'panel' => [
+            'label' => 'Panel-Log',
+            'empty' => 'Das Panel-Log hat gerade keine Warnungen oder Fehler.',
+        ],
+        'wings' => [
+            'label' => 'Wings-Log',
+            'empty' => 'Das Wings-Log dieser Node ist leer.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Für dieses Plugin gibt es keine gespeicherten Logzeilen.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Melde dich zuerst im Panel an und öffne diese Seite dann erneut.',
+        'owner_only' => 'Nur der Besitzer des Panels (ein Root-Administrator) kann diese Seite nutzen.',
+        'expired' => 'Diese Adresse ist abgelaufen oder wurde durch eine neuere ersetzt.',
+        'no_key' => 'Auf diesem Panel ist kein API-Schlüssel von :provider gespeichert. Ein Root-Administrator fügt einen in den Simplify-Einstellungen unter Fehlererklärungen hinzu.',
+        'no_key_terminal' => 'Wenn das Panel nicht öffnet, führe :command auf dem Panel-Server aus. Es fragt nach einem Schlüssel und speichert ihn nicht.',
+        'choose_node' => 'Wähle eine Node.',
+        'panel_log' => 'Panel-Log',
+        'wings_log_of' => 'Wings-Log von :node',
+        'wings_log' => 'Wings-Log',
+        'no_database' => 'Die Datenbank war nicht erreichbar, daher sind die Wings-Logs hier nicht verfügbar. Das Panel-Log zeigt oft den Grund.',
+        'lead' => 'Nutze diese Seite, wenn das Panel einen Fehler wie 500 zeigt und seine normalen Seiten nicht öffnen. Die in den Simplify-Einstellungen gewählte KI liest das Log, sagt, ob etwas nicht stimmt und wie du es behebst.',
+        'check_panel' => 'Panel-Log prüfen',
+        'check_wings' => 'Wings-Log von :node prüfen',
+        'wait' => 'Das Log wird geprüft. Das kann bis zu einer Minute dauern.',
+        'attention' => 'Etwas braucht Aufmerksamkeit',
+        'in_order' => 'Alles scheint in Ordnung',
+        'noticed' => 'Etwas aufgefallen?',
+        'checked' => ':count Zeile von :model geprüft. Adressen, E-Mail-Adressen und Passwörter wurden vorher entfernt.|:count Zeilen von :model geprüft. Adressen, E-Mail-Adressen und Passwörter wurden vorher entfernt.',
+        'terminal_hint' => 'Wenn das Panel nicht öffnet, führe :command auf dem Panel-Server aus, oder :url_command für eine temporäre Adresse zu dieser Seite.',
+        'broken' => 'Diese Seite konnte nicht fertig laden',
+        'title' => 'Panel-Fehler erklären',
+    ],
+    'failures' => [
+        'invalid_key' => 'Der API-Schlüssel von :name ist ungültig. Ein Administrator kann in den Simplify-Einstellungen einen neuen eingeben.',
+        'no_credit' => 'Das :name-Konto hinter diesem Schlüssel hat kein Guthaben mehr. Ein Administrator kann Guthaben aufladen oder die Abrechnung bei :name prüfen.',
+        'forbidden' => 'Dieser API-Schlüssel von :name darf das gewählte Modell nicht nutzen. Ein Administrator kann in den Simplify-Einstellungen ein anderes Modell wählen.',
+        'no_model' => 'Das gewählte Modell von :name ist für diesen Schlüssel nicht verfügbar. Ein Administrator kann in den Simplify-Einstellungen ein anderes Modell wählen.',
+        'busy' => ':name ist für diesen Schlüssel gerade ausgelastet. Versuche es in einer Minute erneut.',
+        'unavailable' => ':name ist vorübergehend nicht verfügbar. Versuche es in einer Minute erneut.',
+        'other_status' => ':name konnte diese Frage nicht beantworten (Fehler :status). Versuche es später erneut.',
+        'other' => ':name konnte diese Frage nicht beantworten. Versuche es später erneut.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude von Anthropic',
+            'key_help' => 'Erstelle einen Schlüssel auf console.anthropic.com → API keys. Jede Frage wird diesem Anthropic-Konto berechnet, meist ein paar Cent oder weniger; setze dort sicherheitshalber ein Monatslimit.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini von Google',
+            'key_help' => 'Erstelle einen Schlüssel auf aistudio.google.com → Get API key. Fragen werden diesem Google-Cloud-Projekt berechnet, meist weniger als ein Cent pro Frage; setze dort sicherheitshalber ein Budget.',
+        ],
+        'openai' => [
+            'label' => 'GPT von OpenAI',
+            'key_help' => 'Erstelle einen Schlüssel auf platform.openai.com → API keys. Jede Frage wird diesem OpenAI-Konto berechnet, meist ein paar Cent oder weniger; setze dort sicherheitshalber ein Monatsbudget.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'beste Antworten, ein paar Cent',
+        'about_a_cent' => 'etwa ein Cent',
+        'cheapest' => 'am günstigsten',
+        'good_answers_under_a_cent' => 'gute Antworten, unter einem Cent',
+        'good_answers_about_a_cent' => 'gute Antworten, etwa ein Cent',
+    ],
+];
