@@ -78,6 +78,14 @@ check(!array_filter(A::forUser($person,$now+60),fn($i)=>$i['unread'])&&array_fil
 A::save(['title'=>'Later news'],null,'jera',$now+120);
 check(array_column(array_filter(A::forUser($person,$now+130),fn($i)=>$i['unread']),'title')===['Later news'],'newer announcements are unread again');
 check(A::forUser($person,$now+130)[array_search('Maintenance moved',array_column(A::forUser($person,$now+130),'title'))]['ends_at']===$now+7200,'the end time goes along as Unix time, for the browser\'s time zone');
+// Clear read: read ones move to Archived for this account; unread and pinned ones stay; Mark all read keeps the archive.
+A::archiveRead($person,$now+140);
+$after=A::forUser($person,$now+140);
+check(array_column(array_filter($after,fn($i)=>$i['archived']),'title')===['New modpack','Maintenance moved','From the plugin'],'read announcements are archived, also the plugin\'s');
+check(!$after[array_search('Later news',array_column($after,'title'))]['archived']&&!$after[array_search('Rules',array_column($after,'title'))]['archived'],'unread and pinned ones stay');
+check(A::archivedAt($person)===$now+140&&A::archivedAt($admin)===0&&!array_filter(A::forUser($admin,$now+140),fn($i)=>$i['archived']),'archiving is per account');
+A::markAllRead($person,$now+150);
+check(A::archivedAt($person)===$now+140&&count(A::readState($person)['archived'])===3&&A::readAt($person)===$now+150,'mark all read and clear read keep each other\'s state');
 A::delete($pin['id']);
 foreach(A::all() as $row)if($row['title']==='Later news')A::delete($row['id']);
 
@@ -98,5 +106,5 @@ check(count(A::all())===1&&A::all()[0]['button']===null,'damaged rows are skippe
 Storage::$records[A::FILE]=json_encode(array_map(fn($i)=>['id'=>sprintf('%016x',$i),'title'=>'T'.$i,'created_at'=>$i],range(1,A::LIMIT)));
 check(fails(fn()=>A::save(['title'=>'One more'],null,'jera',$now),'Delete an old one'),'at most '.A::LIMIT.' announcements');
 check(A::ago($now-30,$now)==='just now'&&A::ago($now-120,$now)==='2 minutes ago'&&A::ago($now-3600,$now)==='1 hour ago'&&A::ago($now-86400,$now)==='yesterday'&&A::ago($now-3*86400,$now)==='3 days ago','relative times');
-echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, pinned to everyone, mark all read per account, app notifications once, broken files and limits\n";
+echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, pinned to everyone, mark all read per account, clear read to Archived, app notifications once, broken files and limits\n";
 }

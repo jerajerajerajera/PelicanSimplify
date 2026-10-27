@@ -1,5 +1,23 @@
 # Changes
 
+## 0.5.3-snapshot.10 (snapshot channel)
+Error explanations can use Claude, GPT or Gemini.
+- Under Simplify settings → Error explanations, a root administrator picks the AI and enters its own API key; each AI keeps its own key.
+- The emergency page and `php artisan simplify:explain` use the chosen AI.
+
+## 0.5.3-snapshot.9 (snapshot channel)
+Explain this error still works when the panel itself shows an error page, and update notifications say what is new.
+- Root administrators can open a plain emergency page at /simplify/explain that does not need the rest of the panel.
+- `php artisan simplify:explain --url` gives a temporary link to that page without logging in, and `php artisan simplify:explain` explains the panel log, the Wings log or a server console right in the terminal.
+- Updates of Pelican, Wings, Simplify and plugins show a few lines from their release notes, with a link to the full notes.
+
+## 0.5.3-snapshot.8 (snapshot channel)
+Notifications show everything now, and admins can pin an announcement to everyone's notifications.
+- The bell lists all notifications, also read ones, with Show more for older ones; Show all opens them in a large popup (full screen on phones) with New announcement for administrators.
+- Mark all read marks every notification read, also the ones not loaded yet.
+- Pin to everyone's notifications keeps an announcement at the top of the bell until it ends, even when someone unpins its bar.
+- Announcement times are entered and shown in your own time zone.
+
 ## 0.5.3-snapshot.7 (snapshot channel)
 Explain this error now checks first: a healthy log shows "Everything seems in order", with anything noteworthy as options to open.
 - When something is really wrong, the popup shows "Something needs attention" with the explanation already open.

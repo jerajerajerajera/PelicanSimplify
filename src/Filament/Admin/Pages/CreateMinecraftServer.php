@@ -838,7 +838,7 @@ class CreateMinecraftServer extends Page implements HasForms
             $warnings = [];
             if ($prepared) {
                 try {
-                    ApplyServerProperties::dispatch($server->uuid, $prepared, false)->delay(now()->addSeconds(10));
+                    ApplyServerProperties::queue($server->uuid, $prepared);
                 } catch (Throwable $exception) {
                     report($exception);
                     $warnings[] = 'Settings could not be queued. The server stays stopped; apply the settings before starting it.';

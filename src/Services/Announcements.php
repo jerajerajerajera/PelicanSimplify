@@ -14,7 +14,7 @@ final class Announcements
 {
     public const FILE='simplify/announcements.json';
     public const DISMISSED_DIR='simplify/announcements-dismissed/';
-    /** Per account: {"read_at": unix time}, everything up to then is read ("Mark all read"). */
+    /** Per account: {"read_at": unix time, "archived_at": unix time, "archived": [keys]}: "Mark all read" and "Clear read". */
     public const READ_DIR='simplify/announcements-read/';
     public const CATEGORIES=['info'=>'Info','warning'=>'Warning','success'=>'Success'];
     public const AUDIENCES=['everyone'=>'Everyone','admins'=>'Admins only'];
@@ -114,12 +114,15 @@ final class Announcements
         array_push($items,...self::external($now));
         if(method_exists($user,'isRootAdmin')&&$user->isRootAdmin())array_push($items,...PanelUpdates::announcements($now));
         $hidden=array_flip(self::dismissedKeys($user));
-        $read=self::readAt($user);
+        $state=self::readState($user);
+        $archived=array_flip($state['archived']);
         foreach($items as &$item){
             $item['dismissed']=isset($hidden[$item['key']]);
             $item['pinned']=($item['pinned']??false)===true;
             // Unread until "Mark all read" or until this account unpins its bar.
-            $item['unread']=!$item['dismissed']&&$item['at']>$read;
+            $item['unread']=!$item['dismissed']&&$item['at']>$state['read_at'];
+            // "Clear read" moves read ones to Archived; an admin's pinned ones always stay on top.
+            $item['archived']=!$item['pinned']&&isset($archived[$item['key']]);
         }
         unset($item);
         usort($items,fn(array $a,array $b):int=>$b['at']<=>$a['at']);
@@ -146,13 +149,33 @@ final class Announcements
     /** "Mark all read": every announcement up to now counts as read for this account. */
     public static function markAllRead(object $user,?int $now=null): void
     {
-        if(!Storage::disk('local')->put(self::READ_DIR.(int)$user->id.'.json',json_encode(['read_at'=>$now??time()],JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save the announcements.');
+        self::saveReadState($user,['read_at'=>$now??time()]);
     }
 
-    public static function readAt(object $user): int
+    /** "Clear read": read announcements (not the pinned ones) move to Archived for this account; read Pelican notifications follow archived_at. */
+    public static function archiveRead(object $user,?int $now=null): void
     {
-        $at=JsonFile::read(self::READ_DIR.(int)$user->id.'.json')['read_at']??0;
-        return is_int($at)?$at:0;
+        $keys=array_column(array_filter(self::forUser($user,$now),fn(array $item):bool=>!$item['unread']&&!$item['pinned']),'key');
+        $keys=array_values(array_unique([...self::readState($user)['archived'],...$keys]));
+        self::saveReadState($user,['archived_at'=>$now??time(),'archived'=>array_slice($keys,-self::DISMISSED_LIMIT)]);
+    }
+
+    public static function readAt(object $user): int { return self::readState($user)['read_at']; }
+
+    /** Until when read Pelican notifications are archived (0: never cleared). */
+    public static function archivedAt(object $user): int { return self::readState($user)['archived_at']; }
+
+    /** @return array{read_at: int, archived_at: int, archived: list<string>} */
+    public static function readState(object $user): array
+    {
+        $data=JsonFile::read(self::READ_DIR.(int)$user->id.'.json');
+        return ['read_at'=>is_int($data['read_at']??null)?$data['read_at']:0,'archived_at'=>is_int($data['archived_at']??null)?$data['archived_at']:0,
+            'archived'=>array_values(array_filter(is_array($data['archived']??null)?$data['archived']:[],fn($key):bool=>is_string($key)&&self::validKey($key)))];
+    }
+
+    private static function saveReadState(object $user,array $changes): void
+    {
+        if(!Storage::disk('local')->put(self::READ_DIR.(int)$user->id.'.json',json_encode([...self::readState($user),...$changes],JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save the announcements.');
     }
 
     public static function dismissedKeys(object $user): array

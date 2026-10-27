@@ -52,7 +52,7 @@ final class Dashboard extends Page
             'legacy_create_url'=>\App\Filament\Admin\Resources\Servers\ServerResource::canCreate()?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('create',panel:'admin'):null,'create_url'=>Extensions::createUrl(),'game_create_url'=>\Simplify\Panel\Services\FeatureSettings::enabled('game_creator')&&Extensions::canCreate()?\Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel:'app'):null,'can_create'=>Extensions::canCreate(),'create_games'=>Extensions::createGames(),'web'=>Extensions::web(),
             'native_list_url'=>\Filament\Facades\Filament::getPanel('app')->getUrl(),
             'profile_url'=>\App\Filament\Pages\Auth\EditProfile::getUrl(panel:'app'),'appearance'=>(fn(array $appearance)=>[...$appearance,'brand'=>\Simplify\Panel\Services\BrandSettings::forDisplay($appearance['brand'])])(\Simplify\Panel\Services\AppearanceSettings::all()),'panel_name'=>(string)config('app.name','Pelican'),'features'=>array_replace(\Simplify\Panel\Services\FeatureSettings::all(),array_combine(['settings','files','players','backups','packages','software','resources','advanced','activity','schedules'],array_map(fn($key)=>Access::feature($key),['settings','files','players','backups','packages','software','resources','advanced','activity','schedules']))),'settings_url'=>user()?->isRootAdmin()?\Simplify\Panel\Filament\Admin\Pages\SimplifySettings::getUrl(panel:'app'):null,'website_url'=>Extensions::webAdapter()?->url(),'list_url'=>self::getUrl(panel:'app'),'server'=>null,'servers'=>[],'user'=>user()->username,'avatar'=>user()->getFilamentAvatarUrl(),'favicon_url'=>route('simplify.favicon').'?v='.\Simplify\Panel\Services\BuildInfo::hash('core.css'),
-            'performance'=>\Simplify\Panel\Services\PerformanceSettings::client(),'update'=>user()?->isRootAdmin()?\Simplify\Panel\Services\UpdateCheck::status():null,'panel_notifications'=>\Simplify\Panel\Services\PanelNotifications::unread(),'panel_unread'=>\Simplify\Panel\Services\PanelNotifications::unreadCount(),'announcements'=>\Simplify\Panel\Services\Announcements::forUser(user()),'admin_pages'=>\Simplify\Panel\Services\AdminPages::menu(),'plugin_pages'=>\Simplify\Panel\Services\ExternalPlugins::appPages(),'plugin_widgets_url'=>PluginWidgets::hasWidgets()?PluginWidgets::getUrl(panel:'app'):null,'plugin_actions'=>\Simplify\Panel\Services\ExternalPlugins::actions('app'),'health_checks'=>\Simplify\Panel\Services\HealthChecks::latest(),'host_extras'=>\Simplify\Panel\Services\AdminPages::hostExtras(),'host_mode_auto'=>\Simplify\Panel\Services\FeatureSettings::enabled('host_mode'),'overview_groups'=>\Simplify\Panel\Services\OverviewGroups::get(user()),'explain_errors'=>\Simplify\Panel\Services\ErrorExplainer::availableFor(user()),'explain_sources'=>\Simplify\Panel\Services\ErrorExplainer::sourcesFor(user(),null)];
+            'performance'=>\Simplify\Panel\Services\PerformanceSettings::client(),'update'=>user()?->isRootAdmin()?\Simplify\Panel\Services\UpdateCheck::status():null,'panel_notifications'=>\Simplify\Panel\Services\PanelNotifications::unread(),'panel_unread'=>\Simplify\Panel\Services\PanelNotifications::unreadCount(),'notifications_archived'=>user()?\Simplify\Panel\Services\Announcements::archivedAt(user())>0:false,'announcements'=>\Simplify\Panel\Services\Announcements::forUser(user()),'admin_pages'=>\Simplify\Panel\Services\AdminPages::menu(),'plugin_pages'=>\Simplify\Panel\Services\ExternalPlugins::appPages(),'plugin_widgets_url'=>PluginWidgets::hasWidgets()?PluginWidgets::getUrl(panel:'app'):null,'plugin_actions'=>\Simplify\Panel\Services\ExternalPlugins::actions('app'),'health_checks'=>\Simplify\Panel\Services\HealthChecks::latest(),'host_extras'=>\Simplify\Panel\Services\AdminPages::hostExtras(),'host_mode_auto'=>\Simplify\Panel\Services\FeatureSettings::enabled('host_mode'),'overview_groups'=>\Simplify\Panel\Services\OverviewGroups::get(user()),'explain_errors'=>\Simplify\Panel\Services\ErrorExplainer::availableFor(user()),'explain_sources'=>\Simplify\Panel\Services\ErrorExplainer::sourcesFor(user(),null)];
         if(!$this->serverUuid){$base['servers']=$this->listing();$base['host_health']=$this->hostHealth();return$base;}
         $s=$this->server();$base['explain_sources']=\Simplify\Panel\Services\ErrorExplainer::sourcesFor(user(),$s);$base['available_colors']=ServerAppearance::choices($s->uuid);$permissions=[];foreach(P::cases() as $p)$permissions[$p->value]=user()->can($p,$s);
         $meta=ManagedSettings::content($s);$mc=MinecraftStatus::get($s);
@@ -80,7 +80,8 @@ final class Dashboard extends Page
             'icon'=>ServerArtwork::icon($s,$meta),'background'=>ServerArtwork::background($s,$artworkMeta),'backup_options'=>AutomaticBackups::settings($s),'root_admin'=>user()->isRootAdmin(),
             'files_url'=>\App\Filament\Server\Resources\Files\FileResource::getUrl('index',panel:'server',tenant:$s),
             'backups_url'=>\App\Filament\Server\Resources\Backups\BackupResource::getUrl('index',panel:'server',tenant:$s),
-            'admin_server_url'=>$admin?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('edit',['record'=>$s],panel:'admin'):null];
+            'admin_server_url'=>$admin?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('edit',['record'=>$s],panel:'admin'):null,
+            ...\Simplify\Panel\Services\InstallProgress::info($s)];
         return$base;
     }
     /** Resolve registered pages instead of depending on version-specific URL paths. */
@@ -110,9 +111,12 @@ final class Dashboard extends Page
     public function panelNotifications(): array { return \Simplify\Panel\Services\PanelNotifications::unread(); }
     #[Renderless]
     public function markPanelNotificationsRead(array $ids): array { \Simplify\Panel\Services\PanelNotifications::markRead($ids); return \Simplify\Panel\Services\PanelNotifications::unread(); }
-    /** All notifications, read ones too, one page at a time (the bell's "Show more" and the full list). */
+    /** All notifications, read ones too, one page at a time (the bell's "Show more" and the full list); $archived: the ones Clear read archived. */
     #[Renderless]
-    public function notificationPage(int $page=1): array { return \Simplify\Panel\Services\PanelNotifications::page($page); }
+    public function notificationPage(int $page=1,bool $archived=false): array { return \Simplify\Panel\Services\PanelNotifications::page($page,20,\Simplify\Panel\Services\Announcements::archivedAt(user()),$archived); }
+    /** "Clear read": read notifications and announcements move to Archived for this account (an admin's pinned ones stay). */
+    #[Renderless]
+    public function clearReadNotifications(): array { \Simplify\Panel\Services\Announcements::archiveRead(user()); return \Simplify\Panel\Services\Announcements::forUser(user()); }
     /** "Mark all read": every Pelican notification and every announcement of this account, also the ones not loaded yet. */
     #[Renderless]
     public function markAllNotificationsRead(): array { \Simplify\Panel\Services\PanelNotifications::markAllRead(); \Simplify\Panel\Services\Announcements::markAllRead(user()); return \Simplify\Panel\Services\Announcements::forUser(user()); }
@@ -153,7 +157,8 @@ final class Dashboard extends Page
         \Simplify\Panel\Services\WingsServers::warm($servers); // One Wings request per node feeds retrieveStatus() and the usage below.
         foreach($servers as $s){
             $linked=user()->isAdmin()||(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned;$m=Extensions::web()?Extensions::webAdapter()->metadata($s):[];
-            $status=$s->retrieveStatus()->value;$mc=$status==='offline'?['players'=>0]:MinecraftStatus::get($s);
+            // A server that is still installing (or failed to) shows that instead of Wings' "offline".
+            $status=match($s->status?->value){'installing'=>'installing','install_failed','reinstall_failed'=>'install failed',default=>$s->retrieveStatus()->value};$mc=in_array($status,['offline','installing','install failed'],true)?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
             $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,'mine'=>(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned,
                 'node_id'=>(int)$s->node_id,'created'=>$s->created_at?->getTimestamp(),'port'=>$s->allocation?->port!==null?(int)$s->allocation->port:null,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
@@ -175,7 +180,7 @@ final class Dashboard extends Page
             ->handle($s->node,user()->id.$s->uuid)->toString();
         return['token'=>$token,'url'=>str_replace(['https://','http://'],['wss://','ws://'],$s->node->getConnectionAddress()).'/api/servers/'.$s->uuid.'/ws'];
     }
-    /** "Explain this error" with the admin's own Anthropic key: the console for people who may watch it; the panel and Wings logs for root admins. */
+    /** "Explain this error" with the admin's own AI key: the console for people who may watch it; the panel and Wings logs for root admins. */
     #[Renderless]
     public function explainConsole(string $source='console'): array
     {
@@ -199,7 +204,52 @@ final class Dashboard extends Page
         if($action==='stop' && PendingChanges::read($s)){PendingChanges::requestStop($s);return;}
         if($action==='restart' && PendingChanges::read($s)){PendingChanges::requestRestart($s,0);return;}
         abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
+        // The creator's settings (such as the accepted EULA) are written before the first start, not up to 30 s later by the queue.
+        if($action==='start'){try{\Simplify\Panel\Jobs\ApplyServerProperties::runNow($s);}catch(\Throwable $e){report($e);}}
         app(DaemonServerRepository::class)->setServer($s)->power($action)->throw();
+    }
+    /** Stops the first installation of a new server; the page stays on the installation view. */
+    #[Renderless]
+    public function killInstallation(): array
+    {
+        $s=$this->server();Access::owner($s);Access::permission($s,P::ControlStop);
+        \Simplify\Panel\Services\InstallProgress::kill($s);
+        return ['setup_state'=>$s->status?->value,...\Simplify\Panel\Services\InstallProgress::info($s,false)];
+    }
+    /** Runs a failed or stopped installation again. */
+    #[Renderless]
+    public function reinstallServer(): array
+    {
+        $s=$this->server();Access::permission($s,P::SettingsReinstall);
+        \Simplify\Panel\Services\InstallProgress::retry($s);$s->refresh();
+        return ['setup_state'=>$s->status?->value,...\Simplify\Panel\Services\InstallProgress::info($s,false)];
+    }
+    /** Deletes a server that is installing or failed to install (the normal delete waits for a finished installation). */
+    #[Renderless]
+    public function deleteSetupServer(string $confirmation): void
+    {
+        $s=$this->server();Access::owner($s);abort_unless(hash_equals($s->name,$confirmation),422,'Enter the exact server name.');
+        abort_unless(in_array($s->status?->value,['installing',...\Simplify\Panel\Services\InstallProgress::FAILED],true),409,'Use Delete server in the server settings.');
+        app(\App\Services\Servers\ServerDeletionService::class)->handle($s);
+        $this->serverUuid=null;
+        $this->redirect(self::getUrl(panel:'app'));
+    }
+    /** Called once the installation finished on the page: applies the creator's settings and tells whether the Minecraft EULA still needs accepting. */
+    #[Renderless]
+    public function finishInstall(): array
+    {
+        $s=$this->server();
+        if(user()->can(P::ControlStart,$s)){try{\Simplify\Panel\Jobs\ApplyServerProperties::runNow($s);}catch(\Throwable $e){report($e);}}
+        return ['eula'=>$this->eulaAccepted($s)];
+    }
+    /** True or false for a Minecraft server whose eula.txt could be read, null otherwise. */
+    private function eulaAccepted(Server $s): ?bool
+    {
+        if(!ManagedSettings::minecraft($s)||!user()->can(P::FileReadContent,$s))return null;
+        try{$text=app(DaemonFileRepository::class)->setServer($s)->getContent('/eula.txt',65536);}
+        catch(\Illuminate\Contracts\Filesystem\FileNotFoundException){return false;}
+        catch(\Throwable){return null;}
+        return (bool)preg_match('/^\s*eula\s*=\s*true\s*$/mi',$text);
     }
     /** Accept the Minecraft EULA for a server that stopped on the EULA prompt, then start it. */
     #[Renderless]
@@ -237,6 +287,8 @@ final class Dashboard extends Page
         $s=$this->server();Access::owner($s);abort_unless(ManagedResources::canEdit($s),403);
         $state=array_intersect_key($state,array_flip(['memory_gb','cpu','disk_mb']));
         abort_unless(isset($state['memory_gb'],$state['cpu'],$state['disk_mb']),422,'Provide all three resource limits.');
+        // After a failed or stopped installation nothing runs yet, so the limits apply at once (the next installation uses them).
+        if(in_array($s->status?->value,\Simplify\Panel\Services\InstallProgress::FAILED,true)){ManagedResources::save($s,$state);return['pending'=>false,'applied'=>true];}
         return PendingChanges::stage($s,$state,null,true);
     }
     #[Renderless]
@@ -283,7 +335,8 @@ final class Dashboard extends Page
             $p=PendingChanges::read($s);
         }
         $data=MinecraftStatus::get($s);
-        return['setup_state'=>$s->fresh()?->status?->value,'color'=>ServerAppearance::color($s),'name'=>$s->name,'server_icon'=>ServerArtwork::serverIcon($s),'reported_version'=>$data['version']??'','players'=>$data['players']??null,'max_players'=>$data['max_players']??null,'player_names'=>$data['names']??[],
+        $s=$s->fresh()??$s;
+        return['setup_state'=>$s->status?->value,'memory'=>$s->memory,'disk'=>$s->disk,'cpu'=>$s->cpu,...\Simplify\Panel\Services\InstallProgress::info($s,false),'color'=>ServerAppearance::color($s),'name'=>$s->name,'server_icon'=>ServerArtwork::serverIcon($s),'reported_version'=>$data['version']??'','players'=>$data['players']??null,'max_players'=>$data['max_players']??null,'player_names'=>$data['names']??[],
             'pending'=>$p?['pending'=>true,'file_only'=>!empty($p['file_only']),'file_changes'=>!empty($p['file_changes']),'restart_at'=>$p['restart_at'],'restart_requested'=>$p['restart_requested'],'error'=>$p['error']??null]:null];
     }
     #[Renderless]
