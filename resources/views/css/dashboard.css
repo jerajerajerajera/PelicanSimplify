@@ -1456,6 +1456,9 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-push { display: grid; gap: 4px; }
 .ps-push .ps-label { display: block; margin: 14px 0 2px; }
 .ps-push .ps-help, .ps-push .ps-error { margin: 0 0 8px; }
+.ps-push .ps-push-scheduler { margin: 0 0 4px; }
+.ps-push-scheduler code { display: block; margin-top: 6px; overflow-wrap: anywhere; font-size: 12px; }
+.ps-push-note { display: block; margin: 6px 0 0; color: var(--ps-muted); font-size: 12px; }
 .ps-push .ps-customize-switch:disabled { opacity: .55; cursor: default; }
 .ps-push-offer { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 8px 6px 8px 12px; border: 1px dashed var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-raised); font-size: 12.5px; }
 .ps-push-offer > svg { flex: none; width: 18px; height: 18px; color: var(--ps-accent); }

@@ -2,6 +2,7 @@
 namespace Illuminate\Support\Facades {
 class Storage {public static array $records=[];public static function disk($name){return new self;}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}
     public function files($dir){return array_values(array_filter(array_keys(self::$records),fn($p)=>str_starts_with($p,$dir.'/')));}}
+class Cache {public static array $values=[];public static function get($key,$default=null){return self::$values[$key]??$default;}}
 class Http {public static array $sent=[];public static int $status=201;public static bool $throw=false;private array $headers=[];private string $body='';
     public static function timeout($s){return new self;}public function connectTimeout($s){return $this;}public function withHeaders(array $h){$this->headers=$h;return $this;}public function withBody($b,$type){$this->body=$b;return $this;}
     public function post($url){if(self::$throw)throw new \RuntimeException('down');self::$sent[]=['url'=>$url,'headers'=>$this->headers,'body'=>$this->body];$status=self::$status;return new class($status){public function __construct(private int $s){}public function status(){return $this->s;}};}}
@@ -43,6 +44,15 @@ check(!array_key_exists('endpoint',$settings['devices'][0])&&!array_key_exists('
 P::subscribe($jera,$phone,'Chrome on Android',$now+10);
 check(count(P::settings($jera)['devices'])===2,'subscribing the same browser again replaces it');
 check(P::accounts()===[1],'accounts with devices');
+
+// Scheduler: real notifications need it; any of Simplify's minute commands counts as a sign of life.
+check(P::schedulerStalled($now),'no run yet means stalled');
+\Illuminate\Support\Facades\Cache::$values['simplify.plugin-check-at']=$now-60;
+check(!P::schedulerStalled($now),'a run a minute ago is fine');
+\Illuminate\Support\Facades\Cache::$values['simplify.plugin-check-at']=$now-400;
+check(P::schedulerStalled($now),'no run for over five minutes is stalled');
+\Illuminate\Support\Facades\Cache::$values['simplify.announcements-at']=$now;
+check(!P::schedulerStalled($now),'the announcements heartbeat counts');
 
 // Preferences: both on by default, unknown kinds ignored.
 check(P::settings($jera)['preferences']===['announcements'=>true,'updates'=>true],'everything on by default');

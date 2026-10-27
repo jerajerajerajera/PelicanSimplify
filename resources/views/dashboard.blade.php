@@ -1083,6 +1083,15 @@
                     <p class="ps-help" x-show="pushNeedsInstall()">On iPhone and iPad, notifications only work in the installed app: tap Share, then Add to Home Screen, and open the panel from there.</p>
                     <p class="ps-help" x-show="!pushSupported() && !pushNeedsInstall()">This browser cannot show notifications from the panel. Try Chrome, Edge, Firefox or Safari, over https.</p>
                     <p class="ps-error" x-show="push.error" x-text="push.error"></p>
+                    {{-- The test is sent straight away; real notifications go out through Pelican's scheduler (simplify:announcements). --}}
+                    <template x-if="push.settings?.scheduler?.stalled">
+                        <div class="ps-alert is-warn ps-push-scheduler" role="alert"><svg aria-hidden="true"><use href="#ps-alert"/></svg><div>
+                            <strong>Notifications are not being sent</strong>
+                            <small x-show="push.settings.scheduler.cron">Pelican's scheduler is not running. Add this cron job for the web server user. The test works without it.</small>
+                            <code x-show="push.settings.scheduler.cron" x-text="push.settings.scheduler.cron"></code>
+                            <small x-show="!push.settings.scheduler.cron">The panel's scheduler is not running. Ask your admin to check it.</small>
+                        </div></div>
+                    </template>
                     <template x-if="pushSupported()">
                         <div>
                             <span class="ps-label">This device</span>
@@ -1100,13 +1109,14 @@
                         <div>
                             <span class="ps-label">What you get</span>
                             <button type="button" class="ps-customize-switch" role="switch" :aria-checked="!!push.settings.preferences.announcements" x-on:click="setPushPreference('announcements', !push.settings.preferences.announcements)">
-                                <span><strong>Announcements</strong><small>Info, Warning and Success messages that admins send as app notification.</small></span>
+                                <span><strong>Announcements</strong><small>Announcements that an admin sends with "Also send as app notification" on.</small></span>
                                 <span class="ps-switch" :class="{'is-on': push.settings.preferences.announcements}" aria-hidden="true"></span>
                             </button>
                             <button type="button" class="ps-customize-switch" role="switch" x-show="push.settings.admin" :aria-checked="!!push.settings.preferences.updates" x-on:click="setPushPreference('updates', !push.settings.preferences.updates)">
                                 <span><strong>Updates</strong><small>A new version of Simplify, a plugin, Wings or Pelican (root admins).</small></span>
                                 <span class="ps-switch" :class="{'is-on': push.settings.preferences.updates}" aria-hidden="true"></span>
                             </button>
+                            <small class="ps-push-note">Pelican's own notifications in the bell, such as a finished backup, are not sent to your devices.</small>
                             <template x-if="push.settings.devices.some((device) => !device.current)">
                                 <div>
                                     <span class="ps-label">Your other devices</span>

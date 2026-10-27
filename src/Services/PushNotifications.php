@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Simplify\Panel\Services;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 /**
@@ -81,6 +82,13 @@ final class PushNotifications
         $sent=0;
         foreach($data['devices'] as $device)if(self::deliver($user,$device,$message)==='sent')$sent++;
         return $sent;
+    }
+
+    /** True when Pelican's scheduler has not run for five minutes: the test still arrives, real notifications do not. */
+    public static function schedulerStalled(?int $now=null): bool
+    {
+        $last=max(array_map(fn(string $key):int=>(int)Cache::get($key,0),['simplify.announcements-at','simplify.plugin-check-at','simplify.panel-updates-at']));
+        return $last<($now??time())-300;
     }
 
     /** Account ids that have at least one device. */
