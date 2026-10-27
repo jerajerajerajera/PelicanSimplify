@@ -49,22 +49,22 @@ final class SteamProfileTab
         $status = SteamAccount::status($user);
         $linked = $status['linked'];
         $linkText = $linked !== null
-            ? 'Linked to Steam account '.$linked.'.'
-            : (self::steamSignInEnabled() ? 'Not linked yet. Use "Link Steam" on the OAuth tab.' : 'Steam sign-in is not enabled on this panel. An administrator can turn it on under Admin → Settings → OAuth.');
+            ? __('pelican-simplify::steam.profile.linked_to', ['account' => $linked])
+            : (self::steamSignInEnabled() ? __('pelican-simplify::steam.profile.not_linked') : __('pelican-simplify::steam.profile.sign_in_off'));
         $keyText = $status['connected']
-            ? 'Steam Web API key ending in '.$status['hint'].($status['steamid'] ? ' (Steam account '.$status['steamid'].')' : '').'. Automatic tokens are '.($status['auto'] ? 'on' : 'off').'.'
-            : 'No key connected. Games that need a token show an empty field in the creator.';
+            ? ($status['steamid'] ? __('pelican-simplify::steam.profile.key_ending_account', ['hint' => $status['hint'], 'account' => $status['steamid']]) : __('pelican-simplify::steam.profile.key_ending', ['hint' => $status['hint']])).' '.($status['auto'] ? __('pelican-simplify::steam.profile.auto_on') : __('pelican-simplify::steam.profile.auto_off'))
+            : __('pelican-simplify::steam.profile.no_key');
 
         return [
-            Section::make('Steam account')->description(__('pelican-simplify::steam.profile.linking_proves_which_steam_account_is'))->schema([
+            Section::make(__('pelican-simplify::steam.profile.steam_account'))->description(__('pelican-simplify::steam.profile.linking_proves_which_steam_account_is'))->schema([
                 \Filament\Schemas\Components\Text::make($linkText),
             ]),
-            Section::make('Game server login tokens')
+            Section::make(__('pelican-simplify::steam.profile.login_tokens'))
                 ->description(__('pelican-simplify::steam.profile.games_such_as_cs2_unturned_and'))
                 ->schema([
                     \Filament\Schemas\Components\Text::make($keyText),
                     Actions::make([
-                        Action::make('simplify_steam_connect')->button()->label($status['connected'] ? 'Replace key' : 'Connect key')->icon('tabler-key')
+                        Action::make('simplify_steam_connect')->button()->label($status['connected'] ? __('pelican-simplify::steam.profile.replace_key') : __('pelican-simplify::steam.profile.connect_key'))->icon('tabler-key')
                             ->modalHeading(__('pelican-simplify::steam.profile.connect_your_steam_web_api_key'))
                             ->modalDescription(__('pelican-simplify::steam.profile.create_or_copy_your_key_at'))
                             ->schema([TextInput::make('key')->label(__('pelican-simplify::steam.profile.steam_web_api_key'))->password()->required()->maxLength(32)->autocomplete(false)])
@@ -78,12 +78,12 @@ final class SteamProfileTab
                                     $action->halt();
                                 }
                             }),
-                        Action::make('simplify_steam_auto')->button()->label($status['auto'] ? 'Turn automatic tokens off' : 'Turn automatic tokens on')->icon('tabler-wand')
+                        Action::make('simplify_steam_auto')->button()->label($status['auto'] ? __('pelican-simplify::steam.profile.turn_auto_off') : __('pelican-simplify::steam.profile.turn_auto_on'))->icon('tabler-wand')
                             ->visible($status['connected'])
                             ->tooltip(__('pelican-simplify::steam.profile.automatic_a_new_server_for_a'))
                             ->action(function () use ($status): void {
                                 SteamAccount::setAuto(user(), !$status['auto']);
-                                Notification::make()->title('Automatic tokens '.($status['auto'] ? 'off' : 'on'))->success()->send();
+                                Notification::make()->title($status['auto'] ? __('pelican-simplify::steam.profile.auto_now_off') : __('pelican-simplify::steam.profile.auto_now_on'))->success()->send();
                             }),
                         Action::make('simplify_steam_disconnect')->button()->label(__('pelican-simplify::steam.profile.disconnect'))->icon('tabler-unlink')->color('danger')
                             ->visible($status['connected'])->requiresConfirmation()

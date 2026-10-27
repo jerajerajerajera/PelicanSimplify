@@ -26,13 +26,12 @@ final class Dashboard extends Page
 {
     use WithFileUploads;
     protected static ?string $slug='simplify';
-    protected static ?string $title='Pelican - Enhanced by Simplify';
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable { return __('pelican-simplify::dashboard.page.title'); }
     protected static bool $shouldRegisterNavigation=false;
     protected string $view='pelican-simplify::dashboard';
     #[Locked] public ?string $serverUuid=null;
     public $iconUpload=null;
     public $bannerUpload=null;
-    public function boot(): void { app()->setLocale('en'); }
     public function mount(): void
     {
         // "Only the add-ons": Pelican's own server list and console stay the pages everyone uses.
@@ -178,7 +177,7 @@ final class Dashboard extends Page
             // A server that is still installing (or failed to) shows that instead of Wings' "offline".
             $status=match($s->status?->value){'installing'=>'installing','install_failed','reinstall_failed'=>'install failed',default=>$s->retrieveStatus()->value};$mc=in_array($status,['offline','installing','install failed'],true)?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
-            $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,'mine'=>(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned,
+            $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: __('pelican-simplify::dashboard.page.other_game')),'status'=>$status,'linked'=>$linked,'mine'=>(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned,
                 'node_id'=>(int)$s->node_id,'created'=>$s->created_at?->getTimestamp(),'port'=>$s->allocation?->port!==null?(int)$s->allocation->port:null,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
                 'url'=>$linked?self::getUrl(['server'=>$s->uuid],panel:'app'):null,
                 'server_icon'=>$serverIcon,'software_icon'=>ServerArtwork::softwareIcon($s,$m),'egg_icon'=>$s->egg?->icon,
@@ -221,7 +220,7 @@ final class Dashboard extends Page
         $p=match($action){'start'=>P::ControlStart,'stop','kill'=>P::ControlStop,'restart'=>P::ControlRestart,default=>null};abort_unless($p,422);Access::permission($s,$p);
         if($action==='stop' && PendingChanges::read($s)){PendingChanges::requestStop($s);return;}
         if($action==='restart' && PendingChanges::read($s)){PendingChanges::requestRestart($s,0);return;}
-        abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
+        abort_if($s->isInConflictState(),409,__('pelican-simplify::dashboard.errors.wait_for_install'));
         // The creator's settings (such as the accepted EULA) are written before the first start, not up to 30 s later by the queue.
         if($action==='start'){try{\Simplify\Panel\Jobs\ApplyServerProperties::runNow($s);}catch(\Throwable $e){report($e);}}
         app(DaemonServerRepository::class)->setServer($s)->power($action)->throw();
@@ -246,8 +245,8 @@ final class Dashboard extends Page
     #[Renderless]
     public function deleteSetupServer(string $confirmation): void
     {
-        $s=$this->server();Access::owner($s);abort_unless(hash_equals($s->name,$confirmation),422,'Enter the exact server name.');
-        abort_unless(in_array($s->status?->value,['installing',...\Simplify\Panel\Services\InstallProgress::FAILED],true),409,'Use Delete server in the server settings.');
+        $s=$this->server();Access::owner($s);abort_unless(hash_equals($s->name,$confirmation),422,__('pelican-simplify::dashboard.errors.exact_name'));
+        abort_unless(in_array($s->status?->value,['installing',...\Simplify\Panel\Services\InstallProgress::FAILED],true),409,__('pelican-simplify::dashboard.errors.use_delete_server_in_the_server'));
         app(\App\Services\Servers\ServerDeletionService::class)->handle($s);
         $this->serverUuid=null;
         $this->redirect(self::getUrl(panel:'app'));
@@ -274,7 +273,7 @@ final class Dashboard extends Page
     public function acceptEula(): void
     {
         $s=$this->server();Access::permission($s,P::FileUpdate);Access::permission($s,P::ControlStart);
-        abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
+        abort_if($s->isInConflictState(),409,__('pelican-simplify::dashboard.errors.wait_for_install'));
         app(DaemonFileRepository::class)->setServer($s)->putContent('/eula.txt',"# Accepted in Simplify by ".user()->username.".\neula=true\n")->throw();
         app(DaemonServerRepository::class)->setServer($s)->power('start')->throw();
     }
@@ -285,8 +284,8 @@ final class Dashboard extends Page
         abort_unless(strlen($path)<=4096 && !str_contains($path,"\0") && !in_array('..',explode('/',$path),true),422);
         $limit=(int)config('panel.files.max_edit_size',1048576);
         try { $content=app(DaemonFileRepository::class)->setServer($s)->getContent($path,$limit); }
-        catch (\Illuminate\Http\Client\ConnectionException) { abort(503,'The node is not reachable.'); }
-        abort_if($limit>0 && strlen($content)>$limit,413,'This file is too large to edit.');
+        catch (\Illuminate\Http\Client\ConnectionException) { abort(503,__('pelican-simplify::dashboard.errors.the_node_is_not_reachable')); }
+        abort_if($limit>0 && strlen($content)>$limit,413,__('pelican-simplify::dashboard.errors.this_file_is_too_large_to'));
         return hash('sha256',$content);
     }
     #[Renderless]
@@ -304,7 +303,7 @@ final class Dashboard extends Page
     {abort_unless(Access::feature('resources'),404);
         $s=$this->server();Access::owner($s);abort_unless(ManagedResources::canEdit($s),403);
         $state=array_intersect_key($state,array_flip(['memory_gb','cpu','disk_mb']));
-        abort_unless(isset($state['memory_gb'],$state['cpu'],$state['disk_mb']),422,'Provide all three resource limits.');
+        abort_unless(isset($state['memory_gb'],$state['cpu'],$state['disk_mb']),422,__('pelican-simplify::dashboard.errors.provide_all_three_resource_limits'));
         // After a failed or stopped installation nothing runs yet, so the limits apply at once (the next installation uses them).
         if(in_array($s->status?->value,\Simplify\Panel\Services\InstallProgress::FAILED,true)){ManagedResources::save($s,$state);return['pending'=>false,'applied'=>true];}
         return PendingChanges::stage($s,$state,null,true);
@@ -427,7 +426,7 @@ final class Dashboard extends Page
     #[Renderless]
     public function deleteServer(string $confirmation): void
     {
-        $s=$this->server();abort_unless(Access::feature('advanced'),404);Access::owner($s);Access::offline($s);abort_unless(hash_equals($s->name,$confirmation),422,'Enter the exact server name.');
+        $s=$this->server();abort_unless(Access::feature('advanced'),404);Access::owner($s);Access::offline($s);abort_unless(hash_equals($s->name,$confirmation),422,__('pelican-simplify::dashboard.errors.exact_name'));
         app(\App\Services\Servers\ServerDeletionService::class)->handle($s);
         $this->serverUuid=null;
         $this->redirect(self::getUrl(panel:'app'));
@@ -452,7 +451,7 @@ final class Dashboard extends Page
     #[Renderless]
     public function restoreBackup(string $uuid,string $confirm): void
     {abort_unless(Access::feature('backups'),404);
-        $s=$this->server();Access::permission($s,P::BackupRestore);Access::offline($s);abort_unless(hash_equals($s->name,$confirm),422,'Enter the server name.');
+        $s=$this->server();Access::permission($s,P::BackupRestore);Access::offline($s);abort_unless(hash_equals($s->name,$confirm),422,__('pelican-simplify::dashboard.errors.enter_the_server_name'));
         $b=$s->backups()->where('uuid',$uuid)->firstOrFail();abort_unless($b->is_successful && $b->completed_at,409);
         $url=app(\App\Services\Backups\DownloadLinkService::class)->handle($b,user());
         $s->update(['status'=>\App\Enums\ServerState::RestoringBackup]);

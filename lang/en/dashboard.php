@@ -491,4 +491,28 @@ return [
         'upload_help' => 'JPG, PNG or WebP · up to :limit',
         'deleted_server' => 'Deleted server',
     ],
+    'packages' => [
+        'install_dependency' => 'Install required dependency :name first.',
+        'via' => 'via :site',
+        'added_by_hand' => 'Added by hand',
+        'this_server_software_does_not_support' => 'This server software does not support installable mods or plugins.',
+        'enter_the_exact_minecraft_version_first' => 'Enter the exact Minecraft version first.',
+        'the_plugin_sites_did_not_answer' => 'The plugin sites did not answer. Try again in a moment.',
+        'unknown_plugin' => 'Unknown plugin.',
+        'this_plugin_cannot_be_installed_automatically' => 'This plugin cannot be installed automatically.',
+        'unsupported_package_download' => 'Unsupported package download.',
+    ],
+    'page' => [
+        'title' => 'Pelican - Enhanced by Simplify',
+        'other_game' => 'Other game',
+    ],
+    'errors' => [
+        'wait_for_install' => 'Wait until the current installation or recovery is complete.',
+        'exact_name' => 'Enter the exact server name.',
+        'use_delete_server_in_the_server' => 'Use Delete server in the server settings.',
+        'the_node_is_not_reachable' => 'The node is not reachable.',
+        'this_file_is_too_large_to' => 'This file is too large to edit.',
+        'provide_all_three_resource_limits' => 'Provide all three resource limits.',
+        'enter_the_server_name' => 'Enter the server name.',
+    ],
 ];

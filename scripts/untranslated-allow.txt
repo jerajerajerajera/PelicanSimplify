@@ -24,3 +24,4 @@ open
 User access
 Game creator
 Plugin updates
+Pelican server

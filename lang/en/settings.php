@@ -240,6 +240,7 @@ return [
         'legacy_grants_help' => '1 user still has a personal creator grant or limit. It keeps working; move this user into a role and remove the old grant below.|:count users still have a personal creator grant or limit. They keep working; move these users into a role and remove the old grants below.',
         'egg_updates_available' => '{0} All eggs are up to date|{1} 1 egg update available|[2,*] :count egg updates available',
         'eggs_updated' => 'Egg updated|:count eggs updated',
+        'logo_too_big' => 'Use a PNG, JPEG or WebP image up to :size KB.',
     ],
     'features' => [
         'addons_only' => [
@@ -588,5 +589,15 @@ return [
         'none' => 'None',
         'everyone_may' => 'Everyone may',
         'only_pelican_permissions' => 'Only what Pelican\'s own permissions allow',
+    ],
+    'fonts' => [
+        'inter' => 'Inter (default)',
+        'system' => 'System',
+        'rounded' => 'Rounded',
+        'serif' => 'Serif',
+        'mono' => 'Monospace',
+        'monocraft' => 'Monocraft (pixel)',
+        'condensed' => 'Condensed',
+        'display' => 'Impact',
     ],
 ];
