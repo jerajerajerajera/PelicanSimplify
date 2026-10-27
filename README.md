@@ -20,6 +20,7 @@ You can switch each add-on on or off by itself, in the first setup or later in S
 - People & roles: invite people and decide on one page what each role may do.
 - Automatic subdomains: give every server its own address. Simplify makes and removes the DNS records in Cloudflare.
 - Error explanations: a server error explained in plain words, by Claude, GPT or Gemini with your own API key.
+- Website embed: show your servers and their status on your own website with one line of code, or on a page of its own.
 - Plugin sites: find and install Minecraft plugins from Modrinth, Hangar, SpigotMC and CurseForge on one page.
 
 ## What it does
@@ -49,7 +50,7 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 - Your own server groups, each with its own colour, and your own server order, saved with your account
 - Filter by game; administrators can also filter on All servers, My servers or Others
 - Quick start, stop and restart buttons on each server: off, always on, or on hover
-- Health panel per node: CPU, RAM, disk and network, with a warning when something is wrong
+- Health per node: CPU, RAM, disk and network, as a Healthy button in the top bar or a bar above or below the servers, with a warning when something is wrong
 - One request per node instead of one per server, so the overview stays fast
 - Host mode: a server list per node, the admin pages in the middle, and servers that open next to the list
 
@@ -160,7 +161,18 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 - Banners: built-in Minecraft art, Steam art, or your own uploads
 - Panel name and logo: upload a logo, or style the name with your own font and colors
 - The same icons as the rest of the Pelican panel, and the same save bar on every settings page
+- Pelican's own pages inside Simplify (Eggs, Nodes, Servers, Settings and more) follow Simplify's look
 - Halloween touches from 25 October to 2 November, easy to turn off
+
+</details>
+
+<details>
+<summary><strong>Website embed</strong></summary>
+
+- Your servers on your own website with one line of code, as an iframe, or on a page of its own
+- Show every server, one server, one game or one server group, with a live preview in Settings
+- Only name, game, modpack, status, players and a public join address are shown; private and Tailscale addresses never are
+- Nothing is published until you switch a server on, in Settings or with "Show on the website" in the server menu
 
 </details>
 
