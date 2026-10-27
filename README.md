@@ -2,7 +2,7 @@
 
 A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel) game server panel. You manage your servers from one overview and create new ones with a guided wizard. Everything still runs on Pelican and [Wings](https://github.com/pelican/wings), and the original panel stays available.
 
-**Stable 0.4.6 for Pelican 1.0.0-beta38 and 1.0.0-rc.1 · PHP 8.3+ (8.4+ on rc.1)**
+**Stable 0.5.2 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
 
 *Screenshots use example servers.*
 
@@ -11,96 +11,61 @@ A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel)
 <a href="docs/screenshots/server-creator.png"><img src="docs/screenshots/server-creator.png" alt="Guided server creation" width="280"></a>
 <a href="docs/screenshots/server-list.png"><img src="docs/screenshots/server-list.png" alt="List view grouped by node" width="280"></a>
 
-## Highlights
+## What it does
 
-- **One overview for all servers:** live status, players, CPU and RAM at a glance, in a grid or list view.
-- **Guided server creation:** pick Minecraft (Vanilla, Paper or a modpack) or search 170+ other games; Simplify picks and installs the right egg.
-- **Simple and host mode:** simple mode suits a few servers. Host mode adds a server list per node and the admin pages side by side, for larger hosts.
-- **Make it yours:** light and dark themes, server colors, banners, and your own logo or styled panel name.
-- **Friends mode, people and roles:** everyone can see every server but only manage their own, and roles set clear permissions and limits.
+Simplify puts all your servers on one page, with their status, players, CPU and RAM, as cards or a list. New servers are made with a step-by-step creator: pick Minecraft (Vanilla, Paper or a modpack) or one of 170+ other games, and Simplify installs the right egg.
 
-## Before you install
+For a few servers the simple mode is enough. Larger hosts can switch to host mode, with a server list per node and the admin pages next to it. You can choose a light or dark theme, give servers their own color and banner, and use your own logo or panel name. In friends mode everyone sees every server but only manages their own, and roles decide who may do what.
 
-Simplify is a large change to how your panel looks and works. Please read this first.
+## Features
 
-- **It replaces a lot of the panel.** The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode.
-- **Everything can be switched off.** Each part has its own switch in Simplify settings, and you can turn off the whole Simplify dashboard. Pelican's original panel always stays available: the Legacy links in Admin tools lead to it, and even if you hide those links the pages keep working.
-- **It does not touch your running servers.** Servers, eggs, nodes and permissions stay Pelican's own. Simplify is a different way to look at and manage them.
-- **Other plugins are only partly supported inside Simplify.** They keep working in Pelican's original panel. Simplify shows their admin and server pages under "External". Widgets and tiles from other plugins are not supported yet. Full plugin support is the top item on the roadmap (see Coming features).
-- **Make a backup before installing**, as with any plugin that changes this much.
+### Highlights
 
-## Getting started
+#### Explain this error
 
-1. In Pelican, go to **Admin → Plugins → Import from URL**.
-2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.4.6/pelican-simplify-v0.4.6.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
+When a server or the panel shows an error, the Explain button tells you in plain words what is wrong and what to try. You choose the AI: Claude, GPT or Gemini, each with your own API key. If the log looks fine, it says so and lists anything worth a look as options you can open. Root administrators can also check the panel log and the Wings log. When the panel itself is broken, a plain emergency page and a terminal command still work. IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent, and the feature stays off until an administrator turns it on.
 
-   **Beta and snapshot builds:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`, the newest snapshot at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-snapshot-latest.zip`. Betas test the next stable release with all its new features; snapshots are development builds with the latest changes. Both are less tested; see the [changelog](CHANGELOG.md).
-3. Follow the setup checks. Anything missing is shown with how to fix it.
+#### Simplify as an app
 
-**Requirements:** Node.js 22.12+ or 24+, Yarn, and a running queue worker and scheduler.
+You can add the panel to the home screen of your phone or computer, and it opens like an app. Turn on app notifications per device to get announcements and new versions of Pelican, Wings, Simplify and plugins as a notification. Every page works on a phone, upright and on its side, with a tab bar at the bottom and popups that slide up as sheets.
 
-**Updates:** Simplify updates itself through its plugin manager, with a backup and automatic rollback. You always get the build made for your Pelican version. Stable releases are the default; choose Beta or Snapshot under "Simplify versions" in Simplify settings → Plugin manager to try new features earlier.
+#### Simplify Server Maker
 
-Coming from the standalone creator? See the [installation notes](docs/INSTALLATION.md). Found a problem? Open an [issue](https://github.com/jerajerajerajera/PelicanSimplify/issues).
+One creator for every server. Press Create server and the Server Maker first asks what you want to make: a Minecraft server (Vanilla, plugins, mods, a modpack or Bedrock) or one of 170+ other games. After that the steps are the same for every game: settings, server, resources and a review. Simplify installs the right egg, and a new server shows how far its installation is until it is ready to start.
 
-## Coming features
+#### Plugins for the panel and for your servers
 
-The order and scope may still change. Everything Simplify does not cover yet is still available in the original Pelican panel.
+Simplify works together with other Pelican plugins. Their pages, widgets and buttons show up inside Simplify, theme plugins set its colours and font, and each plugin can be switched on or off. For Minecraft servers, one page shows the plugins that are installed and searches Modrinth, Hangar and SpigotMC at once, with the source and the version that will be installed. If a new plugin stops the server from working after a restart, Simplify switches it off again and explains why.
 
-### Top priority: plugin support
-
-Simplify should work together with other Pelican plugins instead of beside them:
-
-- Pages and settings from other installed plugins show up inside Simplify (admin menu, host mode and server pages), styled to match.
-- Plugins can add their own tiles to the server dashboard.
-- Plugins are installed, updated and switched on or off from Simplify's plugin manager.
-
-Plugin support is also what makes the next step possible: letting Simplify replace the original panel completely.
-
-### Next up
-
-- **A real phone experience.** Every page built for one hand: a bottom tab bar, full-screen sheets instead of popups, a phone-friendly console and power buttons, and Simplify installable as an app on your home screen.
-- **A better server page.** A clear status bar at the top, a console that gets the space it needs, workspaces that open inside the page instead of popups, and one place for everything that needs your attention.
-- **Simplify as the whole panel.** An option in setup that makes Simplify the only panel. The original stays reachable under `/legacy`, or switches off entirely when no other plugin needs it.
-- **Clearer server installation.** One clear "setting up…" state until a new server is ready, and the Minecraft EULA accepted up front without a restart loop.
-- **Better server creation for every game.** Recommended resources per game and an install progress card.
-- **Egg settings in the dashboard.** Startup settings for every game, with plain descriptions and checks.
-
-### Later
-
-- **Alerts** for crashes and servers running out of resources.
-- **Startup fixes:** recognize common startup problems and offer a one-click fix.
-- **Server presets:** save settings once and reuse them for new servers.
-- **Troubleshooting reports:** export diagnostics with all secrets removed, for easier support.
-- **More overview options:** extra information fields and layouts.
-
-See the [roadmap](docs/ROADMAP.md) for details.
-
-## All features
+### All features
 
 Items marked *(Pelican)* are existing Pelican or Wings features that Simplify shows in its own interface. Everything else is added by Simplify.
 
 <details>
 <summary><strong>Overview and host mode</strong></summary>
 
-- Grid and list views, remembered per user; phones use the list view automatically
+- Cards, compact cards or a list, with 2 to 6 columns, three card widths and a full screen width option, remembered per user
 - Server name, alias, icon, game, live status *(Pelican)*, players, and CPU and RAM graphs
-- Filter by game; servers grouped by node when there is more than one
-- Quick start, stop and restart buttons on each server
+- Your own server groups, each with its own colour, and your own server order, saved with your account
+- Filter by game; administrators can also filter on All servers, My servers or Others
+- Quick start, stop and restart buttons on each server: off, always on, or on hover
 - Health panel per node: CPU, RAM, disk and network, with a warning when something is wrong
-- **Host mode:** a server list per node, the admin pages in the middle, and servers that open next to the list
+- One request per node instead of one per server, so the overview stays fast
+- Host mode: a server list per node, the admin pages in the middle, and servers that open next to the list
 
 </details>
 
 <details>
 <summary><strong>Creating servers</strong></summary>
 
-- **Easy Minecraft server creator:** a step-by-step wizard for Vanilla, Paper and modpacks (Modrinth, CurseForge, FTB and Technic)
-- **Easy server creator:** search 170+ games from the official Pelican eggs; missing eggs are installed automatically
+- Simplify Server Maker: one creator for Minecraft and 170+ other games from the official Pelican eggs; missing eggs are installed automatically
+- Minecraft: Vanilla, servers for plugins or mods, Bedrock, and modpacks from Modrinth, CurseForge, FTB and Technic
 - Steam banners and icons for games, and automatic Steam game server tokens for games that need one
 - Resource presets, per-user limits, a name generator *(Pelican)*, and server color and icon choice
 - Drafts are saved automatically and can be discarded
-- **Automatic subdomains** *(add-on, Cloudflare)*: choose a name such as `oak` in the creator or the server's Network section; Simplify creates the DNS records (a CNAME, plus an SRV record so Minecraft players need no port) and removes them with the server
+- An installation view with steps and the installation log, Kill to stop a first installation, and "Your server is ready" with a Start button
+- The Minecraft EULA is accepted in Simplify's own banner, without Pelican's popup
+- Automatic subdomains *(add-on, Cloudflare)*: choose a name such as `oak` in the creator or the server's Network section; Simplify creates the DNS records (a CNAME, plus an SRV record so Minecraft players need no port) and removes them with the server
 - Pelican's own creator stays available
 
 </details>
@@ -108,11 +73,14 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 <details>
 <summary><strong>Managing a server</strong></summary>
 
-- Live console with command history *(Pelican)*
+- A compact header with the status, address and power buttons, a row with players and usage, and a console that fits the screen
+- Live console with command history *(Pelican)*, which can be made bigger or opened in its own window, and a one-line mini console while a workspace is open
+- Customize server page: full screen width and how you like the console, separate from the overview
 - Power controls and resource usage *(Pelican)*
 - Minecraft settings with a live MOTD preview: players, difficulty, game mode, PvP, whitelist and more
 - Player management: whitelist, operators, kicks and bans
-- Plugins and mods from Modrinth: search, install, update and remove
+- Plugins from Modrinth, Hangar and SpigotMC and mods from Modrinth: search, install, switch off, update and remove
+- A plugin without a release for your Minecraft version can still be installed after a warning
 - Change software, version or modpack, with a recent backup required first
 - Files, schedules, activity log, databases and SFTP details *(Pelican)*
 - Changes that need a restart are collected, with an option to restart now or later
@@ -129,41 +97,79 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 </details>
 
 <details>
+<summary><strong>Announcements and notifications</strong></summary>
+
+- Info, Warning or Success announcements with a start and end time, for everyone or administrators only, with an optional button to a server or a link
+- Announcements show above the overview and server pages while they are live; unpin one to hide its bar, pin it again from the bell
+- Administrators can pin an announcement to everyone's notifications
+- In-game announcements: send to all servers, server groups or single servers, using each game's own chat command, optionally repeated
+- Notices for new versions of Simplify, other plugins, Wings and Pelican, with a few lines of what is new and a link to the full notes
+- A bell with all notifications, Mark all read, Clear read and an Archived list
+- App notifications on your phone or computer, turned on per device, with a test button
+- Times are entered and shown in your own time zone
+- Announcements from the Hub plugin "Announcements" show too
+
+</details>
+
+<details>
+<summary><strong>Explain this error</strong> (optional, with your own API key)</summary>
+
+- An Explain button in the console checks the log first: "Everything seems in order" or "Something needs attention", with the explanation and steps to try
+- Works with Claude, GPT or Gemini; a root administrator picks one and enters its API key, and each question is paid by that key
+- Allow it for everyone who can see the console or for administrators only
+- Root administrators can also check the panel log and the Wings log, and the admin menu has "Explain panel errors"
+- IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent
+- Turn it on in Simplify settings → Error explanations
+
+When the panel itself breaks, there are two other ways to ask:
+
+- The panel shows an error page (such as 500), but you can still sign in: open `/simplify/explain` on your panel, for example `https://panel.example.com/simplify/explain`. This plain page does not need the normal panel pages, so it keeps working when a plugin, Filament or Livewire fails.
+- You cannot sign in or the website is down: run `php artisan simplify:explain` in the panel folder on the server. Use `--source=wings --node=<id>` for a Wings log or `--source=server=<id>` for a server console. `php artisan simplify:explain --url` prints a temporary address for the plain page that works for an hour without signing in.
+
+These need PHP and the panel's files to work. If even `php artisan` fails, the error it prints is usually the cause.
+
+</details>
+
+<details>
+<summary><strong>Phones and the app</strong></summary>
+
+- Every page works on phones, upright and on its side
+- A tab bar at the bottom, compact server rows, a full-height console with quick commands, and popups that slide up as sheets
+- Add the panel to your home screen and open it as an app
+
+</details>
+
+<details>
+<summary><strong>Other Pelican plugins</strong></summary>
+
+- Pages from other plugins in the account menu, admin tools and server pages
+- Widgets from plugins as tiles, and buttons plugins add to Pelican's server list and console
+- Each plugin's parts can be switched on or off inside Simplify
+- When a plugin does the same as a part of Simplify, only that part of Simplify switches off
+- Theme plugins such as Nord, Catppuccin and Theme Customizer: Simplify follows their colours, font and light or dark mode
+
+</details>
+
+<details>
 <summary><strong>Look and feel</strong></summary>
 
 - Light, dark or system theme
-- One accent color for the whole panel, or a color per server
+- One accent color for the whole panel, a color per server group, or a color per server
 - Banners: built-in Minecraft art, Steam art, or your own uploads
 - Panel name and logo: upload a logo, or style the name with your own font and colors
-- The same save bar on every settings page
+- The same icons as the rest of the Pelican panel, and the same save bar on every settings page
+- Halloween touches from 25 October to 2 November, easy to turn off
 
 </details>
 
 <details>
 <summary><strong>People, access and settings</strong></summary>
 
-- **Friends mode:** see all servers, manage only your own or the ones shared with you *(Pelican permissions)*
-- **People & roles:** add people with an email invite, and create roles with Simplify permissions, limits and admin access
+- Friends mode: see all servers, manage only your own or the ones shared with you *(Pelican permissions)*
+- People & roles: add people with an email invite, and create roles with Simplify permissions, limits and admin access
 - Switch individual features on or off for users: files, backups, schedules, players, plugins and more
 - Optional self-service server creation, with limits per role or per person
 - Steam account on the profile page for game server tokens
-
-</details>
-
-<details>
-<summary><strong>Explain this error</strong> (optional, with your own Anthropic API key)</summary>
-
-- An Explain button in the console says in plain words whether something is wrong and what to try
-- Root administrators can also check the panel log and the Wings log
-- IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent
-- Turn it on in Simplify settings → Error explanations; each question is paid by that key
-
-When the panel itself breaks, there are two other ways to ask:
-
-- **The panel shows an error page (such as 500), but you can still sign in:** open `/simplify/explain` on your panel, for example `https://panel.example.com/simplify/explain`. This plain page does not need the normal panel pages, so it keeps working when a plugin, Filament or Livewire fails.
-- **You cannot sign in or the website is down:** run `php artisan simplify:explain` in the panel folder on the server. Use `--source=wings --node=<id>` for a Wings log or `--source=server=<id>` for a server console. `php artisan simplify:explain --url` prints a temporary address for the plain page that works for an hour without signing in.
-
-These need PHP and the panel's files to work. If even `php artisan` fails, the error it prints is usually the cause.
 
 </details>
 
@@ -173,12 +179,86 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 - Installs through Pelican's own plugin import *(Pelican)*
 - Setup checks for PHP, Node.js, the database, queue, storage and upload limits, each with fix instructions
 - Plugin manager with safe updates: backup first, checksum check, and automatic rollback if an update fails
-- Optional automatic plugin updates
+- Stable, Beta and Snapshot update channels, and optional automatic plugin updates
 
 </details>
 
+## Before you install
+
+Simplify is a large change to how your panel looks and works. Please read this first.
+
+- It replaces a lot of the panel. The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode.
+- Everything can be switched off. Each part has its own switch in Simplify settings, and you can turn off the whole Simplify dashboard. Pelican's original panel always stays available: the Legacy links in Admin tools lead to it, and even if you hide those links the pages keep working.
+- It does not touch your running servers. Servers, eggs, nodes and permissions stay Pelican's own. Simplify is a different way to look at and manage them.
+- Other plugins are partly supported inside Simplify. They keep working in Pelican's original panel. Simplify shows their admin and server pages under "External", and their account pages, widgets and buttons inside its own pages.
+- **Make a backup before installing**, as with any plugin that changes this much.
+
+## Getting started
+
+1. In Pelican, go to **Admin → Plugins → Import from URL**.
+2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.5.2/pelican-simplify-v0.5.2.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
+
+   **Beta and snapshot builds:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`, the newest snapshot at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-snapshot-latest.zip`. Betas test the next stable release with all its new features; snapshots are development builds with the latest changes. Both are less tested; see the channel table below.
+3. Follow the setup checks. Anything missing is shown with how to fix it.
+
+| Channel | Current version | What it has | Changelog |
+|---|---|---|---|
+| **Stable** (default) | 0.5.2 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
+| **Beta** | 0.5.3-beta.3 | The next stable release, tested before it ships: stable plus a Customize menu for server pages, pinned announcements and Explain this error | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
+| **Snapshot** | 0.5.3-snapshot.4 | The newest development build; at the moment the same features as beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+
+### Compatibility
+
+| Pelican | PHP | Stable 0.5.1 |
+|---|---|---|
+| 1.0.0-beta38 | 8.3 | ✅ Tested, works |
+| 1.0.0-beta38 | 8.4 | ✅ Works |
+| 1.0.0-beta38 | 8.5 | ✅ Works |
+| 1.0.0-rc.1 | 8.4 | ✅ Tested, works |
+| 1.0.0-rc.1 | 8.5 | ✅ Tested, works |
+| 1.0.0-rc.2 | 8.4 | ✅ Tested, works |
+| 1.0.0-rc.2 | 8.5 | ✅ Tested, works |
+
+Pelican 1.0.0-rc.1 and rc.2 need PHP 8.4 or newer. "Tested" means a fresh panel with that Pelican and PHP version, tested with 0.5.1: Simplify installed, the panel started and every Simplify page opened and worked without errors, on desktop and on phones. Pelican 1.0.0-beta38 with PHP 8.4 and 8.5 was tested the same way with the 0.5.0 betas. On a Pelican release that is not in this table (a newer one, or a panel installed from git that reports "canary"), the setup check "Tested Pelican release" shows a warning and installing continues.
+
+**Requirements:** Node.js 22.12+ or 24+, Yarn, and a running queue worker and scheduler.
+
+**Updates:** Simplify updates itself through its plugin manager, with a backup and automatic rollback. You always get the build made for your Pelican version. Stable releases are the default; choose Beta or Snapshot under "Simplify versions" in Simplify settings → Plugin manager to try new features earlier.
+
+Coming from the standalone creator? See the [installation notes](docs/INSTALLATION.md). Found a problem? Open an [issue](https://github.com/jerajerajerajera/PelicanSimplify/issues).
+
+## Coming features
+
+The order and scope may still change. Everything Simplify does not cover yet is still available in the original Pelican panel.
+
+### Top priority: plugin support
+
+Simplify should work together with other Pelican plugins instead of beside them:
+
+- Done in 0.5.1: pages from other plugins in the account menu, admin tools and server pages, widgets from plugins as tiles, buttons plugins add to Pelican's server list and console, and overlapping plugins switching off only the matching Simplify part.
+- Still to come: installing, updating and switching plugins on or off from Simplify's plugin manager.
+
+Plugin support is also what makes the next step possible: letting Simplify replace the original panel completely.
+
+### Next up
+
+- A better server page. Done in 0.5.1: a compact header, a stats row and a console that fits the screen. Still to come: workspaces that open inside the page instead of popups, and one place for everything that needs your attention.
+- Simplify as the whole panel. An option in setup that makes Simplify the only panel. The original stays reachable under `/legacy`, or switches off entirely when no other plugin needs it.
+- Better server creation for every game. Recommended resources per game.
+- Egg settings in the dashboard. Startup settings for every game, with plain descriptions and checks.
+
+### Later
+
+- **Alerts** for crashes and servers running out of resources.
+- Startup fixes: recognize common startup problems and offer a one-click fix.
+- Server presets: save settings once and reuse them for new servers.
+- Troubleshooting reports: export diagnostics with all secrets removed, for easier support.
+- More overview options: extra information fields.
+
+See the [roadmap](docs/ROADMAP.md) for details.
+
 ## How this project is made
 
-I came up with PelicanSimplify and designed every part of it myself: what it does, how it looks and how it should work. I write the code together with an AI assistant. Every change is checked and tested before it is released: automated tests run on each build, each change is tried in a test installation of Pelican, and I test everything myself on my own panel. Still, it is a young project: expect the odd bug, especially in beta builds, and please report anything you find through [Issues](https://github.com/jerajerajerajera/PelicanSimplify/issues).
+I came up with PelicanSimplify and designed every part of it myself: what it does, how it looks and how it should work. I write the code together with an AI assistant. Every change is checked and tested before it is released: automated tests run on each build, each change is tried in a test installation of Pelican, and I use the beta builds in my own Pelican panel. Still, it is a young project: expect the odd bug, especially in beta builds, and please report anything you find through [Issues](https://github.com/jerajerajerajera/PelicanSimplify/issues).
 
 MIT licensed. Bundled game eggs keep their original licenses.
