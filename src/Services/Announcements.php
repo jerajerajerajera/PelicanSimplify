@@ -66,7 +66,7 @@ final class Announcements
             'starts_at'=>$starts,'ends_at'=>$ends,'audience'=>$input['audience']??'everyone',
             'button'=>$link===null?null:['label'=>self::line($input['button_label']??'',self::LABEL_LENGTH)?:'Open',...$link],
             'created_by'=>$old['created_by']??$author,'created_at'=>$old['created_at']??$now,'updated_at'=>$now,
-            // Sent as an app notification once, when it starts; editing does not send it again.
+            // Sent as an app notification once per device, from when it starts; editing does not send it again.
             'push'=>!empty($input['push']),'pushed_at'=>$old['pushed_at']??null,'pushed_to'=>$old['pushed_to']??null,
             'pinned'=>!empty($input['pinned']),
             'ingame'=>$ingame,
@@ -77,16 +77,20 @@ final class Announcements
         return $row;
     }
 
-    /** Live announcements marked "also send as app notification" that were not sent yet. */
+    /** How long after it starts an announcement still reaches devices that missed it (turned on later, or a failed send). */
+    public const PUSH_CATCH_UP=86400;
+
+    /** Live announcements marked "also send as app notification" that devices may still be missing (each device gets one once). */
     public static function duePush(?int $now=null): array
     {
-        return array_values(array_filter(self::all(),fn(array $r):bool=>$r['push']&&$r['pushed_at']===null&&self::state($r,$now)==='live'));
+        $now??=time();
+        return array_values(array_filter(self::all(),fn(array $r):bool=>$r['push']&&self::state($r,$now)==='live'&&($r['starts_at']??$r['created_at'])>=$now-self::PUSH_CATCH_UP));
     }
 
-    /** Marks it sent; $devices (how many accepted it) is filled in after sending, so admins can see when it reached nobody. */
-    public static function markPushed(string $id,?int $now=null,?int $devices=null): void
+    /** Records a sending round: first sent at, and how many devices it reached so far. */
+    public static function recordPush(string $id,int $devices,?int $now=null): void
     {
-        self::write(array_map(fn(array $r):array=>$r['id']===$id?[...$r,'pushed_at'=>$now??time(),'pushed_to'=>$devices]:$r,self::all()));
+        self::write(array_map(fn(array $r):array=>$r['id']===$id?[...$r,'pushed_at'=>$r['pushed_at']??$now??time(),'pushed_to'=>($r['pushed_to']??0)+$devices]:$r,self::all()));
     }
 
     public static function delete(string $id): void
