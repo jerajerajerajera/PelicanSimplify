@@ -8,7 +8,7 @@ final class ReleaseNotes {public static array $asked=[];
     public static function changelog(string $url,string $version,?string $page=null): ?array {self::$asked[]=$url.'@'.$version;return str_contains($url,'PelicanSimplify/main/')?['lines'=>['Notifications show everything now.'],'url'=>$page]:null;}
     public static function forPlugin($update,$page,string $version): ?array {return is_string($update)?self::changelog($update,$version):null;}}
 final class FeatureSettings {public static function enabled(string $f): bool {return false;}}
-final class PluginUpdater {public const REPOSITORY='https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';public static array $plugins=[];public static function available(): array {return self::$plugins;}public static function latestVersion($p): ?string {return $p->latest;}public static function panelVersion(): string {return '1.0.0-rc.2';}}
+final class PluginUpdater {public const REPOSITORY='https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';public static array $plugins=[];public static function available(): array {return self::$plugins;}public static function latestVersion($p): ?string {return $p->latest;}public static function panelVersion(): string {return '1.0.0-rc.2';}public static function isNewer(string $a,string $b): bool {return version_compare($a,$b,'>');}}
 }
 namespace App\Services\Helpers {final class SoftwareVersionService {public function latestWingsVersion(){return 'v1.0.1';}public function latestPanelVersion(){return 'v1.0.0';}}}
 namespace App\Models {final class Node {public static array $nodes=[];public static function query(){return new class{public function get(){return Node::$nodes;}};}}}

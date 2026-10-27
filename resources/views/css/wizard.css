@@ -656,3 +656,10 @@ html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-sectio
   .ssc-chip-options.ssc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ssc-chip-options.ssc-cards .ssc-card-content { display: flex; justify-content: center; min-height: 40px; padding: 0 12px; }
 }
+
+/* Simplify settings → Egg updates: a heading row with the check and Update all buttons above the plugin-style list. */
+.ps-egg-updates { display: grid; gap: 12px; }
+.ps-egg-updates h3 { margin: 4px 0 0; font-size: 14px; }
+.ps-egg-updates-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ps-egg-updates-head h3 { margin: 0; }
+.ps-egg-updates-head .ps-help { margin: 0 auto 0 0; }

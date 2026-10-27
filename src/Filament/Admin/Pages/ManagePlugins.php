@@ -77,7 +77,7 @@ final class ManagePlugins extends Page
                 'author' => $plugin->author,
                 'description' => $plugin->description,
                 'version' => $plugin->version,
-                'latest' => $latest && version_compare($latest, $plugin->version, '>') ? $latest : null,
+                'latest' => $latest && PluginUpdater::isNewer($latest, $plugin->version) ? $latest : null,
                 'status' => $plugin->status->value,
                 'message' => $plugin->status_message,
                 'can_change' => $this->canChange($plugin),

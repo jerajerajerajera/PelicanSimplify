@@ -23,5 +23,5 @@ d.setGroupColor(g,'orange');assert.equal('color' in d.overviewGroups[0],false);a
 d.setGroupColor(g,'#00ff00');d.setGroupColor(g,null);assert.equal('color' in d.overviewGroups[0],false);assert.equal(saves.at(-1)[0].color,undefined);
 assert.equal(page(undefined,{groups:[{id:'x',name:'X',servers:['b'],color:'nope'}],order:'name'}).overviewGroups[0].color,undefined,'a bad saved colour reads as none');
 // The settings link opens the Appearance tab of Simplify settings.
-d.settingsSection='appearance';assert.equal(new URL(d.panelSettingsUrl()).searchParams.get('section'),'appearance');d.settingsSection='settings';assert.equal(new URL(d.panelSettingsUrl()).searchParams.get('section'),null);
+d.settingsSection='appearance';assert.equal(new URL(d.panelSettingsUrl()).searchParams.get('section'),'appearance::data::tab','Filament selects a tab by slug plus state path');d.settingsSection='settings';assert.equal(new URL(d.panelSettingsUrl()).searchParams.get('section'),null);
 console.log('PASS group colours: group colour beats the common and each server\'s own colour for its servers and heading, saved with the account, invalid colours ignored, removable; settings link opens Appearance');

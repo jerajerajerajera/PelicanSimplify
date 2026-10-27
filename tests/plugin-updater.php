@@ -119,11 +119,19 @@ namespace {
  check(U::channelUrls('snapshot') === [$raw.'main/update.json', $raw.'beta/update-beta.json', $raw.'snapshot/update-snapshot.json'], 'snapshot also reads beta');
  $simplify = new \App\Models\Plugin; $simplify->id = 'pelican-simplify'; $simplify->update_url = $raw.'main/update.json';
  $at = fn (string $v) => ['1.0.0-beta38' => ['version' => $v]];
- Http::$byUrl = [$raw.'main/update.json' => $at('0.4.2'), $raw.'beta/update-beta.json' => $at('0.4.3-beta.1'), $raw.'snapshot/update-snapshot.json' => $at('0.4.3-snapshot.4')];
+ Http::$byUrl = [$raw.'main/update.json' => $at('0.4.2'), $raw.'beta/update-beta.json' => $at('0.4.3-beta.5'), $raw.'snapshot/update-snapshot.json' => $at('0.4.3-snapshot.4')];
  $latest = function (array $on) use ($simplify) { \Simplify\Panel\Services\FeatureSettings::$on = $on; return U::latestVersion($simplify); };
  check($latest([]) === '0.4.2', 'stable channel gets the stable release');
- check($latest(['simplify_beta']) === '0.4.3-beta.1', 'beta channel gets the beta');
- check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.3-beta.1', 'snapshot channel gets a beta that is newer than the snapshot');
+ check($latest(['simplify_beta']) === '0.4.3-beta.5', 'beta channel gets the beta');
+ check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.3-beta.5', 'snapshot channel gets a beta that is newer than the snapshot');
+// Snapshots and betas share one numbering: a higher snapshot replaces a beta of the same version (0.6.0-beta.12 never saw 0.6.0-snapshot.15).
+check(U::isNewer('0.6.0-snapshot.15', '0.6.0-beta.12') && U::isNewer('0.6.0-snapshot.15', '0.6.0-snapshot.14') && U::isNewer('0.6.0-beta.13', '0.6.0-beta.12'), 'a higher snapshot or beta number is newer');
+check(!U::isNewer('0.6.0-snapshot.12', '0.6.0-beta.12') && !U::isNewer('0.6.0-snapshot.11', '0.6.0-beta.12') && !U::isNewer('0.6.0-beta.13', '0.6.0-snapshot.15'), 'a lower or equal number is not newer');
+check(U::isNewer('0.6.0', '0.6.0-snapshot.15') && U::isNewer('0.6.1-snapshot.1', '0.6.0') && !U::isNewer('0.6.0-snapshot.99', '0.6.0'), 'stable stays above its snapshots and betas');
+Http::$byUrl = [$raw.'main/update.json' => $at('0.5.2'), $raw.'beta/update-beta.json' => $at('0.6.0-beta.12'), $raw.'snapshot/update-snapshot.json' => $at('0.6.0-snapshot.15')];
+check($latest(['simplify_beta', 'simplify_snapshot']) === '0.6.0-snapshot.15', 'snapshot channel on beta.12 gets snapshot.15');
+check($latest(['simplify_beta']) === '0.6.0-beta.12', 'beta channel never jumps to a snapshot');
+Http::$byUrl = [$raw.'main/update.json' => $at('0.4.2'), $raw.'beta/update-beta.json' => $at('0.4.3-beta.5'), $raw.'snapshot/update-snapshot.json' => $at('0.4.3-snapshot.4')];
  Http::$byUrl[$raw.'snapshot/update-snapshot.json'] = $at('0.4.4-snapshot.1');
  check($latest(['simplify_beta', 'simplify_snapshot']) === '0.4.4-snapshot.1', 'snapshot channel gets the newest snapshot');
  Http::$byUrl[$raw.'main/update.json'] = $at('0.4.4');
