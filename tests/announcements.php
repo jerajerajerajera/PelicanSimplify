@@ -65,6 +65,21 @@ check(A::dismissedKeys($person)===['own-'.$link['id']],'pinning again takes it o
 A::restore($person,'own-'.$link['id']);A::dismiss($person,'own-'.$link['id']);
 check(A::dismissedKeys($person)===['own-'.$link['id']],'unpin, pin, unpin again leaves one entry');
 
+// Pinned to everyone's notifications by an admin; read and unread per account ("Mark all read").
+$pin=A::save(['title'=>'Rules','pinned'=>true],null,'jera',$now+50);
+check(A::find($pin['id'])['pinned']===true&&A::find($edited['id'])['pinned']===false,'pinning to everyone is saved per announcement');
+$seen=A::forUser($person,$now+60);
+$rules=$seen[array_search('Rules',array_column($seen,'title'))];
+check($rules['pinned']===true&&$rules['unread']===true&&$rules['ends_at']===null,'a pinned announcement reaches everyone, unread at first');
+check(!array_filter($seen,fn($i)=>$i['title']==='New modpack'&&$i['unread']),'an unpinned bar counts as read');
+A::markAllRead($person,$now+60);
+check(!array_filter(A::forUser($person,$now+60),fn($i)=>$i['unread'])&&array_filter(A::forUser($admin,$now+60),fn($i)=>$i['unread']),'mark all read is per account');
+A::save(['title'=>'Later news'],null,'jera',$now+120);
+check(array_column(array_filter(A::forUser($person,$now+130),fn($i)=>$i['unread']),'title')===['Later news'],'newer announcements are unread again');
+check(A::forUser($person,$now+130)[array_search('Maintenance moved',array_column(A::forUser($person,$now+130),'title'))]['ends_at']===$now+7200,'the end time goes along as Unix time, for the browser\'s time zone');
+A::delete($pin['id']);
+foreach(A::all() as $row)if($row['title']==='Later news')A::delete($row['id']);
+
 // App notifications: due once live and only when asked for; marked once sent, and editing keeps that mark.
 $pushed=A::save(['title'=>'Server restart','push'=>true,'starts_at'=>$now+600],null,'jera',$now);
 check(!in_array($pushed['id'],array_column(A::duePush($now),'id'),true)&&in_array($pushed['id'],array_column(A::duePush($now+600),'id'),true),'a scheduled announcement is pushed when it starts');
@@ -82,5 +97,5 @@ check(count(A::all())===1&&A::all()[0]['button']===null,'damaged rows are skippe
 Storage::$records[A::FILE]=json_encode(array_map(fn($i)=>['id'=>sprintf('%016x',$i),'title'=>'T'.$i,'created_at'=>$i],range(1,A::LIMIT)));
 check(fails(fn()=>A::save(['title'=>'One more'],null,'jera',$now),'Delete an old one'),'at most '.A::LIMIT.' announcements');
 check(A::ago($now-30,$now)==='just now'&&A::ago($now-120,$now)==='2 minutes ago'&&A::ago($now-3600,$now)==='1 hour ago'&&A::ago($now-86400,$now)==='yesterday'&&A::ago($now-3*86400,$now)==='3 days ago','relative times');
-echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, app notifications once, broken files and limits\n";
+echo "PASS announcements: validation, tidy text, live/scheduled/ended, audiences, server and https buttons, Announcements plugin and Panel updates, hiding per account, pinned to everyone, mark all read per account, app notifications once, broken files and limits\n";
 }

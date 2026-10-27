@@ -511,3 +511,15 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
    the bottom bars already keep clear of the home indicator (env(safe-area-inset-bottom)). */
 html.ps-standalone body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 html.ps-standalone { -webkit-tap-highlight-color: transparent; }
+
+/* Notifications: read ones step back, an admin's pinned ones sit on top, older ones load with Show more. */
+.ps-notify-head .ps-dropdown-title { margin-right: auto; }
+.ps-notify-item.is-read strong { font-weight: 500; }
+.ps-notify-item.is-read > svg { color: var(--ps-muted); }
+.ps-notify-pinned { margin-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--ps-line); }
+.ps-notify-pinned > .ps-label { display: flex; align-items: center; gap: 6px; }
+.ps-notify-pinned > .ps-label svg { width: 13px; height: 13px; }
+.ps-notify-pinned .ps-notify-list { margin-top: 4px; }
+.ps-notify-more { justify-content: center; width: 100%; margin-top: 6px; }
+.ps-inbox-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ps-inbox-bar > .ps-help { margin: 0 auto 0 0; }
