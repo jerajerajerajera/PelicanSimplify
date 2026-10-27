@@ -43,6 +43,8 @@
       // Every Pelican notification (read ones too), loaded a page at a time when the bell or the full list opens.
       panelUnread: 0,
       feed: { items: [], page: 0, more: false, loading: false, loaded: false },
+      // Notifications that "Clear read" archived: a closed section of the full list, loaded when it opens.
+      archive: { open: false, items: [], page: 0, more: false, loading: false, loaded: false, any: false },
       // "What's new" of an update: three lines, or every line once opened (by notification id).
       openNotes: {},
       announcements: [],
@@ -507,6 +509,7 @@
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
         this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
         this.panelUnread = Number.isFinite(Number(this.boot.panel_unread)) ? Number(this.boot.panel_unread) : this.panelNotices.length;
+        this.archive.any = !!this.boot.notifications_archived;
         this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
@@ -540,7 +543,7 @@
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, archived: !!item.archived, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.
@@ -552,7 +555,56 @@
         return this.notifications().filter((item) => item.pinned);
       },
       otherNotifications() {
-        return this.notifications().filter((item) => !item.pinned);
+        return this.notifications().filter((item) => !item.pinned && !item.archived);
+      },
+      /** What "Clear read" moved away: archived announcements and the loaded pages of archived Pelican notifications. */
+      archivedNotifications() {
+        const announcements = this.notifications().filter((item) => item.archived);
+        return [...announcements, ...this.archive.items.map((notice) => ({ action: null, ...notice, unread: false, pelican: true }))];
+      },
+      hasArchive() {
+        return this.archive.any || this.notifications().some((item) => item.archived);
+      },
+      /** "Clear read" shows when the list has read notifications or announcements that are not pinned. */
+      canClearRead() {
+        return this.otherNotifications().some((item) => (item.pelican || item.announcement) && item.unread === false);
+      },
+      async toggleArchive() {
+        this.archive.open = !this.archive.open;
+        if (this.archive.open && !this.archive.loaded) await this.loadArchivePage(true);
+      },
+      async loadArchivePage(reset = false) {
+        if (typeof wire.notificationPage !== 'function' || (this.archive.loading && !reset)) return;
+        const page = reset ? 1 : this.archive.page + 1;
+        this.archive.loading = true;
+        try {
+          const result = await wire.notificationPage(page, true);
+          if (!Array.isArray(result?.items)) return;
+          const known = new Set(reset ? [] : this.archive.items.map((n) => n.key));
+          this.archive = { ...this.archive, items: reset ? result.items : [...this.archive.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loaded: true };
+        } catch {
+          this.toast('Archived notifications could not be loaded.', 'warn');
+        } finally {
+          this.archive.loading = false;
+        }
+      },
+      /** Moves every read notification and announcement (not an admin's pinned ones) to Archived, for this account only. */
+      async clearReadNotifications() {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive };
+        const read = this.feed.items.filter((n) => n.unread === false);
+        this.announcements = this.announcements.map((item) => (!item.pinned && (item.unread ?? !item.dismissed) === false ? { ...item, archived: true } : item));
+        this.feed = { ...this.feed, items: this.feed.items.filter((n) => n.unread !== false) };
+        this.archive = { ...this.archive, any: true, items: this.archive.loaded ? [...read, ...this.archive.items] : this.archive.items };
+        if (typeof wire.clearReadNotifications !== 'function') return;
+        try {
+          const items = await wire.clearReadNotifications();
+          if (Array.isArray(items)) this.announcements = items;
+          // The next page of current notifications may hold more read ones; start the list again.
+          if (this.feed.more) this.loadNotificationPage(true);
+        } catch {
+          Object.assign(this, before);
+          this.toast('Read notifications could not be cleared.', 'warn');
+        }
       },
       /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
       unreadNotifications() {
@@ -584,6 +636,7 @@
       },
       /** Every notification in a popup (a full-screen sheet on phones), with "Show more" for older ones. */
       openAllNotifications() {
+        this.archive = { ...this.archive, open: false, items: [], page: 0, more: false, loaded: false };
         this.openPopup('inbox');
         this.refreshAnnouncements();
         this.loadNotificationPage(true);
