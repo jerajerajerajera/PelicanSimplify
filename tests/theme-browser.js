@@ -214,7 +214,26 @@ const { start } = require('./browser-harness');
     await nodes.evaluate(() => Alpine.$data(document.querySelector('.ps')).setHostMode(true));
     await nodes.waitForSelector('.ps-host iframe[title="Health"]');
     assert.equal(await nodes.locator('.ps-host-server').count(), 4, 'host mode lists every server');
+    // One frame: the admin tree with pages under their section, the servers behind the second tab.
+    assert.equal(await nodes.locator('.ps-host-leaf:visible').count() > 0 || await nodes.locator('.ps-host-group-head:visible').count() > 0, true, 'host mode shows the admin tree');
+    await nodes.click('.ps-host-tabs button:has-text("Servers")');
+    assert.equal(await nodes.locator('.ps-host-server:visible').count(), 4, 'the Servers tab lists every server');
+    await nodes.locator('.ps-host-server:visible').first().click();
+    await nodes.waitForSelector('.ps-host-frame.is-server iframe');
+    assert.equal(await nodes.locator('.ps-host-server-name').innerText(), 'Survival', 'the open server is named in the page header');
+    await nodes.click('.ps-host-head-actions button[aria-label="Close server"]');
+    assert.equal(await nodes.locator('.ps-host-frame.is-server').isVisible(), false, 'closing the server shows the admin page again');
+    assert.equal(await nodes.evaluate(() => { const s = document.querySelector('.ps-host-side'), m = document.querySelector('.ps-host-main'); return s.getBoundingClientRect().right <= m.getBoundingClientRect().left + 1 && document.documentElement.scrollHeight <= innerHeight + 1; }), true, 'menu and page side by side, no page scroll');
     await nodes.close();
+    const hostPhone = await open('/?mode=overview&theme=dark', { width: 390, height: 844 });
+    await data(hostPhone, (d) => d.setHostMode(true));
+    await hostPhone.waitForTimeout(300);
+    assert.equal(await hostPhone.locator('.ps-host-side').isVisible(), false, 'phones hide the host menu until asked');
+    await hostPhone.click('.ps-host-menu-toggle');
+    await hostPhone.waitForTimeout(400);
+    assert.equal(await hostPhone.evaluate(() => { const r = document.querySelector('.ps-host-side').getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.top >= 0; }), true, 'the host menu opens as a sheet on phones');
+    assert.equal(await hostPhone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'host mode fits a phone');
+    await hostPhone.close();
     console.log('PASS servers grouped per node, compact list rows and host mode');
 
     // 8b. Things only shrink when they would not fit: the list MOTD keeps its width when quick actions

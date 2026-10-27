@@ -788,109 +788,129 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 }
 
 /* Host mode (admins, large hosts) ---------------------------------------------------------------
-   Server buttons per node | colour-coded admin rail (folds to icons) | the selected admin page. */
-.ps-host { display: grid; flex: 1 1 0; grid-template-columns: 290px 220px minmax(0, 1fr); gap: 14px 0; width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; transition: grid-template-columns var(--ps-slow); }
-.ps-host-servers, .ps-host-rail, .ps-host-main { min-height: 0; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+   One frame: a menu on the left (admin pages as a tree, or the servers per node, with health at the bottom)
+   and the open page or server on the right. Flat inside: dividers instead of separate cards, icons without
+   tiles, underlined tabs. Menu and page each scroll on their own. */
+.ps-host { position: relative; display: grid; flex: 1 1 0; grid-template-columns: 252px minmax(0, 1fr); width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+.ps-host-menu-toggle, .ps-host-backdrop, .ps-host-menu-close { display: none; }
+.ps-host-side { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--ps-line); }
+.ps-host-tabs { display: flex; flex: none; align-items: stretch; border-bottom: 1px solid var(--ps-line); }
+.ps-host-tabs > button:not(.ps-btn) { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 7px; min-height: 46px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ps-muted); font: 600 13px/1 var(--ps-font); cursor: pointer; }
+.ps-host-tabs > button:not(.ps-btn):hover { color: var(--ps-ink); }
+.ps-host-tabs > button[aria-pressed="true"] { border-bottom-color: var(--ps-accent); color: var(--ps-ink); }
+.ps-host-tabs > button svg { width: 16px; height: 16px; }
+.ps-host-tabs small { color: var(--ps-muted); font-size: 12px; font-weight: 600; }
+.ps-host-side-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
 
-.ps-host-servers { display: flex; flex-direction: column; margin-right: 14px; }
-/* The admin menu and the page it opens form one card. */
-.ps-host-rail { border-right: 0; border-radius: var(--ps-radius-lg) 0 0 var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-raised) 55%, var(--ps-surface)); }
-.ps-host-main { border-radius: 0 var(--ps-radius-lg) var(--ps-radius-lg) 0; }
-.ps-host-servers-toggle { display: none; }
-.ps-host-server-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 10px; }
-.ps-host-node + .ps-host-node { margin-top: 16px; }
-.ps-host-node > .ps-label { display: flex; align-items: center; gap: 6px; margin: 0 4px 8px; }
+/* The admin tree: a section, with its pages hung underneath on ↳ lines. */
+.ps-host-group + .ps-host-group { margin-top: 2px; }
+.ps-host-group-head, .ps-host-leaf { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-ink); text-align: left; cursor: pointer; }
+.ps-host-group-head { min-height: 32px; padding: 0 8px; font: 600 13px/1.2 var(--ps-font); }
+.ps-host-leaf { min-height: 28px; padding: 0 9px; font: 550 12.5px/1.2 var(--ps-font); }
+.ps-host-group-head svg { width: 17px; height: 17px; color: var(--ps-tone); }
+.ps-host-leaf svg { width: 15px; height: 15px; color: var(--ps-tone); }
+.ps-host-group-head svg, .ps-host-leaf svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ps-host-group-head span, .ps-host-leaf span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-group-head:hover, .ps-host-leaf:hover { background: var(--ps-raised); }
+.ps-host-group-head[aria-current="page"], .ps-host-leaf[aria-current="page"] { background: color-mix(in srgb, var(--ps-tone) 14%, transparent); }
+.ps-host-branch { display: grid; gap: 1px; margin-left: 16px; padding: 0 0 4px 16px; }
+.ps-host-leaf { position: relative; overflow: visible; }
+.ps-host-leaf::before { content: ""; position: absolute; top: -3px; left: -16px; width: 11px; height: 17px; border-bottom: 1.5px solid var(--ps-line-strong); border-left: 1.5px solid var(--ps-line-strong); border-bottom-left-radius: 7px; }
+.ps-host-leaf:not(:last-child)::after { content: ""; position: absolute; top: 12px; bottom: -4px; left: -16px; border-left: 1.5px solid var(--ps-line-strong); }
+.ps-host-legacy { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 8px; padding: 10px 4px 0; border-top: 1px solid var(--ps-line); }
+.ps-host-legacy .ps-label { width: 100%; margin: 0 4px 4px; }
+.ps-host-legacy button { padding: 5px 6px; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); font: 500 12px/1.2 var(--ps-font); cursor: pointer; }
+.ps-host-legacy button:hover, .ps-host-legacy button[aria-current="page"] { background: var(--ps-raised); color: var(--ps-ink); }
+
+/* Servers per node: one row each, status dot, name in the server colour, version and players. */
+.ps-host-node + .ps-host-node { margin-top: 12px; }
+.ps-host-node > .ps-label { display: flex; align-items: center; gap: 6px; margin: 4px 6px 6px; }
 .ps-host-node > .ps-label svg { width: 13px; height: 13px; }
 .ps-host-node > .ps-label small { margin-left: auto; font-weight: 500; text-transform: none; letter-spacing: 0; }
-.ps-host-server { display: grid; gap: 6px; margin-bottom: 6px; padding: 10px 12px; border: 1px solid var(--ps-line); border-left: 3px solid var(--ps-accent); border-radius: var(--ps-radius); background: var(--ps-raised); color: var(--ps-ink); text-decoration: none; transition: border-color var(--ps-fast), transform var(--ps-fast), background-color var(--ps-fast); }
-.ps-host-server:hover { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 7%, var(--ps-raised)); transform: translateX(2px); }
-.ps-host-server[aria-disabled="true"] { opacity: .55; cursor: default; transform: none; }
-.ps-host-server-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ps-host-server-top strong { flex: 1; min-width: 0; overflow: hidden; color: var(--ps-accent); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.ps-host-server-top .ps-badge { flex: none; min-height: 18px; padding: 1px 7px; font-size: 10px; }
-.ps-host-server-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ps-muted); font-size: 12px; }
-.ps-host-server-meta > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ps-host-players { display: inline-flex; flex: none; align-items: center; gap: 4px; color: var(--ps-ink); font-weight: 600; }
+.ps-host-server { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 2px 10px; padding: 7px 8px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-decoration: none; }
+.ps-host-server:hover { background: var(--ps-raised); }
+.ps-host-server[aria-current="page"] { background: color-mix(in srgb, var(--ps-accent) 13%, transparent); }
+.ps-host-server[aria-disabled="true"] { opacity: .55; cursor: default; }
+.ps-host-server strong { min-width: 0; overflow: hidden; color: var(--ps-accent); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-server small { grid-column: 2; min-width: 0; overflow: hidden; color: var(--ps-muted); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-dot { --ps-tone: var(--ps-muted); flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ps-tone); }
+.ps-host-server > .ps-host-dot { grid-row: 1 / 3; }
+.ps-host-players { display: inline-flex; grid-row: 1 / 3; grid-column: 3; align-items: center; gap: 4px; color: var(--ps-ink); font-size: 12px; font-weight: 600; }
 .ps-host-players svg { width: 13px; height: 13px; }
 
-.ps-host-rail { display: flex; flex-direction: column; gap: 4px; padding: 10px; overflow: hidden; }
-.ps-host-rail-title { margin: 4px 6px 6px; }
-.ps-host-rail-items { display: grid; flex: 1; align-content: start; gap: 4px; min-height: 0; overflow-y: auto; }
-.ps-host-rail-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 4px; border: 1px solid transparent; border-radius: var(--ps-radius); background: transparent; color: var(--ps-ink); font: 600 13px/1.2 var(--ps-font); text-align: left; white-space: nowrap; cursor: pointer; }
-.ps-host-rail-item:hover { background: var(--ps-raised); }
-.ps-host-rail-item[aria-current="page"] { border-color: color-mix(in srgb, var(--ps-accent) 45%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-surface)); }
-.ps-host-head > .ps-host-title .ps-host-rail-icon { --ps-tone: var(--ps-accent); }
-.ps-host-rail-item.is-health { margin-top: auto; border-top-color: var(--ps-line); }
+/* Health strip at the bottom of the menu. */
+.ps-host-health-bar { flex: none; display: grid; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid var(--ps-line); }
+.ps-host-health-bar.is-current { background: color-mix(in srgb, #f87171 7%, transparent); }
+.ps-host-health-open { display: grid; gap: 8px; padding: 0; border: 0; background: none; color: var(--ps-ink); text-align: left; cursor: pointer; }
+.ps-host-health-state { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ps-host-health-state svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ps-host-health-state strong { font-size: 13px; }
+.ps-host-health-state small { margin-left: auto; color: var(--ps-muted); font-size: 11px; }
+.ps-host-health-open:hover strong { text-decoration: underline; }
+.ps-host-health-meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ps-host-health-meters > span { display: grid; gap: 4px; min-width: 0; color: var(--ps-muted); font-size: 11px; white-space: nowrap; }
+.ps-host-health-meters b { color: var(--ps-ink); font-weight: 650; }
+.ps-host-health-meters .ps-meter { height: 4px; }
+.ps-host-health-bar .ps-health-grid { grid-template-columns: repeat(auto-fill, 18px); gap: 6px; }
+.ps-host-health-bar .ps-health-check { width: 18px; height: 18px; border: 0; background: none; }
+.ps-host-health-bar .ps-health-check svg { width: 14px; height: 14px; }
+
+/* The page side: one header line (section, its pages as underlined tabs, open full page) above the frame. */
+.ps-host-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.ps-host-head { display: flex; flex: none; align-items: center; gap: 10px; min-width: 0; min-height: 47px; padding: 0 14px; border-bottom: 1px solid var(--ps-line); }
+.ps-host-head h2 { margin: 0; overflow: hidden; font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-head > h2 { flex: none; max-width: 40%; }
+.ps-host-head > small { min-width: 0; overflow: hidden; color: var(--ps-muted); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-head-icon { flex: none; width: 18px; height: 18px; color: var(--ps-tone, var(--ps-accent)); }
+.ps-host-head > .ps-host-dot { width: 9px; height: 9px; }
+.ps-host-server-name { color: var(--ps-accent); }
+.ps-host-head-actions { display: flex; flex: none; gap: 6px; margin-left: auto; }
+.ps-host-subtabs { display: flex; align-self: stretch; min-width: 0; margin-left: 8px; overflow-x: auto; scrollbar-width: none; }
+.ps-host-subtabs::-webkit-scrollbar { display: none; }
+.ps-host-subtabs > button { display: inline-flex; flex: none; align-items: center; gap: 7px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ps-muted); font: 600 13px/1 var(--ps-font); white-space: nowrap; cursor: pointer; }
+.ps-host-subtabs > button:hover { color: var(--ps-ink); }
+.ps-host-subtabs > button[aria-pressed="true"] { border-bottom-color: var(--ps-tone, var(--ps-accent)); color: var(--ps-ink); }
+.ps-host-subtabs > button svg { width: 15px; height: 15px; color: var(--ps-tone, var(--ps-accent)); }
+.ps-host-frame { flex: 1; min-height: 0; }
+.ps-host-frame iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--ps-surface); }
+/* The server page brings its own cards: no extra background behind them. */
+.ps-host-frame.is-server { padding: 12px; }
+.ps-host-frame.is-server iframe { background: transparent; }
+/* Used by the Admin tools menu: a section icon in a tinted square. */
 .ps-host-rail-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 18%, transparent); color: var(--ps-tone, var(--ps-accent)); }
 .ps-host-rail-icon svg { width: 17px; height: 17px; }
-.ps-host-rail-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.ps-host-rail .ps-health-grid { grid-template-columns: repeat(4, 26px); justify-content: space-evenly; gap: 8px; padding: 8px 4px 2px; }
 
-.ps-host-main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.ps-host-head { display: grid; flex: none; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px 16px; padding: 12px 14px; border-bottom: 1px solid var(--ps-line); }
-.ps-host-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ps-host-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
-/* Pages of the open section: centred at the top, in the section colour. */
-.ps-host-subtabs { justify-self: center; padding: 4px; }
-.ps-host-subtabs { max-width: 100%; overflow-x: auto; }
-.ps-host-subtabs > button { flex: none; gap: 7px; min-width: max-content; min-height: 36px; padding: 6px 16px; font-size: 14px; white-space: nowrap; }
-.ps-host-subtabs > button svg { width: 16px; height: 16px; }
-.ps-host-subtabs > button[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--ps-accent); color: var(--ps-ink); }
-.ps-host-frame { flex: 1; min-height: 0; }
-.ps-host-serverpane { grid-column: 2 / -1; grid-row: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
-.ps-host.has-server > .ps-host-rail, .ps-host.has-server > .ps-host-main { display: none; }
-.ps-host-serverpane .ps-host-head { grid-template-columns: minmax(0, 1fr) auto; }
-.ps-host-server[aria-current="page"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-raised)); }
+/* Tablets and phones: the page takes the whole frame; the menu opens as a sheet from one button on top. */
+@media (max-width: 760px) {
+  .ps-host { display: flex; flex-direction: column; overflow: visible; border: 0; background: none; }
+  .ps-host-menu-toggle { display: inline-flex; flex: none; justify-content: flex-start; width: 100%; min-height: 44px; margin-bottom: 10px; font-size: 14px; }
+  .ps-host-menu-toggle > span { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+  .ps-host-menu-chevron { flex: none; width: 16px; height: 16px; transform: rotate(90deg); }
+  .ps-host-main { flex: 1 0 auto; height: max(440px, calc(100dvh - 190px)); overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+  .ps-host-side { position: fixed; right: 0; bottom: 0; left: 0; z-index: var(--ps-z-modal, 80); max-height: 82dvh; border: 0; border-top: 1px solid var(--ps-line); border-radius: 18px 18px 0 0; background: var(--ps-surface); box-shadow: var(--ps-shadow-modal); transform: translateY(105%); visibility: hidden; transition: transform var(--ps-slow), visibility var(--ps-slow); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .ps-host.menu-open .ps-host-side { transform: none; visibility: visible; }
+  .ps-host-backdrop { display: block; position: fixed; inset: 0; z-index: calc(var(--ps-z-modal, 80) - 1); background: var(--ps-backdrop); }
+  .ps-host-menu-close { display: inline-flex; flex: none; align-self: center; margin: 0 6px; }
+  .ps-host-group-head { min-height: 42px; }
+  .ps-host-leaf { min-height: 40px; }
+  .ps-host-leaf::before { top: 0; height: 21px; }
+  .ps-host-frame.is-server { padding: 0; }
+  .ps-host-server { min-height: 48px; }
+  .ps-host-head { flex-wrap: wrap; padding: 0 10px; }
+  .ps-host-subtabs { order: 3; width: 100%; margin: 0 -10px; padding: 0 4px; border-top: 1px solid var(--ps-line); }
+  .ps-host-subtabs > button { min-height: 42px; }
+  .ps-host-head-actions .ps-btn span { display: none; }
+}
+@media (max-height: 500px) and (max-width: 1100px) {
+  .ps-host-main { height: max(260px, calc(100dvh - 16px)); }
+}
+@media (prefers-reduced-motion: reduce) { .ps-host-side { transition: none; } }
+
 .ps.is-embedded .ps-top { display: none; }
 .ps.is-embedded .ps-main { padding: 0; }
 .ps.is-embedded .ps-server-dashboard { max-width: none; }
 body:has(.ps.is-embedded) :is(.fi-footer, [data-ps-footer], [data-ps-footer-wrapper]) { display: none !important; }
 body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: none !important; padding-inline: 0 !important; }
-.ps-host-frame iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--ps-surface); }
-@media (prefers-reduced-motion: reduce) { .ps-host, .ps-host-server { transition: none; } }
-@media (max-width: 1100px) {
-  .ps-host { grid-template-columns: 58px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 14px 0; }
-  .ps-host-servers { grid-column: 1 / -1; margin-right: 0; }
-  .ps-host-head { grid-template-columns: 1fr; }
-  .ps-host-subtabs { justify-self: start; }
-  .ps-host-servers-toggle { display: inline-flex; margin: 8px; }
-  .ps-host-server-list { display: none; max-height: 45dvh; }
-  .ps-host-servers.is-open .ps-host-server-list { display: block; }
-  .ps-host .ps-host-rail-label, .ps-host-rail-title { display: none; }
-  .ps-host-rail { padding: 8px; }
-  .ps-host-rail .ps-health-grid { justify-content: center; padding: 6px 0 0; }
-}
-
-/* Host mode on phones: one column. A server switcher on top (servers grouped per node, the open server's
-   name on the button), the admin sections as a row of labelled chips that swipes sideways, and the selected
-   page or server below at full width. */
-.ps-host-switch-chevron { display: none; }
-@media (max-width: 600px) {
-  .ps-host { display: flex; flex-direction: column; gap: 10px; }
-  .ps-host-servers { position: relative; z-index: 3; flex: none; border-radius: var(--ps-radius-lg); }
-  .ps-host-servers-toggle { justify-content: space-between; width: calc(100% - 16px); min-height: 44px; font-size: 14px; }
-  .ps-host-servers-toggle > span { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-  .ps-host-servers-toggle > .ps-host-switch-chevron { display: block; flex: none; width: 16px; height: 16px; transform: rotate(90deg); transition: transform var(--ps-fast); }
-  .ps-host-servers.is-open .ps-host-switch-chevron { transform: rotate(-90deg); }
-  .ps-host-servers.is-open .ps-host-server-list { position: absolute; top: calc(100% + 6px); right: 0; left: 0; max-height: min(70dvh, 560px); border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: var(--ps-shadow-lg); }
-  .ps-host-server { min-height: 56px; }
-  .ps-host-server:hover { transform: none; }
-  .ps-host-rail { flex: none; flex-direction: row; align-items: center; gap: 6px; padding: 6px; overflow-x: auto; border-right: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); scrollbar-width: none; overscroll-behavior-x: contain; }
-  .ps-host-rail::-webkit-scrollbar { display: none; }
-  .ps-host-rail-items { display: flex; flex: none; gap: 6px; overflow: visible; }
-  .ps-host .ps-host-rail-label { display: inline; }
-  .ps-host-rail-item { flex: none; width: auto; min-height: 44px; padding: 4px 12px 4px 6px; }
-  .ps-host-rail-item.is-health { margin: 0; }
-  .ps-host-rail .ps-health-grid { display: none; }
-  .ps-host-main, .ps-host-serverpane { flex: 1 0 auto; height: max(440px, calc(100dvh - 190px)); border-radius: var(--ps-radius-lg); }
-  .ps-host-head { padding: 10px 12px; }
-  .ps-host-head > .ps-host-title { display: none; }
-  .ps-host-head:has(.ps-host-subtabs[style*="none"]) { display: none !important; }
-  .ps-host-subtabs { justify-self: stretch; }
-  .ps-host-subtabs > button { min-height: 40px; padding: 6px 12px; }
-  .ps-host .ps-host-pane-actions { position: static; flex: none; justify-content: flex-end; padding: 6px 8px; border-bottom: 1px solid var(--ps-line); }
-  .ps-host .ps-host-pane-actions .ps-btn { width: 40px; height: 40px; box-shadow: none; backdrop-filter: none; }
-}
 
 /* Buttons from other plugins: a row under the overview toolbar, small buttons in the console title, and the
    transparent layer a button runs in (visible only while the plugin's own dialog is open). */
@@ -1101,31 +1121,12 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-server-card:not(.locked):hover { border-color: var(--ps-accent); }
 .ps-card-icon, .ps-card-egg-icon { border-radius: 14px; }
 .ps-server-grid.is-list .ps-server-card { border-radius: 16px; }
-.ps-host-servers, .ps-host-serverpane { border-radius: 20px; }
-.ps-host-rail { border-radius: 20px 0 0 20px; }
-.ps-host-main { border-radius: 0 20px 20px 0; }
-.ps-host-server { border: 1px solid color-mix(in srgb, var(--ps-accent) 30%, var(--ps-line)); border-left-width: 1px; border-radius: 14px; background: color-mix(in srgb, var(--ps-accent) 5%, var(--ps-raised)); }
-.ps-host-server:hover { transform: none; border-color: var(--ps-accent); }
-.ps-host-server[aria-current="page"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-raised)); }
 /* Inside the host mode pane the pane header already names the server: no floating status bar there,
    and the section menu sticks to the top of the frame. */
 .ps.is-embedded .ps-statusbar { display: none; }
 .ps.is-embedded .ps-server-workspace .ps-widget-grid { top: 12px; }
 /* Docked sections are part of the page: scrolling past their content scrolls the page on. */
 .ps-dock :is(.ps-modal-layer, .ps-modal-body, .ps-tab-panels) { overscroll-behavior: auto; }
-/* Host mode server pane: the page fills the whole pane; open/close float at the top right. */
-.ps-host-serverpane { position: relative; }
-.ps-host-pane-actions { position: absolute; top: 9px; right: 12px; z-index: 2; display: flex; gap: 6px; }
-.ps-host-pane-actions .ps-btn { background: color-mix(in srgb, var(--ps-surface) 80%, transparent); backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgb(0 0 0 / .2); }
-.ps-host-serverpane .ps-host-frame { border-radius: inherit; overflow: hidden; }
-/* The open server points at the pane; clicking the arrow closes it. */
-.ps-host-server { position: relative; }
-.ps-host-server-arrow { position: absolute; top: 50%; right: -1px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 9px 0 0 9px; background: var(--ps-accent); color: var(--ps-on-accent, #111); cursor: pointer; transform: translateY(-50%); animation: ps-arrow-nudge 1.6s ease-in-out infinite; }
-.ps-host-server-arrow svg { width: 15px; height: 15px; stroke-width: 2.6; }
-.ps-host-server-arrow:hover { animation: none; filter: brightness(1.1); }
-.ps-host-server[aria-current="page"] .ps-host-server-top, .ps-host-server[aria-current="page"] .ps-host-server-meta { padding-right: 26px; }
-@keyframes ps-arrow-nudge { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(3px, -50%); } }
-@media (prefers-reduced-motion: reduce) { .ps-host-server-arrow { animation: none; } }
 
 /* Create buttons: a little bigger, a larger plus, and the shine only on the icon, never on the label. */
 .ps-create-card { --ps-create-icon: 56px; --ps-create-small: 56px; }
@@ -1225,11 +1226,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
    sits on the wrapper because the menu itself scrolls (and would clip it). */
 :is(.ps-notify, .ps-overview-appearance):has(> .ps-dropdown.is-end:not([style*="display: none"]))::after { content: ""; position: absolute; top: calc(100% + 2px); right: 19px; z-index: calc(var(--ps-z-dropdown) + 1); width: 12px; height: 12px; border-top: 1px solid var(--ps-line); border-left: 1px solid var(--ps-line); background: var(--ps-surface); transform: rotate(45deg); pointer-events: none; }
 .ps-theme-option[aria-pressed="true"] { border-color: var(--ps-accent); color: var(--ps-accent); }
-/* The server page fills the pane edge to edge: the pane has no frame of its own, the page's cards form its edges. */
-.ps-host-serverpane { border: 0; background: none; border-radius: 0; }
-.ps-host-serverpane .ps-host-frame iframe { background: transparent; }
 .ps.is-embedded .ps-server-info { margin-bottom: 14px; }
-.ps-host-pane-actions { top: 12px; right: 14px; }
 .ps-widget-group { margin: 10px 8px 2px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 @media (max-width: 960px) { .ps-widget-group { display: none; } }
 
@@ -1432,9 +1429,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-server-workspace .ps-widget { justify-content: center; padding: 6px; }
   .ps .ps-server-workspace .ps-widget strong { display: none; }
   .ps-modal-layer { --ps-modal-gap: 8px; }
-}
-@media (max-height: 500px) and (max-width: 1100px) {
-  .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
 }
 
 /* Announcements above the overview and server pages (Admin tools → Announcements and the Panel's update notices).
