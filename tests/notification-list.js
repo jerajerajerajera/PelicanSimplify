@@ -51,8 +51,15 @@ const page=(extra={})=>{const d=context.window.pelicanSimplify(wire,{server:null
   // Failures put things back.
   fail=true;const e=page();await e.markAllNotificationsRead();
   assert.equal(e.unreadNotifications(),8,'a failed mark all read keeps the count');assert.equal(toasts.at(-1)[1],'warn');
+  // What's new of a Panel update: three lines, all of them on request.
+  const u=page({announcements:[{key:'panel-pelican-1.0.1',source:'panel',category:'info',tone:'info',title:'Pelican 1.0.1 is available',text:'You run 1.0.0.',from:'Panel',audience:'admins',time:'now',until:null,action:null,dismissed:false,unread:true,notes:['One','Two','Three','Four'],notes_url:'https://github.com/pelican-dev/panel/releases/tag/v1.0.1'}]});
+  const update=u.notifications().find((i)=>i.key==='panel-pelican-1.0.1');
+  assert.deepEqual(u.noteLines(update),['One','Two','Three'],'three lines at first');
+  assert.equal(update.notesUrl,'https://github.com/pelican-dev/panel/releases/tag/v1.0.1');
+  u.toggleNotes(update);assert.equal(u.noteLines(u.notifications().find((i)=>i.key==='panel-pelican-1.0.1')).length,4,'all lines once opened, also after the list is rebuilt');
+  assert.deepEqual(page().notifications().find((i)=>i.announcement).notes,[],'announcements without notes have none');
   // Times: "until" in this browser's time zone, from Unix time.
   assert.match(d.announcementUntil(announcements()[1]),/^until \w{3} \d{1,2} \w{3} \d{2}:\d{2}$/);
   assert.equal(d.announcementUntil({until:'until X'}),'until X','the server text without Unix time');
-  console.log('PASS notification list: pinned block on top, all notifications with Show more, count includes unloaded ones, mark all read on the server, full list popup with New announcement, browser time zone');
+  console.log('PASS notification list: pinned block on top, all notifications with Show more, count includes unloaded ones, mark all read on the server, full list popup with New announcement, What\'s new of updates, browser time zone');
 })().catch((e)=>{console.error(e);process.exit(1);});

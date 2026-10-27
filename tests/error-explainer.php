@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Illuminate\Support\Facades {
 class Storage {public static array $files=[];public static function disk($d){return new class{public function get($p){return Storage::$files[$p]??null;}public function put($p,$c){Storage::$files[$p]=$c;return true;}};}}
-class Cache {public static array $store=[];public static function get($k){return self::$store[$k]??null;}public static function put($k,$v,$t=null){self::$store[$k]=$v;return true;}}
+class Cache {public static array $store=[];public static bool $broken=false;public static function get($k){if(self::$broken)throw new \RuntimeException('cache down');return self::$store[$k]??null;}public static function put($k,$v,$t=null){if(self::$broken)throw new \RuntimeException('cache down');self::$store[$k]=$v;return true;}}
 class RateLimiter {public static array $hits=[];public static function tooManyAttempts($k,$max){return (self::$hits[$k]??0)>=$max;}public static function hit($k,$decay){self::$hits[$k]=(self::$hits[$k]??0)+1;}public static function availableIn($k){return 300;}}
 class Http {public static array $sent=[];public static $reply;public static function withHeaders(array $h){return new class($h){public function __construct(public array $h){}public function acceptJson(){return $this;}public function asJson(){return $this;}public function connectTimeout($s){return $this;}public function timeout($s){return $this;}
     public function post($url,$body){Http::$sent[]=['url'=>$url,'headers'=>$this->h,'body'=>$body];[$status,$json]=Http::$reply;return new class($status,$json){public function __construct(public int $s,public array $j){}public function json(){return $this->j;}public function successful(){return $this->s<300;}public function status(){return $this->s;}};}};}}
@@ -130,5 +130,25 @@ check(str_contains(E::explain(null,'panel')['error'],'not set up')&&str_contains
 $GLOBALS['user']=$person(true,true);$put($new,"[2026-10-27 08:00:00] production.INFO: quiet");
 check(E::explain(null,'panel')['summary']==='The panel log has no warnings or errors right now.','quiet panel log');
 $put($old,'');$put($new,'');
-echo "PASS error explainer: encrypted key, audience, privacy filter, request shape, answers, failures, Wings and install logs, panel and Wings logs for root admins, cache and rate limits\n";
+// Emergency page and terminal: ask() needs no signed-in user, says where it was asked, sends fewer lines on request
+// and keeps working when the cache store is broken.
+$GLOBALS['user']=null;RateLimiter::$hits=[];Http::$sent=[];
+$put($new,implode("\n",array_map(fn($i)=>"[2026-10-27 09:00:0$i] production.ERROR: broken $i",range(0,9))));
+$asked=E::ask('sk-ant-typed-once','panel',null,null,null,E::ASKED_FROM['terminal'],10);
+$question=end(Http::$sent)['body']['messages'][0]['content'];
+check($asked['ok']&&end(Http::$sent)['headers']['x-api-key']==='sk-ant-typed-once'&&str_contains($question,'Asked from a terminal')&&!str_contains($question,'The panel itself is up')&&substr_count($question,'production.ERROR')===8,'terminal: given key, no user, its own context');
+$question=fn()=>end(Http::$sent)['body']['messages'][0]['content'];
+$GLOBALS['user']=$person(true,true);Cache::$store=[];E::explain(null,'panel');
+check(str_contains($question(),'The panel itself is up'),'panel pages still say the panel is up');
+Cache::$store=[];$put($new,"[2026-10-27 09:00:00] production.ERROR: one\n[2026-10-27 09:00:01] production.ERROR: two");
+E::ask('k','panel',null,null,null,'',1);check(!str_contains($question(),'one')&&str_contains($question(),'production.ERROR: two'),'--lines keeps the newest lines');
+$node=(object)['name'=>'Node 1'];Cache::$store=[];
+check(E::ask('k','wings',null,$node,'simplify.explain.access',E::ASKED_FROM['emergency'])['ok']&&str_contains($question(),'failed to pull image')&&str_contains($question(),'emergency page'),'Wings log of a chosen node, without a server');
+check(!E::ask('k','nonsense')['ok'],'unknown sources refused');
+$put($new,"[2026-10-27 09:00:00] production.ERROR: redis is down");Cache::$broken=true;$before=count(Http::$sent);
+check(E::ask('k','panel',null,null,'simplify.explain.access')['ok']&&count(Http::$sent)===$before+1,'a broken cache does not stop the question');
+Cache::$broken=false;
+check(E::savedKey()==='sk-ant-secret-1234','saved key for the emergency page and terminal');
+$put($old,'');$put($new,'');
+echo "PASS error explainer: encrypted key, audience, privacy filter, request shape, answers, failures, Wings and install logs, panel and Wings logs for root admins, cache and rate limits, emergency page and terminal questions\n";
 }

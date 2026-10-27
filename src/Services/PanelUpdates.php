@@ -41,33 +41,35 @@ final class PanelUpdates
     {
         $at=(int)($item['seen']??$now);
         return ['key'=>$item['key'],'source'=>'panel','category'=>'info','tone'=>'info','title'=>$item['title'],'text'=>$item['text'],'from'=>'Panel','audience'=>'admins',
-            'at'=>$at,'time'=>Announcements::ago($at,$now),'until'=>null,'action'=>$item['action']??null];
+            'at'=>$at,'time'=>Announcements::ago($at,$now),'until'=>null,'action'=>$item['action']??null,
+            'notes'=>is_array($item['notes']??null)?array_values($item['notes']):[],'notes_url'=>is_string($item['notes_url']??null)?$item['notes_url']:null];
     }
 
     /** @return list<array{key: string, title: string, text: string, action: ?array, seen: int}> */
     public static function collect(): array
     {
-        $items=self::simplify();
+        $items=array_map(fn(array $item):array=>self::withNotes($item,ReleaseNotes::changelog(PluginUpdater::REPOSITORY.self::branch($item['version']).'/update.json',$item['version'],'https://github.com/jerajerajerajera/PelicanSimplify/blob/'.self::branch($item['version']).'/CHANGELOG.md')),self::simplify());
         try{
             foreach(PluginUpdater::available() as $plugin){
                 if($plugin->id==='pelican-simplify'||!($latest=PluginUpdater::latestVersion($plugin)))continue;
-                $items[]=['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>$plugin->name.' '.$latest.' is available',
-                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()];
+                $items[]=self::withNotes(['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>$plugin->name.' '.$latest.' is available',
+                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],is_string($plugin->update_url??null)?ReleaseNotes::changelog($plugin->update_url,$latest):null);
             }
         }catch(\Throwable){}
         $versions=self::versionService();
         if($versions){
             $wings=self::version(fn()=>$versions->latestWingsVersion());
+            $wingsNotes=$wings?ReleaseNotes::release('pelican-dev/wings',$wings):null;
             if($wings)foreach(self::nodes() as $node){
                 $current=self::version(fn()=>self::nodeVersion($node));
                 if(!$current||!version_compare($wings,$current,'>'))continue;
                 $name=(string)($node->name??'Node '.$node->id);
-                $items[]=['key'=>'panel-wings-'.(int)$node->id.'-'.self::slug($wings),'title'=>'Wings '.$wings.' is available for '.$name,
-                    'text'=>$name.' runs Wings '.$current.'. Update Wings on that machine when it suits you.','action'=>['label'=>'How to update','url'=>'https://pelican.dev/docs/wings/update']];
+                $items[]=self::withNotes(['key'=>'panel-wings-'.(int)$node->id.'-'.self::slug($wings),'title'=>'Wings '.$wings.' is available for '.$name,
+                    'text'=>$name.' runs Wings '.$current.'. Update Wings on that machine when it suits you.','action'=>['label'=>'How to update','url'=>'https://pelican.dev/docs/wings/update']],$wingsNotes);
             }
             $panel=self::version(fn()=>$versions->latestPanelVersion());$current=self::version(fn()=>PluginUpdater::panelVersion());
-            if($panel&&$current&&version_compare($panel,$current,'>'))$items[]=['key'=>'panel-pelican-'.self::slug($panel),'title'=>'Pelican '.$panel.' is available',
-                'text'=>'You run '.$current.'. Read the release notes before you update.','action'=>['label'=>'Release notes','url'=>'https://github.com/pelican-dev/panel/releases']];
+            if($panel&&$current&&version_compare($panel,$current,'>'))$items[]=self::withNotes(['key'=>'panel-pelican-'.self::slug($panel),'title'=>'Pelican '.$panel.' is available',
+                'text'=>'You run '.$current.'. Read the release notes before you update.','action'=>['label'=>'Release notes','url'=>'https://github.com/pelican-dev/panel/releases']],ReleaseNotes::release('pelican-dev/panel',$panel));
         }
         return self::seen($items);
     }
@@ -82,6 +84,19 @@ final class PanelUpdates
                 'text'=>'You run '.$status['current'].'. '.(FeatureSettings::enabled('auto_update_plugins')?'It is installed automatically with a backup.':'Update it with one click in the plugin manager.'),
                 'action'=>$status['url']?['label'=>'View update','url'=>$status['url']]:null]];
         }catch(\Throwable){return [];}
+    }
+
+    /** Adds "What's new" (a few lines and a link to the full notes) when they could be read. */
+    private static function withNotes(array $item,?array $notes): array
+    {
+        if(!$notes||!$notes['lines'])return $item;
+        return [...$item,'notes'=>$notes['lines'],'notes_url'=>$notes['url']];
+    }
+
+    /** Simplify's branch for a version: snapshots and betas have their own. */
+    private static function branch(string $version): string
+    {
+        return str_contains($version,'snapshot')?'snapshot':(str_contains($version,'beta')?'beta':'main');
     }
 
     /** Adds when each update was first seen, so the bell can say "2 hours ago". */

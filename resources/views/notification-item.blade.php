@@ -2,6 +2,16 @@
     <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
     <strong x-text="item.title"></strong>
     <small x-text="item.text" x-show="item.text"></small>
+    <template x-if="item.notes?.length">
+        <div class="ps-notify-notes">
+            <span class="ps-label">What's new</span>
+            <ul><template x-for="(line, index) in noteLines(item)" :key="index"><li x-text="line"></li></template></ul>
+            <span class="ps-notify-notes-more">
+                <button type="button" class="ps-text-button" x-show="item.notes.length > 3" x-on:click="toggleNotes(item)" :aria-expanded="!!openNotes[item.id]" x-text="openNotes[item.id] ? 'Show less' : 'Show all '+item.notes.length"></button>
+                <a class="ps-text-button" x-show="item.notesUrl" :href="item.notesUrl" target="_blank" rel="noopener">Full release notes</a>
+            </span>
+        </div>
+    </template>
     <small class="ps-notify-time" x-show="item.time" x-text="item.time"></small>
     <span class="ps-notify-actions" x-show="item.action || (item.pelican && item.unread) || item.announcement">
         <template x-if="item.action">

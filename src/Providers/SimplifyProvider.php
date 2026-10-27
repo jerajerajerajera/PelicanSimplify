@@ -27,6 +27,10 @@ final class SimplifyProvider extends ServiceProvider
         \Illuminate\Support\Facades\Route::get('/simplify/server-icon/{uuid}',\Simplify\Panel\Http\Controllers\ServerIconController::class)->middleware(['web','auth'])->name('simplify.server-icon');
         \Illuminate\Support\Facades\Route::get('/simplify/logo',\Simplify\Panel\Http\Controllers\LogoController::class)->middleware(['web','auth'])->name('simplify.logo');
         \Illuminate\Support\Facades\Route::get('/simplify/favicon.svg',\Simplify\Panel\Http\Controllers\FaviconController::class)->name('simplify.favicon');
+        // Emergency page for "Explain this error": plain HTML without Filament or Livewire, for when the panel shows 500.
+        // The second address comes from `php artisan simplify:explain --url` and needs no session (it skips the web group).
+        \Illuminate\Support\Facades\Route::match(['get','post'],'/simplify/explain',[\Simplify\Panel\Http\Controllers\EmergencyExplainController::class,'session'])->middleware('web')->name('simplify.explain');
+        \Illuminate\Support\Facades\Route::match(['get','post'],'/simplify/explain/access/{token}',[\Simplify\Panel\Http\Controllers\EmergencyExplainController::class,'token'])->where('token','[0-9a-f]{40}')->name('simplify.explain.access');
         // Installable web app: manifest, icons and the service worker (served at the root so its scope is the whole panel).
         \Illuminate\Support\Facades\Route::get('/simplify/manifest.webmanifest',[\Simplify\Panel\Http\Controllers\WebAppController::class,'manifest'])->name('simplify.manifest');
         \Illuminate\Support\Facades\Route::get('/simplify/app-icon/{size}.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'icon'])->whereNumber('size')->name('simplify.app-icon');

@@ -173,7 +173,7 @@ final class ErrorExplainer
     /** Where the lines come from: label for the popup, how the question introduces them, text when there are none. */
     public const SOURCES = [
         'console' => ['Console', null, 'The console is empty, so there is nothing to explain yet.'],
-        'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last. The panel itself is up: an administrator is using it to ask this.', 'The panel log has no warnings or errors right now.'],
+        'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last.', 'The panel log has no warnings or errors right now.'],
         'wings' => ['Wings log', 'Wings daemon log of the node this server runs on', 'The Wings log of this node is empty.'],
     ];
     /** The panel log and the Wings log can hold anyone's details, so only root admins may send them. */
@@ -228,13 +228,29 @@ final class ErrorExplainer
         }
         return array_slice(array_values(array_filter($lines, fn ($line) => trim($line, " \t=-") !== '')), -self::LINES);
     }
-    private static function lines(?Server $s, string $source): array
+    /** Where the question comes from, so Claude knows whether the panel itself is up. */
+    public const ASKED_FROM = [
+        'panel' => 'The panel itself is up: an administrator is using it to ask this.',
+        'emergency' => "Asked from Simplify's emergency page, which works without the normal panel pages: the panel may be partly broken, for example showing error 500.",
+        'terminal' => 'Asked from a terminal on the panel server: the panel website may be down.',
+    ];
+    private static function lines(?Server $s, string $source, $node = null): array
     {
         return match ($source) {
             'console' => self::consoleLines($s),
             'panel' => self::panelEntries(self::panelLogText()),
-            'wings' => self::wingsLog((string) app(\App\Repositories\Daemon\DaemonSystemRepository::class)->setNode($s->node)->getDiagnostics(self::LINES, false, true)->throw()->body()),
+            'wings' => self::wingsLog((string) app(\App\Repositories\Daemon\DaemonSystemRepository::class)->setNode($node ?? $s->node)->getDiagnostics(self::LINES, false, true)->throw()->body()),
         };
+    }
+    /** The saved key for the emergency page and the terminal, which check access themselves. */
+    public static function savedKey(): ?string
+    {
+        return self::key();
+    }
+    /** Runs $callback; when the cache or its store is broken (a half-working panel), $fallback instead of an error. */
+    private static function guarded(callable $callback, mixed $fallback = null): mixed
+    {
+        try { return $callback(); } catch (\Throwable $e) { report($e); return $fallback; }
     }
 
     /** Explains a log for the signed-in user; answers stay cached a few minutes for the same lines. */
@@ -242,26 +258,37 @@ final class ErrorExplainer
     {
         $user = user();
         if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
-        try { $lines = self::sanitize(self::lines($s, $source)); }
+        return self::ask($key, $source, $s, null, 'simplify.explain.user.'.$user->id, $source === 'console' ? '' : self::ASKED_FROM['panel']);
+    }
+    /**
+     * The question itself, without access checks: explain() for the panel pages, the emergency page and
+     * simplify:explain call it after checking who asks. $personal is the rate limit of one person (none in the terminal),
+     * $limit the most lines sent and $asked one of ASKED_FROM.
+     */
+    public static function ask(string $key, string $source, ?Server $s = null, $node = null, ?string $personal = null, string $asked = '', int $limit = self::LINES): array
+    {
+        if (!isset(self::SOURCES[$source])) return ['ok' => false, 'error' => 'Unknown log.'];
+        try { $lines = array_slice(self::sanitize(self::lines($s, $source, $node)), -max(1, min(self::LINES, $limit))); }
         catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
         if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => self::SOURCES[$source][2], 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
         $settings = self::settings();
         $cacheKey = 'simplify.explain.'.sha1($settings['model'].$source.implode("\n", $lines));
-        if (is_array($cached = Cache::get($cacheKey))) return ['ok' => true, ...$cached];
-        $personal = 'simplify.explain.user.'.$user->id;
-        if (RateLimiter::tooManyAttempts($personal, self::PER_USER)) return ['ok' => false, 'error' => 'You asked a lot of questions in a short time. Try again in '.max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)).' minute(s).'];
-        if (RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY)) return ['ok' => false, 'error' => 'This panel reached its daily limit of '.self::PER_DAY.' explanations. Try again tomorrow.'];
-        RateLimiter::hit($personal, 600);
-        RateLimiter::hit('simplify.explain.panel', 86400);
+        if (is_array($cached = self::guarded(fn () => Cache::get($cacheKey)))) return ['ok' => true, ...$cached];
+        if ($personal && self::guarded(fn () => RateLimiter::tooManyAttempts($personal, self::PER_USER), false)) return ['ok' => false, 'error' => 'You asked a lot of questions in a short time. Try again in '.max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)).' minute(s).'];
+        if (self::guarded(fn () => RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY), false)) return ['ok' => false, 'error' => 'This panel reached its daily limit of '.self::PER_DAY.' explanations. Try again tomorrow.'];
+        self::guarded(function () use ($personal): void {
+            if ($personal) RateLimiter::hit($personal, 600);
+            RateLimiter::hit('simplify.explain.panel', 86400);
+        });
         $context = self::SOURCES[$source][1] ?? ($s?->egg?->name ? 'Game or software: '.$s->egg->name : '');
         // The time lets Claude see that a warning from hours ago is not a problem now.
-        $context = trim($context."\nCurrent time on the panel: ".date('Y-m-d H:i:s T'));
-        $result = self::call($key, self::payload($lines, $settings['model'], (string) $context));
+        $context = trim($context.($asked !== '' ? ' '.$asked : '')."\nCurrent time on the panel: ".date('Y-m-d H:i:s T'));
+        $result = self::call($key, self::payload($lines, $settings['model'], $context));
         if (!$result['ok']) return $result;
         $answer = self::answer($result['body']);
         if (!$answer) return ['ok' => false, 'error' => 'Claude could not explain these lines. Try again after the error shows up again.'];
         $answer += ['lines' => count($lines), 'model' => explode(' (', self::MODELS[$settings['model']])[0], 'source' => $source];
-        Cache::put($cacheKey, $answer, now()->addMinutes(10));
+        self::guarded(fn () => Cache::put($cacheKey, $answer, now()->addMinutes(10)));
         return ['ok' => true, ...$answer];
     }
 }
