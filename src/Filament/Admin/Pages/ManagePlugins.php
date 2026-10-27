@@ -93,13 +93,6 @@ final class ManagePlugins extends Page
         return $rows;
     }
 
-    /** Seconds since the scheduled update check last ran, or null when it never ran. */
-    public function lastCheckAge(): ?int
-    {
-        $at = \Illuminate\Support\Facades\Cache::get('simplify.plugin-check-at');
-        return is_int($at) ? max(0, time() - $at) : null;
-    }
-
     public function updatePlugin(string $id): void
     {
         $plugin = Plugin::query()->findOrFail($id);
