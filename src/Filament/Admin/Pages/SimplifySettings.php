@@ -400,7 +400,7 @@ class SimplifySettings extends Page implements HasForms
         $categories['Egg updates'] = [
             Section::make('Egg updates')->description('Simplify checks every egg for a new version every six hours and lets root admins know in the notifications. Running servers keep running and pick up the new egg at their next start.')->schema([
                 Select::make('egg_updates.mode')->label('Updates')->options(\Simplify\Panel\Services\EggUpdates::MODES)->selectablePlaceholder(false)->required()
-                    ->helperText('Eggs that servers use are never updated without you. The previous version is always kept.'),
+                    ->helperText('Eggs that servers use are only updated by you, or after a test server installed and started with the new version. The previous version is always kept.'),
             ]),
             \Filament\Schemas\Components\View::make('pelican-simplify::egg-updates'),
         ];
@@ -556,6 +556,14 @@ class SimplifySettings extends Page implements HasForms
         }
         if ($failed !== []) Notification::make()->title($done > 0 ? $done.' updated, '.count($failed).' failed' : 'Update failed')->body(implode(' ', $failed))->danger()->send();
         else Notification::make()->title($done === 1 ? 'Egg updated' : $done.' eggs updated')->body('Running servers keep running. The previous version is kept and can be put back.')->success()->send();
+    }
+
+    /** Test the update on a test server and update only when it installs and starts. */
+    public function testEgg(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdateTest::start(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->body('This takes a few minutes. You get a notification when it is done.')->success()->send();
     }
 
     public function restoreEgg(int $id): void
