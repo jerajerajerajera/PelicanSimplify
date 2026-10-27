@@ -394,6 +394,7 @@ class SimplifySettings extends Page implements HasForms
                     \Filament\Actions\Action::make('testErrorExplainer')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testErrorExplainer()),
                 ])->columnSpanFull(),
             ]),
+            Section::make('When the panel itself breaks')->description(fn () => 'If the panel shows an error such as 500, open '.route('simplify.explain').' to check the panel and Wings logs: that plain page works without the normal panel pages. If you cannot sign in, run "php artisan simplify:explain" in the panel folder on the server, or "php artisan simplify:explain --url" for a temporary address to that page.')->schema([]),
         ];
     }
     /** Tries the typed key, or the saved one, with the chosen model (Test key button). */

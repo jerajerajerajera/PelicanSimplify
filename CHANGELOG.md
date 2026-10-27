@@ -1,5 +1,14 @@
 # Changes
 
+## 0.5.3-beta.6 (beta channel)
+Explain this error still works when the panel shows an error page, and update notifications say what is new (0.5.3-snapshot.9 below).
+
+## 0.5.3-snapshot.9 (snapshot channel)
+Explain this error still works when the panel itself shows an error page, and update notifications say what is new.
+- Root administrators can open a plain emergency page at /simplify/explain that does not need the rest of the panel.
+- `php artisan simplify:explain --url` gives a temporary link to that page without logging in, and `php artisan simplify:explain` explains the panel log, the Wings log or a server console right in the terminal.
+- Updates of Pelican, Wings, Simplify and plugins show a few lines from their release notes, with a link to the full notes.
+
 ## 0.5.3-beta.5 (beta channel)
 Notifications show everything with admin pins, announcements have a pin button, and Explain this error checks first (0.5.3-snapshot.6 to .8 below).
 

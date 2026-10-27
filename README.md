@@ -160,6 +160,23 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 </details>
 
 <details>
+<summary><strong>Explain this error</strong> (optional, with your own Anthropic API key)</summary>
+
+- An Explain button in the console says in plain words whether something is wrong and what to try
+- Root administrators can also check the panel log and the Wings log
+- IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent
+- Turn it on in Simplify settings → Error explanations; each question is paid by that key
+
+When the panel itself breaks, there are two other ways to ask:
+
+- **The panel shows an error page (such as 500), but you can still sign in:** open `/simplify/explain` on your panel, for example `https://panel.example.com/simplify/explain`. This plain page does not need the normal panel pages, so it keeps working when a plugin, Filament or Livewire fails.
+- **You cannot sign in or the website is down:** run `php artisan simplify:explain` in the panel folder on the server. Use `--source=wings --node=<id>` for a Wings log or `--source=server=<id>` for a server console. `php artisan simplify:explain --url` prints a temporary address for the plain page that works for an hour without signing in.
+
+These need PHP and the panel's files to work. If even `php artisan` fails, the error it prints is usually the cause.
+
+</details>
+
+<details>
 <summary><strong>Installation and maintenance</strong></summary>
 
 - Installs through Pelican's own plugin import *(Pelican)*
