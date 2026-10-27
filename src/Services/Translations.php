@@ -26,12 +26,35 @@ final class Translations
     public static function labels(string $path, array $english): array
     {
         $out = [];
-        foreach ($english as $key => $text) {
-            $name = self::NAMESPACE.'::'.$path.'.'.$key;
-            $translated = __($name);
-            $out[$key] = is_string($translated) && $translated !== $name ? $translated : $text;
-        }
+        foreach ($english as $key => $text) $out[$key] = self::text($path.'.'.$key, $text);
         return $out;
+    }
+
+    /** Rows such as [label, help, default] of an English constant; $fields names the translated positions ($path.'.'.$key.'.'.$field). */
+    public static function rows(string $path, array $english, array $fields = ['label', 'help']): array
+    {
+        foreach ($english as $key => $row) {
+            foreach ($fields as $index => $field) {
+                if (isset($row[$index]) && is_string($row[$index])) $english[$key][$index] = self::text($path.'.'.$key.'.'.$field, $row[$index]);
+            }
+        }
+        return $english;
+    }
+
+    /** One text by key, or the English given when there is none (for labels that also serve as ids, such as tab names). */
+    public static function text(string $path, string $english, array $replace = []): string
+    {
+        $name = self::NAMESPACE.'::'.$path;
+        $translated = function_exists('__') ? __($name, $replace) : $name;
+        if (is_string($translated) && $translated !== $name) return $translated;
+        foreach ($replace as $placeholder => $value) $english = str_replace(':'.$placeholder, (string) $value, $english);
+        return $english;
+    }
+
+    /** Key for an English label: lower-case words joined by underscores ("Users & access" becomes users_access). */
+    public static function key(string $english): string
+    {
+        return trim((string) preg_replace('/[^a-z0-9]+/', '_', strtolower($english)), '_');
     }
 
     /** Texts for the JavaScript bundles (window.simplifyLang). */

@@ -49,7 +49,7 @@
                     {{-- Re-rendered by Livewire: an add-on switched on in the first step adds its own step here. --}}
                     <nav class="ssc-progress" style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="{{ __('pelican-simplify::settings.page.simplify_setup_progress') }}">
                         @foreach($this->setupSteps() as $index => $label)
-                            <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
+                            <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ \Simplify\Panel\Services\Translations::text('settings.steps.'.\Simplify\Panel\Services\Translations::key($label), $label) }}</button>
                             @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless
                         @endforeach
                         <span class="ssc-progress-count" x-text="Simplify.fill(@js(__('pelican-simplify::settings.page.step_of')), { step, total: {{ count($this->setupSteps()) }} })"></span>

@@ -13,3 +13,7 @@ Light purple
 Upload still in progress
 dark
 background: hsl(
+# Feature groups in FeatureSettings::definitions(): ids for the settings sections, never shown.
+Server features
+Access and visibility
+Java 25

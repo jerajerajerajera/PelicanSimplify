@@ -1,6 +1,7 @@
 <?php
 // English lookups for tests that load plugin code without Laravel: __('pelican-simplify::file.key', [...]) and trans_choice().
 namespace {
+    require_once __DIR__.'/../../src/Services/Translations.php';
     if (!function_exists('__')) {
         function __($key = null, $replace = [], $locale = null)
         {

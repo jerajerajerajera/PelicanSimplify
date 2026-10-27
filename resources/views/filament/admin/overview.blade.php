@@ -12,7 +12,7 @@
     $catalog = \Simplify\Panel\Services\MinecraftCatalog::class;
     $kind = (string) $get('server_type');
     $software = $catalog::software($kind, $get('server_software'));
-    $type = (\Simplify\Panel\Filament\Admin\Pages\CreateMinecraftServer::MINECRAFT_CHOICES[$kind][0] ?? '—') . ($software ? ' · ' . $catalog::SOFTWARE[$kind][$software] : '');
+    $type = (\Simplify\Panel\Filament\Admin\Pages\CreateMinecraftServer::minecraftChoices()[$kind][0] ?? '—') . ($software ? ' · ' . $catalog::SOFTWARE[$kind][$software] : '');
     $java = $kind === 'bedrock' ? null : $java;
     $version = $runtime::minecraftVersion($settings);
     $javaServer = !$other && $catalog::javaServer($kind);

@@ -25,16 +25,16 @@
             </div>
             {{-- Re-rendered when the steps change with the chosen game (Minecraft has a server properties step). --}}
             <nav class="ssc-progress" x-init="$nextTick(() => fitSteps($el)); new ResizeObserver(() => fitSteps($el)).observe($el)" x-effect="step; $nextTick(() => fitSteps($el))" x-on:keydown.escape="stepMenu = false" x-on:click.outside="stepMenu = false" wire:key="ssc-progress-{{ md5(implode('|', $this->wizardStepLabels())) }}" style="--ssc-steps: {{ count($this->wizardStepLabels()) }}" :style="{'--ssc-step': step}" aria-label="{{ __('pelican-simplify::maker.create.server_creation_progress') }}">
-                @foreach($this->wizardStepLabels() as $index=>$label)
+                @foreach($this->wizardStepNames() as $index=>$label)
                     <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep || switching || uploading" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})" title="{{ $label }}"><span>{{ $index+1 }}</span><b class="ssc-step-name">{{ $label }}</b></button>
                 @endforeach
                 {{-- Phones: the current step; tapping it lists every step to jump to. --}}
                 <button type="button" class="ssc-progress-phone" x-on:click="stepMenu = !stepMenu" :aria-expanded="stepMenu" aria-haspopup="true">
-                    <strong x-text="@js($this->wizardStepLabels())[step - 1]"></strong>
+                    <strong x-text="@js($this->wizardStepNames())[step - 1]"></strong>
                     <span class="ssc-progress-count" x-text="Simplify.fill(@js(__('pelican-simplify::maker.create.step_of')), { step, total: {{ count($this->wizardStepLabels()) }} })"></span>
                 </button>
                 <div class="ssc-step-menu" x-show="stepMenu" x-cloak x-transition.opacity role="menu">
-                    @foreach($this->wizardStepLabels() as $index=>$label)
+                    @foreach($this->wizardStepNames() as $index=>$label)
                         <button type="button" role="menuitem" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep || switching || uploading" x-on:click="stepMenu = false; goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                     @endforeach
                 </div>

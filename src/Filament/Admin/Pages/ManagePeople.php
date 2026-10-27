@@ -147,8 +147,8 @@ final class ManagePeople extends Page
             TextInput::make('name')->label(__('pelican-simplify::people.form.role_name'))->required()->maxLength(64),
             Section::make('Simplify permissions')->description(__('pelican-simplify::people.form.what_members_can_do_on_their'))->schema([
                 CheckboxList::make('simplify.abilities')->hiddenLabel()->columns(2)
-                    ->options(array_map(fn (array $ability) => $ability[0], RoleAccess::ABILITIES))
-                    ->descriptions(array_map(fn (array $ability) => $ability[1], RoleAccess::ABILITIES)),
+                    ->options(array_map(fn (array $ability) => $ability[0], \Simplify\Panel\Services\Translations::rows('settings.abilities', RoleAccess::ABILITIES)))
+                    ->descriptions(array_map(fn (array $ability) => $ability[1], \Simplify\Panel\Services\Translations::rows('settings.abilities', RoleAccess::ABILITIES))),
                 \Filament\Schemas\Components\Grid::make(3)->schema($limits),
             ]),
             Section::make('Admin panel access')->description(__('pelican-simplify::people.form.which_parts_of_the_admin_panel'))

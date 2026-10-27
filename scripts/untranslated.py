@@ -4,8 +4,10 @@
 Usage: python3 scripts/untranslated.py [--all] [paths...]
 Prints file:line and the text. A text that must stay as it is (a product name, a Minecraft command, a log
 line) goes in scripts/untranslated-allow.txt, one per line. tests/run.sh runs this and fails on new texts.
+English labels that double as ids (tab names, option constants) are fine when lang/en has the same text under
+one of ID_PATHS: the code shows them through Translations::text(), labels() or rows().
 """
-import pathlib, re, sys
+import json, pathlib, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ALLOW_FILE = ROOT / 'scripts' / 'untranslated-allow.txt'
@@ -17,6 +19,9 @@ SINGLE = re.compile(r"'((?:[^'\\\n]|\\.)*)'()")
 TEXT_ATTR = re.compile(r'(?<![:\w-])(?:title|aria-label|placeholder|alt|data-tip|label|wire:confirm)="([^"]*)"()')
 TEXT_NODE = re.compile(r'>([^<>]*)<')
 TRANSLATED = re.compile(r"(?:__|trans|trans_choice|t|tc|sscText|Simplify\.t|Simplify\.tc|@lang)\(\s*'[^']*'")
+ID_PATHS = ['settings.tabs', 'settings.steps', 'settings.step_hints', 'settings.check_groups', 'settings.experiences', 'settings.channels',
+            'settings.features', 'settings.abilities', 'settings.performance', 'settings.egg_modes', 'settings.explain_audiences', 'maker.minecraft', 'maker.steps']
+THROWN = re.compile(r'new \\?(RuntimeException|LogicException|InvalidArgumentException|UnexpectedValueException|JsonException)\(')  # internal errors stay English for the log
 CODEISH = re.compile(r'^[\w.:/#@$%*+=<>()\[\]{},;|&!?\\^~`-]*$')
 
 def looks_like_text(s):
@@ -34,8 +39,24 @@ def looks_like_text(s):
     return True
 
 def allowed():
-    if not ALLOW_FILE.is_file(): return set()
-    return {line.strip() for line in ALLOW_FILE.read_text().splitlines() if line.strip() and not line.startswith('#')}
+    allow = set()
+    if ALLOW_FILE.is_file(): allow = {line.strip() for line in ALLOW_FILE.read_text().splitlines() if line.strip() and not line.startswith('#')}
+    return allow | id_texts()
+
+def id_texts():
+    """English texts under ID_PATHS in lang/en, read through PHP."""
+    code = 'echo json_encode(array_map(fn ($f) => require $f, array_combine(array_map(fn ($f) => basename($f, ".php"), glob($argv[1] . "/*.php")), glob($argv[1] . "/*.php"))));'
+    try: data = json.loads(subprocess.run(['php', '-r', code, str(ROOT / 'lang' / 'en')], capture_output=True, text=True, check=True).stdout)
+    except (OSError, subprocess.CalledProcessError, ValueError): return set()
+    found = set()
+    def walk(node):
+        if isinstance(node, dict): [walk(v) for v in node.values()]
+        elif isinstance(node, str): found.add(node.strip()); found.add(node.replace("'", "\\'").strip())
+    for path in ID_PATHS:
+        node = data
+        for part in path.split('.'): node = node.get(part, {}) if isinstance(node, dict) else {}
+        walk(node)
+    return found
 
 def scan(path):
     text = path.read_text()
@@ -52,6 +73,7 @@ def scan(path):
         code = re.sub(r'^\s*(//|#|\*).*', '', line)
         code = re.sub(r'(?<![:"\'])//(?![/\w.-]*\.\w).*$', '', code) if not blade else code
         code = TRANSLATED.sub('', code)
+        if THROWN.search(code): continue
         if re.search(r'(Log::|logger\(|report\(|->info\(|->warn\(|->error\(|->line\(|->comment\(|console\.(log|warn|error))', code): continue
         for m in (list(SINGLE.finditer(code)) if blade else STRING.finditer(code)):
             s = m.group(1) if m.group(1) is not None else m.group(2)
