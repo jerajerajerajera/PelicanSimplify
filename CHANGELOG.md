@@ -1,5 +1,15 @@
 # Changes
 
+## 0.6.0-snapshot.17 (snapshot channel)
+Test egg updates first, app notifications that reach everyone, and a fix for the snapshot channel.
+- Egg updates has a new choice: Test first, then update. Each listed update also has a Test first button.
+- Simplify tests a copy of the new egg on a temporary test server owned by a root admin, on a free port between 45000 and 45999. The real egg is only updated when the install finishes and the server starts.
+- If the test fails, the current egg stays. Root admins get a notification with the reason and the last install log lines. The test server, its port and the copy are always removed afterwards.
+- Also send as app notification is on by default for a new announcement.
+- For up to a day after an announcement starts, devices that missed it still get it, for example when notifications were turned on later. No device gets it twice.
+- The announcements list shows how many devices received the app notification.
+- A panel that switches from the beta channel to the snapshot channel gets newer snapshots again. Before, a beta of the same version always counted as newer.
+
 ## 0.6.0-snapshot.16 (snapshot channel)
 Egg updates.
 - Simplify checks every egg for a new version every six hours. Root admins get a notification that opens the new Egg updates tab in Simplify settings.
