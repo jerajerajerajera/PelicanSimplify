@@ -279,4 +279,29 @@ final class PluginSources
         if (preg_match('/^(.+?)[-_ ]v?(\d+(?:\.\d+)+[\w.+-]*)$/', $base, $m)) return [trim(str_replace(['-', '_'], ' ', $m[1])), $m[2]];
         return [trim(str_replace(['-', '_'], ' ', $base)), ''];
     }
+
+    /**
+     * Plugins that failed when the server started, from its log: "Could not load 'plugins/x.jar'" and other error lines
+     * naming the file, or "Error occurred while enabling Name v1 (Is it up to date?)". $watched is [key => ['filename',
+     * 'title']]; the result is [key => ['reason' => the log line, 'lines' => it and the lines around it]].
+     */
+    public static function failures(string $log, array $watched): array
+    {
+        $out = [];
+        $lines = preg_split('/\R/', $log) ?: [];
+        foreach ($lines as $index => $line) {
+            if (!preg_match('/\b(ERROR|SEVERE|FATAL)\b|Error occurred while enabling|Could not load/i', $line)) continue;
+            $enabling = preg_match('/(?:Error occurred while enabling|Could not load plugin) \'?([^\'\s]+)/i', $line, $m) ? self::same($m[1]) : '';
+            foreach ($watched as $key => $t) {
+                if (isset($out[$key])) continue;
+                $file = (string) ($t['filename'] ?? '');
+                $names = array_filter([self::same((string) ($t['title'] ?? '')), self::same(self::fromFilename($file)[0])], fn ($n) => strlen($n) >= 3);
+                $named = $enabling !== '' && strlen($enabling) >= 3 && array_filter($names, fn ($n) => str_starts_with($n, $enabling) || str_starts_with($enabling, $n));
+                if (($file !== '' && str_contains($line, $file)) || $named) $out[$key] = $index;
+            }
+        }
+        // The line itself (without its time stamp) and the lines around it, the cause and first stack frames, for Explain.
+        return array_map(fn ($at) => ['reason' => mb_substr(trim(preg_replace('/^\[[^\]]*\]:?\s*/', '', $lines[$at]) ?? $lines[$at]), 0, 240),
+            'lines' => array_map(fn ($l) => mb_substr($l, 0, 400), array_slice($lines, max(0, $at - 2), 40))], $out);
+    }
 }

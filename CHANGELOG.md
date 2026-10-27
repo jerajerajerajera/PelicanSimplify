@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-beta.12 (beta channel)
+Plugins sit on one page, and a plugin that fails to start is switched off (0.5.3-snapshot.15 below).
+
+## 0.5.3-snapshot.15 (snapshot channel)
+Plugins sit on one page, and a plugin that fails to start is switched off.
+- Search is on the left and installed plugins are on the right, with a button to the plugins folder.
+- A plugin that fails to load at the next start is switched off automatically, with the reason and a ? to ask the AI why.
+
 ## 0.5.3-beta.11 (beta channel)
 The "updated" notification after a plugin update shows what is new (0.5.3-snapshot.14 below).
 
