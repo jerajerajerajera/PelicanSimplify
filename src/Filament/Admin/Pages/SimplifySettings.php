@@ -316,7 +316,7 @@ class SimplifySettings extends Page implements HasForms
                         TextInput::make('creation_defaults.'.$type.'.cpu')->label('CPU (%)')->integer()->minValue(1)->maxValue(1600)->required()->helperText('100% is one core; 200% is two cores.'),
                         TextInput::make('creation_defaults.'.$type.'.ram_gb')->label('RAM (GB)')->integer()->minValue(1)->maxValue(128)->required(),
                         TextInput::make('creation_defaults.'.$type.'.disk_mb')->label('Disk (MB)')->integer()->minValue(1024)->maxValue(10485760)->required(),
-                    ]), ['vanilla', 'plus', 'modded'], ['Vanilla', 'Vanilla+', 'Modded / modpacks'])),
+                    ]), ['vanilla', 'plus', 'loader', 'modded', 'bedrock', 'proxy'], ['Vanilla', 'Plugins', 'Mods', 'Modpacks', 'Bedrock', 'Proxy'])),
             ],
             'Easy server creator' => [
                 Section::make('Games for self-service')->description('Games users may create with the game creator. Administrators can pick any game, including the 170+ games from the official Pelican egg index.')->schema([

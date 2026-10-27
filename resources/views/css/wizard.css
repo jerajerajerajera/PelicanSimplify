@@ -204,6 +204,23 @@
 
 /* Game picker (other games) ------------------------------------------------------------------- */
 .ssc-games { position: relative; display: grid; gap: 12px; }
+/* Game step: Minecraft first, with its server types as big buttons, then the other games. */
+.ssc-minecraft { display: grid; gap: 14px; margin-bottom: 18px; padding: 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-xl); background: linear-gradient(120deg, color-mix(in srgb, #3f9b4b 14%, var(--ps-surface)), var(--ps-surface) 60%); }
+.ssc-minecraft.is-picked { border-color: var(--ps-accent); }
+.ssc-minecraft-head { display: flex; align-items: center; gap: 14px; }
+.ssc-minecraft-head h3 { margin: 0; font-size: 20px; font-weight: 700; }
+.ssc-minecraft-head p { margin: 2px 0 0; color: var(--ps-muted); font-size: 13px; }
+.ssc-minecraft-icon { display: grid; flex: none; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #3f9b4b; color: #fff; }
+.ssc-minecraft-icon svg { width: 34px; height: 34px; }
+.ssc-minecraft-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ssc-minecraft-type { display: grid; align-content: start; gap: 4px; min-height: 92px; padding: 14px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 90%, transparent); color: var(--ps-ink); text-align: left; cursor: pointer; transition: border-color var(--ps-fast), transform var(--ps-fast); }
+.ssc-minecraft-type:hover:not(:disabled) { border-color: var(--ps-accent); transform: translateY(-1px); }
+.ssc-minecraft-type[aria-pressed="true"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 9%, var(--ps-surface)); box-shadow: 0 0 0 1px var(--ps-accent); }
+.ssc-minecraft-type:disabled { cursor: progress; }
+.ssc-minecraft-type strong { font-size: 15px; font-weight: 650; }
+.ssc-minecraft-type small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ssc-games-heading { margin: 0 0 10px; color: var(--ps-muted); font-size: 13px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+@media (max-width: 600px) { .ssc-minecraft { padding: 14px; } .ssc-minecraft-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ssc-minecraft-type { min-height: 0; } }
 .ssc-games-install { position: absolute; inset: -8px; z-index: 5; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 24px; border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 94%, transparent); backdrop-filter: blur(3px); text-align: center; }
 .ssc-games-install strong { font-size: 18px; }
 .ssc-games-install ol { display: grid; gap: 8px; margin: 4px 0; padding: 0; list-style: none; text-align: left; }

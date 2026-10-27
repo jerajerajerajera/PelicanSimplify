@@ -459,11 +459,13 @@
                     @include('pelican-simplify::announcement-bars')
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-create-tiles" x-show="boot.can_create">
-                            <button type="button" x-show="canCreateGame('minecraft')" x-on:click="openCreate('minecraft')" class="ps-create-card is-minecraft" :style="creationAccent('minecraft')" aria-label="Create Minecraft server" aria-haspopup="dialog">
-                                <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-creeper"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><span>Create</span><strong>Minecraft</strong><span>server</span></h3>
+                            {{-- The Server Maker: Minecraft and every other game in one creator. --}}
+                            <button type="button" x-show="canCreateGame('server')" x-on:click="openCreate('server')" class="ps-create-card is-server" :style="creationAccent('server')" aria-label="Create server" aria-haspopup="dialog">
+                                <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-host"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
+                                <h3><span>Create</span><strong>Server</strong></h3>
                             </button>
-                            <button type="button" x-show="!canCreateGame('native')" :disabled="!canCreateGame('other')" x-on:click="openCreate('other')" class="ps-create-card is-other" :style="creationAccent('other')" :aria-label="boot.game_create_url ? 'Create other server' : 'Create other server with Pelican\'s form'" aria-haspopup="dialog">
+                            {{-- Game add-on off: administrators still reach other games through Pelican's own form. --}}
+                            <button type="button" x-show="pelicanFormForOthers()" x-on:click="openCreate('other')" class="ps-create-card is-other" :style="creationAccent('other')" aria-label="Create other server with Pelican's form" aria-haspopup="dialog">
                                 <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-gamepad"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
                                 <h3><span>Create</span><strong>Other</strong><span>server</span></h3>
                             </button>
