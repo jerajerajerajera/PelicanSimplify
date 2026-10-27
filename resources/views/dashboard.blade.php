@@ -462,7 +462,7 @@
                             {{-- The Server Maker: Minecraft and every other game in one creator. --}}
                             <button type="button" x-show="canCreateGame('server')" x-on:click="openCreate('server')" class="ps-create-card is-server" :style="creationAccent('server')" aria-label="Create server" aria-haspopup="dialog">
                                 <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-host"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><span>Create</span><strong>Server</strong></h3>
+                                <h3><strong>Create server</strong><span>Minecraft or any other game</span></h3>
                             </button>
                             {{-- Game add-on off: administrators still reach other games through Pelican's own form. --}}
                             <button type="button" x-show="pelicanFormForOthers()" x-on:click="openCreate('other')" class="ps-create-card is-other" :style="creationAccent('other')" aria-label="Create other server with Pelican's form" aria-haspopup="dialog">
@@ -603,9 +603,10 @@
                             <span class="ps-host-server-badge"><svg aria-hidden="true"><use href="#ps-host"/></svg></span>
                         </span>
                         <div>
-                            <div class="ps-host-heading"><h3>Host health</h3><svg class="ps-health-expand" :class="{'expanded': healthExpanded}" aria-hidden="true"><use href="#ps-chevron"/></svg></div>
+                            <div class="ps-host-heading"><h3>Host health</h3><button type="button" class="ps-health-refresh" :class="{'is-busy': healthRefreshing}" :disabled="healthRefreshing" x-on:click.stop="refreshHostHealth()" x-on:keydown.stop aria-label="Refresh host health" data-tip="Refresh now"><svg aria-hidden="true"><use href="#ps-restart"/></svg></button><svg class="ps-health-expand" :class="{'expanded': healthExpanded}" aria-hidden="true"><use href="#ps-chevron"/></svg></div>
                             <span class="ps-health-status" :class="boot.host_health?.state || 'unavailable'"><strong x-text="boot.host_health?.label || 'Unavailable'"></strong></span>
                             <small x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts reporting'"></small>
+                            <small class="ps-health-problem" x-show="boot.host_health?.problem" x-text="boot.host_health?.problem"></small>
                             <small class="ps-health-phone-summary" x-text="'CPU '+hostValue('cpu')+' · RAM '+hostValue('memory')"></small>
                         </div>
                     </div>
@@ -636,6 +637,7 @@
                                                 <span class="ps-badge ps-status" :class="node.state" x-text="node.label"></span>
                                                 <svg class="ps-node-arrow" :class="{'expanded': healthNodeOpen(node)}" aria-hidden="true"><use href="#ps-chevron"/></svg>
                                             </button>
+                                            <small class="ps-health-problem" x-show="node.problem" x-text="node.problem"></small>
                                         </header>
                                         <div class="ps-node-metrics">
                                             <template x-for="metric in hostMetrics" :key="metric.key">

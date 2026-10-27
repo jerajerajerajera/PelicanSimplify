@@ -49,6 +49,11 @@ if(($argv[1]??'')==='livewire'){
         if(!is_array($feed)||!in_array('Smoke notice 3',array_column($feed['items']??[],'title'),true)||($feed['unread']??0)<3)throw new \RuntimeException('the notification list does not show the new notifications');
         $notice=current(array_filter($feed['items'],fn($i)=>$i['title']==='Smoke notice 3'));
         if(($notice['notes']??null)!==['Smoke news']||($notice['notesUrl']??null)!=='https://github.com/x/y')throw new \RuntimeException('What\'s new of a "Plugin updated" notification is missing');
+        // ✕ on one: that notification moves to Archived, read, while the others stay.
+        $one=current(array_filter($feed['items'],fn($i)=>$i['title']==='Smoke notice 1'));
+        $overview->call('archiveNotification',$one['key'],true);
+        $state=\Simplify\Panel\Services\Announcements::readState($admin);
+        if(in_array('Smoke notice 1',array_column(\Simplify\Panel\Services\PanelNotifications::page(1,20,0,false,$state['archived_ids'])['items'],'title'),true)||!in_array('Smoke notice 1',array_column(\Simplify\Panel\Services\PanelNotifications::page(1,20,0,true,$state['archived_ids'])['items'],'title'),true)||!in_array('Smoke notice 2',array_column(\Simplify\Panel\Services\PanelNotifications::page(1,20,0,false,$state['archived_ids'])['items'],'title'),true))throw new \RuntimeException('✕ did not move one notification to Archived');
         $overview->call('markAllNotificationsRead');
         if(\Simplify\Panel\Services\PanelNotifications::unreadCount()!==0)throw new \RuntimeException('mark all read left unread notifications');
         // Clear read: the read ones move to Archived (a second list), the current list keeps none of them.

@@ -523,3 +523,48 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ps-hub-dialog { max-height: 92vh; overflow: auto; border-radius: var(--ps-radius-xl) var(--ps-radius-xl) 0 0; animation-name: ps-sheet-in; }
 }
 @media (prefers-reduced-motion: reduce) { .ps-hub-dialog { animation: none; } }
+
+/* Server Maker: one bar that stays at the bottom of the screen. The wizard footer (Back, Next, Create) sticks
+   to the bottom, and the steps and the draft lie on top of it, between the buttons. */
+.ssc-maker { --ssc-bar: 68px; --ssc-bar-left: 148px; --ssc-bar-right: 152px; }
+.ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: 182px; }
+.ssc-maker .fi-sc-wizard-footer { position: sticky !important; bottom: 0; z-index: 5; flex-wrap: nowrap; height: var(--ssc-bar); padding: 0 16px !important; box-shadow: 0 -10px 24px -18px rgb(0 0 0 / .35); }
+.ssc-maker .fi-sc-wizard-footer > :is(:nth-child(3), :nth-child(4)) { margin-left: auto; }
+.ssc-maker :is(.ssc-next-button, .ssc-back-button, .ssc-create-button) { min-height: 42px; }
+.ssc-navbar { position: sticky; bottom: 0; z-index: 6; display: flex; align-items: center; gap: 12px; height: var(--ssc-bar); margin-top: calc(-1 * var(--ssc-bar)); padding: 0 var(--ssc-bar-right) 0 var(--ssc-bar-left); pointer-events: none; }
+.ssc-navbar > * { pointer-events: auto; }
+.ssc-navbar .ssc-progress { position: relative; order: -1; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; justify-content: safe center; gap: 2px; padding: 0; border: 0; background: none; }
+.ssc-navbar .ssc-progress > button { flex: none; padding: 3px 8px 3px 3px; white-space: nowrap; }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) { padding: 3px; }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) .ssc-step-name { display: none; }
+.ssc-step-name { font: inherit; }
+.ssc-navbar .ssc-draft-bar { position: static; flex: none; margin: 0; padding: 3px 4px 3px 12px; background: var(--ps-surface); box-shadow: none; backdrop-filter: none; }
+.ssc-navbar .ssc-progress > :is(.ssc-progress-phone, .ssc-step-menu) { display: none; }
+@media (max-width: 600px) {
+  .ssc-maker { --ssc-bar: 64px; --ssc-bar-left: 88px; --ssc-bar-right: 88px; }
+  .ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: 128px; }
+  .ssc-maker .fi-sc-wizard-footer { padding: 0 10px !important; }
+  .ssc-maker .fi-sc-wizard-footer > * { flex: 0 0 auto; }
+  .ssc-maker :is(.fi-sc-wizard-footer .fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { min-width: 72px; min-height: 44px; padding: 0 12px; }
+  .ssc-navbar { gap: 6px; }
+  .ssc-navbar .ssc-progress { justify-content: center; padding: 0; }
+  .ssc-navbar .ssc-progress > button:not(.ssc-progress-phone) { display: none; }
+  .ssc-navbar .ssc-progress > .ssc-progress-phone { display: flex; }
+  .ssc-navbar .ssc-progress > .ssc-step-menu { display: grid; }
+  .ssc-navbar .ssc-progress::after { content: none; }
+  .ssc-navbar .ssc-progress-phone::after { content: ""; position: absolute; right: 10px; bottom: 0; left: 10px; height: 3px; border-radius: 2px; background: linear-gradient(var(--ps-accent), var(--ps-accent)) 0 0 / calc(var(--ssc-step, 1) / var(--ssc-steps, 1) * 100%) 100% no-repeat, var(--ps-raised); }
+  .ssc-navbar .ssc-progress-phone { display: flex; flex-direction: column; align-items: center; gap: 1px; position: relative; width: 100%; min-width: 0; padding: 2px 4px 9px; border: 0; border-radius: var(--ps-radius); background: none; color: var(--ps-ink); cursor: pointer; }
+  .ssc-navbar .ssc-progress-phone strong { max-width: 100%; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .ssc-navbar .ssc-progress-phone strong::after { content: " ▾"; color: var(--ps-muted); font-size: 10px; }
+  .ssc-navbar .ssc-progress-phone > .ssc-progress-count { display: block; width: auto; height: auto; border-radius: 0; background: none; color: var(--ps-muted); font-size: 11px; font-weight: 500; }
+  .ssc-navbar .ssc-step-menu { position: absolute; bottom: calc(100% + 14px); left: 50%; display: grid; gap: 2px; width: min(260px, 80vw); padding: 6px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 16px 40px -12px rgb(0 0 0 / .35); transform: translateX(-50%); }
+  .ssc-step-menu button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px 6px 6px; border: 0; border-radius: var(--ps-radius); background: none; color: var(--ps-ink); font: 500 14px/1.3 var(--ps-font); text-align: left; cursor: pointer; }
+  .ssc-step-menu button > span { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ps-raised); font-size: 12px; font-weight: 700; }
+  .ssc-step-menu button.is-complete > span { background: color-mix(in srgb, var(--ps-accent) 20%, var(--ps-surface)); }
+  .ssc-step-menu button.is-current { background: var(--ps-raised); font-weight: 650; }
+  .ssc-step-menu button.is-current > span { background: var(--ps-accent); color: var(--ps-on-accent); }
+  .ssc-step-menu button:disabled { cursor: default; opacity: .45; }
+  .ssc-navbar .ssc-draft-bar { padding: 2px; }
+  .ssc-navbar :is(.ssc-draft-status, .ssc-discard > span) { display: none; }
+  .ssc-navbar .ssc-draft-indicator { width: 32px; height: 32px; }
+}
