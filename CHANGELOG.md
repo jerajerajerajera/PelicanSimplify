@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-beta.2 (beta channel)
+Explain this error, with your own Anthropic API key (0.5.3-snapshot.3 below).
+
+## 0.5.3-snapshot.3 (snapshot channel)
+Explain this error: with your own Anthropic API key, an Explain button in the console tells you in plain words what went wrong and what to try.
+- Off until a root administrator enters an API key under Simplify settings → Error explanations; each administrator pays for their own questions.
+- Works for everyone who can see the console, or for administrators only. IP addresses, e-mail addresses, passwords and tokens are removed from the log lines before they are sent.
+
 ## 0.5.3-beta.1 (beta channel)
 Customize server page and pinned announcements (0.5.3-snapshot.1 and 2 below).
 

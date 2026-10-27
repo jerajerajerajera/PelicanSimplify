@@ -56,7 +56,16 @@ if(($argv[1]??'')==='livewire'){
         // The scheduler's run: refreshes the Panel's updates and sends the new announcement as app notification (nobody subscribed here).
         if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed');
         if(\Simplify\Panel\Services\Announcements::duePush()!==[])throw new \RuntimeException('the announcement was not marked as sent');
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; Panel update check runs; the announcement form opens and a saved announcement shows and is sent by simplify:announcements');
+        // Explain this error: the server page renders the button with the saved key, and explaining reads the console from Wings
+        // (unreachable here, so it must answer with a plain error instead of failing; nothing is sent to Anthropic).
+        Filament::setCurrentPanel(Filament::getPanel('app'));auth()->setUser($admin);
+        if(!\Simplify\Panel\Services\ErrorExplainer::settings()['has_key']||!\Simplify\Panel\Services\ErrorExplainer::availableFor($admin))throw new \RuntimeException('the saved Anthropic key is not available');
+        $page=Livewire::withQueryParams(['server'=>$server->uuid])->actingAs($admin)->test(\Simplify\Panel\Filament\App\Pages\Dashboard::class);
+        if(!str_contains($page->html(),'ps-console-explain'))throw new \RuntimeException('the server page has no Explain button');
+        $page->call('explainConsole');
+        $explained=\Simplify\Panel\Services\ErrorExplainer::explain($server);
+        if(($explained['ok']??true)!==false||!str_contains((string)($explained['error']??''),'Wings'))throw new \RuntimeException('explaining without Wings did not answer with a plain error: '.json_encode($explained));
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; Panel update check runs; the announcement form opens and a saved announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 
@@ -82,6 +91,8 @@ $admin->syncRoles(Role::getRootAdmin());
 $server=Server::factory()->create(['owner_id'=>$admin->id,'name'=>'Smoke server']);
 // Finish Simplify's setup as the admin does in the setup wizard (until then every page sends the admin to the settings), with every feature on so every page is reachable.
 auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
+// Explain this error on, with a key that is only stored (encrypted with the panel's APP_KEY) and never sent anywhere.
+\Simplify\Panel\Services\ErrorExplainer::save(['key'=>'sk-ant-smoke-test-not-a-real-key','model'=>'claude-haiku-5-5','audience'=>'everyone']);
 
 // 3. Every Simplify page on every panel, each in its own process.
 $urls=[];
@@ -104,4 +115,4 @@ foreach($children as $args){
 
 foreach($passed as $line)echo "  ok  $line\n";
 if($failures){echo "FAIL Pelican panel smoke test:\n  - ".implode("\n  - ",$failures)."\n";exit(1);}
-echo "PASS Simplify loads in a real Pelican panel ".config('app.version').": classes and attributes, every page over HTTP, overview Livewire calls\n";
+echo "PASS Simplify loads in a real Pelican panel ".config('app.version').": classes and attributes, every page over HTTP, overview Livewire calls, Explain this error\n";

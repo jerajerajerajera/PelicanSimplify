@@ -866,7 +866,7 @@
                     </nav>
                 </div>
                 <div class="ps-live-column">
-                    <aside class="ps-console" x-show="server">
+                    <aside class="ps-console" x-show="server" :class="{'can-explain': canExplain()}">
                         <div class="ps-console-title">
                             <span class="ps-terminal-icon" aria-hidden="true">›_</span>
                             <strong>Live console</strong>
@@ -879,6 +879,8 @@
                                 </button>
                             </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
+                            {{-- Explain this error: only once an admin saved an Anthropic API key in Simplify settings. --}}
+                            <button type="button" class="ps-console-clear ps-console-tool ps-console-explain" x-show="canExplain()" x-on:click="explainError()" :disabled="!!explain?.loading" data-tip="Explain what went wrong, from the last console lines" aria-label="Explain this error"><svg aria-hidden="true"><use href="#ps-question"/></svg><span>Explain</span></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="setConsoleFocus(!consoleFocus)" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-window" x-show="!docked() && !consoleWindow && !embedded" x-on:click="openConsoleWindow()" data-tip="Open in a new window" aria-label="Open the console in a new window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-peek" x-show="docked()" x-on:click="setConsolePeek(!consolePeek)" :aria-pressed="consolePeek" :data-tip="consolePeek ? 'Hide the log' : 'Show the last log lines'" :aria-label="consolePeek ? 'Hide the log' : 'Show the last log lines'"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
@@ -1354,6 +1356,38 @@
                 <button type="button" class="ps-btn is-primary" x-show="modal==='performance'" x-on:click="saveSettings()" :disabled="busy">Save limits</button>
                 <button type="button" class="ps-btn is-danger" x-show="modal==='software'" x-on:click="changeSoftware()" :disabled="busy || status!=='offline'">Install selected software</button>
                 <button type="button" class="ps-btn is-primary" x-show="modal==='restart'" x-on:click="restartChanges(restartMinutes)" :disabled="busy"><svg aria-hidden="true"><use href="#ps-clock"/></svg>Schedule restart</button>
+            </footer>
+        </section>
+    </div>
+
+    {{-- Explain this error: the last console lines, explained in plain words by Claude (with the admin's own API key). --}}
+    <div class="ps-modal-layer ps-explain-layer" :data-open="!!explain" x-show="explain" x-cloak x-on:click.self="closeExplain()" x-on:keydown.escape.stop="closeExplain()">
+        <section class="ps-modal ps-explain" role="dialog" aria-modal="true" aria-labelledby="ps-explain-title" x-trap.noscroll="!!explain">
+            <header class="ps-modal-head">
+                <h2 id="ps-explain-title">What went wrong?</h2>
+                <button type="button" class="ps-btn is-sm is-icon is-subtle ps-close" x-on:click="closeExplain()" aria-label="Close"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+            </header>
+            <div class="ps-modal-body" aria-live="polite">
+                <div x-show="explain?.loading" class="ps-modal-loading" role="status"><span class="ps-spinner"></span><span>Reading the last console lines…</span></div>
+                <div x-show="explain?.error" class="ps-explain-error" role="alert"><svg aria-hidden="true"><use href="#ps-alert"/></svg><p x-text="explain?.error"></p></div>
+                <template x-if="explain?.answer">
+                    <div class="ps-explain-answer" :class="{'is-fine': !explain.answer.found}">
+                        <p class="ps-explain-problem"><svg aria-hidden="true"><use :href="explain.answer.found ? '#ps-alert' : '#ps-check'"/></svg><span x-text="explain.answer.problem"></span></p>
+                        <section x-show="explain.answer.cause">
+                            <h3>Likely cause</h3>
+                            <p x-text="explain.answer.cause"></p>
+                        </section>
+                        <section x-show="explain.answer.steps.length">
+                            <h3>What you can try</h3>
+                            <ol><template x-for="(step, index) in explain.answer.steps" :key="index"><li x-text="step"></li></template></ol>
+                        </section>
+                    </div>
+                </template>
+            </div>
+            <footer class="ps-modal-foot">
+                <span class="is-start" x-show="explain?.answer" x-text="explain?.answer ? 'Explained by '+explain.answer.model+' from the last '+explain.answer.lines+' console lines. Check before you delete anything.' : ''"></span>
+                <button type="button" class="ps-btn" x-show="explain?.answer || explain?.error" x-on:click="explainError()" :disabled="!!explain?.loading"><svg aria-hidden="true"><use href="#ps-restart"/></svg>Ask again</button>
+                <button type="button" class="ps-btn is-primary" x-on:click="closeExplain()">Done</button>
             </footer>
         </section>
     </div>
