@@ -17,7 +17,8 @@ final class Announcements extends Command
     public function handle(): int
     {
         $now=time();
-        if((int)Cache::get('simplify.panel-updates-at',0)<=$now-600){
+        // Every ten minutes, and right after Simplify itself was updated.
+        if((int)Cache::get('simplify.panel-updates-at',0)<=$now-600||!PanelUpdates::checked()){
             Cache::forever('simplify.panel-updates-at',$now);
             $count=count(PanelUpdates::refresh());
             $this->info($count?$count.' update(s) available.':'Everything is up to date.');

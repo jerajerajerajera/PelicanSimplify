@@ -3,7 +3,7 @@ const context={window:{},setTimeout:()=>0,clearTimeout(){},console};vm.createCon
 vm.runInContext(fs.readFileSync(__dirname+'/../resources/views/js/dashboard.js','utf8'),context);
 (async()=>{
  let calls=0,saved;
- const wire={installedPackages:async()=>{calls++;return {context:{kind:'plugins',version:'1.21.3'},files:[]}},saveResourceLimits:async s=>{saved=s},refreshInfo:async()=>({})};
+ const wire={installedPackages:async()=>{calls++;return {context:{kind:'plugins',version:'1.21.3'},items:[]}},packageSearch:async()=>({items:[],context:{version:'1.21.3'}}),packageDetails:async()=>({}),saveResourceLimits:async s=>{saved=s},refreshInfo:async()=>({})};
  const boot={web:true,server:{minecraft:true,package_kind:'',can_resources:true,memory:4096,disk:10240,cpu:200,permissions:{'file.read':true,'file.read-content':true,'file.update':true,'schedule.read':true,'activity.read':true},native_sections:{schedules:'/server/demo/schedules',activity:'/server/demo/activity'},properties:{}}};
  const d=context.window.pelicanSimplify(wire,boot);d.$nextTick=f=>f();d.$root={querySelector:()=>null};
  assert.equal(d.showWidget('mods'),false);assert.equal(d.showWidget('plugins'),false);

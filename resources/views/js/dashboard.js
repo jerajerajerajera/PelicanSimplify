@@ -193,6 +193,12 @@
       packageQuery: '',
       packageVersion: '',
       packageResults: [],
+      packageDetails: {},
+      packageTab: 'installed',
+      packageSite: 'all',
+      packageSearched: false,
+      packageSearching: false,
+      packageOffline: [],
       installed: {},
       advanced: {},
       software: { server_type: 'vanilla', egg_id: '', minecraft_version: '', modpack_project: '', modpack_version: '' },
@@ -629,8 +635,9 @@
         return this.notifications().filter((item) => !item.pelican && (item.announcement ? item.unread : true)).length + this.panelUnread;
       },
       /** "What's new" lines to show: the first three, all of them once opened. */
-      noteLines(item) {
-        return this.openNotes[item.id] ? item.notes : item.notes.slice(0, 3);
+      /** What's new: one line in the bell (all on request), every line in the full notification list. */
+      noteLines(item, full = false) {
+        return full || this.openNotes[item.id] ? item.notes : item.notes.slice(0, 1);
       },
       toggleNotes(item) {
         this.openNotes = { ...this.openNotes, [item.id]: !this.openNotes[item.id] };
@@ -2132,12 +2139,12 @@
           if (key === 'web') this.website = await load(() => wire.website());
           if (key === 'players') this.playerLists = await load(() => wire.players());
           if (['mods', 'plugins'].includes(key)) {
-            this.packageQuery = '';
-            this.packageResults = [];
-            this.packageVersion = '';
+            Object.assign(this, { packageQuery: '', packageResults: [], packageDetails: {}, packageVersion: '', packageSite: 'all', packageSearched: false, packageOffline: [] });
             this.installed = await load(() => wire.installedPackages());
             if (this.installed.context?.kind !== key) throw new Error('This server does not support ' + key + '.');
             this.packageVersion = this.installed.context?.version || '';
+            this.packageTab = (this.installed.items || []).length ? 'installed' : 'add';
+            if (this.packageTab === 'add') this.openPackageSearch();
           }
           if (['advanced', 'software', 'connection'].includes(key) && (key !== 'software' || this.server?.minecraft)) {
             this.advanced = await load(() => (key === 'connection' ? wire.connectionData() : wire.advancedData()));
@@ -2700,23 +2707,100 @@
           } catch {}
         }, 1800);
       },
-      async searchPackages() {
-        const result = await this.run(() => wire.packageSearch(this.packageQuery, this.packageVersion));
-        if (result === SKIPPED || !result) return;
-        this.packageResults = result.items;
-        this.packageVersion = result.context.version;
+      packageTarget() {
+        const loader = { paper: 'Paper', purpur: 'Purpur', spigot: 'Spigot', bukkit: 'Bukkit', fabric: 'Fabric', forge: 'Forge', neoforge: 'NeoForge', quilt: 'Quilt' }[this.installed.context?.loader] || 'Minecraft';
+        return loader + ' ' + (this.installed.context?.version || this.packageVersion);
       },
-      async installPackage(id) {
-        const result = await this.run(() => wire.installPackage(id, this.packageVersion), 'Package installed. Start the server to load it.');
+      packageSites() {
+        const sites = [{ key: 'all', label: 'All sites' }, { key: 'modrinth', label: 'Modrinth' }];
+        if (['paper', 'purpur'].includes(this.installed.context?.loader)) sites.push({ key: 'hangar', label: 'Hangar' });
+        return [...sites, { key: 'spigot', label: 'SpigotMC' }];
+      },
+      packageHeading() {
+        const what = this.modal === 'plugins' ? 'plugins' : 'mods';
+        return this.packageSearched && this.packageQuery.trim() ? 'Results for “' + this.packageQuery.trim() + '”' : 'Popular ' + what + ' for ' + this.packageTarget();
+      },
+      /** Cards for the chosen site. A card whose plugin is also on that site switches to that site's listing. */
+      visiblePackages() {
+        if (this.packageSite === 'all') return this.packageResults;
+        return this.packageResults
+          .map((p) => (p.source === this.packageSite ? p : (p.also.find((o) => o.source === this.packageSite) && this.switchedSource(p, p.also.find((o) => o.source === this.packageSite)))))
+          .filter(Boolean);
+      },
+      switchedSource(p, other) {
+        return { ...p, key: other.key, source: other.source, label: other.label, page: other.page, fits: other.fits, also: [{ source: p.source, label: p.label, key: p.key, fits: p.fits, page: p.page }, ...p.also.filter((o) => o.key !== other.key)] };
+      },
+      useSource(p, other) {
+        const index = this.packageResults.findIndex((x) => x.key === p.key);
+        if (index < 0) return;
+        this.packageResults.splice(index, 1, this.switchedSource(p, other));
+        this.loadPackageDetails([other.key]);
+      },
+      versionLabel(version) {
+        return version ? (/^\d/.test(version) ? 'v' + version : version) : '';
+      },
+      packageDetail(p) {
+        return this.packageDetails[p.key] || null;
+      },
+      installedKey(key) {
+        return (this.installed.items || []).some((f) => f.key === key);
+      },
+      openPackageSearch() {
+        this.packageTab = 'add';
+        if (!this.packageSearched && !this.packageResults.length && (this.installed.context?.version || this.packageVersion)) this.searchPackages();
+      },
+      async searchPackages() {
+        const request = (this.packageRequest = (this.packageRequest || 0) + 1);
+        this.packageSearching = true;
+        try {
+          const result = await wire.packageSearch(this.packageQuery, this.packageVersion);
+          if (request !== this.packageRequest) return;
+          this.packageResults = result.items || [];
+          this.packageVersion = result.context?.version || this.packageVersion;
+          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC' })[key] || key);
+          this.packageSearched = true;
+          this.loadPackageDetails(this.packageResults.map((p) => p.key));
+        } catch (e) {
+          if (request === this.packageRequest) this.toast(e?.message || 'Search failed. Try again in a moment.', 'danger');
+        } finally {
+          if (request === this.packageRequest) this.packageSearching = false;
+        }
+      },
+      /** Which version "Install" would download, filled in after the results show. */
+      async loadPackageDetails(keys) {
+        const missing = keys.filter((key) => !this.packageDetails[key]);
+        if (!missing.length) return;
+        try {
+          const details = await wire.packageDetails(missing, this.packageVersion);
+          this.packageDetails = { ...this.packageDetails, ...details };
+        } catch {}
+      },
+      async installPackage(p, update = false) {
+        const detail = this.packageDetails[p.key];
+        if (!update && detail && !detail.fits) {
+          const ok = await this.ask({
+            title: 'Install ' + p.title + ' anyway?',
+            message: 'There is no release of ' + p.title + ' for Minecraft ' + this.packageVersion + '. The newest one, ' + this.versionLabel(detail.version) + (detail.for ? ', is made for ' + detail.for : '') + '. It may not work on your version.',
+            confirmLabel: 'Install anyway',
+          });
+          if (!ok) return;
+        }
+        let result = await this.run(() => wire.installPackage(p.key, this.packageVersion, !update && !!detail && !detail.fits, { title: p.title, icon: p.icon, page: p.page }));
+        if (result === SKIPPED && update && this.notice.startsWith('There is no release')) {
+          if (await this.ask({ title: 'Update ' + p.title + ' anyway?', message: this.notice + ' The newest release may not work on your version.', confirmLabel: 'Update anyway' })) result = await this.run(() => wire.installPackage(p.key, this.packageVersion, true, p));
+        }
+        if (result === SKIPPED) return;
+        this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it.', 'ok');
+        this.installed = await wire.installedPackages();
+      },
+      async togglePackage(f) {
+        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? f.title + ' is off. It stays in the folder.' : f.title + ' is on again.');
         if (result !== SKIPPED) this.installed = await wire.installedPackages();
       },
       async removePackage(file) {
         if (!(await this.ask({ title: 'Remove ' + file + '?', message: 'A copy is kept in the server package backup folder.', confirmLabel: 'Remove', tone: 'danger' }))) return;
         const result = await this.run(() => wire.removePackage(file), 'Package removed');
         if (result !== SKIPPED) this.installed = await wire.installedPackages();
-      },
-      tracked(file) {
-        return Object.values(this.installed.tracked || {}).find((x) => x.filename === file);
       },
       async searchPacks() {
         const result = await this.run(() => wire.packSearch(this.packQuery));
