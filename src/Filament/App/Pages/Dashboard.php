@@ -158,6 +158,7 @@ final class Dashboard extends Page
     public function saveOverviewGroups(array $groups,?string $order='name'): array { return \Simplify\Panel\Services\OverviewGroups::save(user(),$groups,$order); }
     #[Renderless]
     public function hostHealth(): array { return \Simplify\Panel\Services\FeatureSettings::enabled('host_health')?HostHealth::snapshot():[]; }
+    #[Renderless]
     public function refreshHostHealth(): array { return \Simplify\Panel\Services\FeatureSettings::enabled('host_health')?HostHealth::refresh():[]; }
     #[Renderless]
     public function listing(): array

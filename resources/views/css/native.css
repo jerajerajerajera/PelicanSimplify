@@ -208,7 +208,7 @@ html.ps-frame .fi-sc-wizard-footer { padding-top: 12px !important; border-top: 1
 /* Tabbed pages (profile, user edit): the header actions sit on the tab row instead of their own row. */
 html.ps-frame .fi-page:has(.fi-sc-tabs) { position: relative; }
 html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-header:has(.fi-header-actions-ctn > *) { position: absolute; top: 14px; right: 16px; z-index: 3; margin: 0 !important; }
-html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-right: 110px !important; }
+html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs:not(.fi-vertical) .fi-tabs { padding-right: 110px !important; }
 html.ps-frame .fi-section:not(.fi-section .fi-section) + .fi-section:not(.fi-section .fi-section) { margin-top: 4px; }
 
 /* Settings popup: the category menu stays in place while the settings beside it scroll. */
