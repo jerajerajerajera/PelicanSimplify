@@ -1,5 +1,10 @@
 # Changes
 
+## 0.6.0-beta.7 (beta channel)
+All settings in one place.
+- Admin tools → Panel has one Settings entry. The separate settings button in the top bar is gone.
+- Pelican's own settings (General, Captcha, Mail, Backup, OAuth, Misc) are tabs in a Pelican group at the bottom of the settings menu. Pelican keeps its own form and save button.
+
 ## 0.6.0-beta.6 (beta channel)
 Menus grouped by what you want to do, a foldable Customize panel and a shorter setup wizard.
 - Admin tools and host mode are grouped as Servers, Nodes, People, Announcements, Tools, Integrations, Panel and Other plugins. The top bar, phone menu, account menu and settings tabs follow the same order.

@@ -57,6 +57,8 @@ final class AdminPages
             [$group, $icon] = self::KNOWN[$name] ?? ($plugin ? ['External', 'plugins'] : ['Other', 'legacy']);
             if ($name === 'ServerResource' && $class::canCreate()) $label = 'Create server (legacy)';
             if ($people && $name === 'UserResource') $label = 'People';
+            // Pelican's settings are tabs inside Simplify settings (Admin tools → Panel → Settings).
+            if ($name === 'Settings' && PelicanSettingsTabs::available()) continue;
             if ($name === 'Settings') $label = 'Pelican settings';
             if ($name === 'PluginResource') $label = 'Plugin manager';
             $groups[$group][] = ['key' => strtolower($name), 'label' => $label, 'url' => $url, 'icon' => $icon, 'plugin' => $plugin['name'] ?? null];
