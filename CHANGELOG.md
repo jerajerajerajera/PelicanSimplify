@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.3-snapshot.14 (snapshot channel)
+The "updated" notification after a plugin update shows what is new.
+- After an update through Simplify's plugin manager, the notification that a plugin was updated shows the What's new of the new version.
+
 ## 0.5.3-snapshot.13 (snapshot channel)
 Plugins can be found on Modrinth, Hangar and SpigotMC, and What's new in update notifications is shorter.
 - The Plugins section has Installed and Add plugin. Add plugin searches Modrinth, Hangar and SpigotMC at once and shows where a plugin comes from and which version installs.
