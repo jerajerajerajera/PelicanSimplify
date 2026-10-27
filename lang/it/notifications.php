@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Novità',
+        'full_release_notes' => 'Note di rilascio complete',
+        'mark_read' => 'Segna come letto',
+        'mark_as_unread' => 'Segna come non letto',
+        'clear' => 'Rimuovi',
+        'show_less' => 'Mostra meno',
+        'pin' => 'Fissa ',
+        'unpin' => 'Sblocca ',
+        'pin_2' => 'Fissa',
+        'unpin_2' => 'Sblocca',
+        'pinned' => 'Fissato',
+        'you_are_all_caught_up' => 'Sei in pari.',
+        'archived' => 'Archiviati',
+        'nothing_archived' => 'Niente in archivio.',
+        'loading' => 'Caricamento…',
+        'show_more' => 'Mostra altro',
+        'clear_name' => 'Rimuovi :title',
+        'show_all' => 'Mostra tutti e :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Le notifiche non sono ancora attive su questo dispositivo.',
+        'test_notification' => 'Notifica di prova',
+        'notifications_work_on_this_device' => 'Le notifiche funzionano su questo dispositivo.',
+        'test_sent_it_should_appear_within' => 'Prova inviata. Dovrebbe comparire entro pochi secondi.',
+        'the_browser_no_longer_accepts_notifications' => 'Il browser non accetta più notifiche per questo dispositivo. Riattivale.',
+        'the_push_service_did_not_accept' => 'Il servizio push non ha accettato la prova. Riprova tra un minuto.',
+    ],
+];
