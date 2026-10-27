@@ -9,8 +9,8 @@
      :class="{'dark': themeDark, 'server-active': !!server, 'host-mode': hostMode && !server, 'is-embedded': embedded, 'is-console-window': consoleWindow, 'is-full-width': overviewPreferences.fullWidth, 'is-server-full-width': overviewPreferences.serverFullWidth, 'ps-halloween': halloween()}"
      :style="accentStyle(server?.uuid || 'overview')">
     @include('pelican-simplify::dashboard-icons')
-    {{-- Halloween (25 October to 2 November): a faint web with a spider in the corner. Clicks pass through. --}}
-    <template x-if="halloween()">
+    {{-- Halloween (25 October to 2 November): a faint web with a spider in the corner. Clicks pass through; once per window, not again inside an embedded page. --}}
+    <template x-if="halloween() && !embedded">
         <div class="ps-hw-corner" aria-hidden="true">
             <svg class="ps-hw-web" viewBox="0 0 100 100"><path d="M100 0H0M100 0 10 45M100 0 40 80M100 0V100M100 0 72 95M78 0Q81.1 7 80.2 9.9Q85.5 15.8 86.8 17.6Q92.3 21.3 93.8 20.9Q98.9 23.4 100 22M60 0Q64 11 64 18Q72 27 76 32Q84.4 37 88.8 38Q96.4 41 100 40M40 0Q45 15.5 46 27Q57 39.5 64 48Q75.6 54.5 83.2 57Q93.6 60.5 100 60M20 0Q26 20 28 36Q42 52 52 64Q66.8 72 77.6 76Q90.8 80 100 80"/></svg>
             <span class="ps-hw-spider"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="3.2"/><path d="M4 5 1 2M4 7H0M4 9l-3 3M10 5l3-3M10 7h4M10 9l3 3"/></svg></span>
@@ -471,12 +471,12 @@
                     </template>
                 </aside>
                 <div class="ps-host-main">
+                    @include('pelican-simplify::announcement-chips')
                     <header class="ps-host-head" x-show="hostServer" x-cloak :style="accentStyle(hostServer?.uuid || 'overview')">
                         <i class="ps-host-dot ps-status" :class="hostServer?.status"></i>
                         <h2 class="ps-host-server-name" x-text="hostServer ? cardNames(hostServer).large : ''"></h2>
                         <small x-text="hostServer ? hostServerVersion(hostServer) : ''"></small>
                         <span class="ps-host-head-actions">
-                            <a class="ps-btn is-sm" :href="hostServer?.url"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
                             <button type="button" class="ps-btn is-sm is-icon" x-on:click="closeHostServer()" data-tip="Close" aria-label="Close server"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
                         </span>
                     </header>
@@ -484,9 +484,6 @@
                         <svg class="ps-host-head-icon" aria-hidden="true"><use :href="'#ps-'+(hostSection?.icon||'host')"/></svg>
                         <h2 x-text="hostSection?.label"></h2>
                         <small x-show="hostSection?.pages.length > 1" x-text="hostPage?.label"></small>
-                        <span class="ps-host-head-actions" x-show="hostPage?.url">
-                            <a class="ps-btn is-sm" :href="hostPage?.url" target="_top"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
-                        </span>
                     </header>
                     <div class="ps-host-frame is-server" x-show="hostServer" :style="accentStyle(hostServer?.uuid || 'overview')">
                         <template x-for="s in hostServer ? [hostServer] : []" :key="s.uuid">
