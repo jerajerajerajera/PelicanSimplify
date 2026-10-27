@@ -65,7 +65,7 @@ final class Packages
     public static function search(Server $s,string $q,string $version): array
     {
         Access::permission($s,SubuserPermission::FileRead);$ctx=self::target($s,$version);
-        $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind']));
+        $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind'],CurseForge::hasKey()));
         abort_if(array_filter($results)===[],503,'The plugin sites did not answer. Try again in a moment.');
         return ['context'=>$ctx,'items'=>PluginSources::merge($results,$q,$ctx['version'],$ctx['kind']),'offline'=>array_keys(array_filter($results,fn($r)=>$r===null))];
     }
@@ -90,7 +90,7 @@ final class Packages
                 'key'=>$t['key']??'','icon'=>$t['icon']??'','auto_off'=>!$on?($t['auto_off']??''):'','watch'=>$on&&!empty($t['watch']),'page'=>$t['page']??'','size'=>(int)($f['size']??0)];
         }
         usort($items,fn($a,$b)=>strcasecmp($a['title'],$b['title']));
-        return ['context'=>$ctx,'items'=>$items];
+        return ['context'=>[...$ctx,'curseforge'=>CurseForge::hasKey(),'curseforge_own'=>CurseForge::allowUserKeys(),'curseforge_mine'=>CurseForge::userHasKey()],'items'=>$items];
     }
     /** Tracked installs, keyed by "source:id". Entries from before 0.5.3 were Modrinth only, keyed by project id. */
     private static function tracked(Server $s): array
