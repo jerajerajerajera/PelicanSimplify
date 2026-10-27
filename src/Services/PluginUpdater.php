@@ -150,6 +150,8 @@ final class PluginUpdater
                 if (!$boot->successful()) throw new \RuntimeException('The panel does not start with the new version: '.self::output($boot));
                 $result = ['ok' => true, 'message' => $plugin->name.' updated from '.$from.' to '.$to.'.'];
                 PanelUpdates::forget();
+                // What's new right in the "Plugin updated" notification; usually already read by the update check.
+                try { $result['notes'] = PanelUpdates::notesFor($plugin, $to); } catch (\Throwable) {}
             } catch (\Throwable $exception) {
                 self::restore($directory, $backup);
                 report($exception);
@@ -328,6 +330,7 @@ final class PluginUpdater
             $users = $userId ? \App\Models\User::query()->whereKey($userId)->get() : \App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin());
             $notification = \Filament\Notifications\Notification::make()->title($result['ok'] ? $titles[0] : $titles[1])->body($result['message']);
             $result['ok'] ? $notification->success() : $notification->danger();
+            if (!empty($result['notes']['lines'])) $notification->viewData(['simplify_notes' => $result['notes']['lines'], 'simplify_notes_url' => $result['notes']['url'] ?? null]);
             if (FeatureSettings::enabled('plugin_manager')) $notification->actions([\Filament\Actions\Action::make('open')->label('Open plugins')->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
             // Delivered right away: the result must arrive even when the queue worker is busy or down.
             foreach ($users as $user) $user->notifyNow($notification->toDatabase());

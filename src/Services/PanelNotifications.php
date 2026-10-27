@@ -88,7 +88,13 @@ final class PanelNotifications
                 break;
             }
         }
+        // What's new that Simplify added to its own "Plugin updated" notification.
+        $view = is_array($data['viewData'] ?? null) ? $data['viewData'] : [];
+        $notes = array_values(array_filter(array_map(fn ($line) => is_string($line) ? self::text($line) : '', is_array($view['simplify_notes'] ?? null) ? $view['simplify_notes'] : [])));
+        $notesUrl = is_string($view['simplify_notes_url'] ?? null) && str_starts_with($view['simplify_notes_url'], 'https://github.com/') ? $view['simplify_notes_url'] : null;
         return [
+            'notes' => array_slice($notes, 0, ReleaseNotes::LINES),
+            'notesUrl' => $notes ? $notesUrl : null,
             'id' => 'pelican-'.$notification->id,
             'key' => (string) $notification->id,
             'tone' => self::TONES[$data['status'] ?? $data['color'] ?? ''] ?? 'info',
