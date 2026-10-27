@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-beta.7 (beta channel)
+Error explanations can use Claude, GPT or Gemini (0.5.3-snapshot.10 below).
+
+## 0.5.3-snapshot.10 (snapshot channel)
+Error explanations can use Claude, GPT or Gemini.
+- Under Simplify settings → Error explanations, a root administrator picks the AI and enters its own API key; each AI keeps its own key.
+- The emergency page and `php artisan simplify:explain` use the chosen AI.
+
 ## 0.5.3-beta.6 (beta channel)
 Explain this error still works when the panel shows an error page, and update notifications say what is new (0.5.3-snapshot.9 below).
 

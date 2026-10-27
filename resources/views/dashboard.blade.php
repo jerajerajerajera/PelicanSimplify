@@ -76,7 +76,7 @@
                                     </div>
                                 </div>
                             </template>
-                            {{-- Explain the panel's own log (root admins with an Anthropic key in Simplify settings). --}}
+                            {{-- Explain the panel's own log (root admins with an AI key in Simplify settings). --}}
                             <button type="button" class="ps-admin-health-title ps-admin-explain" x-show="explainSources().includes('panel')" x-on:click="adminMenu=false; explainError('panel')"><svg aria-hidden="true"><use href="#ps-question"/></svg><span>Explain panel errors</span></button>
                             <template x-for="section in hostSections().filter((x) => x.key === 'legacy')" :key="section.key">
                                 <div class="ps-admin-legacy">
@@ -867,7 +867,7 @@
                                 </button>
                             </template>
                             <button type="button" class="ps-console-clear" x-on:click="logs=[]; renderLogs()">Clear</button>
-                            {{-- Explain this error: only once an admin saved an Anthropic API key in Simplify settings. --}}
+                            {{-- Explain this error: only once an admin saved an AI API key (Claude, GPT or Gemini) in Simplify settings. --}}
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-explain" x-show="canExplain()" x-on:click="explainError('console')" :disabled="!!explain?.loading" data-tip="Explain what went wrong, from the last console lines" aria-label="Explain this error"><svg aria-hidden="true"><use href="#ps-question"/></svg><span>Explain</span></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-grow" x-show="!docked() && !consoleWindow" x-on:click="setConsoleFocus(!consoleFocus)" :aria-pressed="consoleFocus" :data-tip="consoleFocus ? 'Normal size' : 'Bigger console'" :aria-label="consoleFocus ? 'Normal size' : 'Bigger console'"><svg aria-hidden="true"><use href="#ps-expand"/></svg></button>
                             <button type="button" class="ps-console-clear ps-console-tool ps-console-window" x-show="!docked() && !consoleWindow && !embedded" x-on:click="openConsoleWindow()" data-tip="Open in a new window" aria-label="Open the console in a new window"><svg aria-hidden="true"><use href="#ps-external"/></svg></button>
@@ -1360,7 +1360,7 @@
         </section>
     </div>
 
-    {{-- Explain this error: the last console lines, explained in plain words by Claude (with the admin's own API key). --}}
+    {{-- Explain this error: the last console lines, explained in plain words by the AI an admin picked (with their own API key). --}}
     <div class="ps-modal-layer ps-explain-layer" :data-open="!!explain" x-show="explain" x-cloak x-on:click.self="closeExplain()" x-on:keydown.escape.stop="closeExplain()">
         <section class="ps-modal ps-explain" role="dialog" aria-modal="true" aria-labelledby="ps-explain-title" x-trap.noscroll="!!explain">
             <header class="ps-modal-head">

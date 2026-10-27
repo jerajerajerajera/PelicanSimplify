@@ -11,7 +11,7 @@ namespace App\Repositories\Daemon {final class DaemonServerRepository {public st
     public function getHttpClient(){return new class{public function timeout($s){return $this;}public function get($url,$q){return new class{public function throw(){return $this;}public function json($k){return DaemonServerRepository::$lines;}};}};}}}
 namespace App\Models {class Server {public function __construct(public string $uuid='abc',public $status=null,public $egg=null,public $node=null){}}}
 namespace App\Repositories\Daemon {final class DaemonSystemRepository {public static string $report='';public function setNode($n){return $this;}public function getDiagnostics($l,$e,$g){return new class{public function throw(){return $this;}public function body(){return DaemonSystemRepository::$report;}};}}}
-namespace Simplify\Panel\Services {require __DIR__.'/../src/Services/JsonFile.php';}
+namespace Simplify\Panel\Services {require __DIR__.'/../src/Services/JsonFile.php';foreach(['Provider','Anthropic','OpenAi','Gemini'] as $class)require __DIR__.'/../src/Services/Explain/Providers/'.$class.'.php';}
 namespace {
 $GLOBALS['user']=null;
 function user(){return $GLOBALS['user'];}
@@ -30,7 +30,8 @@ $person=fn(bool $root,bool $admin,int $id=7)=>new class($root,$admin,$id){public
 $server=new \App\Models\Server('abc',null,(object)['name'=>'Forge Minecraft']);
 
 // Off until a root admin saves a key; the key is stored encrypted and never shown again.
-check(E::settings()===['model'=>'claude-opus-5-5','audience'=>'everyone','has_key'=>false],'defaults without a key');
+$none=['anthropic'=>false,'openai'=>false,'gemini'=>false];
+check(E::settings()===['provider'=>'anthropic','model'=>'claude-opus-5-5','audience'=>'everyone','has_key'=>false,'saved_keys'=>$none],'defaults without a key');
 check(!E::availableFor($person(false,false)),'no button without a key');
 $GLOBALS['user']=$person(false,false);
 try{E::save(['key'=>'sk-ant-x']);check(false,'non-admins cannot save');}catch(\RuntimeException $e){check($e->getMessage()==='abort 403','non-admins get a 403');}
@@ -38,7 +39,7 @@ $GLOBALS['user']=$person(true,true);
 E::save(['key'=>'  sk-ant-secret-1234  ','model'=>'claude-haiku-5-5','audience'=>'admins']);
 $raw=Storage::$files[E::FILE];
 check(!str_contains($raw,'sk-ant-secret-1234')&&str_contains($raw,'enc:'),'key stored encrypted only');
-check(E::settings()===['model'=>'claude-haiku-5-5','audience'=>'admins','has_key'=>true],'saved choices');
+check(E::settings()===['provider'=>'anthropic','model'=>'claude-haiku-5-5','audience'=>'admins','has_key'=>true,'saved_keys'=>['anthropic'=>true]+$none],'saved choices');
 E::save(['key'=>'','model'=>'unknown-model','audience'=>'everyone']);
 check(E::settings()['has_key']&&E::settings()['model']==='claude-haiku-5-5'&&E::settings()['audience']==='everyone','empty key keeps the saved key; an unknown model keeps the current one');
 check(E::availableFor($person(false,false)),'everyone who can see the console');
@@ -59,11 +60,11 @@ check(count($clean)===9&&end($clean)==='java.lang.OutOfMemoryError: Java heap sp
 check(count(E::sanitize(array_fill(0,250,'line')))===E::LINES&&mb_strlen(E::sanitize([str_repeat('a ',800)])[0])===600,'at most 100 lines of 600 characters');
 
 // The request: structured answer, low effort, fallbacks only where Anthropic offers them.
-$payload=E::payload(['line one','line two'],'claude-opus-5-5','Game or software: Paper');
-check($payload['model']==='claude-opus-5-5'&&$payload['output_config']['effort']==='low'&&$payload['output_config']['format']['type']==='json_schema','model, effort and JSON answer');
+$request=E::request('anthropic','sk-test','claude-opus-5-5',['line one','line two'],'Game or software: Paper');$payload=$request['body'];
+check($request['url']==='https://api.anthropic.com/v1/messages'&&$payload['model']==='claude-opus-5-5'&&$payload['output_config']['effort']==='low'&&$payload['output_config']['format']['type']==='json_schema','model, effort and JSON answer');
 check(!isset($payload['thinking'],$payload['temperature'])&&$payload['fallbacks']==='default','no thinking or sampling settings; fallbacks on for Opus');
 check(str_contains($payload['messages'][0]['content'],"Game or software: Paper\n")&&str_contains($payload['messages'][0]['content'],"<log>\nline one\nline two\n</log>"),'console in the question');
-check(!isset(E::payload(['x'],'claude-haiku-5-5')['fallbacks']),'Haiku has no fallbacks');
+check(!isset(E::request('anthropic','k','claude-haiku-5-5',['x'])['body']['fallbacks'])&&!isset(E::request('anthropic','k','claude-haiku-5-5',['x'])['headers']['anthropic-beta']),'Haiku has no fallbacks');
 check($payload['output_config']['format']['schema']['additionalProperties']===false,'strict schema');
 
 // Reading answers and failures.
@@ -150,5 +151,35 @@ check(E::ask('k','panel',null,null,'simplify.explain.access')['ok']&&count(Http:
 Cache::$broken=false;
 check(E::savedKey()==='sk-ant-secret-1234','saved key for the emergency page and terminal');
 $put($old,'');$put($new,'');
-echo "PASS error explainer: encrypted key, audience, privacy filter, request shape, answers, failures, Wings and install logs, panel and Wings logs for root admins, cache and rate limits, emergency page and terminal questions\n";
+
+// GPT and Gemini: their own request shape, answer format, errors and key; the Anthropic key stays saved.
+$schemaOk=function(array $schema,bool $plain)use(&$schemaOk){foreach($schema as $k=>$v){if($k==='additionalProperties'&&$plain)return false;if(is_array($v)&&!$schemaOk($v,$plain))return false;}return true;};
+$openai=E::request('openai','sk-proj-1','gpt-6.1-sol',['line one'],'Game or software: Paper');
+check($openai['url']==='https://api.openai.com/v1/responses'&&$openai['headers']==['Authorization'=>'Bearer sk-proj-1']&&$openai['body']['model']==='gpt-6.1-sol'&&$openai['body']['store']===false&&$openai['body']['text']['format']['type']==='json_schema'&&$openai['body']['text']['format']['strict']===true&&$openai['body']['text']['format']['schema']['additionalProperties']===false&&str_contains($openai['body']['input'],"<log>\nline one\n</log>")&&str_contains($openai['body']['instructions'],'game servers'),'OpenAI: Responses API, strict schema, not stored');
+$gemini=E::request('gemini','AIza-1','gemini-3.8-flash',['line one']);
+check($gemini['url']==='https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent'&&$gemini['headers']==['x-goog-api-key'=>'AIza-1']&&!str_contains($gemini['url'],'AIza')&&$gemini['body']['generationConfig']['responseMimeType']==='application/json'&&$schemaOk($gemini['body']['generationConfig']['responseJsonSchema'],true)&&isset($gemini['body']['generationConfig']['responseJsonSchema']['properties']['issues']['items']['properties']['steps'])&&str_contains($gemini['body']['systemInstruction']['parts'][0]['text'],'game servers'),'Gemini: key in a header, JSON schema without additionalProperties');
+$json=json_encode(['found'=>false,'summary'=>'All fine.','issues'=>[['title'=>'My panel feels slow','cause'=>'One timeout.','steps'=>[]]]]);
+check(E::answer(['output'=>[['type'=>'reasoning'],['type'=>'message','content'=>[['type'=>'output_text','text'=>$json]]]]],'openai')['issues'][0]['title']==='My panel feels slow'&&E::answer(['output'=>[['type'=>'message','content'=>[['type'=>'refusal','refusal'=>'no']]]]],'openai')===null,'OpenAI answers and refusals');
+check(E::answer(['candidates'=>[['content'=>['parts'=>[['text'=>'thinking','thought'=>true],['text'=>$json]]],'finishReason'=>'STOP']]],'gemini')['summary']==='All fine.'&&E::answer(['promptFeedback'=>['blockReason'=>'SAFETY']],'gemini')===null&&E::answer(['candidates'=>[['finishReason'=>'SAFETY']]],'gemini')===null,'Gemini answers, thoughts skipped, blocks give null');
+check(str_contains(E::failure(401,['error'=>['code'=>'invalid_api_key']],'openai'),'OpenAI API key is not valid')&&str_contains(E::failure(429,['error'=>['code'=>'insufficient_quota','message'=>'You exceeded your current quota']],'openai'),'no credit')&&str_contains(E::failure(400,['error'=>['status'=>'INVALID_ARGUMENT','message'=>'API key not valid. Please pass a valid API key.']],'gemini'),'Google API key is not valid')&&str_contains(E::failure(429,['error'=>['status'=>'RESOURCE_EXHAUSTED']],'gemini'),'busy')&&str_contains(E::failure(404,[],'gemini'),'model is not available'),'plain errors per provider');
+E::save(['provider'=>'openai','key'=>'sk-proj-secret','model'=>'claude-opus-5-5']);
+$raw=Storage::$files[E::FILE];$settings=E::settings();
+check($settings['provider']==='openai'&&$settings['model']==='gpt-6.1-sol'&&$settings['has_key']&&$settings['saved_keys']===['anthropic'=>true,'openai'=>true,'gemini'=>false]&&!str_contains($raw,'sk-proj-secret'),'switching to OpenAI: its own encrypted key, its default model, the Anthropic key kept');
+check(E::availableFor($person(false,false)),'the button stays with an OpenAI key');
+Http::$reply=[200,['output'=>[['type'=>'message','content'=>[['type'=>'output_text','text'=>$json]]]]]];Http::$sent=[];RateLimiter::$hits=[];
+\App\Repositories\Daemon\DaemonServerRepository::$lines=['[ERROR] openai test line'];
+$gpt=E::explain($server);
+check($gpt['ok']&&$gpt['model']==='GPT-6.1 Sol'&&Http::$sent[0]['url']==='https://api.openai.com/v1/responses'&&Http::$sent[0]['headers']['Authorization']==='Bearer sk-proj-secret'&&!isset(Http::$sent[0]['headers']['x-api-key']),'explained by GPT with the OpenAI key only');
+$test=E::test('','gemini-3.5-flash-lite','gemini');
+check(!$test['ok']&&$test['message']==='Enter an API key first.','no saved Gemini key yet');
+Http::$reply=[200,['candidates'=>[['content'=>['parts'=>[['text'=>'OK']]],'finishReason'=>'MAX_TOKENS']]]];
+$test=E::test('AIza-typed','gemini-3.5-flash-lite','gemini');
+check($test['ok']&&$test['message']==='The key works with Gemini 3.5 Flash-Lite.'&&end(Http::$sent)['headers']['x-goog-api-key']==='AIza-typed'&&str_contains(end(Http::$sent)['url'],'gemini-3.5-flash-lite:generateContent'),'Gemini test key');
+E::save(['provider'=>'openai'],true);
+check(!E::settings()['has_key']&&E::settings()['saved_keys']['anthropic']&&!E::availableFor($person(true,true)),'removing the OpenAI key turns it off, the Anthropic key stays');
+E::save(['provider'=>'anthropic']);
+check(E::settings()['has_key']&&E::settings()['model']==='claude-opus-5-5','back to Claude with its saved key');
+Storage::$files[E::FILE]=json_encode(['key'=>'enc:'.strrev('sk-ant-old'),'model'=>'claude-sonnet-5-5','audience'=>'everyone']);
+check(E::settings()['provider']==='anthropic'&&E::settings()['model']==='claude-sonnet-5-5'&&E::settings()['has_key'],'settings from before the AI choice keep working');
+echo "PASS error explainer: encrypted key, audience, privacy filter, request shape, answers, failures, Wings and install logs, panel and Wings logs for root admins, cache and rate limits, emergency page and terminal questions, Claude, GPT and Gemini\n";
 }

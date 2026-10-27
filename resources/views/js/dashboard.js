@@ -2233,7 +2233,7 @@
           if (bottom) el.scrollTop = el.scrollHeight;
         });
       },
-      /** The Explain button shows once an admin saved an Anthropic API key, for people who may watch this console. */
+      /** The Explain button shows once an admin saved an AI API key, for people who may watch this console. */
       canExplain() {
         return !!(this.boot.explain_errors && this.server?.permissions?.['websocket.connect']);
       },
@@ -2248,7 +2248,7 @@
       explainNoun(source) {
         return { console: 'console', panel: 'panel log', wings: 'Wings log' }[source] || 'log';
       },
-      /** Sends the last lines of a log (read again by the panel) to Claude and shows the answer. */
+      /** Sends the last lines of a log (read again by the panel) to the chosen AI and shows the answer. */
       async explainError(source) {
         source = source || this.explain?.source || this.explainSources()[0];
         if (!this.explainSources().includes(source) || this.explain?.loading) return;

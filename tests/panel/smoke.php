@@ -137,7 +137,7 @@ $server=Server::factory()->create(['owner_id'=>$admin->id,'name'=>'Smoke server'
 // Finish Simplify's setup as the admin does in the setup wizard (until then every page sends the admin to the settings), with every feature on so every page is reachable.
 auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
 // Explain this error on, with a key that is only stored (encrypted with the panel's APP_KEY) and never sent anywhere.
-\Simplify\Panel\Services\ErrorExplainer::save(['key'=>'sk-ant-smoke-test-not-a-real-key','model'=>'claude-haiku-5-5','audience'=>'everyone']);
+\Simplify\Panel\Services\ErrorExplainer::save(['provider'=>'anthropic','key'=>'sk-ant-smoke-test-not-a-real-key','model'=>'claude-haiku-5-5','audience'=>'everyone']);
 
 // 3. Every Simplify page on every panel, each in its own process.
 $urls=[];
