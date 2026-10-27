@@ -43,6 +43,8 @@
       // Every Pelican notification (read ones too), loaded a page at a time when the bell or the full list opens.
       panelUnread: 0,
       feed: { items: [], page: 0, more: false, loading: false, loaded: false },
+      // "What's new" of an update: three lines, or every line once opened (by notification id).
+      openNotes: {},
       announcements: [],
       // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
       push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
@@ -538,7 +540,7 @@
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.
@@ -555,6 +557,13 @@
       /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
       unreadNotifications() {
         return this.notifications().filter((item) => !item.pelican && (item.announcement ? item.unread : true)).length + this.panelUnread;
+      },
+      /** "What's new" lines to show: the first three, all of them once opened. */
+      noteLines(item) {
+        return this.openNotes[item.id] ? item.notes : item.notes.slice(0, 3);
+      },
+      toggleNotes(item) {
+        this.openNotes = { ...this.openNotes, [item.id]: !this.openNotes[item.id] };
       },
       /** Loads the first (reset) or next page of Pelican's notifications, read ones included. */
       async loadNotificationPage(reset = false) {

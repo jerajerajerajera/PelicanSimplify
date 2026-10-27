@@ -3,8 +3,11 @@ namespace Illuminate\Support\Facades {class Cache {public static array $store=[]
 namespace Simplify\Panel\Services {
 final class BuildInfo {public static ?string $version='0.5.0';public static function version(): ?string {return self::$version;}}
 final class UpdateCheck {public static ?array $status=null;public static function status(): ?array {return self::$status;}}
+final class ReleaseNotes {public static array $asked=[];
+    public static function release(string $repository,string $version): ?array {self::$asked[]=$repository.'@'.$version;return $repository==='pelican-dev/panel'?['lines'=>['Faster server list','Fix: backups on S3'],'url'=>'https://github.com/pelican-dev/panel/releases/tag/v'.$version]:null;}
+    public static function changelog(string $url,string $version,?string $page=null): ?array {self::$asked[]=$url.'@'.$version;return str_contains($url,'PelicanSimplify/main/')?['lines'=>['Notifications show everything now.'],'url'=>$page]:null;}}
 final class FeatureSettings {public static function enabled(string $f): bool {return false;}}
-final class PluginUpdater {public static array $plugins=[];public static function available(): array {return self::$plugins;}public static function latestVersion($p): ?string {return $p->latest;}public static function panelVersion(): string {return '1.0.0-rc.2';}}
+final class PluginUpdater {public const REPOSITORY='https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';public static array $plugins=[];public static function available(): array {return self::$plugins;}public static function latestVersion($p): ?string {return $p->latest;}public static function panelVersion(): string {return '1.0.0-rc.2';}}
 }
 namespace App\Services\Helpers {final class SoftwareVersionService {public function latestWingsVersion(){return 'v1.0.1';}public function latestPanelVersion(){return 'v1.0.0';}}}
 namespace App\Models {final class Node {public static array $nodes=[];public static function query(){return new class{public function get(){return Node::$nodes;}};}}}
@@ -39,6 +42,11 @@ check(array_column($list,'title')===['Simplify 0.5.1 is available','Player Count
 check(array_column($list,'key')===['panel-simplify-0.5.1','panel-plugin-player-counter-1.3.0','panel-wings-2-1.0.1','panel-pelican-1.0.0'],'stable keys, so hiding one keeps it hidden');
 $shown=P::announcements(500+7200);
 check(count($shown)===4&&$shown[3]['time']==='2 hours ago','the bell says when an update was first seen');
+// What's new: Simplify from its channel's CHANGELOG, Pelican and Wings from their GitHub releases, once per version.
+check($shown[0]['notes']===['Notifications show everything now.']&&$shown[0]['notes_url']==='https://github.com/jerajerajerajera/PelicanSimplify/blob/main/CHANGELOG.md','Simplify\'s update says what is new, from the main branch for a stable version');
+check($shown[3]['notes']===['Faster server list','Fix: backups on S3']&&str_ends_with($shown[3]['notes_url'],'/v1.0.0'),'Pelican\'s update has the release notes and a link');
+check($shown[1]['notes']===[]&&$shown[2]['notes']===[]&&$shown[2]['notes_url']===null,'no notes when they cannot be read');
+check(in_array('pelican-dev/wings@1.0.1',\Simplify\Panel\Services\ReleaseNotes::$asked,true)&&count(array_filter(\Simplify\Panel\Services\ReleaseNotes::$asked,fn($a)=>str_starts_with($a,'pelican-dev/wings')))===1,'Wings notes are read once for all nodes');
 P::forget();UpdateCheck::$status=null;check(P::announcements()===[],'after an update the list is empty until the next check');
-echo "PASS panel updates: version parsing, Simplify update without the scheduler, plugins, Wings per node and Pelican, stable keys, first-seen times\n";
+echo "PASS panel updates: version parsing, Simplify update without the scheduler, plugins, Wings per node and Pelican, stable keys, first-seen times, what's new\n";
 }
