@@ -21,7 +21,7 @@ window.sscDraft = function (wire) {
   return {
     deleteConfirm: false, dirty: false, saving: false, editingText: false, switching: false, uploading: false, completed: false,
     status: 'Draft ready', savedCount: 0, hasSaved: true, refreshCount: 0, revision: 0, savedRevision: 0,
-    step: 1, furthestStep: 1, stopWatching: null, saveTimer: null, pending: null,
+    step: 1, furthestStep: 1, stepMenu: false, stopWatching: null, saveTimer: null, pending: null,
     init() {
       this.step = Number(wire.draftStep) || 1;
       this.furthestStep = Math.max(this.step, Number(wire.furthestStep) || 1);
@@ -81,6 +81,11 @@ window.sscDraft = function (wire) {
       } finally {
         this.switching = false;
       }
+    },
+    /** Only the current step keeps its name when every name does not fit in the bar. */
+    fitSteps(nav) {
+      nav.classList.remove('is-compact');
+      if (nav.scrollWidth > nav.clientWidth + 1) nav.classList.add('is-compact');
     },
     savedVisible() {
       return this.hasSaved && !this.dirty && !this.saving && !this.switching;

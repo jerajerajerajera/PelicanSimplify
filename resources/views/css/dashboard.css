@@ -1118,6 +1118,13 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-create-card .ps-create-add svg { width: 16px; height: 16px; stroke-width: 3.2; }
 .ps-create-card h3 strong { background: none; color: var(--ps-ink); -webkit-text-fill-color: currentColor; }
 .ps-create-card h3 { font-size: 14px; }
+/* The Server Maker tile: always labelled, a little larger, a real button instead of a bare icon. */
+.ps-create-card.is-server { gap: 14px; padding: 8px 20px 8px 8px; border: 1px solid color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-accent) 7%, var(--ps-surface)); }
+.ps-create-card.is-server:is(:hover, :focus-visible):not(:disabled) { gap: 14px; border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-surface)); }
+.ps-create-card.is-server h3, .ps-create-card.is-server:is(:hover, :focus-visible):not(:disabled) h3 { max-width: none; opacity: 1; transform: none; gap: 1px; }
+.ps-create-card.is-server h3 strong { font-size: 16px; }
+.ps-create-card.is-server h3 span { color: var(--ps-muted); font-size: 12px; }
+@media (hover: none) { .ps-create-card.is-server h3 { max-width: none; opacity: 1; } }
 /* Phones: a status bar whose name shrinks before the buttons. */
 @media (max-width: 700px) {
   .ps-statusbar { gap: 8px; padding: 6px 6px 6px 12px; }
