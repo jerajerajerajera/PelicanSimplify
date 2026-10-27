@@ -27,6 +27,8 @@ final class ErrorExplainer
     /** Questions per person per 10 minutes, and for the whole panel per day. */
     public const PER_USER = 6;
     public const PER_DAY = 200;
+    /** Glob of the panel log files; storage/logs/*.log when null. */
+    public static ?string $panelLogs = null;
     private const SCHEMA = ['type' => 'object', 'additionalProperties' => false, 'required' => ['problem', 'cause', 'steps', 'found'], 'properties' => [
         'found' => ['type' => 'boolean', 'description' => 'False when the lines show no error or problem at all.'],
         'problem' => ['type' => 'string', 'description' => 'One or two short sentences: what went wrong, in plain words.'],
@@ -34,8 +36,8 @@ final class ErrorExplainer
         'steps' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Up to five concrete things to try, most likely fix first.'],
     ]];
     private const SYSTEM = "You help people who run game servers (often Minecraft, sometimes other games) on a Pelican panel. "
-        ."You get the last lines of a server's console. Explain what went wrong for someone who is not a developer: short, friendly sentences, no jargon without a short explanation. "
-        ."Point at the line or the mod, plugin or file that causes the problem when the log shows it. Suggest steps that can be done from a game panel: change a setting, remove or update a mod, restore a backup, give the server more memory, accept the EULA, check a file. "
+        ."You get the last lines of a server's console, or for panel administrators the panel's own log or the Wings daemon log. Explain what went wrong for someone who is not a developer: short, friendly sentences, no jargon without a short explanation. "
+        ."Point at the line or the mod, plugin, file or setting that causes the problem when the log shows it. Suggest steps that can be done from a game panel: change a setting, remove or update a mod, restore a backup, give the server more memory, accept the EULA, check a file. For panel and Wings logs, steps an administrator can take on the panel or node machine are fine too. "
         ."Never invent details that are not in the log; say so when the log is not conclusive. Parts like [hidden] were removed for privacy. "
         ."If the lines show a normal start or nothing wrong, set found to false and say that the console looks fine. Answer in English.";
 
@@ -91,14 +93,14 @@ final class ErrorExplainer
     }
 
     /** The Messages API request for these lines. */
-    public static function payload(array $lines, string $model, string $game = ''): array
+    public static function payload(array $lines, string $model, string $context = ''): array
     {
         $payload = [
             'model' => $model,
             'max_tokens' => 8000,
             'system' => self::SYSTEM,
             'output_config' => ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => self::SCHEMA]],
-            'messages' => [['role' => 'user', 'content' => ($game !== '' ? "Game or software: {$game}\n" : '')."Console, oldest line first:\n<console>\n".implode("\n", $lines)."\n</console>\nWhat went wrong, and what can I try?"]],
+            'messages' => [['role' => 'user', 'content' => ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nWhat went wrong, and what can I try?"]],
         ];
         // Opus and Sonnet may decline a request that looks like a security topic; Anthropic then retries it on a fitting model.
         if ($model !== 'claude-haiku-5-5') $payload['fallbacks'] = 'default';
@@ -156,6 +158,26 @@ final class ErrorExplainer
         return $result['ok'] ? ['ok' => true, 'message' => 'The key works with '.explode(' (', self::MODELS[$model])[0].'.'] : ['ok' => false, 'message' => preg_replace('/ An administrator .*$/', '', $result['error'])];
     }
 
+    /** Where the lines come from: label for the popup, how the question introduces them, text when there are none. */
+    public const SOURCES = [
+        'console' => ['Console', null, 'The console is empty, so there is nothing to explain yet.'],
+        'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last', 'The panel log has no warnings or errors right now.'],
+        'wings' => ['Wings log', 'Wings daemon log of the node this server runs on', 'The Wings log of this node is empty.'],
+    ];
+    /** The panel log and the Wings log can hold anyone's details, so only root admins may send them. */
+    public static function logsFor($user): bool
+    {
+        return (bool) ($user && self::settings()['has_key'] && $user->isRootAdmin());
+    }
+    /** The sources the signed-in user may explain, for a server page ($s) or the overview (null). */
+    public static function sourcesFor($user, ?Server $s): array
+    {
+        $sources = [];
+        if ($s && self::availableFor($user)) $sources[] = 'console';
+        if (self::logsFor($user)) { $sources[] = 'panel'; if ($s) $sources[] = 'wings'; }
+        return $sources;
+    }
+
     /** The last console lines of a server, read from Wings (the same log the console shows). */
     public static function consoleLines(Server $s): array
     {
@@ -165,27 +187,66 @@ final class ErrorExplainer
         }
         return (array) ($repository->getHttpClient()->timeout(10)->get('/api/servers/'.$s->uuid.'/logs', ['size' => self::LINES])->throw()->json('data') ?? []);
     }
-    /** Explains the console of $s for the signed-in user; answers stay cached a few minutes for the same lines. */
-    public static function explain(Server $s): array
+    /** The end of the newest panel log file. */
+    public static function panelLogText(?string $pattern = null): string
+    {
+        $files = glob($pattern ?? self::$panelLogs ?? storage_path('logs').'/*.log') ?: [];
+        if ($files === []) return '';
+        usort($files, fn (string $a, string $b) => [filemtime($b), $b] <=> [filemtime($a), $a]);
+        $file = new \SplFileObject($files[0], 'r');
+        $size = $file->getSize();
+        $file->fseek(max(0, $size - 262144));
+        return $size > 0 ? (string) $file->fread(min($size, 262144)) : '';
+    }
+    /** Warnings and errors from a Laravel log: the last eight entries, each its message and first stack frames. */
+    public static function panelEntries(string $text): array
+    {
+        $entries = preg_split('/\r?\n(?=\[\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2})/', $text) ?: [];
+        $wanted = array_values(array_filter($entries, fn (string $entry) => (bool) preg_match('/^\[[^\]]+\] [\w-]+\.(WARNING|ERROR|CRITICAL|ALERT|EMERGENCY):/', ltrim($entry))));
+        $lines = [];
+        foreach (array_slice($wanted, -8) as $entry) array_push($lines, ...array_slice(preg_split('/\r?\n/', trim($entry)) ?: [], 0, 12));
+        return $lines;
+    }
+    /** The log part of a Wings diagnostics report (everything after its logs heading), last lines only. */
+    public static function wingsLog(string $report): array
+    {
+        $lines = preg_split('/\r?\n/', $report) ?: [];
+        foreach ($lines as $index => $line) {
+            if (preg_match('/^\W*(latest\s+)?(wings\s+)?logs?\b/i', trim($line))) { $lines = array_slice($lines, $index + 1); break; }
+        }
+        return array_slice(array_values(array_filter($lines, fn ($line) => trim($line, " \t=-") !== '')), -self::LINES);
+    }
+    private static function lines(?Server $s, string $source): array
+    {
+        return match ($source) {
+            'console' => self::consoleLines($s),
+            'panel' => self::panelEntries(self::panelLogText()),
+            'wings' => self::wingsLog((string) app(\App\Repositories\Daemon\DaemonSystemRepository::class)->setNode($s->node)->getDiagnostics(self::LINES, false, true)->throw()->body()),
+        };
+    }
+
+    /** Explains a log for the signed-in user; answers stay cached a few minutes for the same lines. */
+    public static function explain(?Server $s, string $source = 'console'): array
     {
         $user = user();
-        if (!self::availableFor($user) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
-        try { $lines = self::sanitize(self::consoleLines($s)); }
-        catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => 'Could not read the console from Wings. Try again when the node is reachable.']; }
-        if ($lines === []) return ['ok' => false, 'error' => 'The console is empty, so there is nothing to explain yet.'];
+        if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
+        try { $lines = self::sanitize(self::lines($s, $source)); }
+        catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
+        if ($lines === []) return ['ok' => false, 'error' => self::SOURCES[$source][2]];
         $settings = self::settings();
-        $cacheKey = 'simplify.explain.'.sha1($settings['model'].implode("\n", $lines));
+        $cacheKey = 'simplify.explain.'.sha1($settings['model'].$source.implode("\n", $lines));
         if (is_array($cached = Cache::get($cacheKey))) return ['ok' => true, ...$cached];
         $personal = 'simplify.explain.user.'.$user->id;
         if (RateLimiter::tooManyAttempts($personal, self::PER_USER)) return ['ok' => false, 'error' => 'You asked a lot of questions in a short time. Try again in '.max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)).' minute(s).'];
         if (RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY)) return ['ok' => false, 'error' => 'This panel reached its daily limit of '.self::PER_DAY.' explanations. Try again tomorrow.'];
         RateLimiter::hit($personal, 600);
         RateLimiter::hit('simplify.explain.panel', 86400);
-        $result = self::call($key, self::payload($lines, $settings['model'], (string) $s->egg?->name));
+        $context = self::SOURCES[$source][1] ?? ($s?->egg?->name ? 'Game or software: '.$s->egg->name : '');
+        $result = self::call($key, self::payload($lines, $settings['model'], (string) $context));
         if (!$result['ok']) return $result;
         $answer = self::answer($result['body']);
-        if (!$answer) return ['ok' => false, 'error' => 'Claude could not explain these lines. Try again after the error shows up again in the console.'];
-        $answer += ['lines' => count($lines), 'model' => explode(' (', self::MODELS[$settings['model']])[0]];
+        if (!$answer) return ['ok' => false, 'error' => 'Claude could not explain these lines. Try again after the error shows up again.'];
+        $answer += ['lines' => count($lines), 'model' => explode(' (', self::MODELS[$settings['model']])[0], 'source' => $source];
         Cache::put($cacheKey, $answer, now()->addMinutes(10));
         return ['ok' => true, ...$answer];
     }

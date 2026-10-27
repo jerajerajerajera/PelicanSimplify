@@ -2141,21 +2141,33 @@
       canExplain() {
         return !!(this.boot.explain_errors && this.server?.permissions?.['websocket.connect']);
       },
-      /** Sends the last console lines (read again by the panel from Wings) to Claude and shows the answer. */
-      async explainError() {
-        if (!this.canExplain() || this.explain?.loading) return;
+      /** What the signed-in user may have explained here: the console, and for root admins the panel and Wings logs. */
+      explainSources() {
+        return (this.boot.explain_sources || []).filter((source) => source !== 'console' || this.canExplain());
+      },
+      explainLabel(source) {
+        return { console: 'Console', panel: 'Panel log', wings: 'Wings log' }[source] || source;
+      },
+      /** The same name inside a sentence: "the last lines of the Wings log". */
+      explainNoun(source) {
+        return { console: 'console', panel: 'panel log', wings: 'Wings log' }[source] || 'log';
+      },
+      /** Sends the last lines of a log (read again by the panel) to Claude and shows the answer. */
+      async explainError(source) {
+        source = source || this.explain?.source || this.explainSources()[0];
+        if (!this.explainSources().includes(source) || this.explain?.loading) return;
         const request = (this.explainRequest = (this.explainRequest || 0) + 1);
-        this.explain = { loading: true, error: null, answer: null };
+        this.explain = { source, loading: true, error: null, answer: null };
         let result;
         try {
-          result = await wire.explainConsole();
+          result = await wire.explainConsole(source);
         } catch {
           result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
         }
         if (this.explainRequest !== request || !this.explain) return;
         this.explain = result?.ok
-          ? { loading: false, error: null, answer: { found: result.found !== false, problem: result.problem, cause: result.cause || '', steps: result.steps || [], lines: result.lines, model: result.model } }
-          : { loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+          ? { source, loading: false, error: null, answer: { found: result.found !== false, problem: result.problem, cause: result.cause || '', steps: result.steps || [], lines: result.lines, model: result.model } }
+          : { source, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
       },
       closeExplain() {
         this.explainRequest = (this.explainRequest || 0) + 1;
