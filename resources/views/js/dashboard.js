@@ -1533,6 +1533,10 @@
         if (this.createGame !== 'native') target.searchParams.set('game', this.createGame);
         return target.href;
       },
+      /** Simplify's own creators (Minecraft, other games) fill the popup edge to edge; Pelican's form is a native page. */
+      createFrameKind() {
+        return this.createGame === 'minecraft' || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
+      },
       canCreateGame(game) {
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
@@ -1592,7 +1596,7 @@
           this.toast('Server created. Installation has started.', 'ok');
           return;
         }
-        this.styleFrame(frame, this.createGame === 'minecraft' ? 'create' : 'native');
+        this.styleFrame(frame, this.createFrameKind());
       },
       panelSettingsUrl() {
         const url = this.frameUrl(this.boot.settings_url);
