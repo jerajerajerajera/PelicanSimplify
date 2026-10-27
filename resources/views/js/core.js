@@ -13,6 +13,12 @@
   const media = matchMedia('(prefers-color-scheme: dark)');
   let options = window.simplifyThemeConfig || {};
   let preference = 'system';
+  // Texts from lang/<locale>/js.php in the user's Pelican language (English fills the gaps); :name placeholders.
+  const t = (key, params = {}) => {
+    let text = window.simplifyLang?.[key] ?? key;
+    for (const name of Object.keys(params).sort((a, b) => b.length - a.length)) text = text.split(':' + name).join(String(params[name]));
+    return text;
+  };
   try {
     const saved = localStorage.getItem(KEY);
     if (CHOICES.includes(saved)) preference = saved;
@@ -301,8 +307,8 @@
       else message.remove();
       const cancel = wrap.querySelector('[data-cancel]');
       const confirm = wrap.querySelector('[data-confirm]');
-      cancel.textContent = opts.cancelLabel || 'Cancel';
-      confirm.textContent = opts.confirmLabel || 'Confirm';
+      cancel.textContent = opts.cancelLabel || t('cancel');
+      confirm.textContent = opts.confirmLabel || t('confirm');
       confirm.classList.add(opts.tone === 'danger' ? 'is-danger' : 'is-primary');
       let field = null;
       if (opts.input || opts.requireText) {
@@ -351,6 +357,7 @@
 
   window.Simplify = {
     ui: true,
+    t,
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),
@@ -463,7 +470,7 @@
         field.innerHTML = '<svg aria-hidden="true"><use href="#ps-search"/></svg>';
         const input = pdoc.createElement('input');
         input.type = 'search';
-        input.placeholder = search.placeholder || 'Search';
+        input.placeholder = search.placeholder || t('search');
         input.setAttribute('aria-label', input.placeholder);
         input.value = search.value;
         input.addEventListener('input', () => {
@@ -487,7 +494,7 @@
         else bar.append(btn);
       }
       if (filters) {
-        const btn = button(filters, label(filters) || 'Filter', false);
+        const btn = button(filters, label(filters) || t('filter'), false);
         btn.querySelectorAll('.fi-icon-btn-badge-ctn').forEach((el) => el.remove());
         btn.addEventListener('click', () => openFilters(filters));
         bar.append(btn);
@@ -538,12 +545,12 @@
     });
   };
   document.addEventListener('livewire:init', hookLivewire);
-  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = 'Save changes', onSave, onDiscard = null, discardMessage = 'Your changes since the last save are lost.' }) => {
+  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = t('save_changes'), onSave, onDiscard = null, discardMessage = t('discard_message') }) => {
     hookLivewire();
     const bar = document.createElement('div');
     bar.className = 'ps-savebar' + (fixed ? ' is-fixed' : '');
     bar.setAttribute('role', 'region');
-    bar.setAttribute('aria-label', 'Save changes');
+    bar.setAttribute('aria-label', t('save_changes'));
     bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">Unsaved changes</span></span>'
       + (onDiscard ? '<button type="button" class="ps-savebar-discard">Discard</button>' : '')
       + '<button type="button" class="ps-savebar-save"><svg class="ps-savebar-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg><span class="ps-savebar-label"></span></button>';
@@ -560,7 +567,7 @@
         bar.classList.toggle('is-dirty', on);
         button.disabled = !on;
         button.removeAttribute('aria-disabled');
-        text.textContent = 'Unsaved changes';
+        text.textContent = t('unsaved_changes');
       },
       saving() {
         bar.classList.add('is-saving');
@@ -573,7 +580,7 @@
         // Nothing left to save: the check is a status, not a button.
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
-        text.textContent = 'All changes saved';
+        text.textContent = t('all_changes_saved');
         clearTimeout(timer);
         timer = setTimeout(() => bar.classList.remove('is-saved'), 1600);
       },
@@ -593,7 +600,7 @@
       onSave(api);
     });
     bar.querySelector('.ps-savebar-discard')?.addEventListener('click', () => {
-      dialog({ title: 'Discard changes?', message: discardMessage, confirmLabel: 'Discard', tone: 'danger' }).then((ok) => ok && onDiscard(api));
+      dialog({ title: t('discard_title'), message: discardMessage, confirmLabel: t('discard'), tone: 'danger' }).then((ok) => ok && onDiscard(api));
     });
     // Changed means: the values differ from the last saved state. Switching tabs, focusing or clicking
     // around never counts, and putting a value back hides the bar again.
@@ -707,7 +714,7 @@
         window.dispatchEvent(new CustomEvent('simplify:installable'));
         return choice?.outcome === 'accepted';
       }
-      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: 'Add to Home Screen', message: 'Tap the Share button in Safari, then choose "Add to Home Screen". The panel then opens as its own app.', confirmLabel: 'OK', cancelLabel: 'Close' });
+      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: t('home_screen_title'), message: t('home_screen_message'), confirmLabel: t('ok'), cancelLabel: t('close') });
       return false;
     },
   };
