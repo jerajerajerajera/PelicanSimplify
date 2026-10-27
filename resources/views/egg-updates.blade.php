@@ -8,15 +8,23 @@
             <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:'Update all {{ count($eggs['available']) }} eggs?',message:'Running servers keep running. Each egg keeps its previous version, so it can be put back.',confirmLabel:'Update all'}).then(ok => ok && $wire.updateEggs(null))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />Update all</button>
         @endif
     </header>
-    <div class="ps-plugin-list">
+    <div class="ps-plugin-list" @if(array_filter(array_column($eggs['available'], 'testing'))) wire:poll.10s @endif>
         @forelse($eggs['available'] as $egg)
             <article class="ps-plugin" wire:key="egg-update-{{ $egg['id'] }}">
                 <div class="ps-plugin-main">
                     <div class="ps-plugin-title"><strong>{{ $egg['name'] }}</strong>@if($egg['held'])<span class="ps-badge"><span>Put back</span></span>@endif</div>
                     <small>{{ $egg['servers'] === 0 ? 'No servers' : ($egg['servers'] === 1 ? '1 server' : $egg['servers'].' servers') }} · found {{ \Carbon\Carbon::createFromTimestamp($egg['found'])->diffForHumans() }}</small>
+                    @if($egg['testing'])
+                        <p class="ps-help">{{ ['waiting' => 'Waiting for another test to finish.', 'installing' => 'Installing on a test server…', 'starting' => 'Starting the test server…'][$egg['testing']] ?? 'Testing…' }}</p>
+                    @elseif($egg['result'] && !$egg['result']['ok'])
+                        <p class="ps-plugin-error">Tested {{ \Carbon\Carbon::createFromTimestamp($egg['result']['at'])->diffForHumans() }}: the test server {{ $egg['result']['reason'] }}</p>
+                    @endif
                 </div>
                 <div class="ps-plugin-actions">
+                    @unless($egg['testing'])
+                    <button type="button" class="ps-btn is-sm" x-on:click="Simplify.confirm({title:@js('Test '.$egg['name'].' first?'),message:'Simplify makes a test server with the new version on a free test port. When it installs and starts, the egg is updated; the test server is removed either way. This takes a few minutes.',confirmLabel:'Test and update'}).then(ok => ok && $wire.testEgg({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-flask class="ps-ico" />Test first</button>
                     <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js('Update '.$egg['name'].'?'),message:@js(($egg['servers'] > 0 ? 'Its servers keep running and get the new egg at their next start or reinstall. ' : '').'The previous version is kept, so it can be put back.'),confirmLabel:'Update'}).then(ok => ok && $wire.updateEggs({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />Update</button>
+                    @endunless
                 </div>
             </article>
         @empty

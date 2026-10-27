@@ -17,7 +17,8 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Egg updates. Pelican checks each egg's update URL once a day but only remembers the result for an hour and shows it
  * as a button on its Eggs page. Simplify checks itself, keeps the result, tells root admins in the bell, keeps the
- * previous definition of every updated egg so it can be put back, and can update eggs no server uses on its own.
+ * previous definition of every updated egg so it can be put back, and can update eggs on its own: only eggs no server
+ * uses, or any egg after a test server installed and started with the new definition (EggUpdateTest).
  */
 final class EggUpdates
 {
@@ -32,6 +33,7 @@ final class EggUpdates
     public const MODES = [
         'ask' => 'Ask first',
         'auto' => 'Update eggs without servers automatically',
+        'test' => 'Test first, then update',
         'off' => 'Off',
     ];
 
@@ -57,10 +59,12 @@ final class EggUpdates
         if (!Storage::disk('local')->put(self::SETTINGS, json_encode($next, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) throw new \RuntimeException('Could not save the egg update settings.');
     }
 
-    /** Keyed by egg id (an update can change the egg's uuid). found: id => [hash, at, held]; applied: id => remote hash last installed. */
+    /** Keyed by egg id (an update can change the egg's uuid). found: id => [hash, at, held]; applied: id => remote hash last
+     * installed; test, queue and results: the running test, the eggs waiting for one and how the last test of each ended.
+     */
     public static function state(): array
     {
-        return array_replace(['found' => [], 'applied' => [], 'checked_at' => 0], JsonFile::read(self::STATE));
+        return array_replace(['found' => [], 'applied' => [], 'checked_at' => 0, 'test' => null, 'queue' => [], 'results' => []], JsonFile::read(self::STATE));
     }
 
     /** Change the state under a lock, so the scheduler and a click on Update never overwrite each other. */
@@ -79,9 +83,14 @@ final class EggUpdates
     {
         $settings = self::settings();
         if ($settings['mode'] === 'off' && !$force) return [];
-        if (!$force && time() - (int) self::state()['checked_at'] < self::INTERVAL) return [];
-        $new = self::check();
-        return $new === [] ? [] : self::handleNew($new, $settings);
+        $messages = [];
+        if ($force || time() - (int) self::state()['checked_at'] >= self::INTERVAL) {
+            $new = self::check();
+            if ($new !== []) $messages = self::handleNew($new, $settings);
+        }
+        $state = self::state();
+        if ($state['test'] !== null || $state['queue'] !== []) $messages = [...$messages, ...EggUpdateTest::tick()];
+        return $messages;
     }
 
     /**
@@ -124,7 +133,7 @@ final class EggUpdates
         return $new;
     }
 
-    /** New updates: tell root admins, and update the eggs no server uses when that is switched on. */
+    /** New updates: tell root admins, and update the eggs no server uses (or test the others) when that is switched on. */
     private static function handleNew(array $eggs, array $settings): array
     {
         $messages = [];
@@ -132,11 +141,15 @@ final class EggUpdates
         $waiting = [];
         foreach ($eggs as $egg) {
             $servers = self::serverCount($egg);
-            if ($settings['mode'] === 'auto' && $servers === 0) {
+            if (in_array($settings['mode'], ['auto', 'test'], true) && $servers === 0) {
                 $result = self::update($egg);
                 $messages[] = $result['message'];
                 if ($result['ok']) $updated[] = $egg->name;
                 else $waiting[] = $egg;
+                continue;
+            }
+            if ($settings['mode'] === 'test') {
+                $messages[] = EggUpdateTest::start($egg)['message'];
                 continue;
             }
             $waiting[] = $egg;
@@ -165,7 +178,7 @@ final class EggUpdates
             app(EggImporterService::class)->fromContent($remote['content'], $remote['format'], $egg);
             self::change(function (array $state) use ($egg, $remote): array {
                 $state['applied'][$egg->id] = $remote['hash'];
-                unset($state['found'][$egg->id]);
+                unset($state['found'][$egg->id], $state['results'][$egg->id]);
                 return $state;
             });
             Cache::forget('eggs.'.$egg->uuid.'.update');
@@ -270,6 +283,8 @@ final class EggUpdates
             'servers' => (int) $egg->servers_count,
             'found' => (int) ($state['found'][$egg->id]['at'] ?? 0),
             'held' => (bool) ($state['found'][$egg->id]['held'] ?? false),
+            'testing' => ($state['test']['egg'] ?? null) === $egg->id ? $state['test']['stage'] : (in_array($egg->id, $state['queue'], true) ? 'waiting' : null),
+            'result' => $state['results'][$egg->id] ?? null,
         ])->all();
     }
 
