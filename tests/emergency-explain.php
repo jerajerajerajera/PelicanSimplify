@@ -22,7 +22,7 @@ function app($class){return new $class;}
 function report($e){}
 function now(){return new class{public function addMinutes($m){return $m;}};}
 function response($body,$status,$headers){return (object)['body'=>$body,'status'=>$status,'headers'=>$headers];}
-foreach(['Services/JsonFile','Services/ErrorExplainer','Services/EmergencyAccess','Http/Controllers/EmergencyExplainController'] as $file)require __DIR__.'/../src/'.$file.'.php';
+foreach(['Services/JsonFile','Services/Explain/Providers/Provider','Services/Explain/Providers/Anthropic','Services/Explain/Providers/OpenAi','Services/Explain/Providers/Gemini','Services/ErrorExplainer','Services/EmergencyAccess','Http/Controllers/EmergencyExplainController'] as $file)require __DIR__.'/../src/'.$file.'.php';
 use Simplify\Panel\Services\{ErrorExplainer as E,EmergencyAccess as Access};
 use Simplify\Panel\Http\Controllers\EmergencyExplainController as Page;
 use Illuminate\Http\Request;

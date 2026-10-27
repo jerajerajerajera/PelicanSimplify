@@ -41,7 +41,7 @@ final class EmergencyExplainController
     private function handle(Request $request, string $personal, ?string $csrf)
     {
         $key = ErrorExplainer::savedKey();
-        if (!$key) return $this->page(200, '<p>No Anthropic API key is saved on this panel. A root administrator adds one in Simplify settings, under Error explanations.</p>'
+        if (!$key) return $this->page(200, '<p>No '.self::e(ErrorExplainer::providerName()).' API key is saved on this panel. A root administrator adds one in Simplify settings, under Error explanations.</p>'
             .'<p>When the panel does not open, run <code>php artisan simplify:explain</code> on the panel server. It asks for a key and does not save it.</p>');
         [$nodes, $nodeError] = $this->nodes();
         $result = null;
@@ -70,7 +70,7 @@ final class EmergencyExplainController
     private function form(array $nodes, ?string $nodeError, ?string $csrf): string
     {
         $hidden = $csrf ? '<input type="hidden" name="_token" value="'.self::e($csrf).'">' : '';
-        $html = '<p class="lead">Use this page when the panel shows an error such as 500 and its normal pages do not open. Claude reads the log, says whether something is wrong and how to fix it.</p>';
+        $html = '<p class="lead">Use this page when the panel shows an error such as 500 and its normal pages do not open. The AI chosen in Simplify settings reads the log, says whether something is wrong and how to fix it.</p>';
         $html .= '<form method="post" class="ask" onsubmit="this.classList.add(\'busy\')">'.$hidden;
         $html .= '<button type="submit" name="source" value="panel">Check the panel log</button>';
         foreach ($nodes as $id => $node) {

@@ -14,7 +14,7 @@ namespace Filament\Schemas\Components\Tabs {class Tab extends \Test\Component {}
 namespace Illuminate\Support {class HtmlString {public function __construct($value){}}}
 namespace Simplify\Panel\Services {
  class FeatureSettings {public static bool $complete=false;public static function enabled($key){return self::$complete;}public static function definitions(){return ['dashboard'=>['Dashboard','Description',true,'Interface'],'theme'=>['Theme','Description',true,'Appearance']];}}
- class ErrorExplainer {public const MODELS=['claude-opus-5-5'=>'Opus'];public const AUDIENCES=['everyone'=>'Everyone'];public const PER_USER=6;public const PER_DAY=200;public static function settings(){return ['has_key'=>false];}}
+ class ErrorExplainer {public const AUDIENCES=['everyone'=>'Everyone'];public const PER_USER=6;public const PER_DAY=200;public static function settings(){return ['has_key'=>false,'saved_keys'=>[]];}public static function providers(){return ['anthropic'=>'Claude by Anthropic'];}public static function models($p){return ['claude-opus-5-5'=>'Opus'];}public static function provider($p){return ErrorExplainer::class;}public static function name(){return 'Anthropic';}public static function keyPlaceholder(){return 'sk-ant-';}public static function keyHelp(){return 'help';}}
  class Extensions {public static function webInstalled(){return false;}}
  class CreatorAccess {public static function legacyUserGrants(){return 0;}}
  class RoleAccess {public const ABILITIES=['files'=>['Files','d'],'create'=>['Create','d']];public const LIMITS=['max_servers'=>[2,1,100]];public static function all(){return ['everyone'=>['abilities'=>[]],'roles'=>[]];}}
@@ -35,7 +35,7 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];
  if(count($profiles)!==3||$profiles[2]->label!=='Modded / modpacks'||count($profiles[2]->options['schema'][0])!==3)throw new \RuntimeException('CPU/RAM/disk profiles missing from settings');
  $explain=$tabs[10]->options['schema'][0][0];
- if(($tabs[10]->options['badge'][0]??null)!=='Add-on'||$explain->label!=='Explain this error'||$explain->options['schema'][0][0]->label!=='explainer.key'||!isset($explain->options['schema'][0][0]->options['password']))throw new \RuntimeException('error explanations tab missing its key field');
+ if(($tabs[10]->options['badge'][0]??null)!=='Add-on'||$explain->label!=='Explain this error'||$explain->options['schema'][0][0]->label!=='explainer.provider'||!isset($explain->options['schema'][0][0]->options['live'])||$explain->options['schema'][0][2]->label!=='explainer.key'||!isset($explain->options['schema'][0][2]->options['password']))throw new \RuntimeException('error explanations tab missing its AI choice or key field');
  if(($tabs[7]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
  echo "PASS separate setup pages, matching numbered navigation, final-step submit, category tabs and editable modpack resource columns\n";
 }
