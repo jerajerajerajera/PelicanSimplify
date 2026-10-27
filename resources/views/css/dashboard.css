@@ -496,7 +496,7 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
   border-radius: var(--ps-radius-lg);
   background: var(--ps-surface);
 }
-.ps-server-info:has(.ps-info-menu:not([style*="display: none"])) { overflow: visible; }
+.ps-server-info:has(.ps-info-menu:not([style*="display: none"]), .ps-host-pin[aria-expanded="true"]) { overflow: visible; }
 .ps-info-decor { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: calc(var(--ps-radius-lg) - 1px); pointer-events: none; }
 .ps-server-banner { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .5; filter: blur(6px); pointer-events: none; transform: scale(1.04); mask-image: linear-gradient(to right, transparent 45%, #000 100%); }
 .ps.dark .ps-server-banner { opacity: .55; }
@@ -902,9 +902,10 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   /* The menu button already names the open page. */
   .ps-host-head.is-page { display: none !important; }
     }
-@media (max-height: 500px) and (max-width: 1100px) {
-  .ps-host-main { height: max(260px, calc(100dvh - 16px)); }
-}
+/* Low screens (a phone on its side) scroll the page as a whole, so the host block sizes itself instead of sharing what is left of the screen (nothing). */
+@media (max-height: 500px) { .ps-host { flex: none; } }
+@media (max-height: 500px) and (min-width: 761px) { .ps-host { height: max(260px, calc(100dvh - 16px)); } }
+@media (max-height: 500px) and (max-width: 760px) { .ps-host-main { height: max(260px, calc(100dvh - 16px)); } }
 @media (prefers-reduced-motion: reduce) { .ps-host-side { transition: none; } }
 
 .ps.is-embedded .ps-top { display: none; }
@@ -1449,6 +1450,18 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-host-pin-open { top: calc(100% - 4px); right: 0; width: min(520px, calc(100vw - 32px)); padding: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
 .ps-host-pin-open .ps-announcement-bar { box-shadow: var(--ps-shadow-lg); }
 @media (max-width: 900px) { .ps-host-pins { right: 12px; max-width: 60%; } .ps-host-pin { max-width: 140px; } }
+.ps-pins-low { display: none; }
+@media (max-height: 500px) {
+  .ps-server-dashboard > .ps-announcements-pinned { display: none !important; }
+  .ps .ps-server-info:has(.ps-pins-low .ps-host-pin) { grid-template-columns: 36px minmax(0, 1fr) auto auto; grid-template-areas: "icons content pins power"; }
+  .ps-pins-low:has(.ps-host-pin) { display: block; }
+  /* Round icon chips (the title shows on hover and when opened), so the server name keeps its room. */
+  .ps-pins-low { position: relative; grid-area: pins; align-self: center; }
+  .ps-pins-low .ps-host-pins { position: static; max-width: none; height: auto; }
+  .ps-pins-low .ps-host-pin { justify-content: center; width: 32px; height: 32px; padding: 0; }
+  .ps-pins-low .ps-host-pin span { display: none; }
+  .ps-pins-low .ps-host-pin-open { top: calc(100% + 8px); right: 0; }
+}
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
 .ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
 .ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }

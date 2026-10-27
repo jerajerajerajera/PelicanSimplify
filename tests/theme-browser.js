@@ -473,6 +473,20 @@ const { start } = require('./browser-harness');
     }
     const desk = await open('/?mode=server&theme=dark');
     assert.deepEqual(await desk.evaluate(() => [!!document.querySelector('.ps-phone-sections').offsetParent, !!document.querySelector('.ps-quick-commands').offsetParent, !!document.querySelector('.ps-widget-grid').offsetParent]), [false, false, true], 'desktop keeps its section menu');
+    // Workspaces opened one after another (closed with ✕ in between) all dock next to the console; the Explain layer stays a popup.
+    for (const label of ['Game settings', 'Player management', 'Backups', 'Files']) {
+      await desk.click(`.ps-widget[aria-label^="${label}"]`);
+      await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock'));
+      const docked = await desk.evaluate(() => ({ explain: document.querySelector('.ps-explain-layer').parentElement.classList.contains('ps'), visible: document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0 }));
+      assert.deepEqual(docked, { explain: true, visible: true }, label + ' docks after closing the previous workspace');
+      await desk.click('.ps-dock .ps-close');
+      await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
+    }
+    // Escape closes a workspace popup.
+    await data(desk, (d) => { d.modal = 'alias'; });
+    await desk.waitForSelector('.ps-modal-layer[data-open="true"] .ps-modal', { state: 'visible' });
+    await desk.keyboard.press('Escape');
+    await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
     await desk.close();
     console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands, sheets');
 
@@ -568,6 +582,20 @@ const { start } = require('./browser-harness');
       const dock = await console_.evaluate(() => document.querySelector('.ps-dock').getBoundingClientRect().height);
       assert.ok(dock <= viewport.height, 'docked workspace fits a low screen: ' + dock);
       await console_.close();
+      // Pinned announcements fold into chips on a low screen, so they do not push the console off the screen.
+      const pinned = await open('/?mode=server&theme=dark&announcements=1', viewport);
+      const pins = await pinned.evaluate(() => { const box = document.querySelector('.ps-console').getBoundingClientRect(); return { chips: document.querySelectorAll('.ps-pins-low .ps-host-pin').length, bars: document.querySelector('.ps-server-dashboard > .ps-announcements-pinned').getBoundingClientRect().height, bottom: Math.round(box.bottom), scroll: document.documentElement.scrollHeight <= innerHeight }; });
+      assert.ok(pins.chips === 3 && pins.bars === 0 && pins.bottom <= viewport.height && pins.scroll, 'announcements fit a low screen: ' + JSON.stringify(pins));
+      await pinned.click('.ps-pins-low .ps-host-pin');
+      await pinned.waitForSelector('.ps-pins-low .ps-host-pin-open .ps-announcement-bar', { state: 'visible' });
+      await pinned.close();
+      // Host mode on a low screen: the block keeps its height, with the menu in view.
+      const host = await open('/?mode=overview&theme=dark', viewport);
+      await data(host, (d) => d.setHostMode(true));
+      await host.waitForSelector('.ps-host', { state: 'visible' });
+      const hostBox = await host.evaluate(() => { const box = document.querySelector('.ps-host').getBoundingClientRect(); const menu = document.querySelector(innerWidth <= 760 ? '.ps-host-menu-toggle' : '.ps-host-side').getBoundingClientRect(); return { height: Math.round(box.height), menu: Math.round(menu.height) }; });
+      assert.ok(hostBox.height >= 250 && hostBox.menu > 0, 'host mode keeps its height on a low screen: ' + JSON.stringify(hostBox));
+      await host.close();
     }
     // Sideways strips show which side hides more items.
     const strip = await open('/?mode=overview&theme=light', { width: 390, height: 844 });

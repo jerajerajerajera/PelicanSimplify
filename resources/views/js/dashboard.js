@@ -2230,7 +2230,8 @@
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
-        const layer = this.$root?.querySelector?.('.ps-modal-layer');
+        // Only the workspace layer moves; the Explain layer next to it stays a popup.
+        const layer = this.$root?.querySelector?.('.ps-modal-layer[data-ps-workspace]');
         if (!layer) return;
         if (docked && layer.parentElement !== dock) dock.appendChild(layer);
         if (!docked && layer.parentElement === dock) this.$root.appendChild(layer);
