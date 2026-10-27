@@ -117,13 +117,15 @@ final class Announcements
         $hidden=array_flip(self::dismissedKeys($user));
         $state=self::readState($user);
         $archived=array_flip($state['archived']);
+        $markedUnread=array_flip($state['unread_keys']);$markedRead=array_flip($state['read_keys']);
         foreach($items as &$item){
             $item['dismissed']=isset($hidden[$item['key']]);
             $item['pinned']=($item['pinned']??false)===true;
             // Unread until "Mark all read" or until this account unpins its bar.
             // "Clear read" (or ✕ on one) moves it to Archived, read; an admin's pinned ones always stay on top.
             $item['archived']=!$item['pinned']&&isset($archived[$item['key']]);
-            $item['unread']=!$item['dismissed']&&!$item['archived']&&$item['at']>$state['read_at'];
+            // Mark read / Mark as unread on this one wins over the rest.
+            $item['unread']=!$item['archived']&&!isset($markedRead[$item['key']])&&(isset($markedUnread[$item['key']])||(!$item['dismissed']&&$item['at']>$state['read_at']));
         }
         unset($item);
         usort($items,fn(array $a,array $b):int=>$b['at']<=>$a['at']);
@@ -137,6 +139,9 @@ final class Announcements
         $keys=array_values(array_diff(self::dismissedKeys($user),[$key]));
         $keys[]=$key;
         self::saveDismissed($user,array_slice($keys,-self::DISMISSED_LIMIT));
+        // Unpinning its bar reads it, also after Mark as unread.
+        $state=self::readState($user);
+        if(in_array($key,$state['unread_keys'],true))self::saveReadState($user,['unread_keys'=>array_values(array_diff($state['unread_keys'],[$key]))]);
     }
 
     /** Pins an unpinned announcement again for this account. */
@@ -150,7 +155,31 @@ final class Announcements
     /** "Mark all read": every announcement up to now counts as read for this account. */
     public static function markAllRead(object $user,?int $now=null): void
     {
-        self::saveReadState($user,['read_at'=>$now??time()]);
+        self::saveReadState($user,['read_at'=>$now??time(),'unread_keys'=>[],'read_keys'=>[]]);
+    }
+
+    /**
+     * Mark read / Mark as unread on one announcement for this account. Mark as unread also takes it out of Archived, back
+     * into the list, like an unread Pelican notification.
+     */
+    public static function markOne(object $user,string $key,bool $unread): void
+    {
+        if(!self::validKey($key))return;
+        $state=self::readState($user);
+        $without=fn(array $keys):array=>array_values(array_diff($keys,[$key]));
+        $with=fn(array $keys):array=>array_slice([...$without($keys),$key],-self::DISMISSED_LIMIT);
+        self::saveReadState($user,$unread
+            ?['unread_keys'=>$with($state['unread_keys']),'read_keys'=>$without($state['read_keys']),'archived'=>$without($state['archived'])]
+            :['read_keys'=>$with($state['read_keys']),'unread_keys'=>$without($state['unread_keys'])]);
+    }
+
+    /** Mark as unread on one Pelican notification: unread again, and out of Archived when ✕ put it there. */
+    public static function markPelicanUnread(object $user,string $id): void
+    {
+        if(!preg_match(self::PELICAN_ID,$id))return;
+        PanelNotifications::markUnread([$id]);
+        $state=self::readState($user);
+        if(in_array($id,$state['archived_ids'],true))self::saveReadState($user,['archived_ids'=>array_values(array_diff($state['archived_ids'],[$id]))]);
     }
 
     /** "Clear read": read announcements (not the pinned ones) move to Archived for this account; read Pelican notifications follow archived_at. */
@@ -190,13 +219,20 @@ final class Announcements
     /** Until when read Pelican notifications are archived (0: never cleared). */
     public static function archivedAt(object $user): int { return self::readState($user)['archived_at']; }
 
-    /** @return array{read_at: int, archived_at: int, archived: list<string>, archived_ids: list<string>} */
+    /** @return array{read_at: int, archived_at: int, archived: list<string>, archived_ids: list<string>, unread_keys: list<string>, read_keys: list<string>} */
     public static function readState(object $user): array
     {
         $data=JsonFile::read(self::READ_DIR.(int)$user->id.'.json');
         return ['read_at'=>is_int($data['read_at']??null)?$data['read_at']:0,'archived_at'=>is_int($data['archived_at']??null)?$data['archived_at']:0,
             'archived'=>array_values(array_filter(is_array($data['archived']??null)?$data['archived']:[],fn($key):bool=>is_string($key)&&self::validKey($key))),
-            'archived_ids'=>array_values(array_filter(is_array($data['archived_ids']??null)?$data['archived_ids']:[],fn($id):bool=>is_string($id)&&preg_match(self::PELICAN_ID,$id)===1))];
+            'archived_ids'=>array_values(array_filter(is_array($data['archived_ids']??null)?$data['archived_ids']:[],fn($id):bool=>is_string($id)&&preg_match(self::PELICAN_ID,$id)===1)),
+            'unread_keys'=>self::keyList($data['unread_keys']??null),'read_keys'=>self::keyList($data['read_keys']??null)];
+    }
+
+    /** @return list<string> */
+    private static function keyList(mixed $keys): array
+    {
+        return array_values(array_filter(is_array($keys)?$keys:[],fn($key):bool=>is_string($key)&&self::validKey($key)));
     }
 
     private static function saveReadState(object $user,array $changes): void
