@@ -160,12 +160,18 @@ class SimplifySettings extends Page implements HasForms
         $this->rerunSetup = false;
         $this->setupStarted = false;
     }
+    /** Servers currently shown on the website (Website embed add-on, or the website plugin). */
+    private function embedServers(): array
+    {
+        if (!\Simplify\Panel\Services\WebsiteListing::available()) return [];
+        return Server::query()->orderBy('name')->limit(500)->get()->filter(fn (Server $s) => \Simplify\Panel\Services\WebsiteListing::visible($s))->pluck('uuid')->values()->all();
+    }
     public function updateStatus(): ?array { return \Simplify\Panel\Services\UpdateCheck::status(); }
     public function mount(): void
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -187,6 +193,7 @@ class SimplifySettings extends Page implements HasForms
     private const LATER_ADDONS = [
         'Error explanations' => 'tabler-help-circle',
         'Plugin sites' => 'tabler-puzzle',
+        'Website embed' => 'tabler-code',
     ];
 
     /** Pages other plugins add (empty when the service is not available, as in unit tests). */
@@ -373,6 +380,7 @@ class SimplifySettings extends Page implements HasForms
         $icons['Server banners'] = 'tabler-photo';
         $addons['Error explanations'] = $this->errorExplainerSections();
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
+        if (class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $addons['Website embed'] = $this->websiteEmbedSections();
         $icons = [...$icons, ...self::LATER_ADDONS];
         $categories = [...$categories, ...$addons];
         $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
@@ -426,6 +434,41 @@ class SimplifySettings extends Page implements HasForms
                 ]),
             ]),
         ];
+    }
+    /** The Website embed add-on: how the list looks, which servers it shows, and the code for another website. */
+    private function websiteEmbedSections(): array
+    {
+        $on = fn (Get $get): bool => (bool) $get('features.website_embed');
+        return [
+            Section::make('Not switched on')->description('Switch on Website embed under General → Add-ons and save. Until then nothing is public.')->visible(fn (Get $get) => !$on($get))->schema([]),
+            Section::make('Look')->columns(2)->description('Websites can still change each option in their own code. The list follows the visitor\'s light or dark mode unless you choose one.')->schema([
+                Select::make('embed.style')->label('Style')->options(['auto' => 'Follow the website visitor', 'light' => 'Light', 'dark' => 'Dark'])->selectablePlaceholder(false)->required(),
+                Select::make('embed.corners')->label('Corners')->options(['round' => 'Round', 'square' => 'Square'])->selectablePlaceholder(false)->required(),
+                ColorPicker::make('embed.accent')->label('Accent colour')->regex('/^#[0-9a-fA-F]{6}$/')->helperText('Empty uses the panel accent colour.'),
+                \Filament\Schemas\Components\Grid::make(1)->schema([
+                    Toggle::make('embed.players')->label('Show players'),
+                    Toggle::make('embed.modpack')->label('Show modpack and version, with a link to it'),
+                    Toggle::make('embed.join')->label('Show the join address with a copy button')->helperText('Only public addresses: never a home network or Tailscale address.'),
+                ]),
+            ]),
+            Section::make('Servers on your website')->description('Owners can also switch this on in their server\'s menu under "Show on the website".')->schema([
+                \Filament\Forms\Components\CheckboxList::make('embed.servers')->hiddenLabel()->options(fn () => Server::query()->orderBy('name')->limit(500)->pluck('name', 'uuid')->all())
+                    ->searchable()->bulkToggleable()->columns(2)->noSearchResultsMessage('No servers found.'),
+            ]),
+            Section::make('Code for your website')->description('Paste one of these into any page of your website. Save first: changes here reach websites within a minute.')->schema([
+                \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.website-embed'),
+            ]),
+        ];
+    }
+    private function saveEmbed(array $embed): void
+    {
+        \Simplify\Panel\Services\WebsiteEmbed::save($embed);
+        if (!\Simplify\Panel\Services\WebsiteListing::available() || !array_key_exists('servers', $embed)) return;
+        $chosen = array_flip(array_map('strval', (array) $embed['servers']));
+        foreach (Server::query()->orderBy('name')->limit(500)->get() as $server) {
+            $visible = isset($chosen[$server->uuid]);
+            if (\Simplify\Panel\Services\WebsiteListing::visible($server) !== $visible) \Simplify\Panel\Services\WebsiteListing::setVisible($server, $visible);
+        }
     }
     public function testCurseForge(): void
     {
@@ -536,6 +579,7 @@ class SimplifySettings extends Page implements HasForms
         }
         if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
         if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
+        if (!empty($state['embed']) && class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $embedState = $state['embed'];
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
@@ -559,6 +603,8 @@ class SimplifySettings extends Page implements HasForms
             $features['simplify_snapshot'] = $state['update_channel'] === 'snapshot';
         }
         \Simplify\Panel\Services\FeatureSettings::save($features,true);
+        // After the switches, so a just-enabled add-on can store which servers are shown.
+        if (isset($embedState)) $this->saveEmbed($embedState);
         $this->rerunSetup = false;
         Notification::make()->title('PelicanSimplify settings saved')->success()->send();
         if ($firstSetup) {
