@@ -60,7 +60,13 @@ if(($argv[1]??'')==='livewire'){
         \Simplify\Panel\Services\PanelUpdates::refresh();
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         // Opening the form builds every field; callAction() itself needs PHPUnit, so the save goes through the same service.
-        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->set('browserTimezone','Europe/Amsterdam')->call('mountAction','addAnnouncement');
+        $form=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->set('browserTimezone','Europe/Amsterdam')->call('mountAction','addAnnouncement');
+        // "Also send in game": the form builds its fields (the modal itself is not part of html() here), and In-game commands lists every egg.
+        $fields=$form->get('mountedActions')[0]['data']??[];
+        foreach(['ingame','ingame_targets','ingame_groups','ingame_servers','ingame_repeat'] as $field)if(!array_key_exists($field,$fields))throw new \RuntimeException('the announcement form has no '.$field.' field');
+        $commands=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->call('mountAction','ingameCommands');
+        $eggs=$commands->get('mountedActions')[0]['data']??[];
+        if(count($eggs)!==\App\Models\Egg::query()->count())throw new \RuntimeException('In-game commands does not list every egg');
         \Simplify\Panel\Services\Announcements::save(['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open','push'=>true,'pinned'=>true],null,(string)$admin->username);
         $shown=\Simplify\Panel\Services\Announcements::forUser($admin);
         if(!in_array('Smoke test',array_column($shown,'title'),true))throw new \RuntimeException('the new announcement is not shown on the overview');
@@ -68,6 +74,13 @@ if(($argv[1]??'')==='livewire'){
         // The scheduler's run: refreshes the Panel's updates and sends the new announcement as app notification (nobody subscribed here).
         if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed');
         if(\Simplify\Panel\Services\Announcements::duePush()!==[])throw new \RuntimeException('the announcement was not marked as sent');
+        // In game: the scheduler tries every server (no Wings here, so none is running) and keeps the result for the list.
+        $ingame=\Simplify\Panel\Services\Announcements::save(['title'=>'Smoke in game','ingame'=>true,'ingame_targets'=>'all','ingame_repeat'=>10],null,(string)$admin->username,null,(int)$admin->id);
+        if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed with an in-game announcement');
+        $result=\Simplify\Panel\Services\InGameAnnouncements::sent()[$ingame['id']]??null;
+        if($result===null||$result['sent']!==0)throw new \RuntimeException('the in-game result was not kept: '.json_encode($result));
+        $list=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->html();
+        if(!str_contains($list,'In game on all servers, every 10 minutes'))throw new \RuntimeException('the announcements list does not show the in-game status');
         // Explain this error: the server page renders the button with the saved key, and explaining reads the console from Wings
         // (unreachable here, so it must answer with a plain error instead of failing; nothing is sent to Anthropic).
         Filament::setCurrentPanel(Filament::getPanel('app'));auth()->setUser($admin);
@@ -77,7 +90,7 @@ if(($argv[1]??'')==='livewire'){
         $page->call('explainConsole');
         $explained=\Simplify\Panel\Services\ErrorExplainer::explain($server);
         if(($explained['ok']??true)!==false||!str_contains((string)($explained['error']??''),'Wings'))throw new \RuntimeException('explaining without Wings did not answer with a plain error: '.json_encode($explained));
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; the full notification list shows real notifications and mark all read clears them all and clear read archives them; Panel update check runs; the announcement form opens (browser time zone) and a saved, pinned announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; the full notification list shows real notifications and mark all read clears them all and clear read archives them; Panel update check runs; the announcement form opens (browser time zone) with its in-game part and in-game commands, and a saved, pinned announcement shows and is sent by simplify:announcements, also in game; the server page shows Explain and explainConsole answers without Wings');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 
