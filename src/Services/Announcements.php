@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Announcements: Info, Warning and Success messages root admins write under Admin tools → Announcements, shown as
  * bars above the server overview and server pages and in the bell. Also shows the announcements of the Hub plugin "Announcements"
- * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). While one is live it stays pinned:
- * collapsing it (per account) leaves a one-line pin that opens it again.
+ * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). Live ones are pinned there;
+ * each account can unpin one and pin it again from the bell.
  */
 final class Announcements
 {
@@ -113,7 +113,7 @@ final class Announcements
         return $items;
     }
 
-    /** Collapses an announcement for this account to a one-line pin; it stays pinned until it ends. */
+    /** Unpins an announcement for this account: no bar any more, it stays under the bell until it ends. */
     public static function dismiss(object $user,string $key): void
     {
         if(!self::validKey($key))return;
@@ -122,7 +122,7 @@ final class Announcements
         self::saveDismissed($user,array_slice($keys,-self::DISMISSED_LIMIT));
     }
 
-    /** Opens a collapsed announcement again for this account. */
+    /** Pins an unpinned announcement again for this account. */
     public static function restore(object $user,string $key): void
     {
         if(!self::validKey($key))return;
