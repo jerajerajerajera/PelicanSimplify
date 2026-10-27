@@ -261,7 +261,7 @@
         if (this.destroyed) return;
         this.startServerTimers();
       },
-      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page. */
+      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page, ?settings=<tab> for Simplify settings. */
       openFromLink() {
         let params;
         try {
@@ -271,7 +271,10 @@
         }
         const admin = params.get('admin');
         const open = params.get('open');
-        if (admin && admin.startsWith('/')) {
+        const settings = params.get('settings');
+        if (settings && /^[a-z-]+$/.test(settings)) {
+          this.openPanelSettings(settings);
+        } else if (admin && admin.startsWith('/')) {
           const known = this.adminPages().flatMap((group) => group.items).find((item) => new URL(item.url, location.origin).pathname === admin);
           this.openAdminPage(known || { key: 'link', label: 'Admin', url: admin });
         } else if (open && this.server && this.widgets.some((widget) => widget.key === open)) {
@@ -280,6 +283,7 @@
         try {
           params.delete('admin');
           params.delete('open');
+          params.delete('settings');
           history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
         } catch {}
       },
@@ -1936,7 +1940,8 @@
         const url = this.frameUrl(this.boot.settings_url);
         if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', this.settingsSection);
+        // Filament names a tab by its slug plus where its state lives.
+        target.searchParams.set('section', this.settingsSection.includes('::') ? this.settingsSection : this.settingsSection + '::data::tab');
         return target.href;
       },
       openPanelSettings(section = 'settings') {
@@ -2247,6 +2252,23 @@
       docked() {
         // Phones open workspaces as sheets over the page instead of docking them next to the console.
         return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
+      },
+      /**
+       * Puts focus in a workspace popup once it shows, so Escape and Tab work in it. x-show reveals the layer on the
+       * next frame while x-trap focuses after 15 ms; when that frame comes late (a layout transition is still running)
+       * the trap finds nothing visible and focus stays on the page.
+       */
+      focusPopup(layer) {
+        let frames = 0;
+        const check = () => {
+          if (!this.modal || this.docked() || layer.contains(document.activeElement)) return;
+          if (getComputedStyle(layer).display === 'none') { if (++frames < 30) requestAnimationFrame(check); return; }
+          const usable = (el) => !el.disabled && el.checkVisibility?.() !== false;
+          const target = [...layer.querySelectorAll('[autofocus]')].find(usable)
+            || [...layer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].find(usable);
+          target?.focus();
+        };
+        requestAnimationFrame(check);
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {

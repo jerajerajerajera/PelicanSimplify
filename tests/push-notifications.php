@@ -2,6 +2,7 @@
 namespace Illuminate\Support\Facades {
 class Storage {public static array $records=[];public static function disk($name){return new self;}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}
     public function files($dir){return array_values(array_filter(array_keys(self::$records),fn($p)=>str_starts_with($p,$dir.'/')));}}
+class Cache {public static array $values=[];public static function get($key,$default=null){return self::$values[$key]??$default;}}
 class Http {public static array $sent=[];public static int $status=201;public static bool $throw=false;private array $headers=[];private string $body='';
     public static function timeout($s){return new self;}public function connectTimeout($s){return $this;}public function withHeaders(array $h){$this->headers=$h;return $this;}public function withBody($b,$type){$this->body=$b;return $this;}
     public function post($url){if(self::$throw)throw new \RuntimeException('down');self::$sent[]=['url'=>$url,'headers'=>$this->headers,'body'=>$this->body];$status=self::$status;return new class($status){public function __construct(private int $s){}public function status(){return $this->s;}};}}
@@ -44,6 +45,15 @@ P::subscribe($jera,$phone,'Chrome on Android',$now+10);
 check(count(P::settings($jera)['devices'])===2,'subscribing the same browser again replaces it');
 check(P::accounts()===[1],'accounts with devices');
 
+// Scheduler: real notifications need it; any of Simplify's minute commands counts as a sign of life.
+check(P::schedulerStalled($now),'no run yet means stalled');
+\Illuminate\Support\Facades\Cache::$values['simplify.plugin-check-at']=$now-60;
+check(!P::schedulerStalled($now),'a run a minute ago is fine');
+\Illuminate\Support\Facades\Cache::$values['simplify.plugin-check-at']=$now-400;
+check(P::schedulerStalled($now),'no run for over five minutes is stalled');
+\Illuminate\Support\Facades\Cache::$values['simplify.announcements-at']=$now;
+check(!P::schedulerStalled($now),'the announcements heartbeat counts');
+
 // Preferences: both on by default, unknown kinds ignored.
 check(P::settings($jera)['preferences']===['announcements'=>true,'updates'=>true],'everything on by default');
 check(P::savePreferences($jera,['updates'=>false,'spam'=>true])===['announcements'=>true,'updates'=>false],'one kind turned off');
@@ -55,6 +65,14 @@ $request=Http::$sent[0];
 check(str_starts_with($request['headers']['Authorization'],'vapid t=')&&str_ends_with($request['headers']['Authorization'],'k='.$public)&&$request['headers']['Content-Encoding']==='aes128gcm'&&!str_contains($request['body'],'There'),'VAPID header and an encrypted body');
 check(P::send($jera,'updates',['title'=>'Update'])===0&&count(Http::$sent)===2,'nothing for a kind that is turned off');
 check(P::settings($jera)['devices'][0]['last_sent_at']!==null,'the last notification time is kept');
+// Once per device: a device that received a key is skipped; a failed send is tried again later; re-subscribing keeps it.
+Http::$sent=[];
+check(P::send($jera,'announcements',['title'=>'A'],'announcement-x')===2&&P::send($jera,'announcements',['title'=>'A'],'announcement-x')===0&&count(Http::$sent)===2,'each device gets a once-key only once');
+Http::$status=500;check(P::send($jera,'announcements',['title'=>'B'],'announcement-y')===0,'a failed send is not remembered');Http::$status=201;
+check(P::send($jera,'announcements',['title'=>'B'],'announcement-y')===2,'so the next round delivers it');
+P::subscribe($jera,$phone,'Chrome on Android',$now+20);
+check(P::send($jera,'announcements',['title'=>'A'],'announcement-x')===0,'subscribing the same browser again keeps what it received');
+check(!array_key_exists('received',P::settings($jera)['devices'][0]),'received keys stay on the server');
 Http::$sent=[];
 check(P::test($jera,$laptop['endpoint'])['ok']&&count(Http::$sent)===1&&Http::$sent[0]['url']===$laptop['endpoint'],'the test goes to this device only');
 check(!P::test($sam,$laptop['endpoint'])['ok'],'no test for a device of someone else');

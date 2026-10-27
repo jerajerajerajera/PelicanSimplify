@@ -85,7 +85,8 @@ if(($argv[1]??'')==='livewire'){
         if(!array_filter($shown,fn($item)=>$item['title']==='Smoke test'&&$item['pinned']))throw new \RuntimeException('the announcement is not pinned to the notifications');
         // The scheduler's run: refreshes the Panel's updates and sends the new announcement as app notification (nobody subscribed here).
         if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed');
-        if(\Simplify\Panel\Services\Announcements::duePush()!==[])throw new \RuntimeException('the announcement was not marked as sent');
+        $smokePush=current(array_filter(\Simplify\Panel\Services\Announcements::all(),fn(array $r):bool=>$r['title']==='Smoke test'));
+        if(!$smokePush||$smokePush['pushed_at']===null)throw new \RuntimeException('the announcement was not marked as sent');
         // In game: the scheduler tries every server (no Wings here, so none is running) and keeps the result for the list.
         $ingame=\Simplify\Panel\Services\Announcements::save(['title'=>'Smoke in game','ingame'=>true,'ingame_targets'=>'all','ingame_repeat'=>10],null,(string)$admin->username,null,(int)$admin->id);
         if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed with an in-game announcement');
@@ -164,7 +165,7 @@ $admin=User::withoutEvents(fn()=>User::factory()->create(['username'=>'smoke-adm
 $admin->syncRoles(Role::getRootAdmin());
 $server=Server::factory()->create(['owner_id'=>$admin->id,'name'=>'Smoke server']);
 // Finish Simplify's setup as the admin does in the setup wizard (until then every page sends the admin to the settings), with every feature on so every page is reachable.
-auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
+auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save([...array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),'addons_only'=>false],true);
 // Explain this error on, with a key that is only stored (encrypted with the panel's APP_KEY) and never sent anywhere.
 \Simplify\Panel\Services\ErrorExplainer::save(['provider'=>'anthropic','key'=>'sk-ant-smoke-test-not-a-real-key','model'=>'claude-haiku-5-5','audience'=>'everyone']);
 

@@ -1,5 +1,28 @@
 # Changes
 
+## 0.6.0-beta.13 (beta channel)
+The last beta before 0.6.0: only the add-ons, egg updates, clearer app notifications and small fixes.
+- The first setup step asks How much Simplify? Full Simplify works as before. Only the add-ons keeps Pelican's own dashboard, server pages and look, and adds only the add-ons you switch on.
+- With Only the add-ons, Pelican's menu gets a Simplify group with Server Maker, Announcements and Simplify settings. Create server on Pelican's server list still offers the Server Maker.
+- Simplify settings has the same choice under General. Switching back to Full Simplify restores your earlier settings. Existing panels stay on Full Simplify.
+- Simplify checks every egg for a new version every six hours. Root admins get a notification that opens the new Egg updates tab in Simplify settings.
+- The Egg updates tab has three choices: Ask first, Update eggs without servers automatically, or Off. The list has Update, Update all and Check now.
+- Every update keeps the previous version first. Put back restores it, and an egg that was put back is not updated automatically.
+- Move servers moves servers that still use the previous startup command or Docker image to the new one. It takes effect at their next start. Servers with their own command or image stay as they are.
+- Egg updates has a new choice: Test first, then update. Each listed update also has a Test first button.
+- Simplify tests a copy of the new egg on a temporary test server owned by a root admin, on a free port between 45000 and 45999. The real egg is only updated when the install finishes and the server starts.
+- If the test fails, the current egg stays. Root admins get a notification with the reason and the last install log lines. The test server, its port and the copy are always removed afterwards.
+- The Notifications window explains what is sent as a push notification. Announcements only go out when "Also send as app notification" is on. Pelican's own bell notifications are not pushed.
+- The Notifications window warns when Pelican's scheduler has not run for five minutes. Without it only the test notification arrives. Root admins see the cron line to add.
+- Also send as app notification is on by default for a new announcement.
+- For up to a day after an announcement starts, devices that missed it still get it, for example when notifications were turned on later. No device gets it twice.
+- The announcements list shows how many devices received the app notification.
+- Links in notifications can open a settings tab directly. The Open settings link to Appearance works again.
+- The Create server button shows a plain server icon. The round plus sits on the bottom-right corner of the button.
+- A workspace popup always takes focus when it opens, so Escape always closes it.
+- A panel that switches from the beta channel to the snapshot channel gets newer snapshots again. Before, a beta of the same version always counted as newer.
+- The README covers Website embed, the Health button and Pelican pages in Simplify style.
+
 ## 0.6.0-beta.12 (beta channel)
 Website embed, Pelican pages in Simplify style, and fixes from the lab round.
 - New add-on Website embed. It shows your servers on any website with one line of code, or as an iframe or a page of its own. It is on by default, but it publishes nothing until a server is switched on under Settings → Website embed or with "Show on the website" in the server menu.

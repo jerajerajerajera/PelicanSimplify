@@ -25,11 +25,18 @@ final class ManageAnnouncements extends Page
     protected static ?string $slug = 'simplify-announcements';
     protected string $view = 'pelican-simplify::admin-announcements';
     protected static bool $shouldRegisterNavigation = false;
+    protected static string|\BackedEnum|null $navigationIcon = 'tabler-speakerphone';
 
     /** The browser's time zone (set by the view), so "Show from" and "Show until" are the admin's own clock time. */
     public string $browserTimezone = '';
 
     public static function canAccess(): bool { return (bool) user()?->isRootAdmin(); }
+
+    /** "Only the add-ons": listed in Pelican's own menu under Simplify. */
+    public static function shouldRegisterNavigation(): bool { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() && static::canAccess(); }
+    public static function getNavigationGroup(): ?string { return 'Simplify'; }
+    public static function getNavigationLabel(): string { return 'Announcements'; }
+    public static function getNavigationSort(): ?int { return 2; }
 
     /** ?tz= is the browser's time zone (from "New announcement" in the dashboard's notifications, which opens with ?action=addAnnouncement). */
     public function mount(): void
@@ -136,8 +143,8 @@ final class ManageAnnouncements extends Page
             TextInput::make('button_label')->label('Button text')->placeholder('Open')->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
             Toggle::make('pinned')->label('Pin to everyone\'s notifications')
                 ->helperText('Stays at the top of the bell for everyone who sees it, until it ends. People can still unpin the bar on their own screen.'),
-            Toggle::make('push')->label('Also send as app notification')
-                ->helperText('To everyone who turned on notifications (account menu → Notifications). Sent once, when the announcement starts.'),
+            Toggle::make('push')->label('Also send as app notification')->default(true)
+                ->helperText('To everyone who turned on notifications (account menu → Notifications), once per device. Devices that turn them on within a day of the start still get it.'),
             ...$this->ingameFields(),
         ];
     }

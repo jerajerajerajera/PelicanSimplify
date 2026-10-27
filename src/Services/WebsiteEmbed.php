@@ -60,9 +60,14 @@ final class WebsiteEmbed
         if($options['accent']===''){$panel=AppearanceSettings::all()['accent_color']??'';$options['accent']=$panel!==''&&$panel!==AppearanceSettings::defaults()['accent_color']?$panel:'#0d9488';}
         return ['options'=>$options,'servers'=>$servers,'name'=>(string)config('app.name','Pelican')];
     }
+    /** Every server except the test servers of egg updates. */
+    private static function servers(): \Illuminate\Database\Eloquent\Builder
+    {
+        return class_exists(EggUpdateTest::class)?EggUpdateTest::hide(Server::query()):Server::query();
+    }
     private static function collect(): array
     {
-        $candidates=Server::query()->with(['allocation','egg','node'])->orderBy('name')->limit(500)->get()
+        $candidates=self::servers()->with(['allocation','egg','node'])->orderBy('name')->limit(500)->get()
             ->filter(fn(Server $s)=>self::shown($s))->take(self::LIMIT)->values();
         WingsServers::warm($candidates);
         $out=[];
@@ -134,7 +139,7 @@ final class WebsiteEmbed
     public static function games(): array
     {
         $games=[];
-        foreach(Server::query()->with('egg')->orderBy('name')->limit(500)->get() as $s)if(self::shown($s))$games[self::game($s)]=true;
+        foreach(self::servers()->with('egg')->orderBy('name')->limit(500)->get() as $s)if(self::shown($s))$games[self::game($s)]=true;
         $games=array_keys($games);sort($games);
         return $games;
     }
