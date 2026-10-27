@@ -791,6 +791,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
    Straight on the page, no frame around it: a menu on the left (admin pages as a tree, or the servers per
    node, with health at the bottom) and the open page or server next to it, split by one line. Icons without
    tiles, underlined tabs. Menu and page each scroll on their own. */
+/* The title and the top navigation line up with the host workspace below them. */
+.ps.host-mode .ps-top { max-width: 1680px; }
 .ps-host { position: relative; display: grid; flex: 1 1 0; grid-template-columns: 252px minmax(0, 1fr); width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; overflow: hidden; }
 .ps-host-menu-toggle, .ps-host-backdrop, .ps-host-menu-close { display: none; }
 .ps-host-side { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--ps-line); }
@@ -857,7 +859,7 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 .ps-host-health-bar .ps-health-check { width: 18px; height: 18px; border: 0; background: none; }
 .ps-host-health-bar .ps-health-check svg { width: 14px; height: 14px; }
 
-/* The page side: one header line (section, the open page, open full page) above the frame; the pages
+/* The page side: one header line (section and the open page, or the open server) above the frame; the pages
    themselves are only in the menu tree. */
 .ps-host-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .ps-host-head { display: flex; flex: none; align-items: center; gap: 10px; box-sizing: border-box; min-width: 0; height: var(--ps-host-row); padding: 0 14px; border-bottom: 1px solid var(--ps-line); }
@@ -895,8 +897,7 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-host-head { padding: 0; }
   /* The menu button already names the open page. */
   .ps-host-head.is-page { display: none !important; }
-      .ps-host-head-actions .ps-btn span { display: none; }
-}
+    }
 @media (max-height: 500px) and (max-width: 1100px) {
   .ps-host-main { height: max(260px, calc(100dvh - 16px)); }
 }

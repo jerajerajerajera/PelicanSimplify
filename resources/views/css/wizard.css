@@ -394,6 +394,16 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active > * > * > * > .ps-pelican-frame { flex: 1; height: auto; min-height: 0; }
 /* Embedded in the dashboard popup or the host workspace, the card is sized to the frame: nothing outside it scrolls. */
 html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: hidden; }
+/* In the host workspace the settings sit straight on the page like the rest of host mode: no card, no margin,
+   no menu background; one line between the menu and the settings, full height of the workspace. */
+html.ps-frame[data-ps-host] .ps-settings-page.is-embedded { max-width: none; margin: 0; padding: 0; }
+html.ps-frame[data-ps-host] .ps-settings-page :is(.ps-settings-form, .ps-settings-form :has(.ps-settings-tabs), .fi-sc-tabs, .fi-sc-tabs-tab) { border: 0 !important; border-radius: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0 !important; }
+html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { --ps-nav-bg: transparent; height: 100vh !important; }
+html.ps-frame[data-ps-host] .fi-page:has(.ps-settings-page, .ssc-wizard) { padding: 0 !important; }
+/* The Server Maker too: no card of its own in host mode; its bottom bar takes the page colour. */
+html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker { background: transparent !important; }
+html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker .fi-sc-wizard-footer { background: var(--ps-bg) !important; }
+html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-section-content-ctn) { background: transparent !important; }
 .ps-settings-tabs .fi-tabs-item { min-height: 40px; padding: 5px 8px !important; border: 1px solid transparent; border-radius: 11px !important; white-space: nowrap; }
 .ps-settings-tabs .fi-tabs-item > .fi-icon { padding: 6px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 16%, transparent); color: var(--ps-tone, var(--ps-accent)); box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item:hover { background: var(--ps-raised) !important; }
@@ -414,6 +424,7 @@ html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settin
   .ps-settings-tabs.fi-vertical > .fi-tabs { width: 100%; height: auto; }
   .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: auto; margin: 0 !important; overflow: visible; }
   html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: auto; }
+  html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { height: auto !important; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { overflow: visible; flex-wrap: wrap !important; }
   .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active .ps-pelican-frame { min-height: 480px; }
 }
