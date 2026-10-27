@@ -380,6 +380,8 @@ final class Dashboard extends Page
     #[Renderless]
     public function explainPluginFailure(string $filename): array {abort_unless(Access::feature('packages'),404); return Packages::explainFailure($this->server(),$filename); }
     #[Renderless]
+    public function saveCurseForgeKey(string $key): array {abort_unless(Access::feature('packages'),404); \Simplify\Panel\Services\CurseForge::saveUserKey($key); return Packages::installed($this->server()); }
+    #[Renderless]
     public function checkPluginHealth(): array {abort_unless(Access::feature('packages'),404); return Packages::checkHealth($this->server()); }
     #[Renderless]
     public function togglePackage(string $filename,bool $on): void {abort_unless(Access::feature('packages'),404); Packages::toggle($this->server(),$filename,$on); }

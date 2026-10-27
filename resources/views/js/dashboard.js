@@ -2748,7 +2748,9 @@
       packageSites() {
         const sites = [{ key: 'all', label: 'All sites' }, { key: 'modrinth', label: 'Modrinth' }];
         if (['paper', 'purpur'].includes(this.installed.context?.loader)) sites.push({ key: 'hangar', label: 'Hangar' });
-        return [...sites, { key: 'spigot', label: 'SpigotMC' }];
+        if (this.modal === 'plugins') sites.push({ key: 'spigot', label: 'SpigotMC' });
+        if (this.installed.context?.curseforge) sites.push({ key: 'curseforge', label: 'CurseForge' });
+        return sites;
       },
       packageHeading() {
         const what = this.modal === 'plugins' ? 'plugins' : 'mods';
@@ -2790,7 +2792,7 @@
           if (request !== this.packageRequest) return;
           this.packageResults = result.items || [];
           this.packageVersion = result.context?.version || this.packageVersion;
-          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC' })[key] || key);
+          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC', curseforge: 'CurseForge' })[key] || key);
           this.packageSearched = true;
           this.loadPackageDetails(this.packageResults.map((p) => p.key));
         } catch (e) {
@@ -2826,6 +2828,24 @@
         this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it; if it fails to load, Simplify switches it off again.', 'ok');
         if (this.modal === 'plugins' && this.server) this.server.plugin_watch = true;
         this.installed = await wire.installedPackages();
+      },
+      /** Bigger hosts can let people search CurseForge with their own free API key; an empty key removes it. */
+      async setCurseForgeKey() {
+        const key = await this.ask({
+          title: 'Your CurseForge API key',
+          message: 'Create a free key at console.curseforge.com (sign in, then API keys). It is stored encrypted on this panel and only sent to CurseForge.' + (this.installed.context?.curseforge_mine ? ' Leave the field empty and save to remove your key.' : ''),
+          input: true,
+          inputLabel: 'API key',
+          inputType: 'password',
+          placeholder: '$2a$10$…',
+          confirmLabel: 'Save',
+        });
+        if (key === false || key === null || key === undefined) return;
+        const result = await this.run(() => wire.saveCurseForgeKey(String(key)), String(key).trim() ? 'CurseForge key saved. Search now includes CurseForge.' : 'Your CurseForge key was removed.');
+        if (result === SKIPPED) return;
+        this.installed = result;
+        this.packageDetails = {};
+        this.searchPackages();
       },
       /** Opens the file manager in the plugins (or mods) folder. */
       openPackageFolder() {

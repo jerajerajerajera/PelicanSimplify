@@ -266,7 +266,7 @@
 
   /**
    * A Simplify confirmation dialog. Resolves to true/false, or to the typed text when `input` is set.
-   * Options: title, message, confirmLabel, cancelLabel, tone ('danger' | 'primary'), input, placeholder, requireText.
+   * Options: title, message, confirmLabel, cancelLabel, tone ('danger' | 'primary'), input, inputType ('password'), placeholder, requireText.
    */
   const dialog = (opts = {}) => {
     const parent = parentUi();
@@ -299,6 +299,7 @@
         field = document.createElement('input');
         field.placeholder = opts.placeholder || opts.requireText || '';
         field.autocomplete = 'off';
+        if (opts.inputType === 'password') field.type = 'password';
         label.append(field);
         wrap.querySelector('.ps-modal-body').append(label);
         const check = () => (confirm.disabled = !!opts.requireText && field.value !== opts.requireText);
