@@ -1261,6 +1261,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-host-emblem .ps-host-heart { width: 24px; height: 24px; }
   .ps .ps-health-status { font-size: 14px; line-height: 20px; }
   .ps .ps-health-phone-summary { display: block; margin: 0; color: var(--ps-muted); font-size: 12px; }
+  /* The line has no room for refresh: it shows once the details are open, where the per-node numbers take over from the summary. */
+  .ps .ps-health-panel:not(.expanded) .ps-health-refresh, .ps .ps-health-panel.expanded .ps-health-phone-summary { display: none; }
   .ps .ps-health-drawer, .ps .ps-health-drawer > div, .ps .ps-node-health-list { --ps-health-details-height: none; max-height: none; }
   .ps .ps-health-panel:not(.expanded) .ps-health-drawer { max-height: 0; }
   .ps .ps-node-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
