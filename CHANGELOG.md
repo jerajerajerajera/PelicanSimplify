@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.0-snapshot.18 (snapshot channel)
+Documentation.
+- The README covers Only the add-ons and egg updates.
+
 ## 0.6.0-snapshot.17 (snapshot channel)
 Test egg updates first, app notifications that reach everyone, and a fix for the snapshot channel.
 - Egg updates has a new choice: Test first, then update. Each listed update also has a Test first button.
