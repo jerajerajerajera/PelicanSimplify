@@ -24,18 +24,18 @@ final class CreationGuard
             User::query()->whereKey(user()->id)->lockForUpdate()->firstOrFail();
             CreatorAccess::assertState($state);
             if (!CreatorAccess::nodes()->whereKey($payload['node_id'])->exists()) {
-                throw ValidationException::withMessages(['data.node_id' => 'You do not have access to this node.']);
+                throw ValidationException::withMessages(['data.node_id' => __('pelican-simplify::maker.form.you_do_not_have_access_to')]);
             }
             $node = Node::query()->whereKey($payload['node_id'])->lockForUpdate()->firstOrFail();
             if (!$node->isViable((int) $payload['memory'], (int) $payload['disk'], (int) $payload['cpu'])) {
-                throw ValidationException::withMessages(['data.ram_gb' => 'The hosting machine has no room for these resources. Choose a smaller server.']);
+                throw ValidationException::withMessages(['data.ram_gb' => __('pelican-simplify::maker.form.the_hosting_machine_has_no_room')]);
             }
             if (!CreatorAccess::admin() || CreatorAccess::nodes()->count() === 1) {
                 $payload['allocation_id'] = Allocation::query()->where('node_id', $node->id)->whereNull('server_id')->orderBy('id')->lockForUpdate()->value('id');
             }
             $allocation = Allocation::query()->whereKey($payload['allocation_id'])->lockForUpdate()->first();
             if (!$allocation || $allocation->server_id !== null || (int) $allocation->node_id !== (int) $payload['node_id']) {
-                throw ValidationException::withMessages(['data.allocation_id' => 'This port is no longer available.']);
+                throw ValidationException::withMessages(['data.allocation_id' => __('pelican-simplify::maker.form.this_port_is_no_longer_available')]);
             }
             if (!CreatorAccess::admin()) {
                 $servers = Server::query()->where('owner_id', user()->id)->get(['memory', 'disk']);
@@ -59,7 +59,7 @@ final class CreationGuard
         }
         try {
             if (!flock($handle, LOCK_EX | LOCK_NB)) {
-                throw ValidationException::withMessages(['data.ram_gb' => 'Another resource change is in progress. Please try again shortly.']);
+                throw ValidationException::withMessages(['data.ram_gb' => __('pelican-simplify::maker.form.another_resource_change_is_in_progress')]);
             }
             return $callback();
         } finally {

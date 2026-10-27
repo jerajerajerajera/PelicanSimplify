@@ -314,17 +314,17 @@ final class Announcements
     public static function ago(int $at,int $now): string
     {
         $seconds=max(0,$now-$at);
-        if($seconds<60)return 'just now';
-        foreach([[86400,'day'],[3600,'hour'],[60,'minute']] as [$size,$unit]){
+        if($seconds<60)return __('pelican-simplify::announcements.time.just_now');
+        foreach([[86400,'days'],[3600,'hours'],[60,'minutes']] as [$size,$unit]){
             if($seconds<$size)continue;
             $count=intdiv($seconds,$size);
-            if($unit==='day'&&$count===1)return 'yesterday';
-            return $count.' '.$unit.($count===1?'':'s').' ago';
+            if($unit==='days'&&$count===1)return __('pelican-simplify::announcements.time.yesterday');
+            return trans_choice('pelican-simplify::announcements.time.'.$unit,$count);
         }
-        return 'just now';
+        return __('pelican-simplify::announcements.time.just_now');
     }
 
-    private static function until(int $at): string { return 'until '.date('D j M H:i',$at); }
+    private static function until(int $at): string { return __('pelican-simplify::announcements.time.until', ['date'=>date('D j M H:i',$at)]); }
 
     private static function validKey(string $key): bool { return (bool)preg_match('/^[a-z]+-[A-Za-z0-9._-]{1,120}$/',$key); }
 

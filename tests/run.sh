@@ -4,6 +4,7 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 PHP_BIN=${PHP_BIN:-php}
 python3 "$ROOT/tests/package-layout.py"
 python3 "$ROOT/tests/hub-check.py"
+python3 "$ROOT/scripts/untranslated.py"
 while IFS= read -r -d '' FILE; do "$PHP_BIN" -l "$FILE" >/dev/null; done < <(find "$ROOT" -name '*.php' ! -name '*.blade.php' -print0)
 for FILE in "$ROOT"/tests/*.php; do [[ "$FILE" == *.fixture.php ]] || "$PHP_BIN" "$FILE"; done
 if [[ -d "$ROOT/server-directory/tests" ]]; then for FILE in "$ROOT"/server-directory/tests/*.php; do "$PHP_BIN" "$FILE"; done; fi

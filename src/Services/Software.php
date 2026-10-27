@@ -13,7 +13,7 @@ final class Software
             if(preg_match('/minecraft|vanilla|paper|purpur|spigot|ftb|modrinth|tekkit|hexxit|forge|fabric|curseforge/i',$e->name))$eggs[]=['id'=>$e->id,'name'=>$e->name];
         }
         return ['eggs'=>$eggs,'image'=>$s->image,'startup'=>$s->startup,'requested_subdomain'=>self::requestedSubdomain($s),
-            'note'=>'Runtime is selected automatically. Administrators can override it in Pelican.'];
+            'note'=>__('pelican-simplify::dashboard.software.runtime_is_selected_automatically_administrators_can')];
     }
     private static function requestedSubdomain(Server $s): string
     {
@@ -22,21 +22,21 @@ final class Software
     public static function change(Server $s,array $state,string $confirm): void
     {
         Access::permission($s,SubuserPermission::SettingsReinstall);Access::owner($s);Access::offline($s);
-        abort_if(PendingChanges::read($s)!==null,409,'Apply or discard staged settings before changing software.');
-        abort_unless(hash_equals($s->name,$confirm),422,'Enter the exact server name.');
-        abort_unless($s->backups()->where('is_successful',true)->whereNotNull('completed_at')->where('created_at','>=',now()->subMinutes(30))->exists(),409,'Wait for a successful backup made within the last 30 minutes before changing software.');
+        abort_if(PendingChanges::read($s)!==null,409,__('pelican-simplify::dashboard.software.apply_or_discard_staged_settings_before'));
+        abort_unless(hash_equals($s->name,$confirm),422,__('pelican-simplify::dashboard.errors.exact_name'));
+        abort_unless($s->backups()->where('is_successful',true)->whereNotNull('completed_at')->where('created_at','>=',now()->subMinutes(30))->exists(),409,__('pelican-simplify::dashboard.software.wait_for_a_successful_backup_made'));
         $state=validator($state,['server_type'=>'required|in:vanilla,plus,modded','egg_id'=>'nullable|integer','minecraft_version'=>'nullable|string|max:40','modpack_project'=>'nullable|string|max:150','modpack_version'=>'nullable|string|max:150'])->validate();
         if($state['server_type']==='modded')$egg=ModpackCatalog::egg($state['modpack_project']??'');
         else $egg=Egg::find($state['egg_id']??0);
-        abort_unless($egg,422,'The required egg is not installed. Ask an administrator to import it.');
+        abort_unless($egg,422,__('pelican-simplify::dashboard.software.the_required_egg_is_not_installed'));
         abort_unless(preg_match('/minecraft|vanilla|paper|purpur|spigot|ftb|modrinth|tekkit|hexxit|forge|fabric|curseforge/i',$egg->name),422);
         $env=[];foreach($egg->variables as $v)$env[$v->env_variable]=$v->default_value;
         if($state['server_type']==='modded')$env=ModpackCatalog::applyVariables($egg,$state,$env);
         else {
             $version=$state['minecraft_version']??'';
-            abort_unless(preg_match('/^(?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?)$/',$version),422,'Enter an exact Minecraft release version.');
+            abort_unless(preg_match('/^(?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?)$/',$version),422,__('pelican-simplify::dashboard.software.enter_an_exact_minecraft_release_version'));
             $key=null;foreach(['MINECRAFT_VERSION','MC_VERSION','SERVER_VERSION'] as $k)if(array_key_exists($k,$env)){$key=$k;break;}
-            abort_unless($key,422,'This egg has no supported Minecraft version setting.');$env[$key]=$version;
+            abort_unless($key,422,__('pelican-simplify::dashboard.software.this_egg_has_no_supported_minecraft'));$env[$key]=$version;
             if(isset($env['BUILD_NUMBER']))$env['BUILD_NUMBER']='latest';
         }
         $image=JavaRuntime::requireImage([...$state,'java_version'=>'auto'],$egg);

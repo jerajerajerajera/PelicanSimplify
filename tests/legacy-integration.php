@@ -6,6 +6,7 @@ namespace Filament\Actions {class Action {public static function make($name){ret
 namespace App\Filament\Admin\Resources\Servers {class ServerResource {public static function registerCustomPages($pages){}}}
 namespace Simplify\Panel\Filament\Admin\Pages {class CreateServerLegacy {public static function route($path){return $path;}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  require __DIR__.'/../src/PelicanSimplifyPlugin.php';
  $plugin=new \Simplify\Panel\PelicanSimplifyPlugin;
  foreach(['app','admin'] as $id){

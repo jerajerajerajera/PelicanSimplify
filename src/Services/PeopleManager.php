@@ -72,9 +72,9 @@ final class PeopleManager
     {
         self::authorize();
         $actor = user();
-        if ((int) $target->id === (int) $actor->id) throw ValidationException::withMessages(['user' => 'You cannot delete your own account here.']);
-        if ($target->isRootAdmin() && self::rootAdminCount() <= 1) throw ValidationException::withMessages(['user' => 'The last root admin cannot be deleted.']);
-        if ($target->servers()->exists()) throw ValidationException::withMessages(['user' => 'This person still owns servers. Move or delete them first.']);
+        if ((int) $target->id === (int) $actor->id) throw ValidationException::withMessages(['user' => __('pelican-simplify::people.errors.you_cannot_delete_your_own_account')]);
+        if ($target->isRootAdmin() && self::rootAdminCount() <= 1) throw ValidationException::withMessages(['user' => __('pelican-simplify::people.errors.the_last_root_admin_cannot_be')]);
+        if ($target->servers()->exists()) throw ValidationException::withMessages(['user' => __('pelican-simplify::people.errors.this_person_still_owns_servers_move')]);
         $target->delete();
     }
 
@@ -94,7 +94,7 @@ final class PeopleManager
     {
         self::authorize();
         $name = trim($name);
-        if ($role?->isRootAdmin() || strcasecmp($name, Role::ROOT_ADMIN) === 0) throw ValidationException::withMessages(['name' => 'The Root Admin role is managed by Pelican and cannot be changed.']);
+        if ($role?->isRootAdmin() || strcasecmp($name, Role::ROOT_ADMIN) === 0) throw ValidationException::withMessages(['name' => __('pelican-simplify::people.errors.the_root_admin_role_is_managed')]);
         validator(['name' => $name], ['name' => ['required', 'string', 'max:64', Rule::unique('roles', 'name')->ignore($role?->id)]])->validate();
         $known = array_merge(...array_values(array_map('array_keys', self::permissionGroups()) ?: [[]]));
         $permissions = array_values(array_intersect(array_unique(array_map('strval', $permissions)), $known));
@@ -113,7 +113,7 @@ final class PeopleManager
     public static function deleteRole(Role $role): void
     {
         self::authorize();
-        if ($role->isRootAdmin()) throw ValidationException::withMessages(['role' => 'The Root Admin role cannot be deleted.']);
+        if ($role->isRootAdmin()) throw ValidationException::withMessages(['role' => __('pelican-simplify::people.errors.the_root_admin_role_cannot_be')]);
         DB::transaction(function () use ($role): void {
             $id = (int) $role->id;
             $role->delete();
@@ -146,7 +146,7 @@ final class PeopleManager
             'email' => ['required', 'email', 'between:1,255', Rule::unique('users', 'email')->ignore($target?->id)],
             'roles' => ['array'],
             'roles.*' => ['integer', Rule::exists('roles', 'id')],
-        ], ['username.regex' => 'Use letters, numbers, dots, dashes and underscores only.'])->validate();
+        ], ['username.regex' => __('pelican-simplify::people.errors.use_letters_numbers_dots_dashes_and')])->validate();
         $valid['roles'] = array_values(array_unique(array_map('intval', $valid['roles'] ?? [])));
         return $valid;
     }
@@ -158,8 +158,8 @@ final class PeopleManager
         $wasRoot = $target->isRootAdmin();
         $staysRoot = in_array((int) $root->id, $roleIds, true);
         if ($wasRoot && !$staysRoot) {
-            if ((int) $target->id === (int) user()->id) throw ValidationException::withMessages(['roles' => 'You cannot remove your own root admin access.']);
-            if (self::rootAdminCount() <= 1) throw ValidationException::withMessages(['roles' => 'The last root admin keeps root access.']);
+            if ((int) $target->id === (int) user()->id) throw ValidationException::withMessages(['roles' => __('pelican-simplify::people.errors.you_cannot_remove_your_own_root')]);
+            if (self::rootAdminCount() <= 1) throw ValidationException::withMessages(['roles' => __('pelican-simplify::people.errors.the_last_root_admin_keeps_root')]);
         }
         $target->syncRoles(Role::query()->whereIn('id', $roleIds)->get());
     }

@@ -110,7 +110,7 @@ final class ManagePlugins extends Page
         abort_unless($this->canChange($plugin) && in_array($plugin->status->value, $enabled ? ['disabled', 'crashed'] : ['enabled'], true), 403);
         $service = app(\App\Services\Helpers\PluginService::class);
         $enabled ? $service->enablePlugin($plugin) : $service->disablePlugin($plugin);
-        Notification::make()->title($plugin->name.($enabled ? ' enabled' : ' disabled'))->body(__('pelican-simplify::plugins.form.reload_the_panel_to_apply_the'))->success()->send();
+        Notification::make()->title($enabled ? __('pelican-simplify::plugins.form.enabled_name', ['name' => $plugin->name]) : __('pelican-simplify::plugins.form.disabled_name', ['name' => $plugin->name]))->body(__('pelican-simplify::plugins.form.reload_the_panel_to_apply_the'))->success()->send();
     }
 
     /** Install, uninstall and delete run through Pelican's own jobs and service, so nothing needs the legacy page. */
@@ -139,7 +139,7 @@ final class ManagePlugins extends Page
         $plugin = Plugin::query()->findOrFail($id);
         abort_unless(user()?->can('delete', $plugin) && in_array($plugin->status->value, ['not_installed', 'errored', 'crashed'], true), 403);
         app(\App\Services\Helpers\PluginService::class)->deletePlugin($plugin);
-        Notification::make()->title($plugin->name.' deleted')->success()->send();
+        Notification::make()->title(__('pelican-simplify::plugins.form.deleted_name', ['name' => $plugin->name]))->success()->send();
     }
 
     protected function getHeaderActions(): array
@@ -166,7 +166,7 @@ final class ManagePlugins extends Page
                     \Simplify\Panel\Services\UpdateCheck::forget();
                     $count = count(PluginUpdater::available(true));
                     \Simplify\Panel\Services\PanelUpdates::refresh();
-                    Notification::make()->title($count ? $count.' update(s) available' : 'Everything is up to date')->success()->send();
+                    Notification::make()->title(trans_choice('pelican-simplify::plugins.form.updates_available', $count))->success()->send();
                 }),
             \Filament\Actions\Action::make('importUrl')->label(__('pelican-simplify::plugins.form.import_from_url'))->tooltip(__('pelican-simplify::plugins.form.import_from_url'))->icon('tabler-world-download')
                 ->authorize(fn () => user()?->can('create', Plugin::class))

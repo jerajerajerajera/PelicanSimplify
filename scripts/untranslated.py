@@ -13,7 +13,8 @@ import json, pathlib, re, subprocess, sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ALLOW_FILE = ROOT / 'scripts' / 'untranslated-allow.txt'
 SOURCES = [('resources/views', '*.blade.php'), ('resources/views/js', '*.js'), ('src', '*.php')]
-SKIP = {'resources/views/js/embed.js', 'src/Console/Commands/Explain.php'}  # the public website embed and terminal output stay English for now
+# The public website embed, terminal output, the translation audit and the push encryption stay English.
+SKIP = ('resources/views/js/embed.js', 'src/Http/Controllers/EmbedController.php', 'src/Console/', 'src/Services/Translations.php', 'src/Services/WebPush.php')
 
 STRING = re.compile(r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"")
 SINGLE = re.compile(r"'((?:[^'\\\n]|\\.)*)'()")
@@ -85,6 +86,8 @@ def scan(path):
         for m in (list(SINGLE.finditer(code)) if blade else STRING.finditer(code)):
             s = m.group(1) if m.group(1) is not None else m.group(2)
             if looks_like_text(s): found.append((number, s))
+            elif not blade and re.search(r'<[a-z/][^>]*>', s):  # HTML built in PHP: check the text between the tags
+                found += [(number, part) for part in re.split(r'<[^>]*>', s) if looks_like_text(part)]
         if blade:
             for m in TEXT_ATTR.finditer(code):
                 s = ' '.join(re.sub(r'\{\{.*?\}\}|&\w+;', ' ', m.group(1)).split())
@@ -107,7 +110,7 @@ def main(args):
     total = 0
     for f in files:
         rel, found = scan(f)
-        if rel in SKIP and not paths: continue
+        if rel.startswith(SKIP) and not paths: continue
         for number, s in found:
             if s.strip() in allow: continue
             total += 1

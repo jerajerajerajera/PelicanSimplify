@@ -138,4 +138,12 @@ return [
         'unsupported' => ':count without chat command',
         'failed' => ':count failed',
     ],
+    'time' => [
+        'just_now' => 'just now',
+        'yesterday' => 'yesterday',
+        'days' => ':count day ago|:count days ago',
+        'hours' => ':count hour ago|:count hours ago',
+        'minutes' => ':count minute ago|:count minutes ago',
+        'until' => 'until :date',
+    ],
 ];

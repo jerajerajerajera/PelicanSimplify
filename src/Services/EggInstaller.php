@@ -58,10 +58,10 @@ final class EggInstaller
         }
         $file = self::file($state);
         if (!$file) {
-            throw ValidationException::withMessages(['data.egg_id' => 'Choose a supported server type and modpack first.']);
+            throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.form.choose_a_supported_server_type_and')]);
         }
         if (!CreatorAccess::canImportEggs()) {
-            throw ValidationException::withMessages(['data.egg_id' => 'The matching egg is not installed yet. Ask an administrator to import it, or to allow users to install missing eggs in Simplify settings.']);
+            throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.form.the_matching_egg_is_not_installed')]);
         }
         try {
             // Recheck under a shared cache lock so simultaneous wizards reuse one import.
@@ -92,12 +92,12 @@ final class EggInstaller
                 return $egg;
             });
         } catch (LockTimeoutException) {
-            throw ValidationException::withMessages(['data.egg_id' => 'This egg is being imported by another request. Wait a moment and continue again.']);
+            throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.form.this_egg_is_being_imported_by')]);
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
             report($exception);
-            throw ValidationException::withMessages(['data.egg_id' => 'Could not import the required egg. Check the Pelican logs or import it manually under Admin → Eggs. No server has been created.']);
+            throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.form.could_not_import_the_required_egg')]);
         }
     }
 }

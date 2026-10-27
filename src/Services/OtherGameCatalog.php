@@ -28,13 +28,13 @@ final class OtherGameCatalog
             $editable[$name] = CreatorAccess::admin() || ($variable->user_editable && $variable->user_viewable);
             $value = $editable[$name] && array_key_exists($name, $values) ? $values[$name] : ($variable->default_value ?? '');
             if (!is_scalar($value) && $value !== null) {
-                throw ValidationException::withMessages(['data.game_variables.' . $name => 'Enter a valid value.']);
+                throw ValidationException::withMessages(['data.game_variables.' . $name => __('pelican-simplify::steam.errors.enter_a_valid_value')]);
             }
             $result[$name] = (string) ($value ?? '');
         }
         foreach ($values as $name => $value) {
             if (!array_key_exists($name, $editable) || !$editable[$name]) {
-                throw ValidationException::withMessages(['data.game_variables' => 'This game variable cannot be changed.']);
+                throw ValidationException::withMessages(['data.game_variables' => __('pelican-simplify::steam.errors.this_game_variable_cannot_be_changed')]);
             }
         }
         return $result;
@@ -44,7 +44,7 @@ final class OtherGameCatalog
     {
         $image = (string) (collect($egg->docker_images)->first() ?? '');
         if ($image === '') {
-            throw ValidationException::withMessages(['data.game_egg_id' => 'This egg has no Docker image. Ask an administrator to configure it.']);
+            throw ValidationException::withMessages(['data.game_egg_id' => __('pelican-simplify::steam.errors.this_egg_has_no_docker_image')]);
         }
         return $image;
     }
@@ -56,19 +56,19 @@ final class OtherGameCatalog
     private static function steamTokenAction(\Filament\Forms\Components\TextInput $field, string $path, string $gameName): void
     {
         $field->password()->revealable()->suffixAction(
-            \Filament\Actions\Action::make('steam_token_'.md5($path))->icon('tabler-brand-steam')->tooltip('Create a token with your Steam account')
+            \Filament\Actions\Action::make('steam_token_'.md5($path))->icon('tabler-brand-steam')->tooltip(__('pelican-simplify::steam.token.create_tooltip'))
                 ->visible(fn () => SteamAccount::connected(user()))
                 ->action(function (\Filament\Schemas\Components\Utilities\Set $set, $livewire) use ($path, $gameName): void {
                     try {
                         $memo = trim((string) ($livewire->data['name'] ?? '')) ?: $gameName;
                         $set($path, SteamAccount::createTokenForGame(user(), $gameName, $memo));
-                        \Filament\Notifications\Notification::make()->title('Steam token created')->body('It is listed on steamcommunity.com/dev/managegameservers as "'.mb_substr($memo, 0, 32).'".')->success()->send();
+                        \Filament\Notifications\Notification::make()->title(__('pelican-simplify::steam.token.created'))->body(__('pelican-simplify::steam.token.created_body', ['memo' => mb_substr($memo, 0, 32)]))->success()->send();
                     } catch (\Illuminate\Validation\ValidationException $exception) {
-                        \Filament\Notifications\Notification::make()->title('No token created')->body(collect($exception->errors())->flatten()->first())->danger()->send();
+                        \Filament\Notifications\Notification::make()->title(__('pelican-simplify::steam.token.not_created'))->body(collect($exception->errors())->flatten()->first())->danger()->send();
                     }
                 })
-        )->hint(fn () => !SteamAccount::connected(user()) ? 'Connect your Steam key in your profile (Steam tab) to create this with one click or automatically.'
-            : (SteamAccount::autoTokens(user()) ? 'Leave empty: a token is created for this server automatically.' : null));
+        )->hint(fn () => !SteamAccount::connected(user()) ? __('pelican-simplify::steam.token.connect_hint')
+            : (SteamAccount::autoTokens(user()) ? __('pelican-simplify::steam.token.auto_hint') : null));
     }
 
     /** Starting values for the game settings form (toggles as true/false). */

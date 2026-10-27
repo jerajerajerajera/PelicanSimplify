@@ -580,7 +580,7 @@
     bar.className = 'ps-savebar' + (fixed ? ' is-fixed' : '');
     bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', t('common.save_changes'));
-    bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">Unsaved changes</span></span>'
+    bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">' + t('common.unsaved_changes') + '</span></span>'
       + (onDiscard ? '<button type="button" class="ps-savebar-discard">Discard</button>' : '')
       + '<button type="button" class="ps-savebar-save"><svg class="ps-savebar-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg><span class="ps-savebar-label"></span></button>';
     const text = bar.querySelector('.ps-savebar-text');

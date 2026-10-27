@@ -2615,8 +2615,8 @@
           const n = this.stats.network;
           return t('dashboard.traffic_used', { traffic: n?.rx_bytes == null || n?.tx_bytes == null ? '—' : '↓ ' + this.trafficBytes(n.rx_bytes) + ' / ↑ ' + this.trafficBytes(n.tx_bytes) });
         }
-        if (key === 'cpu') return `of ${this.server?.cpu || '∞'}% allocated`;
-        return `of ${this.bytes(((key === 'ram' ? this.server?.memory : this.server?.disk) || 0) * 1048576)} allocated`;
+        if (key === 'cpu') return t('dashboard.of_allocated', { amount: (this.server?.cpu || '∞') + '%' });
+        return t('dashboard.of_allocated', { amount: this.bytes(((key === 'ram' ? this.server?.memory : this.server?.disk) || 0) * 1048576) });
       },
       spark(key) {
         const a = this.series[key];

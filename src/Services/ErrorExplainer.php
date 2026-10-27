@@ -137,6 +137,7 @@ final class ErrorExplainer
     /** The question for these lines, the same for every provider. */
     public static function question(array $lines, string $context = ''): string
     {
+        // @english
         return ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nIs everything working, or is something wrong here?";
     }
     /** The request to a provider for these lines: ['url', 'headers', 'body']. */

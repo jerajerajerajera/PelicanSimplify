@@ -25,3 +25,10 @@ User access
 Game creator
 Plugin updates
 Pelican server
+# Headers, SQL and font names.
+frame-ancestors *
+default-src 'none'
+frame-ancestors 'self'
+HTTP
+egg_id, count(*) as total
+Inter Variable

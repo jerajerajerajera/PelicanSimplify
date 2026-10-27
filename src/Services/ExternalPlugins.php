@@ -97,7 +97,7 @@ final class ExternalPlugins
     public static function overlaps(): array
     {
         return self::$overlaps ??= array_map(fn (array $match): array => [
-            'id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? 'It does part of what Simplify does.'),
+            'id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? __('pelican-simplify::plugins.conflicts.does_part')),
             'features' => array_values(array_filter((array) ($match[1]['features'] ?? []), 'is_string')),
         ], self::matches(self::published('overlaps')));
     }
@@ -112,7 +112,7 @@ final class ExternalPlugins
     /** Enabled plugins that clash with Simplify, with the reason: [{id, name, reason}]. */
     public static function conflicts(): array
     {
-        return array_map(fn (array $match): array => ['id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? 'It changes the same parts of the panel as Simplify.')], self::matches(self::conflictList()));
+        return array_map(fn (array $match): array => ['id' => $match[0]['id'], 'name' => $match[0]['name'], 'reason' => (string) ($match[1]['reason'] ?? __('pelican-simplify::plugins.conflicts.changes_same'))], self::matches(self::conflictList()));
     }
 
     /**
@@ -338,10 +338,10 @@ final class ExternalPlugins
                 $list[self::key($panelId, $class)] = $label.' — '.$plugin['name'].' ('.$where.')';
             }
         }
-        foreach (['server' => 'Server widget', 'app' => 'Server list widget'] as $panelId => $where) {
+        foreach (['server' => __('pelican-simplify::plugins.external.server_widget'), 'app' => __('pelican-simplify::plugins.external.server_list_widget')] as $panelId => $where) {
             foreach (self::widgets($panelId, true) as $widget) $list[$widget['key']] = $widget['label'].' — '.$widget['plugin'].' ('.$where.')';
         }
-        foreach (['server' => 'Console button', 'app' => 'Server list button'] as $panelId => $where) {
+        foreach (['server' => __('pelican-simplify::plugins.external.console_button'), 'app' => __('pelican-simplify::plugins.external.server_list_button')] as $panelId => $where) {
             foreach (self::registeredActions($panelId) as $action) {
                 try {
                     $label = trim(strip_tags((string) ($action->getTooltip() ?: $action->getLabel())));

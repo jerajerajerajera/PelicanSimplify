@@ -20,7 +20,7 @@ final class PelicanSimplifyPlugin implements Plugin
         $panel->renderHook('panels::head.end',fn()=>view('pelican-simplify::shared-assets'));
         $panel->renderHook('panels::global-search.after',fn()=>view('pelican-simplify::legacy-return'));
         $panel->userMenuItems([
-            Action::make('simplify_settings')->label('Simplify settings')->icon('tabler-settings')
+            Action::make('simplify_settings')->label(__('pelican-simplify::settings.page.simplify_settings'))->icon('tabler-settings')
                 ->url(fn()=>SimplifySettings::getUrl(panel:$panel->getId()==='server'?'app':$panel->getId()))
                 ->visible(fn()=>(bool)user()?->isRootAdmin()),
         ]);

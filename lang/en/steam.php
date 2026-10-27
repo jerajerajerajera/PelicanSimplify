@@ -42,5 +42,16 @@ return [
         'connect_your_steam_key_first_profile' => 'Connect your Steam key first (profile → Steam).',
         'your_saved_steam_key_could_not' => 'Your saved Steam key could not be read. Connect your Steam account again.',
         'this_game_could_not_be_found' => 'This game could not be found on Steam. Create a token on steamcommunity.com/dev/managegameservers instead.',
+        'enter_a_valid_value' => 'Enter a valid value.',
+        'this_game_variable_cannot_be_changed' => 'This game variable cannot be changed.',
+        'this_egg_has_no_docker_image' => 'This egg has no Docker image. Ask an administrator to configure it.',
+    ],
+    'token' => [
+        'create_tooltip' => 'Create a token with your Steam account',
+        'created' => 'Steam token created',
+        'created_body' => 'It is listed on steamcommunity.com/dev/managegameservers as ":memo".',
+        'not_created' => 'No token created',
+        'connect_hint' => 'Connect your Steam key in your profile (Steam tab) to create this with one click or automatically.',
+        'auto_hint' => 'Leave empty: a token is created for this server automatically.',
     ],
 ];

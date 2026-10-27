@@ -600,4 +600,18 @@ return [
         'condensed' => 'Condensed',
         'display' => 'Impact',
     ],
+    'curseforge' => [
+        'error' => 'CurseForge answered with error :status.',
+        'this_is_not_a_curseforge_api' => 'This is not a CurseForge API key.',
+        'curseforge_did_not_accept_this_key' => 'CurseForge did not accept this key.',
+        'enter_a_curseforge_api_key_first' => 'Enter a CurseForge API key first.',
+        'curseforge_did_not_answer_try_again' => 'CurseForge did not answer. Try again in a moment.',
+        'plugin_search_now_includes_curseforge' => 'Plugin search now includes CurseForge.',
+    ],
+    'subdomains_missing' => [
+        'domain' => 'domain',
+        'target' => 'game address',
+        'token' => 'CLOUDFLARE_API_TOKEN in .env',
+        'zone' => 'CLOUDFLARE_ZONE_ID in .env',
+    ],
 ];

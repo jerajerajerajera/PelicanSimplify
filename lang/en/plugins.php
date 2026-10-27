@@ -80,12 +80,16 @@ return [
         'read_time' => 'read :time',
         'read_hourly' => 'The list is read again once an hour.',
         'screenshot_number' => 'Screenshot :number',
+        'unreachable' => 'The Pelican Hub could not be reached. Try again in a few minutes.',
+        'unknown_maker' => 'Unknown maker',
     ],
     'conflicts' => [
         'and' => 'and',
         'switched_off' => 'Simplify\'s dashboard is switched off: :plugins is installed|Simplify\'s dashboard is switched off: :plugins are installed',
         'switched_off_help' => 'Everyone gets Pelican\'s own panel for now. Disable or remove that plugin to turn Simplify back on; your Simplify settings are kept.|Everyone gets Pelican\'s own panel for now. Disable or remove those plugins to turn Simplify back on; your Simplify settings are kept.',
         'overlap' => ':plugins does part of what Simplify does|:plugins do part of what Simplify does',
+        'does_part' => 'It does part of what Simplify does.',
+        'changes_same' => 'It changes the same parts of the panel as Simplify.',
     ],
     'form' => [
         'the_list_is_up_to_date' => 'The list is up to date',
@@ -104,6 +108,10 @@ return [
         'zip_url' => 'Zip URL',
         'upload_zip' => 'Upload zip',
         'plugin_zip' => 'Plugin zip',
+        'enabled_name' => ':name enabled',
+        'disabled_name' => ':name disabled',
+        'deleted_name' => ':name deleted',
+        'updates_available' => '{0} Everything is up to date|{1} 1 update available|[2,*] :count updates available',
     ],
     'updater' => [
         'busy' => ':name is already being updated.',
@@ -128,5 +136,15 @@ return [
         'open_plugins' => 'Open plugins',
         'available' => ':name :version is available',
         'installing' => 'Installing it now with a backup and automatic rollback. You get another notification when it is done.',
+    ],
+    'pages' => [
+        'plugin_actions' => 'Plugin actions',
+        'plugin_widgets' => 'Plugin widgets',
+    ],
+    'external' => [
+        'server_widget' => 'Server widget',
+        'server_list_widget' => 'Server list widget',
+        'console_button' => 'Console button',
+        'server_list_button' => 'Server list button',
     ],
 ];

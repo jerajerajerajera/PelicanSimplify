@@ -29,8 +29,8 @@ final class PendingChanges
         $result=Cache::lock('simplify.pending.'.$s->uuid,15)->block(3,function()use($s,$state,$prepared,$original,$minecraft,$resourcesOnly):array {
             $s->refresh();
             $old=self::read($s);
-            abort_if(!empty($old['restart_requested']),409,'A restart is already applying these changes.');
-            abort_if($old && (int)($old['actor_id']??0)!==(int)user()->id,409,'Another user has pending changes. Apply or discard them first.');
+            abort_if(!empty($old['restart_requested']),409,__('pelican-simplify::dashboard.errors.a_restart_is_already_applying_these'));
+            abort_if($old && (int)($old['actor_id']??0)!==(int)user()->id,409,__('pelican-simplify::dashboard.errors.another_user_has_pending_changes_apply'));
             $data=['actor_id'=>user()->id,'minecraft'=>$minecraft,'properties'=>$minecraft?SettingsDifference::properties($prepared['properties'],PropertiesReader::parse($original)):[],'icon'=>$prepared['icon'],
                 'hash'=>!empty($old['minecraft'])&&empty($old['file_only'])?($old['hash']??hash('sha256',$original)):hash('sha256',$original),'created_at'=>time(),'restart_at'=>null,'restart_requested'=>false];
             if ($data['icon'] !== null) {
@@ -75,8 +75,8 @@ final class PendingChanges
         Access::permission($s,SubuserPermission::FileReadContent);
         Cache::lock('simplify.pending.'.$s->uuid,15)->block(3,function()use($s):void {
             $data=self::read($s);
-            abort_if(!empty($data['restart_requested']),409,'A restart is already in progress.');
-            abort_if($data && (int)($data['actor_id']??0)!==(int)user()->id,409,'Another user has pending changes.');
+            abort_if(!empty($data['restart_requested']),409,__('pelican-simplify::dashboard.errors.a_restart_is_already_in_progress'));
+            abort_if($data && (int)($data['actor_id']??0)!==(int)user()->id,409,__('pelican-simplify::dashboard.errors.another_user_has_pending_changes'));
             $data ??= ['actor_id'=>user()->id,'minecraft'=>ManagedSettings::minecraft($s),'file_only'=>true,'properties'=>[],'icon'=>null,'hash'=>'','created_at'=>time(),'restart_at'=>null,'restart_requested'=>false];
             $data['file_changes']=true;
             if(!Storage::disk('local')->put(self::path($s),json_encode($data,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save the restart reminder.');
@@ -86,7 +86,7 @@ final class PendingChanges
     {
         if(ManagedSettings::minecraft($s)||!empty(self::read($s)['file_only'])) Access::permission($s,SubuserPermission::FileUpdate);else Access::owner($s);
         Cache::lock('simplify.pending.'.$s->uuid,15)->block(3,function()use($s):void {
-            abort_if(!empty(self::read($s)['restart_requested']),409,'Restart is already in progress.');
+            abort_if(!empty(self::read($s)['restart_requested']),409,__('pelican-simplify::dashboard.errors.restart_is_already_in_progress'));
             Storage::disk('local')->delete(self::path($s));
         });
     }
@@ -98,10 +98,10 @@ final class PendingChanges
         Access::permission($s,SubuserPermission::ControlStop);
         if ($startAfter) Access::permission($s,SubuserPermission::ControlStart);
         abort_unless($minutes>=0 && $minutes<=10080,422);
-        abort_if(!$s->installed_at || $s->status!==null,409,'Wait until the current installation or recovery is complete.');
+        abort_if(!$s->installed_at || $s->status!==null,409,__('pelican-simplify::dashboard.errors.wait_for_install'));
         Cache::lock('simplify.pending.'.$s->uuid,15)->block(3,function()use($s,$minutes,$startAfter):void {
-            $data=self::read($s);abort_unless($data,409,'There are no pending changes.');
-            abort_if(!empty($data['restart_requested']),409,'Restart is already in progress.');
+            $data=self::read($s);abort_unless($data,409,__('pelican-simplify::dashboard.errors.there_are_no_pending_changes'));
+            abort_if(!empty($data['restart_requested']),409,__('pelican-simplify::dashboard.errors.restart_is_already_in_progress'));
             unset($data['error']);
             $data['restart_at']=time()+$minutes*60;$data['restart_actor_id']=user()->id;$data['start_after_apply']=$startAfter;
             Storage::disk('local')->put(self::path($s),json_encode($data,JSON_THROW_ON_ERROR));
@@ -147,7 +147,7 @@ final class PendingChanges
             $content='';$merged='';
             if(($data['minecraft']??true)&&empty($data['file_only'])){
             $files=app(DaemonFileRepository::class)->setServer($s);$content=$files->getContent('/server.properties',1048576);
-            abort_unless(hash_equals($data['hash'],hash('sha256',$content)),409,'server.properties changed. Discard and save the settings again.');
+            abort_unless(hash_equals($data['hash'],hash('sha256',$content)),409,__('pelican-simplify::dashboard.errors.server_properties_changed_discard_and_save'));
             $path='simplify/settings-backups/'.$s->uuid.'/'.(string)\Illuminate\Support\Str::uuid().'.properties';
             if (!Storage::disk('local')->put($path,$content)) throw new \RuntimeException('Could not create settings backup.');
             $values=$data['properties'];$parsed=PropertiesReader::parse($content);

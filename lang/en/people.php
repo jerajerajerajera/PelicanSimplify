@@ -73,4 +73,17 @@ return [
         'reset_sent' => 'Reset link sent',
         'reset_failed' => 'Could not send the link',
     ],
+    'errors' => [
+        'only_an_administrator_can_create_accounts' => 'Only an administrator can create accounts.',
+        'only_an_administrator_can_change_server' => 'Only an administrator can change server access.',
+        'only_an_administrator_can_manage_additional' => 'Only an administrator can manage additional scheduled tasks.',
+        'you_cannot_delete_your_own_account' => 'You cannot delete your own account here.',
+        'the_last_root_admin_cannot_be' => 'The last root admin cannot be deleted.',
+        'this_person_still_owns_servers_move' => 'This person still owns servers. Move or delete them first.',
+        'the_root_admin_role_is_managed' => 'The Root Admin role is managed by Pelican and cannot be changed.',
+        'the_root_admin_role_cannot_be' => 'The Root Admin role cannot be deleted.',
+        'use_letters_numbers_dots_dashes_and' => 'Use letters, numbers, dots, dashes and underscores only.',
+        'you_cannot_remove_your_own_root' => 'You cannot remove your own root admin access.',
+        'the_last_root_admin_keeps_root' => 'The last root admin keeps root access.',
+    ],
 ];

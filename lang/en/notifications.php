@@ -20,4 +20,12 @@ return [
         'clear_name' => 'Clear :title',
         'show_all' => 'Show all :count',
     ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Notifications are not on for this device yet.',
+        'test_notification' => 'Test notification',
+        'notifications_work_on_this_device' => 'Notifications work on this device.',
+        'test_sent_it_should_appear_within' => 'Test sent. It should appear within a few seconds.',
+        'the_browser_no_longer_accepts_notifications' => 'The browser no longer accepts notifications for this device. Turn them on again.',
+        'the_push_service_did_not_accept' => 'The push service did not accept the test. Try again in a minute.',
+    ],
 ];

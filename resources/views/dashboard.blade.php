@@ -1376,7 +1376,7 @@
                                     <article class="ps-package">
                                         <img :src="p.icon ? safeImage(p.icon) : boot.favicon_url" alt="" loading="lazy" :class="{'is-placeholder': !p.icon}">
                                         <div>
-                                            <strong x-text="p.title"></strong><small x-show="p.author" x-text="' by ' + p.author"></small>
+                                            <strong x-text="p.title"></strong><small x-show="p.author" x-text="Simplify.t('dashboard.by_author', { author: p.author })"></small>
                                             <p x-text="p.description"></p>
                                             <div class="ps-package-meta">
                                                 <a class="ps-source" :class="'is-' + p.source" :href="safeLink(p.page)" target="_blank" rel="noopener noreferrer" x-text="packageDetail(p)?.via ? Simplify.fill(@js(__('pelican-simplify::dashboard.ui.via_github')), { site: p.label }) : p.label"></a>

@@ -16,6 +16,7 @@ class CreatorAccess {public static bool $admin=true;public static function admin
 class ServerProperties {public static function prepare($state,$flag){return ['properties'=>array_intersect_key($state,array_flip(['motd','max-players','difficulty','gamemode','pvp','white-list','allow-flight','view-distance','spawn-protection'])),'icon'=>null];}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function user(){return (object)['id'=>7];}function app($class){return new $class;}function abort_if($condition,$code,$message=''){if($condition)throw new \RuntimeException($message);}function abort_unless($condition,$code){abort_if(!$condition,$code);}function validator($state,$rules){return new class($state){public function __construct(private array $state){}public function validate(){return array_intersect_key($this->state,array_flip(['memory_gb','disk_mb','cpu']));}};}
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/PropertiesReader.php';require __DIR__.'/../src/Services/SettingsDifference.php';require __DIR__.'/../src/Services/ResourceLimits.php';require __DIR__.'/../src/Services/PendingChanges.php';

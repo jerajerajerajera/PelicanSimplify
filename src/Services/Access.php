@@ -37,8 +37,8 @@ final class Access
     public static function owner(Server $s): void { abort_unless(self::linked($s) && (user()->isRootAdmin() || (int)$s->owner_id===(int)user()->id),403); }
     public static function offline(Server $s): void
     {
-        abort_unless($s->installed_at && $s->status===null,409,'Wait until installation or recovery has finished.');
+        abort_unless($s->installed_at && $s->status===null,409,__('pelican-simplify::dashboard.errors.wait_until_installation_or_recovery_has'));
         $state=app(\App\Repositories\Daemon\DaemonServerRepository::class)->setServer($s)->getDetails()['state']??'unknown';
-        abort_unless($state==='offline',409,'Stop the server before performing this action.');
+        abort_unless($state==='offline',409,__('pelican-simplify::dashboard.errors.stop_the_server_before_performing_this'));
     }
 }

@@ -103,7 +103,7 @@ final class ApplyServerProperties implements ShouldQueue
         report($exception ?? new \RuntimeException('SSC settings job failed for ' . $this->uuid));
         Storage::disk('local')->put('ssc/server-settings/' . $this->uuid . '.json', json_encode([
             'status' => 'failed', 'server_uuid' => $this->uuid,
-            'message' => 'Check the queue logs, retry the failed job, then start the server.',
+            'message' => __('pelican-simplify::maker.properties.job_failed'),
         ], JSON_THROW_ON_ERROR));
     }
 }

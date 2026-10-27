@@ -16,7 +16,7 @@ final class ModpackIcon
         try {
             $response = Http::timeout(10)->connectTimeout(3)
                 ->withOptions(['allow_redirects' => ['max' => 2, 'protocols' => ['https']]])
-                ->withHeaders(['User-Agent' => 'PelicanSimplify (Pelican plugin)'])->get($url);
+                ->withHeaders(['User-Agent' => 'PelicanSimplify'])->get($url);
             $bytes = $response->successful() ? $response->body() : '';
         } catch (Throwable) {
             return null;

@@ -265,6 +265,7 @@ return [
         'plugin_log_lower' => 'server log about this plugin',
         'log_lower' => 'log',
         'traffic_used' => 'Used :traffic · since server start',
+        'of_allocated' => 'of :amount allocated',
         'setting_up' => 'Setting up :server',
         'the_game' => 'the game',
         'installing_software' => 'Installing :software',
@@ -411,5 +412,6 @@ return [
         'plugin_failed_toast' => ':name did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.',
         'package_off' => ':name is off. It stays in the folder.',
         'package_on' => ':name is on again.',
+        'by_author' => 'by :author',
     ],
 ];

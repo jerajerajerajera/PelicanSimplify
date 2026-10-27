@@ -77,8 +77,8 @@ final class InstallProgress
     /** Stops the first installation of a new server. */
     public static function kill(Server $s): void
     {
-        abort_unless($s->status?->value === 'installing', 409, 'The installation has already finished.');
-        abort_unless(self::fresh($s), 409, 'Only the first installation of a new server can be stopped. Stopping a reinstall would delete the server\'s files.');
+        abort_unless($s->status?->value === 'installing', 409, __('pelican-simplify::dashboard.errors.the_installation_has_already_finished'));
+        abort_unless(self::fresh($s), 409, __('pelican-simplify::dashboard.errors.only_the_first_installation_of_a'));
         self::mark($s, ['killed_at' => time(), 'by' => user()?->id]);
         app(DaemonServerRepository::class)->setServer($s)->delete();
         $s->forceFill(['status' => ServerState::InstallFailed])->save();
@@ -87,13 +87,13 @@ final class InstallProgress
     /** Runs the installation again: a killed server is created on Wings again, any other through Pelican's reinstall. */
     public static function retry(Server $s): void
     {
-        abort_unless(in_array($s->status?->value, self::FAILED, true), 409, 'The server is not waiting for a new installation.');
+        abort_unless(in_array($s->status?->value, self::FAILED, true), 409, __('pelican-simplify::dashboard.errors.the_server_is_not_waiting_for'));
         $killed = JsonFile::read(self::path($s))['killed_at'] ?? null;
         if ($killed === null) {
             app(\App\Services\Servers\ReinstallServerService::class)->handle($s);
             return;
         }
-        abort_if(time() - (int) $killed < self::RETRY_AFTER, 429, 'Wings is still cleaning up. Try again in a few seconds.');
+        abort_if(time() - (int) $killed < self::RETRY_AFTER, 429, __('pelican-simplify::dashboard.errors.wings_is_still_cleaning_up_try'));
         $s->forceFill(['status' => ServerState::Installing])->save();
         try {
             app(DaemonServerRepository::class)->setServer($s)->create(false);

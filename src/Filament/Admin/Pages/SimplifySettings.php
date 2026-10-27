@@ -132,6 +132,7 @@ class SimplifySettings extends Page implements HasForms
         $groups = [];
         foreach ($this->requirements as $check) {
             $name = $check['id'] ?? $check['name'];
+            // @english: check ids
             $group = $check['group'] ?? match (true) {
                 $name === 'Tested Pelican release' => 'Panel services',
                 ($check['blocking'] ?? true) === false => 'Upload capacity',
@@ -387,7 +388,7 @@ class SimplifySettings extends Page implements HasForms
                     TextInput::make('subdomains.port_max')->label(__('pelican-simplify::settings.form.last_forwarded_port'))->integer()->minValue(1)->maxValue(65535)->required()->gte('subdomains.port_min')->helperText(__('pelican-simplify::settings.form.only_servers_with_a_port_in')),
                 ]),
                 Section::make(__('pelican-simplify::settings.sections.cloudflare_token'))->description(__('pelican-simplify::settings.form.create_a_cloudflare_api_token_with'))->schema([
-                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? __('pelican-simplify::settings.form.still_missing', ['items' => implode(', ', $missing)]) : __('pelican-simplify::settings.form.subdomains_ready')),
+                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? __('pelican-simplify::settings.form.still_missing', ['items' => implode(', ', array_map(fn (string $item) => __('pelican-simplify::settings.subdomains_missing.'.$item), $missing))]) : __('pelican-simplify::settings.form.subdomains_ready')),
                 ]),
             ],
         ];

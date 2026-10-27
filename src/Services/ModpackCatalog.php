@@ -28,7 +28,7 @@ final class ModpackCatalog
     {
         try {
             $response = Http::acceptJson()->connectTimeout(2)->timeout(6)
-                ->withHeaders(['User-Agent' => 'PelicanSimplify/0.2.0 (Pelican plugin)', ...$headers])->get($url, $query);
+                ->withHeaders(['User-Agent' => 'PelicanSimplify/0.2.0', ...$headers])->get($url, $query);
             $data = $response->successful() ? $response->json() : null;
             return is_array($data) ? $data : [];
         } catch (Throwable) {
@@ -126,7 +126,7 @@ final class ModpackCatalog
                         $ftb[] = self::card('ftb', (string) $id, $pack);
                     }
                 }
-                $technic = array_values(array_filter(self::technic(), fn ($pack) => $query === '' || str_contains(mb_strtolower($pack['title'] . ' Technic ' . $pack['description']), mb_strtolower($query))));
+                $technic = array_values(array_filter(self::technic(), fn ($pack) => $query === '' || str_contains(mb_strtolower($pack['title'].' '.'Technic'.' '.$pack['description']), mb_strtolower($query))));
                 $cf = [];
                 if (self::curseForgeKey() !== '' && $query !== '') {
                     $data = self::json('https://api.curseforge.com/v1/mods/search', ['gameId' => 432, 'classId' => 4471, 'searchFilter' => $query, 'pageSize' => 6], ['x-api-key' => self::curseForgeKey()]);
@@ -206,7 +206,7 @@ final class ModpackCatalog
                     return [];
                 }
                 // Only expose the egg's tested server-build default, not arbitrary client builds.
-                return ['egg_default' => 'Server build configured in egg'];
+                return ['egg_default' => __('pelican-simplify::maker.modpack.egg_default')];
             }
             $items = match ($provider) {
                 'modrinth' => self::json('https://api.modrinth.com/v2/project/' . $id . '/version'),
@@ -298,7 +298,7 @@ final class ModpackCatalog
         $version = (string) ($state['modpack_version'] ?? '');
         $parts = self::split($key);
         if (!$parts || !self::pack($key) || !array_key_exists($version, self::versions($key))) {
-            throw ValidationException::withMessages(['data.modpack_project' => 'Choose a valid modpack and server version.']);
+            throw ValidationException::withMessages(['data.modpack_project' => __('pelican-simplify::maker.modpack.choose_a_valid_modpack_and_server')]);
         }
         [$provider, $id] = $parts;
         $required = match ($provider) {
@@ -308,13 +308,13 @@ final class ModpackCatalog
         };
         foreach ($required as $variable) {
             if (!array_key_exists($variable, $env)) {
-                throw ValidationException::withMessages(['data.egg_id' => 'This pack requires a compatible ' . $provider . ' egg. Import the matching egg first.']);
+                throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.modpack.needs_egg', ['provider' => $provider])]);
             }
         }
         if ($provider === 'technic') {
             $expected = self::pack($key)['egg_name'];
             if (mb_strtolower($egg->name) !== mb_strtolower($expected)) {
-                throw ValidationException::withMessages(['data.egg_id' => 'Import and select the ' . $expected . ' egg for this serverpack.']);
+                throw ValidationException::withMessages(['data.egg_id' => __('pelican-simplify::maker.modpack.select_egg', ['egg' => $expected])]);
             }
             // Preserve the installed egg's server-build default exactly (including v prefixes).
             return $env;
@@ -328,7 +328,7 @@ final class ModpackCatalog
         }
         if ($provider === 'curseforge') {
             if (self::curseForgeKey() === '' || !array_key_exists('API_KEY', $env)) {
-                throw ValidationException::withMessages(['data.modpack_project' => 'Configure the CurseForge API key and import a compatible CurseForge Generic egg first.']);
+                throw ValidationException::withMessages(['data.modpack_project' => __('pelican-simplify::maker.modpack.configure_the_curseforge_api_key_and')]);
             }
             $env['API_KEY'] = self::curseForgeKey();
         }

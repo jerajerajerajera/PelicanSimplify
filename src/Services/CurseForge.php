@@ -58,8 +58,8 @@ final class CurseForge
     {
         abort_unless(user() && self::allowUserKeys(), 403);
         $key = trim($key);
-        abort_if(strlen($key) > 200, 422, 'This is not a CurseForge API key.');
-        if ($key !== '' && !self::test($key)['ok']) abort(422, 'CurseForge did not accept this key.');
+        abort_if(strlen($key) > 200, 422, __('pelican-simplify::settings.curseforge.this_is_not_a_curseforge_api'));
+        if ($key !== '' && !self::test($key)['ok']) abort(422, __('pelican-simplify::settings.curseforge.curseforge_did_not_accept_this_key'));
         $data = $key === '' ? [] : ['key' => encrypt($key)];
         if (!Storage::disk('local')->put(self::userFile(), json_encode($data, JSON_THROW_ON_ERROR))) throw new \RuntimeException('Could not save your CurseForge key.');
     }
@@ -67,14 +67,14 @@ final class CurseForge
     public static function test(string $key = ''): array
     {
         $key = trim($key) ?: (string) self::decrypted(JsonFile::read(self::FILE)['key'] ?? null);
-        if ($key === '') return ['ok' => false, 'message' => 'Enter a CurseForge API key first.'];
+        if ($key === '') return ['ok' => false, 'message' => __('pelican-simplify::settings.curseforge.enter_a_curseforge_api_key_first')];
         try {
             $response = Http::acceptJson()->withHeaders(['x-api-key' => $key])->connectTimeout(3)->timeout(8)->get(self::API.'mods/search', ['gameId' => 432, 'classId' => 5, 'pageSize' => 1]);
         } catch (\Throwable) {
-            return ['ok' => false, 'message' => 'CurseForge did not answer. Try again in a moment.'];
+            return ['ok' => false, 'message' => __('pelican-simplify::settings.curseforge.curseforge_did_not_answer_try_again')];
         }
-        if ($response->status() === 403 || $response->status() === 401) return ['ok' => false, 'message' => 'CurseForge did not accept this key.'];
-        return $response->successful() ? ['ok' => true, 'message' => 'Plugin search now includes CurseForge.'] : ['ok' => false, 'message' => 'CurseForge answered with error '.$response->status().'.'];
+        if ($response->status() === 403 || $response->status() === 401) return ['ok' => false, 'message' => __('pelican-simplify::settings.curseforge.curseforge_did_not_accept_this_key')];
+        return $response->successful() ? ['ok' => true, 'message' => __('pelican-simplify::settings.curseforge.plugin_search_now_includes_curseforge')] : ['ok' => false, 'message' => __('pelican-simplify::settings.curseforge.error', ['status' => $response->status()])];
     }
     /** Headers for requests to CurseForge, or null without a key. */
     public static function headers(): ?array
