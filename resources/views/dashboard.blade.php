@@ -480,14 +480,10 @@
                             <button type="button" class="ps-btn is-sm is-icon" x-on:click="closeHostServer()" data-tip="Close" aria-label="Close server"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
                         </span>
                     </header>
-                    <header class="ps-host-head" x-show="!hostServer && hostSection" :style="{'--ps-tone': hostSection?.color}">
+                    <header class="ps-host-head is-page" x-show="!hostServer && hostSection" :style="{'--ps-tone': hostSection?.color}">
                         <svg class="ps-host-head-icon" aria-hidden="true"><use :href="'#ps-'+(hostSection?.icon||'host')"/></svg>
                         <h2 x-text="hostSection?.label"></h2>
-                        <div class="ps-host-subtabs" x-show="hostSection?.pages.length > 1" role="group" aria-label="Pages">
-                            <template x-for="item in hostSection?.pages || []" :key="item.key">
-                                <button type="button" :aria-pressed="hostPage?.key===item.key" x-on:click="setHostPage(item)"><svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span></button>
-                            </template>
-                        </div>
+                        <small x-show="hostSection?.pages.length > 1" x-text="hostPage?.label"></small>
                         <span class="ps-host-head-actions" x-show="hostPage?.url">
                             <a class="ps-btn is-sm" :href="hostPage?.url" target="_top"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
                         </span>
@@ -499,7 +495,7 @@
                     </div>
                     <div class="ps-host-frame" x-show="!hostServer">
                         <template x-if="hostPage">
-                            <iframe data-ps-frame="native" :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
+                            <iframe data-ps-frame="native" data-ps-flat :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
                         </template>
                     </div>
                 </div>

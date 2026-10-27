@@ -22,12 +22,14 @@
   let frameKind = '';
   let frameAccent = '';
   let frameTab = '';
+  let frameFlat = false;
   try {
     const host = window.frameElement;
     if (host?.dataset?.psFrame) {
       frameKind = host.dataset.psFrame;
       frameAccent = host.dataset.psAccent || '';
       frameTab = host.dataset.psTab || '';
+      frameFlat = 'psFlat' in host.dataset;
     }
   } catch {}
   // Simplify settings show one Pelican settings tab per frame: the tab bar is hidden (CSS) and the asked tab opened
@@ -88,6 +90,8 @@
       root.classList.add('ps-frame');
       root.dataset.psFrame = frameKind;
       if (frameTab) root.dataset.psTab = frameTab;
+      // Host mode shows the page straight on the Simplify page, not on a card.
+      if (frameFlat) root.dataset.psFlat = '';
     }
     ui.layer?.classList.toggle('dark', dark());
     // The phone's status bar follows the chosen theme, not only the system one.
