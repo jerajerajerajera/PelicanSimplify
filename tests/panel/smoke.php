@@ -69,6 +69,41 @@ if(($argv[1]??'')==='livewire'){
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 
+// Child: the emergency Explain page and simplify:explain, also with Livewire broken and with a broken session store.
+// Anthropic is faked here, so nothing leaves the runner.
+if(($argv[1]??'')==='emergency'){
+    try{
+        $admin=User::where('email',SMOKE_EMAIL)->firstOrFail();
+        \Illuminate\Support\Facades\Http::fake(['api.anthropic.com/*'=>\Illuminate\Support\Facades\Http::response(['stop_reason'=>'end_turn','content'=>[['type'=>'text','text'=>json_encode(['found'=>true,'summary'=>'Smoke answer.','issues'=>[['title'=>'Smoke issue','cause'=>'Smoke cause','steps'=>['Smoke step']]]])]]])]);
+        \Illuminate\Support\Facades\Log::error('Smoke: Livewire\\Exceptions\\ComponentNotFoundException for the emergency page');
+        $client=fn()=>new class($app){use Illuminate\Foundation\Testing\Concerns\MakesHttpRequests,Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication,Illuminate\Foundation\Testing\Concerns\InteractsWithSession;public function __construct(public $app){}};
+        $expect=function($response,string $what,array $texts){
+            if($response->getStatusCode()!==200)throw new \RuntimeException($what.': HTTP '.$response->getStatusCode().($response->exception?' '.problem($response->exception):''));
+            foreach($texts as $text)if(!str_contains((string)$response->getContent(),$text))throw new \RuntimeException($what.': no "'.$text.'" in '.substr(strip_tags((string)$response->getContent()),0,300));
+        };
+        // Livewire broken: the Simplify overview fails, the emergency page still opens and explains the panel log.
+        app()->bind(\Livewire\Mechanisms\HandleComponents\HandleComponents::class,fn()=>throw new \RuntimeException('Livewire is broken on purpose'));
+        $overview=$client()->actingAs($admin)->get(\Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(panel:'app'));
+        if($overview->getStatusCode()===200)throw new \RuntimeException('breaking Livewire did not break the overview, so this check proves nothing');
+        $expect($client()->actingAs($admin)->get('/simplify/explain'),'emergency page with Livewire broken',['Check the panel log']);
+        $expect($client()->actingAs($admin)->withSession(['_token'=>'smoke-csrf'])->post('/simplify/explain',['_token'=>'smoke-csrf','source'=>'panel']),'emergency page asking with Livewire broken',['Panel log: Something needs attention','Smoke answer.','Smoke step']);
+        $sent=\Illuminate\Support\Facades\Http::recorded()[0][0]??null;
+        if(!$sent||!str_contains((string)$sent->body(),'ComponentNotFoundException')||!str_contains((string)$sent->body(),'emergency page'))throw new \RuntimeException('the panel log was not sent with the emergency context');
+        if($client()->get('/simplify/explain')->getStatusCode()!==401)throw new \RuntimeException('signed out visitors were not refused');
+        // The terminal: a temporary address, and the panel log explained.
+        if(\Illuminate\Support\Facades\Artisan::call('simplify:explain',['--url'=>true])!==0||!preg_match('#/simplify/explain/access/([0-9a-f]{40})#',\Illuminate\Support\Facades\Artisan::output(),$match))throw new \RuntimeException('simplify:explain --url printed no address');
+        if(\Illuminate\Support\Facades\Artisan::call('simplify:explain',['--source'=>'panel','--lines'=>20])!==0||!str_contains(\Illuminate\Support\Facades\Artisan::output(),'Smoke step'))throw new \RuntimeException('simplify:explain did not print the answer: '.\Illuminate\Support\Facades\Artisan::output());
+        if(\Illuminate\Support\Facades\Artisan::call('simplify:explain',['--source'=>'server=999999'])!==1)throw new \RuntimeException('simplify:explain accepted a missing server');
+        // Session store broken: the normal address fails, the temporary one still works.
+        config(['session.driver'=>'smoke-broken']);app()->forgetInstance('session');app()->forgetInstance('session.store');
+        if($client()->get('/simplify/explain')->getStatusCode()===200)throw new \RuntimeException('breaking the session did not break the normal address, so this check proves nothing');
+        $expect($client()->get('/simplify/explain/access/'.$match[1]),'temporary address with the session broken',['Check the panel log']);
+        $expect($client()->post('/simplify/explain/access/'.$match[1],['source'=>'panel']),'asking through the temporary address',['Smoke answer.']);
+        if($client()->get('/simplify/explain/access/'.str_repeat('0',40))->getStatusCode()!==403)throw new \RuntimeException('a wrong temporary address was not refused');
+        result(true,'emergency Explain page works with Livewire broken and, through the temporary address from simplify:explain --url, with the session broken; simplify:explain explains the panel log');
+    }catch(\Throwable $e){result(false,'emergency Explain page: '.problem($e));}
+}
+
 $failures=[];$passed=[];
 // 1. Every class of the plugin loads, and every attribute on it can be built (PHP checks repeats and targets only here).
 $src=realpath(__DIR__.'/../../src');$classes=0;
@@ -105,7 +140,7 @@ foreach(Filament::getPanels() as $panel){
 }
 // The overview of the app panel is the page that broke in beta.7; it must be among them.
 if(!array_filter(array_keys($urls),fn($k)=>str_contains($k,'Dashboard on app')))$failures[]='Simplify overview: no Simplify Dashboard page on the app panel';
-$children=array_map(fn($what,$url)=>['page',$what,$url],array_keys($urls),$urls);$children[]=['livewire'];
+$children=array_map(fn($what,$url)=>['page',$what,$url],array_keys($urls),$urls);$children[]=['livewire'];$children[]=['emergency'];
 foreach($children as $args){
     $child=new Process([PHP_BINARY,__FILE__,...$args],getcwd(),null,null,300);$child->run();
     $result=json_decode(trim(strrchr("\n".trim($child->getOutput()),"\n")),true);
@@ -115,4 +150,4 @@ foreach($children as $args){
 
 foreach($passed as $line)echo "  ok  $line\n";
 if($failures){echo "FAIL Pelican panel smoke test:\n  - ".implode("\n  - ",$failures)."\n";exit(1);}
-echo "PASS Simplify loads in a real Pelican panel ".config('app.version').": classes and attributes, every page over HTTP, overview Livewire calls, Explain this error\n";
+echo "PASS Simplify loads in a real Pelican panel ".config('app.version').": classes and attributes, every page over HTTP, overview Livewire calls, Explain this error and its emergency page\n";
