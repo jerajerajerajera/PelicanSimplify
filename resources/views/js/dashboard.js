@@ -629,8 +629,9 @@
         return this.notifications().filter((item) => !item.pelican && (item.announcement ? item.unread : true)).length + this.panelUnread;
       },
       /** "What's new" lines to show: the first three, all of them once opened. */
-      noteLines(item) {
-        return this.openNotes[item.id] ? item.notes : item.notes.slice(0, 3);
+      /** What's new: one line in the bell (all on request), every line in the full notification list. */
+      noteLines(item, full = false) {
+        return full || this.openNotes[item.id] ? item.notes : item.notes.slice(0, 1);
       },
       toggleNotes(item) {
         this.openNotes = { ...this.openNotes, [item.id]: !this.openNotes[item.id] };
