@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3-snapshot.6 (snapshot channel)
+Announcements have a pin button. They are pinned while they are live; unpin one to remove its bar, and pin it again from the bell.
+- The pin button on each announcement is shown pressed while it is pinned; this replaces the small pills from the previous snapshot.
+- The bell lists every live announcement with Pin or Unpin.
+
 ## 0.5.3-snapshot.5 (snapshot channel)
 Less scrolling and no double frames in menus, popups and embedded pages.
 - Simplify settings scrolls in one place instead of two.
