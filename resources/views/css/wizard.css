@@ -286,6 +286,11 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge) { margin-top: 30px; position: relative; }
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge)::before { content: "Add-ons"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { flex: 1; min-width: 0; padding: 22px 26px 8px; }
+/* Pelican's own settings inside Simplify settings: one frame per Pelican tab, saved with Pelican's button. */
+.ps-pelican-frame { display: flex; flex-direction: column; gap: 10px; height: calc(var(--ps-settings-height, 640px) - 30px); min-height: 360px; }
+.ps-pelican-frame > p { margin: 0; color: var(--ps-muted); font-size: 13px; }
+.ps-pelican-frame > iframe { flex: 1; width: 100%; min-height: 0; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+body.ps-pelican-tab .ps-savebar { display: none !important; }
 
 /* Sections: quiet cards with a clear title. */
 .ps-settings-tabs .fi-section { border-radius: var(--ps-radius-lg) !important; box-shadow: none !important; outline: 0 !important; border: 1px solid var(--ps-line) !important; background: var(--ps-surface) !important; }

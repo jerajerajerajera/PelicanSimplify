@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const context={window:{},location:{origin:'https://panel.test'},URL};vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/../resources/views/js/dashboard.js','utf8'),context);
 const user=context.window.pelicanSimplify({},{});user.openPanelSettings();assert.equal(user.modal,null);
-const admin=context.window.pelicanSimplify({},{settings_url:'https://panel.test/pelican-simplify-settings'});admin.openPanelSettings();assert.equal(admin.modal,'panel-settings');assert.equal(admin.modalTitle(),'Simplify settings');assert.equal(new URL(admin.panelSettingsUrl()).searchParams.get('simplify_embed'),'1');
+const admin=context.window.pelicanSimplify({},{settings_url:'https://panel.test/pelican-simplify-settings'});admin.openPanelSettings();assert.equal(admin.modal,'panel-settings');assert.equal(admin.modalTitle(),'Settings');assert.equal(new URL(admin.panelSettingsUrl()).searchParams.get('simplify_embed'),'1');
 admin.boot.settings_url='https://another.test/settings';assert.equal(admin.panelSettingsUrl(),'');
 admin.modal=null;admin.boot.settings_url='https://panel.test/settings';admin.busy=true;admin.openPanelSettings();assert.equal(admin.modal,null);
 let saves=0;const state=context.window.pelicanSimplify({saveServerBackground:async id=>{saves++;return {background_id:id,background:'/simplify/background/'+id}}},{server:{background_id:'auto',permissions:{'settings.rename':true}}});state.run=fn=>fn();state.openBackground();assert.equal(state.modal,'background');state.backgroundDraft='village';assert.equal(saves,0);assert.equal(state.server.background_id,'auto');
