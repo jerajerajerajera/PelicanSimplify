@@ -110,7 +110,7 @@
 .ps-settings-page { width: 100%; max-width: 1080px; margin: 0 auto; color: var(--ps-ink); }
 .ps-settings-page.is-standalone { max-width: 1200px; padding: 4px 0 32px; }
 .ps-settings-page.is-standalone :is(.ps-settings-form, .ps-banner-library) { padding: 24px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-xl); background: var(--ps-surface); }
-.ps-settings-page.is-embedded { padding: 20px; }
+.ps-settings-page.is-embedded { padding: 20px 20px 16px; }
 .ps-settings-form .fi-sc-tabs-tablist, .ps-settings-form .fi-tabs { flex-wrap: wrap; gap: 6px; }
 .ps-settings-form .fi-sc-tabs { min-width: 0; }
 .ps-settings-form .ssc-progress { margin-bottom: 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); }
@@ -359,7 +359,7 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs.fi-vertical { height: var(--ps-settings-height, auto) !important; align-items: stretch !important; background: linear-gradient(to right, var(--ps-nav-bg) 0 269px, var(--ps-line) 269px 270px, transparent 270px) !important; }
 .ps-settings-tabs.fi-vertical > .fi-tabs { position: static; width: 270px; max-height: none; height: 100%; padding: 14px 12px; }
 html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
 .ps-settings-tabs .fi-tabs-item { min-height: 40px; padding: 5px 8px !important; border: 1px solid transparent; border-radius: 11px !important; white-space: nowrap; }
 .ps-settings-tabs .fi-tabs-item > .fi-icon { padding: 6px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 16%, transparent); color: var(--ps-tone, var(--ps-accent)); box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item:hover { background: var(--ps-raised) !important; }
@@ -378,7 +378,7 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 @media (max-width: 900px) {
   .ps-settings-tabs.fi-vertical { height: auto !important; background: none !important; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { width: 100%; height: auto; }
-  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: auto; margin: 0 !important; overflow: visible; }
+  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: auto; margin: 0 !important; overflow: visible; }
 }
 
 /* Phone layout (creator and first setup): "Step 1 of 4" with a progress bar instead of every step,

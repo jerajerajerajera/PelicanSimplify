@@ -76,6 +76,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-overview-appearance, .ps-notify { position: relative; }
 .ps-overview-appearance-menu { width: 300px; }
 .ps-notify-menu { width: 340px; }
+/* Menus under the top bar use the height left on the screen before they scroll. */
+.ps-top .ps-dropdown { max-height: calc(100dvh - 96px); }
 .ps-account { position: relative; display: flex; align-items: center; flex: none; }
 .ps-account-button { max-width: 200px; padding: 0 10px 0 4px; gap: 8px; }
 .ps-account-avatar { display: grid; place-items: center; flex: none; width: 30px; height: 30px; overflow: hidden; border-radius: 50%; background: var(--ps-raised); }
@@ -689,7 +691,9 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .nav-open .ps-nav-items { display: flex; }
   .ps-nav-items > .ps-btn.is-icon, .ps-nav-items > div > .ps-btn.is-icon { justify-content: flex-start; gap: 12px; width: 100%; padding: 0 12px; }
   .ps-nav-items > div { width: 100%; }
-  .ps-nav-items .ps-dropdown { position: static; width: 100%; margin-top: 4px; box-shadow: none; }
+  .ps-nav-items .ps-dropdown { position: static; width: 100%; max-height: none; margin-top: 4px; overflow: visible; box-shadow: none; }
+  /* Inside the phone menu only the menu itself scrolls; the admin groups stack in one column. */
+  .ps-nav-items .ps-admin-groups { grid-template-columns: minmax(0, 1fr); }
   .ps-notify-count { position: static; margin-left: auto; }
   .ps-account { flex-wrap: wrap; width: 100%; }
   .ps-account .ps-plugin-pages { flex-basis: 100%; }

@@ -955,7 +955,7 @@
                 <div x-show="loading" class="ps-modal-loading" role="status"><span class="ps-spinner"></span><span>Loading your workspace…</span></div>
 
                 <template x-if="modal==='create'">
-                    <iframe :data-ps-frame="createGame==='minecraft' ? 'create' : 'native'" :data-ps-accent="currentAccentHex()" :src="createFrameUrl()" title="Create server" x-on:load="createFrameLoaded($el)"></iframe>
+                    <iframe :data-ps-frame="createFrameKind()" :data-ps-accent="currentAccentHex()" :src="createFrameUrl()" title="Create server" x-on:load="createFrameLoaded($el)"></iframe>
                 </template>
                 <template x-if="modal==='panel-settings'">
                     <iframe data-ps-frame="settings" :data-ps-accent="currentAccentHex()" :src="panelSettingsUrl()" title="Simplify settings" x-on:load="panelSettingsLoaded($el)"></iframe>
