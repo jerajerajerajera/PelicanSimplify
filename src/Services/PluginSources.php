@@ -11,17 +11,20 @@ use Illuminate\Support\Facades\Http;
  */
 final class PluginSources
 {
-    public const LABELS = ['modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'spigot' => 'SpigotMC', 'github' => 'GitHub'];
-    private const ORDER = ['modrinth' => 0, 'hangar' => 1, 'spigot' => 2];
+    public const LABELS = ['modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'spigot' => 'SpigotMC', 'curseforge' => 'CurseForge', 'github' => 'GitHub'];
+    private const ORDER = ['modrinth' => 0, 'hangar' => 1, 'spigot' => 2, 'curseforge' => 3];
+    /** CurseForge: Minecraft, its classes for Bukkit plugins and for mods, and its mod loader numbers. */
+    private const CURSEFORGE = ['game' => 432, 'plugins' => 5, 'mods' => 6, 'loaders' => ['forge' => 1, 'fabric' => 4, 'quilt' => 5, 'neoforge' => 6]];
     private const AGENT = 'PelicanSimplify (github.com/jerajerajerajera/PelicanSimplify)';
     /** Hosts Wings may download from: the sites' own file servers and GitHub release assets. */
-    private const HOSTS = ['cdn.modrinth.com', 'hangarcdn.papermc.io', 'api.spiget.org', 'github.com'];
+    private const HOSTS = ['cdn.modrinth.com', 'hangarcdn.papermc.io', 'api.spiget.org', 'github.com', 'edge.forgecdn.net', 'mediafilez.forgecdn.net'];
 
-    /** Several GETs at once. A site that fails or is slow gives null instead of failing the search. */
+    /** Several GETs at once. A site that fails or is slow gives null instead of failing the search. CurseForge URLs get the saved key. */
     public static function fetchAll(array $urls): array
     {
         if (!$urls) return [];
-        $responses = Http::pool(fn (Pool $pool) => array_map(fn ($key) => $pool->as((string) $key)->acceptJson()->withHeaders(['User-Agent' => self::AGENT])->connectTimeout(3)->timeout(8)->get($urls[$key]), array_keys($urls)));
+        $headers = fn (string $url) => ['User-Agent' => self::AGENT, ...(str_starts_with($url, CurseForge::API) ? (CurseForge::headers() ?? []) : [])];
+        $responses = Http::pool(fn (Pool $pool) => array_map(fn ($key) => $pool->as((string) $key)->acceptJson()->withHeaders($headers($urls[$key]))->connectTimeout(3)->timeout(8)->get($urls[$key]), array_keys($urls)));
         $out = [];
         foreach ($urls as $key => $_) {
             $response = $responses[$key] ?? null;
@@ -51,12 +54,15 @@ final class PluginSources
         return in_array($loader, ['paper', 'purpur'], true) ? ['paper', 'spigot', 'bukkit'] : ($loader === 'spigot' ? ['spigot', 'bukkit'] : [$loader]);
     }
 
-    public static function searchUrls(string $query, string $loader, string $kind): array
+    public static function searchUrls(string $query, string $loader, string $kind, bool $curseforge = false): array
     {
         $query = trim(mb_substr($query, 0, 80));
         $types = $kind === 'plugins' ? ['project_type:plugin', 'project_type:mod'] : ['project_type:mod'];
         $facets = json_encode([$types, array_map(fn ($l) => 'categories:'.$l, self::loaders($loader))]);
         $urls = ['modrinth' => 'https://api.modrinth.com/v2/search?'.http_build_query(['query' => $query, 'limit' => 15, 'index' => $query === '' ? 'downloads' : 'relevance', 'facets' => $facets])];
+        // CurseForge only with a key saved by an admin; mods only for the loaders it knows.
+        $cfLoader = self::CURSEFORGE['loaders'][$loader] ?? null;
+        if ($curseforge && ($kind === 'plugins' || $cfLoader)) $urls['curseforge'] = CurseForge::API.'mods/search?'.http_build_query(['gameId' => self::CURSEFORGE['game'], 'classId' => self::CURSEFORGE[$kind === 'plugins' ? 'plugins' : 'mods'], 'searchFilter' => $query, 'sortField' => 2, 'sortOrder' => 'desc', 'pageSize' => 15, ...($kind === 'plugins' ? [] : ['modLoaderType' => $cfLoader])]);
         if ($kind !== 'plugins') return $urls;
         if (in_array($loader, ['paper', 'purpur'], true)) $urls['hangar'] = 'https://hangar.papermc.io/api/v1/projects?'.http_build_query(['q' => $query, 'limit' => 15, 'platform' => 'PAPER', ...($query === '' ? ['sort' => '-downloads'] : [])]);
         $urls['spigot'] = $query === ''
@@ -87,6 +93,13 @@ final class PluginSources
             $icon = (string) ($r['icon']['url'] ?? '');
             $items[] = self::item('spigot', (string) (int) $r['id'], $r['name'] ?? '', $r['tag'] ?? '', $icon !== '' ? 'https://www.spigotmc.org/'.ltrim($icon, '/') : '', '', (int) ($r['downloads'] ?? 0),
                 'https://www.spigotmc.org/resources/'.(int) $r['id'].'/', self::fits($r['testedVersions'] ?? [], $minecraft, false));
+        }
+        foreach ($results['curseforge']['data'] ?? [] as $c) {
+            if (!is_array($c) || empty($c['id'])) continue;
+            $versions = array_column(array_filter($c['latestFilesIndexes'] ?? [], 'is_array'), 'gameVersion');
+            $page = (string) ($c['links']['websiteUrl'] ?? '');
+            $items[] = self::item('curseforge', (string) (int) $c['id'], $c['name'] ?? '', $c['summary'] ?? '', $c['logo']['thumbnailUrl'] ?? '', $c['authors'][0]['name'] ?? '', (int) ($c['downloadCount'] ?? 0),
+                str_starts_with($page, 'https://www.curseforge.com/') ? $page : 'https://www.curseforge.com/minecraft/', self::fits($versions, $minecraft, $exact));
         }
         // Each site already sorts by relevance: take their results in turns, made-for-this-version and exact names first.
         $wanted = self::same($query);
@@ -130,8 +143,8 @@ final class PluginSources
     /** "modrinth:AANobbMI" -> ['modrinth', 'AANobbMI'], or null when the key is not one of ours. */
     public static function parseKey(string $key): ?array
     {
-        if (!preg_match('/^(modrinth|hangar|spigot):([\w.-]{1,128})$/', $key, $m)) return null;
-        if ($m[1] === 'spigot' && !ctype_digit($m[2])) return null;
+        if (!preg_match('/^(modrinth|hangar|spigot|curseforge):([\w.-]{1,128})$/', $key, $m)) return null;
+        if (in_array($m[1], ['spigot', 'curseforge'], true) && !ctype_digit($m[2])) return null;
         return [$m[1], $m[2]];
     }
 
@@ -142,11 +155,13 @@ final class PluginSources
         $parsed = [];
         foreach (array_slice(array_unique($keys), 0, 24) as $key) {
             if (!is_string($key) || !($p = self::parseKey($key))) continue;
-            if ($p[0] !== 'modrinth' && $kind !== 'plugins') continue;
+            if (!in_array($p[0], ['modrinth', 'curseforge'], true) && $kind !== 'plugins') continue;
+            if ($p[0] === 'curseforge' && !CurseForge::hasKey()) continue;
             $parsed[$key] = $p;
             [$source, $id] = $p;
             if ($source === 'modrinth') $urls[$key] = 'https://api.modrinth.com/v2/project/'.rawurlencode($id).'/version?'.http_build_query(['loaders' => json_encode(self::loaders($loader))]);
             if ($source === 'hangar') $urls[$key] = 'https://hangar.papermc.io/api/v1/projects/'.rawurlencode($id).'/versions?'.http_build_query(['limit' => 25, 'platform' => 'PAPER']);
+            if ($source === 'curseforge') $urls[$key] = CurseForge::API.'mods/'.$id.'/files?'.http_build_query(['pageSize' => 30, ...($kind === 'plugins' ? [] : ['modLoaderType' => self::CURSEFORGE['loaders'][$loader] ?? 0])]);
             if ($source === 'spigot') {
                 $urls[$key] = 'https://api.spiget.org/v2/resources/'.$id;
                 $urls[$key.'#version'] = 'https://api.spiget.org/v2/resources/'.$id.'/versions/latest';
@@ -205,6 +220,21 @@ final class PluginSources
             $name = (string) ($pick['name'] ?? '');
             $filename = (string) ($download['fileInfo']['name'] ?? '');
             return self::result($source, $name, $name, $filename, (string) ($download['downloadUrl'] ?? ''), $pick['platformDependencies']['PAPER'] ?? [], $fits, [], $names, $download['externalUrl'] ?? null);
+        }
+        if ($source === 'curseforge') {
+            // Release files first; a file without downloadUrl is one its author does not allow other apps to download.
+            $files = array_values(array_filter($data['data'] ?? [], fn ($f) => is_array($f) && ($f['isAvailable'] ?? true) !== false));
+            usort($files, fn ($a, $b) => [(int) (($a['releaseType'] ?? 1) === 1), (string) ($a['fileDate'] ?? '')] <=> [(int) (($b['releaseType'] ?? 1) === 1), (string) ($b['fileDate'] ?? '')]);
+            $files = array_reverse($files);
+            $pick = null;
+            foreach ($files as $f) if (self::fits($f['gameVersions'] ?? [], $minecraft, $exact)) { $pick = $f; break; }
+            $fits = $pick !== null;
+            $pick ??= $files[0] ?? null;
+            if (!$pick) return [...$none, 'reason' => 'This project has no files on CurseForge.'];
+            $filename = (string) ($pick['fileName'] ?? '');
+            $version = self::fromFilename($filename)[1] ?: (string) ($pick['displayName'] ?? '');
+            $result = self::result($source, $version, (string) ($pick['id'] ?? ''), $filename, (string) ($pick['downloadUrl'] ?? ''), $pick['gameVersions'] ?? [], $fits, [], [], null);
+            return $result['installable'] ? $result : [...$result, 'reason' => 'The author only allows downloads on the CurseForge website.'];
         }
         // SpigotMC: Spiget only offers the newest version, and lists the versions it was tested on.
         $tested = $data['testedVersions'] ?? [];

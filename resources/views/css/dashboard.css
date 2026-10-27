@@ -700,8 +700,10 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 .ps-source.is-modrinth { --ps-source: #1bd96a; }
 .ps-source.is-hangar { --ps-source: #3b82f6; }
 .ps-source.is-spigot { --ps-source: #ed8106; }
+.ps-source.is-curseforge { --ps-source: #f16436; }
 .ps-source:hover { text-decoration: underline; }
-.ps-package-also .ps-link { padding: 0; border: 0; background: none; color: var(--ps-accent); font: inherit; cursor: pointer; }
+.ps-curseforge-own { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 12px; }
+.ps-curseforge-own .ps-link, .ps-package-also .ps-link { padding: 0; border: 0; background: none; color: var(--ps-accent); font: inherit; cursor: pointer; }
 .ps-package-also .ps-link:hover { text-decoration: underline; }
 /* Narrow: what is installed first (short), the search below. */
 @media (max-width: 900px) {

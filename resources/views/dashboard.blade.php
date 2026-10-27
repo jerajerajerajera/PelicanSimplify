@@ -1290,11 +1290,15 @@
                                 <input class="ps-input ps-version-input" x-show="!installed.context?.version" x-model="packageVersion" placeholder="Minecraft version" aria-label="Minecraft version">
                                 <button type="submit" class="ps-btn is-primary" :disabled="busy"><svg aria-hidden="true"><use href="#ps-search"/></svg>Search</button>
                             </form>
-                            <div class="ps-chips" x-show="modal==='plugins'" role="group" aria-label="Sites">
+                            <div class="ps-chips" x-show="packageSites().length > 2" role="group" aria-label="Sites">
                                 <template x-for="site in packageSites()" :key="site.key">
                                     <button type="button" class="ps-chip" :aria-pressed="packageSite===site.key" x-on:click="packageSite=site.key" x-text="site.label"></button>
                                 </template>
                             </div>
+                            <p class="ps-help ps-curseforge-own" x-show="installed.context?.curseforge_own">
+                                <span x-text="installed.context?.curseforge_mine ? 'CurseForge uses your own API key.' : (installed.context?.curseforge ? 'CurseForge uses the key of this panel.' : 'Add a CurseForge API key to search CurseForge too.')"></span>
+                                <button type="button" class="ps-link" x-on:click="setCurseForgeKey()" x-text="installed.context?.curseforge_mine ? 'Change or remove' : 'Use my own key'"></button>
+                            </p>
                             <h3 class="ps-section-title" x-text="packageHeading()"></h3>
                             <p class="ps-help" x-show="packageSearching">Searching…</p>
                             <div class="ps-package-list">
