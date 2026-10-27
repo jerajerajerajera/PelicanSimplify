@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Services/UploadLimits.php';
 require __DIR__.'/../src/Services/DependencyCheck.php';
 use Simplify\Panel\Services\UploadLimits as U;

@@ -20,7 +20,8 @@ TEXT_ATTR = re.compile(r'(?<![:\w-])(?:title|aria-label|placeholder|alt|data-tip
 TEXT_NODE = re.compile(r'>([^<>]*)<')
 TRANSLATED = re.compile(r"(?:__|trans|trans_choice|t|tc|sscText|Simplify\.t|Simplify\.tc|@lang)\(\s*'[^']*'")
 ID_PATHS = ['settings.tabs', 'settings.steps', 'settings.step_hints', 'settings.check_groups', 'settings.experiences', 'settings.channels',
-            'settings.features', 'settings.abilities', 'settings.performance', 'settings.egg_modes', 'settings.explain_audiences', 'maker.minecraft', 'maker.steps']
+            'settings.features', 'settings.abilities', 'settings.performance', 'settings.egg_modes', 'settings.explain_audiences', 'maker.minecraft', 'maker.steps',
+            'checks.requirements', 'checks.assets', 'checks.uploads']
 THROWN = re.compile(r'new \\?(RuntimeException|LogicException|InvalidArgumentException|UnexpectedValueException|JsonException)\(')  # internal errors stay English for the log
 CODEISH = re.compile(r'^[\w.:/#@$%*+=<>()\[\]{},;|&!?\\^~`-]*$')
 
