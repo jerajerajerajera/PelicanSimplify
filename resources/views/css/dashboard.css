@@ -1373,3 +1373,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 @media (max-width: 600px) {
   .ps-modal.ps-explain { height: auto; max-height: calc(100dvh - 12px); }
 }
+.ps-explain-sources { margin-bottom: 18px; }
+.ps-explain-sources > button { flex: 1 1 0; }
+.ps-admin-explain { margin-top: 4px; }

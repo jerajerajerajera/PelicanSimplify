@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-beta.3 (beta channel)
+Explain this error for the panel log and the Wings log (0.5.3-snapshot.4 below).
+
+## 0.5.3-snapshot.4 (snapshot channel)
+Explain this error can now also read the panel log and the Wings log for root administrators.
+- The Explain popup lets root administrators choose between the console, the panel log and the Wings log of the server's node.
+- The admin menu has "Explain panel errors" to explain the panel log from the overview.
+
 ## 0.5.3-beta.2 (beta channel)
 Explain this error, with your own Anthropic API key (0.5.3-snapshot.3 below).
 
