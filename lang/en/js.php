@@ -405,5 +405,8 @@ return [
         'server' => 'Server',
         'browser' => 'Browser',
         'usually_about' => 'usually about :count min',
+        'plugin_failed_toast' => ':name did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.',
+        'package_off' => ':name is off. It stays in the folder.',
+        'package_on' => ':name is on again.',
     ],
 ];

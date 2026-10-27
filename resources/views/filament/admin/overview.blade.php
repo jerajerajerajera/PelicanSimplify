@@ -51,17 +51,17 @@
 @endphp
 <section class="ssc-overview">
     <div class="ssc-overview-heading">
-        <h3>Server overview</h3>
-        <p>Everything is prepared. Change settings below if needed.</p>
+        <h3>{{ __('pelican-simplify::maker.review.server_overview') }}</h3>
+        <p>{{ __('pelican-simplify::maker.review.everything_is_prepared_change_settings_below') }}</p>
     </div>
     <dl class="ssc-summary-grid">
         @foreach ($rows as $label => $value)
             <div class="ssc-summary-item"><dt>{{ $label }}</dt><dd>{{ $value }}</dd></div>
         @endforeach
-        <div class="ssc-summary-item ssc-summary-wide"><dt>Docker image</dt><dd><code>{{ $image ?: 'Choose Java in Edit settings' }}</code></dd></div>
+        <div class="ssc-summary-item ssc-summary-wide"><dt>{{ __('pelican-simplify::maker.review.docker_image') }}</dt><dd><code>{{ $image ?: 'Choose Java in Edit settings' }}</code></dd></div>
     </dl>
     @if (!$other && $kind !== 'bedrock' && !$java && !$get('image'))
-        <p class="ssc-summary-notice">Java could not be determined. Choose a modpack version, or set Java manually below.</p>
+        <p class="ssc-summary-notice">{{ __('pelican-simplify::maker.review.java_could_not_be_determined_choose') }}</p>
     @endif
     <div class="ssc-overview-footer">
         <x-filament::button type="button" color="gray" outlined wire:click="toggleAdvanced">

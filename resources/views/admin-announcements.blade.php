@@ -6,10 +6,10 @@
     @php($panel = $this->panelUpdates())
     <div class="ps-admin-page ps-announcements" x-data x-init="$wire.browserTimezone = window.Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || ''">
         <div class="ps-people-bar">
-            <p class="ps-help ps-people-intro">Announcements show as a bar above the server overview and under the bell. Everyone can hide a bar for themselves; it then stays under the bell until it ends.</p>
+            <p class="ps-help ps-people-intro">{{ __('pelican-simplify::announcements.manage.announcements_show_as_a_bar_above') }}</p>
             <div class="ps-person-actions">
-                <button type="button" class="ps-btn" wire:click="mountAction('ingameCommands')"><x-tabler-message-chatbot class="ps-ico" />In-game commands</button>
-                <button type="button" class="ps-btn is-primary" wire:click="mountAction('addAnnouncement')"><x-tabler-speakerphone class="ps-ico" />New announcement</button>
+                <button type="button" class="ps-btn" wire:click="mountAction('ingameCommands')"><x-tabler-message-chatbot class="ps-ico" />{{ __('pelican-simplify::announcements.manage.in_game_commands') }}</button>
+                <button type="button" class="ps-btn is-primary" wire:click="mountAction('addAnnouncement')"><x-tabler-speakerphone class="ps-ico" />{{ __('pelican-simplify::announcements.manage.new_announcement') }}</button>
             </div>
         </div>
         <div class="ps-announcement-list">
@@ -38,21 +38,21 @@
                     </div>
                     <span class="ps-badge {{ ['live' => 'is-ok', 'scheduled' => 'is-info', 'ended' => 'is-muted'][$row['state']] }}"><span>{{ ucfirst($row['state']) }}</span></span>
                     <div class="ps-person-actions">
-                        <button type="button" class="ps-btn is-sm" wire:click="mountAction('editAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-edit class="ps-ico" />Edit</button>
+                        <button type="button" class="ps-btn is-sm" wire:click="mountAction('editAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-edit class="ps-ico" />{{ __('pelican-simplify::announcements.manage.edit') }}</button>
                         @if($row['state'] === 'live')
-                            <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="End now" aria-label="End {{ $row['title'] }} now" wire:click="mountAction('endAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-player-stop class="ps-ico" /></button>
+                            <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="{{ __('pelican-simplify::announcements.manage.end_now') }}" aria-label="End {{ $row['title'] }} now" wire:click="mountAction('endAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-player-stop class="ps-ico" /></button>
                         @endif
-                        <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="Delete" aria-label="Delete {{ $row['title'] }}" wire:click="mountAction('deleteAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-trash class="ps-ico" /></button>
+                        <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ __('pelican-simplify::announcements.manage.delete') }}" aria-label="Delete {{ $row['title'] }}" wire:click="mountAction('deleteAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-trash class="ps-ico" /></button>
                     </div>
                 </article>
             @empty
-                <p class="ps-empty">No announcements yet. Use New announcement to tell everyone about maintenance, an event or a new server.</p>
+                <p class="ps-empty">{{ __('pelican-simplify::announcements.manage.no_announcements_yet_use_new_announcement') }}</p>
             @endforelse
         </div>
 
         <section class="ps-announcement-section">
-            <h2 class="ps-section-title">From the Panel</h2>
-            <p class="ps-help">Added automatically for root admins when a new version of Simplify, another plugin, Wings or Pelican is available, and removed once it is installed. Checked every ten minutes.</p>
+            <h2 class="ps-section-title">{{ __('pelican-simplify::announcements.manage.from_the_panel') }}</h2>
+            <p class="ps-help">{{ __('pelican-simplify::announcements.manage.added_automatically_for_root_admins_when') }}</p>
             <div class="ps-announcement-list">
                 @forelse($panel as $item)
                     <article class="ps-announcement is-info" wire:key="panel-{{ $item['key'] }}">
@@ -62,10 +62,10 @@
                             <p>{{ $item['text'] }}</p>
                             <small>Panel · admins only · {{ $item['time'] }}</small>
                         </div>
-                        <span class="ps-badge is-info"><span>Live</span></span>
+                        <span class="ps-badge is-info"><span>{{ __('pelican-simplify::announcements.manage.live') }}</span></span>
                     </article>
                 @empty
-                    <p class="ps-empty">Everything is up to date.</p>
+                    <p class="ps-empty">{{ __('pelican-simplify::announcements.manage.everything_is_up_to_date') }}</p>
                 @endforelse
             </div>
         </section>
@@ -73,17 +73,17 @@
         @if($this->pluginInstalled())
             @php($external = $this->pluginAnnouncements())
             <section class="ps-announcement-section">
-                <h2 class="ps-section-title">From the Announcements plugin</h2>
-                <p class="ps-help">The Announcements plugin is installed: its live announcements show in Simplify as well. Change them on that plugin's own page.</p>
+                <h2 class="ps-section-title">{{ __('pelican-simplify::announcements.manage.from_the_announcements_plugin') }}</h2>
+                <p class="ps-help">{{ __('pelican-simplify::announcements.manage.the_announcements_plugin_is_installed_its') }}</p>
                 <div class="ps-announcement-list">
                     @forelse($external as $item)
                         <article class="ps-announcement is-{{ $item['tone'] }}" wire:key="{{ $item['key'] }}">
                             <x-tabler-speakerphone class="ps-ico" />
                             <div class="ps-announcement-main"><strong>{{ $item['title'] }}</strong>@if($item['text'] !== '')<p>{{ $item['text'] }}</p>@endif</div>
-                            <span class="ps-badge is-ok"><span>Live</span></span>
+                            <span class="ps-badge is-ok"><span>{{ __('pelican-simplify::announcements.manage.live') }}</span></span>
                         </article>
                     @empty
-                        <p class="ps-empty">None of its announcements are live right now.</p>
+                        <p class="ps-empty">{{ __('pelican-simplify::announcements.manage.none_of_its_announcements_are_live') }}</p>
                     @endforelse
                 </div>
             </section>

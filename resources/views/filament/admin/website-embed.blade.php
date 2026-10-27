@@ -1,6 +1,6 @@
 {{-- Website embed add-on: the code to paste into another website, with copy buttons and a live preview of the saved list. --}}
 @if ($waiting ?? false)
-    <p class="ps-embed-wait">Pick what this code shows above. A group needs at least one of its servers ticked under "Servers on your website".</p>
+    <p class="ps-embed-wait">{{ __('pelican-simplify::embed.settings.pick_what_this_code_shows_above') }}</p>
 @else
 @php($snippet = \Simplify\Panel\Services\WebsiteEmbed::snippet(url('/'), $show ?? []))
 @php($query = parse_url($snippet['page'], PHP_URL_QUERY))
@@ -9,7 +9,7 @@
         <div class="ps-embed-code">
             <div class="ps-embed-head">
                 <strong>{{ $label }}</strong>
-                <button type="button" class="ps-embed-copy" x-on:click="take(@js($key), @js($snippet[$key]))" x-text="copied === @js($key) ? 'Copied' : (copied === @js($key.'-selected') ? 'Selected: press Ctrl+C' : 'Copy code')">Copy code</button>
+                <button type="button" class="ps-embed-copy" x-on:click="take(@js($key), @js($snippet[$key]))" x-text="copied === @js($key) ? @js(__('pelican-simplify::embed.settings.copied')) : (copied === @js($key.'-selected') ? @js(__('pelican-simplify::embed.settings.selected_press_ctrl_c')) : @js(__('pelican-simplify::embed.settings.copy_code')))">{{ __('pelican-simplify::embed.settings.copy_code') }}</button>
             </div>
             <pre x-ref="{{ $key }}">{{ $snippet[$key] }}</pre>
             <p>{{ $help }}</p>
@@ -17,16 +17,16 @@
     @endforeach
     <div class="ps-embed-code">
         <div class="ps-embed-head">
-            <strong>Page of its own</strong>
-            <button type="button" class="ps-embed-copy" x-on:click="take('page', @js($snippet['page']))" x-text="copied === 'page' ? 'Copied' : (copied === 'page-selected' ? 'Selected: press Ctrl+C' : 'Copy link')">Copy link</button>
+            <strong>{{ __('pelican-simplify::embed.settings.page_of_its_own') }}</strong>
+            <button type="button" class="ps-embed-copy" x-on:click="take('page', @js($snippet['page']))" x-text="copied === 'page' ? @js(__('pelican-simplify::embed.settings.copied')) : (copied === 'page-selected' ? @js(__('pelican-simplify::embed.settings.selected_press_ctrl_c')) : @js(__('pelican-simplify::embed.settings.copy_link')))">{{ __('pelican-simplify::embed.settings.copy_link') }}</button>
         </div>
         <pre x-ref="page">{{ $snippet['page'] }}</pre>
-        <p>A link to the same list as a page, for example a status page for one server. <a href="{{ $snippet['page'] }}" target="_blank" rel="noopener" class="ps-embed-open">Open</a></p>
+        <p>{{ __('pelican-simplify::embed.settings.a_link_to_the_same_list') }} <a href="{{ $snippet['page'] }}" target="_blank" rel="noopener" class="ps-embed-open">{{ __('pelican-simplify::embed.settings.open') }}</a></p>
     </div>
     @if (\Simplify\Panel\Services\WebsiteEmbed::enabled())
         <div class="ps-embed-preview">
-            <strong>Preview of the saved list</strong>
-            <iframe src="{{ url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query) }}" title="Preview of the website embed" loading="lazy"></iframe>
+            <strong>{{ __('pelican-simplify::embed.settings.preview_of_the_saved_list') }}</strong>
+            <iframe src="{{ url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query) }}" title="{{ __('pelican-simplify::embed.settings.preview_of_the_website_embed') }}" loading="lazy"></iframe>
         </div>
     @endif
 </div>

@@ -1,0 +1,40 @@
+<?php
+return [
+    'page' => [
+        'simplify_settings' => 'Simplify settings',
+        'system_checks' => 'System checks',
+        'setup_wizard' => 'Setup wizard',
+        'open_plugins' => 'Open plugins',
+        'running_the_setup_wizard_again' => 'Running the setup wizard again',
+        'your_current_settings_stay_active_until' => 'Your current settings stay active until you finish.',
+        'cancel' => 'Cancel',
+        'first_setup_preferences' => 'First setup · Preferences',
+        'make_simplify_yours' => 'Make Simplify yours',
+        'a_few_short_steps_what_simplify' => 'A few short steps: what Simplify does, who may do what, and how it looks. Everything else keeps a sensible default and can be changed later in Simplify settings.',
+        'simplify_setup_progress' => 'Simplify setup progress',
+        'run_the_setup_wizard_again' => 'Run the setup wizard again?',
+        'you_walk_through_the_system_checks' => 'You walk through the system checks and the setup questions again, starting from your current settings. Nothing changes until you finish the wizard.',
+        'start_setup' => 'Start setup',
+        'save_settings' => 'Save settings',
+    ],
+    'setup' => [
+        'finish_setup' => 'Finish setup',
+    ],
+    'legacy' => [
+        'legacy_creator' => 'Legacy creator',
+        'simplify_creator' => 'Simplify creator',
+        'go_to_simplify_panel' => 'Go to Simplify Panel',
+        'create_server' => 'Create server',
+    ],
+    'appearance' => [
+        'custom_color' => 'Custom color',
+        'preview' => 'Preview',
+        'pelican' => '× Pelican',
+        'remove_logo' => 'Remove logo',
+        'uploading' => 'Uploading…',
+        'current_logo' => 'Current logo',
+        'server_accent_color' => 'Server accent color',
+        'custom' => 'Custom',
+        'custom_server_accent_color' => 'Custom server accent color',
+    ],
+];

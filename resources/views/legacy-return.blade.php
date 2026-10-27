@@ -8,18 +8,18 @@
         @endphp
         @if($nativeCreate || $simplifyCreate)
             <x-filament::dropdown placement="bottom-end" width="xs">
-                <x-slot name="trigger"><x-filament::icon-button icon="tabler-plus" color="gray" label="Create server" /></x-slot>
+                <x-slot name="trigger"><x-filament::icon-button icon="tabler-plus" color="gray" label="{{ __('pelican-simplify::settings.legacy.create_server') }}" /></x-slot>
                 <x-filament::dropdown.list>
-                    @if($nativeCreate)<x-filament::dropdown.list.item tag="a" icon="tabler-server" :href="\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('create', panel: 'admin')">Legacy creator</x-filament::dropdown.list.item>@endif
-                    @if($simplifyCreate)<x-filament::dropdown.list.item tag="a" icon="tabler-layout-dashboard" :href="\Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app')"><span class="ps-creator-choice">Simplify creator <x-tabler-sparkles aria-hidden="true" /></span></x-filament::dropdown.list.item>@endif
+                    @if($nativeCreate)<x-filament::dropdown.list.item tag="a" icon="tabler-server" :href="\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('create', panel: 'admin')">{{ __('pelican-simplify::settings.legacy.legacy_creator') }}</x-filament::dropdown.list.item>@endif
+                    @if($simplifyCreate)<x-filament::dropdown.list.item tag="a" icon="tabler-layout-dashboard" :href="\Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app')"><span class="ps-creator-choice">{{ __('pelican-simplify::settings.legacy.simplify_creator') }} <x-tabler-sparkles aria-hidden="true" /></span></x-filament::dropdown.list.item>@endif
                 </x-filament::dropdown.list>
             </x-filament::dropdown>
         @endif
     @endif
     @unless($addonsOnly)
-    <a href="{{ \Simplify\Panel\Services\LegacyNavigation::url() }}" class="ps-btn ps-legacy-return" aria-label="Go to Simplify Panel">
+    <a href="{{ \Simplify\Panel\Services\LegacyNavigation::url() }}" class="ps-btn ps-legacy-return" aria-label="{{ __('pelican-simplify::settings.legacy.go_to_simplify_panel') }}">
         <x-tabler-layout-dashboard class="ps-ico" aria-hidden="true" />
-        <span>Go to Simplify Panel</span>
+        <span>{{ __('pelican-simplify::settings.legacy.go_to_simplify_panel') }}</span>
         <x-tabler-sparkles class="ps-ico ps-simplify-sparkles" aria-hidden="true" />
     </a>
     @endunless

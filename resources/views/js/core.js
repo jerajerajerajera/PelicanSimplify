@@ -24,8 +24,8 @@
     return typeof found === 'string' ? found : key;
   };
   const t = (key, params = {}) => fill(lookup(key), params);
-  const tc = (key, count, params = {}) => {
-    const forms = lookup(key).split('|');
+  const choice = (raw, count, params = {}) => {
+    const forms = String(raw).split('|');
     let text = null;
     for (const form of forms) {
       const exact = form.match(/^\s*\{(\d+)\}\s*/);
@@ -44,6 +44,7 @@
     }
     return fill(text, { count, ...params });
   };
+  const tc = (key, count, params = {}) => choice(lookup(key), count, params);
   try {
     const saved = localStorage.getItem(KEY);
     if (CHOICES.includes(saved)) preference = saved;
@@ -385,6 +386,7 @@
     t,
     tc,
     fill: (text, params = {}) => fill(String(text), params),
+    choice,
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),

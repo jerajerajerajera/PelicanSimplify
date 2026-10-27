@@ -2708,7 +2708,7 @@
         const result = await this.run(() => wire.killInstallation(), t('dashboard.installation_stopped'));
         if (result === SKIPPED || !result) return;
         Object.assign(this.server, result);
-        this.logs.push('[Simplify]: Installation stopped.');
+        this.logs.push('[Simplify]: ' + t('dashboard.installation_stopped') + '.');
         this.renderLogs();
       },
       async cancelInstall() {
@@ -3052,13 +3052,13 @@
             this.server.plugin_watch = !!result.watching;
             if (!(result.disabled || []).length) return;
             this.pluginFailures = result.disabled;
-            for (const p of result.disabled) this.toast(p.title + ' did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.', 'warn');
+            for (const p of result.disabled) this.toast(t('dashboard.plugin_failed_toast', { name: p.title }), 'warn');
             if (this.isPackageModal()) this.installed = await wire.installedPackages();
           } catch {}
         }, 2500);
       },
       async togglePackage(f) {
-        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? f.title + ' is off. It stays in the folder.' : f.title + ' is on again.');
+        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? t('dashboard.package_off', { name: f.title }) : t('dashboard.package_on', { name: f.title }));
         if (result === SKIPPED) return;
         if (!f.enabled && f.key && this.server) this.server.plugin_watch = true;
         this.installed = await wire.installedPackages();

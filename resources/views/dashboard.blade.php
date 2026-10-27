@@ -127,7 +127,7 @@
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-toggle" x-on:click="groupEditing = groupEditing===group.id ? null : group.id" :aria-expanded="groupEditing===group.id" :data-tip="groupEditing===group.id ? @js(__('pelican-simplify::dashboard.ui.done')) : @js(__('pelican-simplify::dashboard.ui.servers_and_order'))" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.servers_and_order_for')), { group: group.name })"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                                             <span class="ps-group-dot" x-show="group.color" :style="{'background-color': group.color}" aria-hidden="true"></span>
                                             <input type="text" class="ps-input ps-group-name" :value="group.name" maxlength="40" aria-label="{{ __('pelican-simplify::dashboard.ui.group_name') }}" x-on:keydown.enter.prevent="$el.blur()" x-on:change="$el.value = renameOverviewGroup(group.id, $el.value)">
-                                            <small class="ps-group-count" x-text="groupCount(group)+(groupCount(group)===1 ? ' server' : ' servers')"></small>
+                                            <small class="ps-group-count" x-text="Simplify.choice(@js(__('pelican-simplify::dashboard.ui.server_count')), groupCount(group))"></small>
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-up" :disabled="index===0" x-on:click="moveOverviewGroup(group.id, -1)" data-tip="{{ __('pelican-simplify::dashboard.ui.move_up') }}" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.move_up_name')), { name: group.name })"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle ps-group-down" :disabled="index===overviewGroups.length-1" x-on:click="moveOverviewGroup(group.id, 1)" data-tip="{{ __('pelican-simplify::dashboard.ui.move_down') }}" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.move_down_name')), { name: group.name })"><svg aria-hidden="true"><use href="#ps-chevron"/></svg></button>
                                             <button type="button" class="ps-btn is-sm is-icon is-subtle" x-on:click="removeOverviewGroup(group.id)" data-tip="{{ __('pelican-simplify::dashboard.ui.remove_group') }}" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.remove_name')), { name: group.name })"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
@@ -135,7 +135,7 @@
                                         <div class="ps-group-servers" x-show="groupEditing===group.id">
                                             <div class="ps-group-order ps-group-color"><span>{{ __('pelican-simplify::dashboard.ui.group_color') }}</span>
                                                 <span class="ps-group-color-choice">
-                                                    <label class="ps-swatch ps-group-swatch" :class="{'is-empty': !group.color}" :style="group.color ? {'background-color': group.color} : {}" :data-tip="group.color ? @js(__('pelican-simplify::dashboard.ui.change_group_color')) : @js(__('pelican-simplify::dashboard.ui.pick_a_group_color'))"><input type="color" class="ps-color-input" :value="group.color || '#878787'" x-on:change="setGroupColor(group.id, $el.value)" :aria-label="'Color for '+group.name"></label>
+                                                    <label class="ps-swatch ps-group-swatch" :class="{'is-empty': !group.color}" :style="group.color ? {'background-color': group.color} : {}" :data-tip="group.color ? @js(__('pelican-simplify::dashboard.ui.change_group_color')) : @js(__('pelican-simplify::dashboard.ui.pick_a_group_color'))"><input type="color" class="ps-color-input" :value="group.color || '#878787'" x-on:change="setGroupColor(group.id, $el.value)" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.color_for')), { name: group.name })"></label>
                                                     <button type="button" class="ps-btn is-sm is-subtle" x-show="group.color" x-on:click="setGroupColor(group.id, null)">{{ __('pelican-simplify::dashboard.ui.remove_color') }}</button>
                                                     <small x-show="!group.color">{{ __('pelican-simplify::dashboard.ui.off_every_server_keeps_its_own') }}</small>
                                                 </span>
@@ -379,7 +379,7 @@
                                     <svg aria-hidden="true"><use :href="theme==='light' ? '#ps-sun' : theme==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
                                 </button>
                                 <template x-for="t in ['light','dark','system']" :key="t">
-                                    <button type="button" class="ps-btn is-icon ps-theme-option" x-show="themeOpen" :aria-pressed="theme===t" x-on:click="setTheme(t); themeOpen=false" :data-tip="t==='light' ? @js(__('pelican-simplify::dashboard.ui.light')) : t==='dark' ? @js(__('pelican-simplify::dashboard.ui.dark')) : @js(__('pelican-simplify::dashboard.ui.system'))" :aria-label="t+' theme'">
+                                    <button type="button" class="ps-btn is-icon ps-theme-option" x-show="themeOpen" :aria-pressed="theme===t" x-on:click="setTheme(t); themeOpen=false" :data-tip="t==='light' ? @js(__('pelican-simplify::dashboard.ui.light')) : t==='dark' ? @js(__('pelican-simplify::dashboard.ui.dark')) : @js(__('pelican-simplify::dashboard.ui.system'))" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.theme_option')), { theme: { light: @js(__('pelican-simplify::dashboard.ui.light')), dark: @js(__('pelican-simplify::dashboard.ui.dark')), system: @js(__('pelican-simplify::dashboard.ui.system')) }[t] })">
                                         <svg aria-hidden="true"><use :href="t==='light' ? '#ps-sun' : t==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
                                     </button>
                                 </template>
@@ -456,7 +456,7 @@
                         <div class="ps-host-server-list" x-show="hostTab==='servers'">
                             <template x-for="node in hostNodes()" :key="node.id">
                                 <div class="ps-host-node">
-                                    <span class="ps-label"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="node.name"></span><small x-text="node.servers.length+(node.servers.length===1?' server':' servers')"></small></span>
+                                    <span class="ps-label"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="node.name"></span><small x-text="Simplify.choice(@js(__('pelican-simplify::dashboard.ui.server_count')), node.servers.length)"></small></span>
                                     <template x-for="s in node.servers" :key="s.uuid">
                                         <a class="ps-host-server" :href="s.linked ? s.url : null" :style="accentStyle(s.uuid)" :aria-disabled="!s.linked" :aria-current="hostServer?.uuid===s.uuid ? 'page' : null" x-on:click="if (s.linked && !$event.ctrlKey && !$event.metaKey && !$event.shiftKey) { $event.preventDefault(); openHostServer(s); }">
                                             <i class="ps-host-dot ps-status" :class="s.status" :aria-label="s.status"></i>
@@ -474,7 +474,7 @@
                     <template x-for="section in hostSections().filter((x) => x.key === 'health')" :key="section.key">
                         <div class="ps-host-health-bar" :class="{'is-current': hostSection?.key==='health' && !hostServer}">
                             <button type="button" class="ps-host-health-open" x-on:click="openHostSection(section)">
-                                <span class="ps-host-health-state"><svg class="ps-health-heart" :class="boot.host_health?.state || 'unavailable'" aria-hidden="true"><use href="#ps-heart"/></svg><strong x-text="boot.features.host_health ? (boot.host_health?.label || @js(__('pelican-simplify::dashboard.ui.unavailable'))) : @js(__('pelican-simplify::dashboard.ui.health'))"></strong><small x-show="boot.features.host_health" x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts'"></small></span>
+                                <span class="ps-host-health-state"><svg class="ps-health-heart" :class="boot.host_health?.state || 'unavailable'" aria-hidden="true"><use href="#ps-heart"/></svg><strong x-text="boot.features.host_health ? (boot.host_health?.label || @js(__('pelican-simplify::dashboard.ui.unavailable'))) : @js(__('pelican-simplify::dashboard.ui.health'))"></strong><small x-show="boot.features.host_health" x-text="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.hosts_available')), { available: boot.host_health?.available ?? 0, count: boot.host_health?.hosts ?? 0 })"></small></span>
                                 <span class="ps-host-health-meters" x-show="boot.features.host_health">
                                     <template x-for="kind in ['cpu', 'memory']" :key="kind">
                                         <span><span><span x-text="kind==='cpu' ? @js(__('pelican-simplify::dashboard.ui.cpu')) : @js(__('pelican-simplify::dashboard.ui.ram'))"></span> <b x-text="hostValue(kind)"></b></span><span class="ps-meter"><span :style="{width: hostFill(kind)+'%'}"></span></span></span>
@@ -567,7 +567,7 @@
                         <template x-for="s in overviewItems()" :key="s.uuid">
                             <div class="ps-server-entry" :class="{'is-node-heading': !!s.isNodeHeader, 'has-card-motd': overviewPreferences.showMotd && s.game==='minecraft' && !!s.motd, 'has-power': quickActionsMode()!=='off' && s.linked && Object.values(s.permissions || {}).some(Boolean), 'power-shown': quickActionsMode()==='on', 'confirming-power': powerConfirmation?.uuid===s.uuid}" :style="accentStyle(s.uuid)">
                                 <template x-if="s.isNodeHeader">
-                                    <h2 class="ps-node-heading" :class="{'has-color': !!s.color}"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="s.count+(s.count===1?' server':' servers')"></small></h2>
+                                    <h2 class="ps-node-heading" :class="{'has-color': !!s.color}"><svg aria-hidden="true"><use :href="'#ps-'+(s.icon || 'host')"/></svg><span x-text="s.name"></span><small x-text="Simplify.choice(@js(__('pelican-simplify::dashboard.ui.server_count')), s.count)"></small></h2>
                                 </template>
                                 <template x-if="!s.isNodeHeader">
                                 <article class="ps-server-card" :class="{'locked': !s.linked}">
@@ -660,7 +660,7 @@
                             <div class="ps-host-heading"><h3>{{ __('pelican-simplify::dashboard.ui.host_health') }}</h3><button type="button" class="ps-health-refresh" :class="{'is-busy': healthRefreshing}" :disabled="healthRefreshing" x-on:click.stop="refreshHostHealth()" x-on:keydown.stop aria-label="{{ __('pelican-simplify::dashboard.ui.refresh_host_health') }}" data-tip="{{ __('pelican-simplify::dashboard.ui.refresh_now') }}"><svg aria-hidden="true"><use href="#ps-restart"/></svg></button><svg class="ps-health-expand" :class="{'expanded': healthExpanded}" aria-hidden="true"><use href="#ps-chevron"/></svg></div>
                             <span class="ps-health-status" :class="boot.host_health?.state || 'unavailable'"><strong x-text="boot.host_health?.label || @js(__('pelican-simplify::dashboard.ui.unavailable'))"></strong><small x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts reporting'"></small></span>
                             <small class="ps-health-problem" x-show="boot.host_health?.problem" x-text="boot.host_health?.problem"></small>
-                            <small class="ps-health-phone-summary" x-text="'CPU '+hostValue('cpu')+' · RAM '+hostValue('memory')"></small>
+                            <small class="ps-health-phone-summary" x-text="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.cpu_ram')), { cpu: hostValue('cpu'), ram: hostValue('memory') })"></small>
                         </div>
                     </div>
                     <template x-for="metric in hostMetrics" :key="metric.key">
@@ -811,7 +811,7 @@
                 <div class="ps-pins-low">@include('pelican-simplify::announcement-chips')</div>
                 {{-- Power: one button that follows the state (Start or Stop), Restart, and the rest under ⋯. --}}
                 <div class="ps-info-power" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}" x-on:click.outside="colorMenu=false; infoMenu=false" x-on:keydown.escape.stop="colorMenu=false; infoMenu=false">
-                    <button type="button" class="ps-btn ps-power-main" :class="{'is-primary': mainPower().action==='start'}" x-on:click="power(mainPower().action)" :disabled="busy || !server?.permissions['control.'+mainPower().action] || ['starting','stopping'].includes(status)" :aria-label="mainPower().label+' server'"><svg aria-hidden="true"><use :href="'#ps-'+mainPower().icon"/></svg><span x-text="mainPower().label"></span></button>
+                    <button type="button" class="ps-btn ps-power-main" :class="{'is-primary': mainPower().action==='start'}" x-on:click="power(mainPower().action)" :disabled="busy || !server?.permissions['control.'+mainPower().action] || ['starting','stopping'].includes(status)" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.action_server')), { action: mainPower().label })"><svg aria-hidden="true"><use :href="'#ps-'+mainPower().icon"/></svg><span x-text="mainPower().label"></span></button>
                     <button type="button" class="ps-btn ps-power-restart" x-on:click="power('restart')" :disabled="busy || !server?.permissions['control.restart'] || status!=='running'" aria-label="{{ __('pelican-simplify::dashboard.ui.restart_server') }}"><svg aria-hidden="true"><use href="#ps-restart"/></svg><span>{{ __('pelican-simplify::dashboard.ui.restart') }}</span></button>
                     <button type="button" class="ps-btn is-icon ps-info-more-button" x-ref="infoMore" aria-label="{{ __('pelican-simplify::dashboard.ui.more_server_options') }}" aria-controls="ps-info-menu" :aria-expanded="infoMenu" x-on:click="infoMenu=!infoMenu; colorMenu=false"><svg aria-hidden="true"><use href="#ps-dots"/></svg></button>
                     <div id="ps-info-menu" class="ps-dropdown is-end ps-info-menu" x-show="infoMenu" x-cloak x-transition.opacity role="menu">
@@ -970,7 +970,7 @@
                             <span class="ps-console-state" x-text="connected ? @js(__('pelican-simplify::dashboard.ui.connected_to_wings')) : @js(__('pelican-simplify::dashboard.ui.connecting_to_wings'))"></span>
                             {{-- Buttons other plugins add to Pelican's console (such as Upload logs from Mclogs Uploader). --}}
                             <template x-for="action in pluginActions('server')" :key="action.key">
-                                <button type="button" class="ps-console-clear ps-console-plugin-action" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.label+(action.plugin ? ' — from the '+action.plugin+' plugin' : @js(__('pelican-simplify::dashboard.ui.from_another_plugin_2')))" :aria-label="action.label">
+                                <button type="button" class="ps-console-clear ps-console-plugin-action" :disabled="action.disabled || pluginActionBusy===action.key" :aria-busy="pluginActionBusy===action.key" x-on:click="runPluginAction(action)" :data-tip="action.plugin ? Simplify.fill(@js(__('pelican-simplify::dashboard.ui.action_from_plugin')), { action: action.label, plugin: action.plugin }) : Simplify.fill(@js(__('pelican-simplify::dashboard.ui.action_from_another_plugin')), { action: action.label })" :aria-label="action.label">
                                     <span class="ps-plugin-action-icon" x-show="action.icon" x-html="action.icon" aria-hidden="true"></span><span x-text="action.label"></span>
                                 </button>
                             </template>
@@ -1067,7 +1067,7 @@
                 {{-- Every notification: what an admin pinned on top, then the rest with "Show more"; a full-screen sheet on phones. --}}
                 <div x-show="modal==='inbox'" class="ps-inbox">
                     <div class="ps-inbox-bar">
-                        <span class="ps-help" x-text="unreadNotifications() ? unreadNotifications()+' unread' : @js(__('pelican-simplify::dashboard.ui.everything_is_read'))"></span>
+                        <span class="ps-help" x-text="unreadNotifications() ? Simplify.fill(@js(__('pelican-simplify::dashboard.ui.unread')), { count: unreadNotifications() }) : @js(__('pelican-simplify::dashboard.ui.everything_is_read'))"></span>
                         <button type="button" class="ps-btn is-sm" x-show="announcementsPage()" x-on:click="newAnnouncement()"><svg aria-hidden="true"><use href="#ps-plus"/></svg>{{ __('pelican-simplify::dashboard.ui.new_announcement') }}</button>
                         <button type="button" class="ps-btn is-sm is-subtle" x-show="unreadNotifications()" x-on:click="markAllNotificationsRead()"><svg aria-hidden="true"><use href="#ps-check"/></svg>{{ __('pelican-simplify::dashboard.ui.mark_all_read') }}</button>
                         <button type="button" class="ps-btn is-sm is-subtle" x-show="canClearRead()" x-on:click="clearReadNotifications()" data-tip="{{ __('pelican-simplify::dashboard.ui.moves_read_notifications_to_archived_pinned') }}">{{ __('pelican-simplify::dashboard.ui.clear_read') }}</button>
@@ -1379,9 +1379,9 @@
                                             <strong x-text="p.title"></strong><small x-show="p.author" x-text="' by ' + p.author"></small>
                                             <p x-text="p.description"></p>
                                             <div class="ps-package-meta">
-                                                <a class="ps-source" :class="'is-' + p.source" :href="safeLink(p.page)" target="_blank" rel="noopener noreferrer" x-text="packageDetail(p)?.via ? p.label + ' via GitHub' : p.label"></a>
+                                                <a class="ps-source" :class="'is-' + p.source" :href="safeLink(p.page)" target="_blank" rel="noopener noreferrer" x-text="packageDetail(p)?.via ? Simplify.fill(@js(__('pelican-simplify::dashboard.ui.via_github')), { site: p.label }) : p.label"></a>
                                                 <span x-show="packageDetail(p)?.version" x-text="versionLabel(packageDetail(p)?.version)"></span>
-                                                <span x-show="packageDetail(p)?.for" x-text="'for ' + packageDetail(p)?.for"></span>
+                                                <span x-show="packageDetail(p)?.for" x-text="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.for_versions')), { versions: packageDetail(p)?.for })"></span>
                                                 <span class="ps-badge is-warn" x-show="packageDetail(p) && !packageDetail(p).fits"><svg aria-hidden="true"><use href="#ps-alert"/></svg><span x-text="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.not_made_for')), { version: packageVersion })"></span></span>
                                                 <span class="ps-package-also" x-show="p.also.length">{{ __('pelican-simplify::dashboard.ui.also_on') }} <template x-for="(o, i) in p.also" :key="o.key"><span><button type="button" class="ps-link" x-on:click="useSource(p, o)" x-text="o.label"></button><span x-show="i < p.also.length - 1">, </span></span></template></span>
                                             </div>

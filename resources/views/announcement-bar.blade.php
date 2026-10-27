@@ -9,5 +9,5 @@
     <template x-if="item.action">
         <a class="ps-btn is-sm ps-announcement-action" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
     </template>
-    <button type="button" class="ps-btn is-sm is-icon ps-announcement-unpin" aria-pressed="true" data-tip="Unpin" :aria-label="'Unpin '+item.title" x-on:click="dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-pin"/></svg></button>
+    <button type="button" class="ps-btn is-sm is-icon ps-announcement-unpin" aria-pressed="true" data-tip="{{ __('pelican-simplify::announcements.bar.unpin') }}" :aria-label="'Unpin '+item.title" x-on:click="dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-pin"/></svg></button>
 </div>

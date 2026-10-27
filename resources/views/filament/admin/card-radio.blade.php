@@ -55,7 +55,7 @@
                     @if ($pack)
                         <a class="ssc-card-link" href="https://modrinth.com/modpack/{{ rawurlencode($pack['slug']) }}"
                            target="_blank" rel="noopener noreferrer" x-on:click.stop
-                           aria-label="Read more about {{ $label }} on Modrinth (opens in a new tab)">Read more ↗</a>
+                           aria-label="Read more about {{ $label }} on Modrinth (opens in a new tab)">{{ __('pelican-simplify::maker.choices.read_more') }}</a>
                     @endif
                 </span>
             </label>

@@ -21,9 +21,9 @@
                  } }">
             <div class="ssc-minecraft-head">
                 <span class="ssc-minecraft-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path fill="currentColor" stroke="none" d="M6 7h4v4H6zm8 0h4v4h-4zm-4 4h4v3h3v5h-3v-3h-4v3H7v-5h3z"/></svg></span>
-                <div><h3 id="ssc-minecraft-title">Minecraft</h3><p>Java and Bedrock. Pick what kind of Minecraft server you want.</p></div>
+                <div><h3 id="ssc-minecraft-title">{{ __('pelican-simplify::maker.game.minecraft') }}</h3><p>{{ __('pelican-simplify::maker.game.java_and_bedrock_pick_what_kind') }}</p></div>
             </div>
-            <div class="ssc-minecraft-types" role="group" aria-label="Minecraft server types">
+            <div class="ssc-minecraft-types" role="group" aria-label="{{ __('pelican-simplify::maker.game.minecraft_server_types') }}">
                 @foreach ($minecraft as $key => [$label, $line])
                     <button type="button" class="ssc-minecraft-type" aria-pressed="{{ ($data['game'] ?? '') === 'minecraft' && ($data['type'] ?? '') === $key ? 'true' : 'false' }}" x-on:click="pick(@js($key))" :disabled="busy">
                         <strong>{{ $label }}</strong><small>{{ $line }}</small>
@@ -33,7 +33,7 @@
         </section>
     @endif
     @if ($others)
-    @if ($minecraft)<h3 class="ssc-games-heading">Other games</h3>@endif
+    @if ($minecraft)<h3 class="ssc-games-heading">{{ __('pelican-simplify::maker.game.other_games') }}</h3>@endif
     <div class="ssc-games" wire:ignore
          x-data="{
             state: $wire.$entangle(@js($getStatePath())),
@@ -75,26 +75,26 @@
          }">
         <div class="ssc-games-install" x-show="installing" x-cloak role="status" aria-live="polite">
             <span class="ssc-games-install-spinner" aria-hidden="true"></span>
-            <strong>Installing <span x-text="installing"></span></strong>
+            <strong>{{ __('pelican-simplify::maker.game.installing') }} <span x-text="installing"></span></strong>
             <ol>
-                <li :class="{'is-done': phase > 0, 'is-now': phase === 0}">Downloading the egg from the Pelican egg index</li>
-                <li :class="{'is-done': phase > 1, 'is-now': phase === 1}">Checking it against the published checksum</li>
-                <li :class="{'is-now': phase === 2}">Adding it to this panel</li>
+                <li :class="{'is-done': phase > 0, 'is-now': phase === 0}">{{ __('pelican-simplify::maker.game.downloading_the_egg_from_the_pelican') }}</li>
+                <li :class="{'is-done': phase > 1, 'is-now': phase === 1}">{{ __('pelican-simplify::maker.game.checking_it_against_the_published_checksum') }}</li>
+                <li :class="{'is-now': phase === 2}">{{ __('pelican-simplify::maker.game.adding_it_to_this_panel') }}</li>
             </ol>
-            <small>The creator continues by itself when the game is ready.</small>
+            <small>{{ __('pelican-simplify::maker.game.the_creator_continues_by_itself_when') }}</small>
         </div>
         <div class="ssc-games-bar">
             <label class="ssc-games-search">
                 <x-tabler-search class="ssc-games-search-icon" />
-                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="Search {{ count($cards) }} {{ $minecraft ? 'other ' : '' }}games…" aria-label="Search games" autocomplete="off" />
+                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="Search {{ count($cards) }} {{ $minecraft ? 'other ' : '' }}games…" aria-label="{{ __('pelican-simplify::maker.game.search_games') }}" autocomplete="off" />
             </label>
-            <div class="ssc-games-chips" role="group" aria-label="Filter games">
-                <button type="button" :aria-pressed="filter==='all'" x-on:click="filter='all'; limit=24">All</button>
-                <button type="button" :aria-pressed="filter==='popular'" x-on:click="filter='popular'; limit=24">Popular</button>
-                <button type="button" :aria-pressed="filter==='installed'" x-on:click="filter='installed'; limit=24">Installed</button>
+            <div class="ssc-games-chips" role="group" aria-label="{{ __('pelican-simplify::maker.game.filter_games') }}">
+                <button type="button" :aria-pressed="filter==='all'" x-on:click="filter='all'; limit=24">{{ __('pelican-simplify::maker.game.all') }}</button>
+                <button type="button" :aria-pressed="filter==='popular'" x-on:click="filter='popular'; limit=24">{{ __('pelican-simplify::maker.game.popular') }}</button>
+                <button type="button" :aria-pressed="filter==='installed'" x-on:click="filter='installed'; limit=24">{{ __('pelican-simplify::maker.game.installed') }}</button>
             </div>
         </div>
-        <div class="ssc-games-grid" role="radiogroup" aria-label="Games">
+        <div class="ssc-games-grid" role="radiogroup" aria-label="{{ __('pelican-simplify::maker.game.games') }}">
             <template x-for="card in shown().slice(0, limit)" :key="card.key">
                 <button type="button" class="ssc-game" role="radio" :aria-checked="state===card.key" x-on:click="state = card.key; $wire.pickGame('other', card.key)">
                     <span class="ssc-game-icon" :style="{'--hue': hue(card.name)}" x-text="initials(card.name)"></span>
@@ -102,14 +102,14 @@
                         <strong x-text="card.name"></strong>
                         <small x-text="card.description"></small>
                     </span>
-                    <span class="ssc-game-badge" :class="card.installed ? 'is-installed' : 'is-available'" x-text="card.installed ? 'Installed' : 'Available'"></span>
+                    <span class="ssc-game-badge" :class="card.installed ? 'is-installed' : 'is-available'" x-text="card.installed ? @js(__('pelican-simplify::maker.game.installed')) : @js(__('pelican-simplify::maker.game.available'))"></span>
                 </button>
             </template>
         </div>
-        <p class="ssc-games-empty" x-show="!shown().length">No game matches “<span x-text="query"></span>”.@if ($minecraft)<span x-show="/mine|craft|paper|purpur|forge|fabric|quilt|bedrock|modpack|spigot/i.test(query)"> Minecraft is at the top of this step.</span>@endif</p>
+        <p class="ssc-games-empty" x-show="!shown().length">{{ __('pelican-simplify::maker.game.no_game_matches') }}<span x-text="query"></span>”.@if ($minecraft)<span x-show="/mine|craft|paper|purpur|forge|fabric|quilt|bedrock|modpack|spigot/i.test(query)"> {{ __('pelican-simplify::maker.game.minecraft_is_at_the_top_of') }}</span>@endif</p>
         <button type="button" class="ssc-games-more" x-show="shown().length > limit" x-on:click="limit += 48" x-text="'Show more (' + (shown().length - limit) + ')'"></button>
         <p class="ssc-games-note" x-show="selected() && !selected().installed">
-            <strong x-text="selected()?.name"></strong> is not on this panel yet. Its egg is downloaded from the official Pelican egg index and installed when you continue.
+            <strong x-text="selected()?.name"></strong> {{ __('pelican-simplify::maker.game.is_not_on_this_panel_yet') }}
         </p>
     </div>
     @endif

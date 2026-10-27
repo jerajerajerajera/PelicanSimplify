@@ -5,8 +5,8 @@ const lang = JSON.parse(execFileSync(process.env.PHP_BIN || 'php', ['-r', 'echo 
 const fill = (text, params) => Object.keys(params).sort((a, b) => b.length - a.length).reduce((out, name) => out.split(':' + name).join(String(params[name])), text);
 const lookup = (key) => { const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), lang); return typeof found === 'string' ? found : key; };
 const t = (key, params = {}) => fill(lookup(key), params);
-const tc = (key, count, params = {}) => {
-  const forms = lookup(key).split('|');
+const choice = (raw, count, params = {}) => {
+  const forms = String(raw).split('|');
   for (const form of forms) {
     const exact = form.match(/^\s*\{(\d+)\}\s*/), range = form.match(/^\s*\[(\d+|\*),\s*(\d+|\*)\]\s*/);
     if (exact && Number(exact[1]) === count) return fill(form.slice(exact[0].length), { count, ...params });
@@ -15,13 +15,14 @@ const tc = (key, count, params = {}) => {
   const plain = forms.map((form) => form.replace(/^\s*(\{\d+\}|\[(\d+|\*),\s*(\d+|\*)\])\s*/, ''));
   return fill(plain[Math.min(count === 1 ? 0 : 1, plain.length - 1)], { count, ...params });
 };
+const tc = (key, count, params = {}) => choice(lookup(key), count, params);
 const run = vm.runInContext;
 vm.runInContext = function (code, context, ...rest) {
   const win = context && context.window;
   if (win && typeof win === 'object') {
     win.simplifyLang = win.simplifyLang || lang;
-    if (win.Simplify && typeof win.Simplify === 'object' && !win.Simplify.t) Object.assign(win.Simplify, { t, tc, fill: (text, params = {}) => fill(String(text), params) });
-    else if (!win.Simplify) win.Simplify = { t, tc, fill: (text, params = {}) => fill(String(text), params), toast() {} };
+    if (win.Simplify && typeof win.Simplify === 'object' && !win.Simplify.t) Object.assign(win.Simplify, { t, tc, fill: (text, params = {}) => fill(String(text), params), choice });
+    else if (!win.Simplify) win.Simplify = { t, tc, fill: (text, params = {}) => fill(String(text), params), choice, toast() {} };
   }
   return run.call(this, code, context, ...rest);
 };

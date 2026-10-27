@@ -1,0 +1,3 @@
+# Texts that stay as they are in every language: product names, Minecraft commands.
+say 
+Samsung Internet
