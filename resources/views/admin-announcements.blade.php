@@ -7,7 +7,10 @@
     <div class="ps-admin-page ps-announcements" x-data x-init="$wire.browserTimezone = window.Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || ''">
         <div class="ps-people-bar">
             <p class="ps-help ps-people-intro">Announcements show as a bar above the server overview and under the bell. Everyone can hide a bar for themselves; it then stays under the bell until it ends.</p>
-            <button type="button" class="ps-btn is-primary" wire:click="mountAction('addAnnouncement')"><x-tabler-speakerphone class="ps-ico" />New announcement</button>
+            <div class="ps-person-actions">
+                <button type="button" class="ps-btn" wire:click="mountAction('ingameCommands')"><x-tabler-message-chatbot class="ps-ico" />In-game commands</button>
+                <button type="button" class="ps-btn is-primary" wire:click="mountAction('addAnnouncement')"><x-tabler-speakerphone class="ps-ico" />New announcement</button>
+            </div>
         </div>
         <div class="ps-announcement-list">
             @forelse($rows as $row)
@@ -25,6 +28,13 @@
                             @if($row['push']) · {{ $row['pushed_at'] !== null ? 'sent as app notification' : 'app notification when it starts' }}@endif
                             @if($row['created_by'] !== '') · by {{ $row['created_by'] }}@endif
                         </small>
+                        @if($row['ingame_status'])
+                            <small class="ps-announcement-ingame"><x-tabler-message-chatbot class="ps-ico" />
+                                {{ $row['ingame']['targets'] === 'all' ? 'In game on all servers' : 'In game on chosen servers' }}{{ $row['ingame']['repeat'] ? ', '.strtolower(\Simplify\Panel\Services\InGameAnnouncements::REPEATS[$row['ingame']['repeat']]) : '' }}
+                                @if($row['ingame_status']['last']) · {{ $row['ingame_status']['last'] }}@endif
+                                @if($row['ingame_status']['next']) · {{ $row['ingame_status']['next'] }}@endif
+                            </small>
+                        @endif
                     </div>
                     <span class="ps-badge {{ ['live' => 'is-ok', 'scheduled' => 'is-info', 'ended' => 'is-muted'][$row['state']] }}"><span>{{ ucfirst($row['state']) }}</span></span>
                     <div class="ps-person-actions">
