@@ -89,6 +89,8 @@ if(($argv[1]??'')==='emergency'){
         $expect($client()->actingAs($admin)->withSession(['_token'=>'smoke-csrf'])->post('/simplify/explain',['_token'=>'smoke-csrf','source'=>'panel']),'emergency page asking with Livewire broken',['Panel log: Something needs attention','Smoke answer.','Smoke step']);
         $sent=\Illuminate\Support\Facades\Http::recorded()[0][0]??null;
         if(!$sent||!str_contains((string)$sent->body(),'ComponentNotFoundException')||!str_contains((string)$sent->body(),'emergency page'))throw new \RuntimeException('the panel log was not sent with the emergency context');
+        // Same app for every request: forget the signed-in admin, as a new visitor's request would.
+        auth()->forgetGuards();
         if($client()->get('/simplify/explain')->getStatusCode()!==401)throw new \RuntimeException('signed out visitors were not refused');
         // The terminal: a temporary address, and the panel log explained.
         if(\Illuminate\Support\Facades\Artisan::call('simplify:explain',['--url'=>true])!==0||!preg_match('#/simplify/explain/access/([0-9a-f]{40})#',\Illuminate\Support\Facades\Artisan::output(),$match))throw new \RuntimeException('simplify:explain --url printed no address');

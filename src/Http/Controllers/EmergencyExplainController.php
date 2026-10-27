@@ -94,7 +94,7 @@ final class EmergencyExplainController
             if ($issue['steps']) $html .= '<ol>'.implode('', array_map(fn ($step) => '<li>'.self::e($step).'</li>', $issue['steps'])).'</ol>';
             $html .= '</details>';
         }
-        if ($result['model']) $html .= '<p class="note">'.(int) $result['lines'].' lines checked by '.self::e((string) $result['model']).'. Addresses, e-mail addresses and passwords were removed first.</p>';
+        if ($result['model']) $html .= '<p class="note">'.(int) $result['lines'].((int) $result['lines'] === 1 ? ' line' : ' lines').' checked by '.self::e((string) $result['model']).'. Addresses, e-mail addresses and passwords were removed first.</p>';
         return $html.'</section>';
     }
 
@@ -131,12 +131,12 @@ final class EmergencyExplainController
     }
 
     private const CSS = <<<'CSS'
-:root{color-scheme:light dark;--bg:#f4f5f7;--card:#fff;--text:#1d2129;--muted:#5d6472;--line:#dde0e6;--accent:#2563eb;--good:#15803d;--bad:#b45309}
-@media (prefers-color-scheme:dark){:root{--bg:#111318;--card:#1a1d24;--text:#e8eaef;--muted:#9aa1ae;--line:#2c313b;--accent:#60a5fa;--good:#4ade80;--bad:#fbbf24}}
+:root{color-scheme:light dark;--bg:#f4f5f7;--card:#fff;--text:#1d2129;--muted:#5d6472;--line:#dde0e6;--accent:#2563eb;--on-accent:#fff;--good:#15803d;--bad:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#111318;--card:#1a1d24;--text:#e8eaef;--muted:#9aa1ae;--line:#2c313b;--accent:#60a5fa;--on-accent:#0b1220;--good:#4ade80;--bad:#fbbf24}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:720px;margin:0 auto;padding:32px 16px}h1{font-size:22px;margin:0 0 8px}h2{font-size:16px;margin:0 0 6px}
 p{margin:0 0 10px}.lead,.note{color:var(--muted)}.note{font-size:13px}code{font:13px ui-monospace,monospace;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 5px}
-.ask{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}button{font:inherit;font-weight:600;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:10px;padding:9px 14px;cursor:pointer}
+.ask{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}button{font:inherit;font-weight:600;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:10px;padding:9px 14px;cursor:pointer}
 button.secondary{background:var(--card);color:var(--text);border-color:var(--line)}.wait{display:none;width:100%;color:var(--muted)}.busy .wait{display:block}.busy button{opacity:.5;pointer-events:none}
 .result{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--good);border-radius:12px;padding:16px;margin-top:16px}.result.bad{border-left-color:var(--bad)}
 details{border-top:1px solid var(--line);padding:8px 0}summary{font-weight:600;cursor:pointer}ol{margin:6px 0 0;padding-left:20px}

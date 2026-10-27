@@ -78,7 +78,7 @@ final class Explain extends Command
             if($issue['cause']!=='')$this->line('   '.wordwrap($issue['cause'],100,"\n   "));
             foreach($issue['steps'] as $step)$this->line('   - '.wordwrap($step,98,"\n     "));
         }
-        if($result['model']){$this->newLine();$this->line('<fg=gray>'.$result['lines'].' lines checked by '.$result['model'].'. Addresses, e-mail addresses and passwords were removed first.</>');}
+        if($result['model']){$this->newLine();$this->line('<fg=gray>'.$result['lines'].($result['lines']===1?' line':' lines').' checked by '.$result['model'].'. Addresses, e-mail addresses and passwords were removed first.</>');}
         return self::SUCCESS;
     }
 
