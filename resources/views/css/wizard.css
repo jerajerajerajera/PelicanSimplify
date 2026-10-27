@@ -279,6 +279,9 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs .fi-tabs-item.fi-active { background: var(--ps-surface) !important; box-shadow: var(--ps-shadow-sm), inset 0 0 0 1px var(--ps-line); }
 .ps-settings-tabs .fi-tabs-item.fi-active > .fi-icon { background: var(--ps-accent); color: #fff; box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item .fi-badge { display: none; }
+/* The tab list has two groups: the panel's own settings, then the add-ons (their tabs carry a badge). */
+.ps-settings-tabs .fi-tabs-item:first-child { margin-top: 22px; position: relative; }
+.ps-settings-tabs .fi-tabs-item:first-child::before { content: "Panel"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 /* Add-on tabs carry a badge; the first one opens an "Add-ons" group. */
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge) { margin-top: 30px; position: relative; }
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge)::before { content: "Add-ons"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }

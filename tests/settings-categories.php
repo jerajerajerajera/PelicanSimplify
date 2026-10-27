@@ -32,11 +32,11 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
- if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Users & access','Backups & performance','Server banners','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites'])throw new \RuntimeException('settings tabs lost a setup category');
+ if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Server banners','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites'])throw new \RuntimeException('settings tabs lost a setup category');
  $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];
  if(count($profiles)!==6||$profiles[3]->label!=='Modpacks'||$profiles[2]->label!=='Mods'||count($profiles[3]->options['schema'][0])!==3)throw new \RuntimeException('CPU/RAM/disk profiles missing from settings');
  $explain=$tabs[10]->options['schema'][0][0];
  if(($tabs[10]->options['badge'][0]??null)!=='Add-on'||$explain->label!=='Explain this error'||$explain->options['schema'][0][0]->label!=='explainer.provider'||!isset($explain->options['schema'][0][0]->options['live'])||$explain->options['schema'][0][2]->label!=='explainer.key'||!isset($explain->options['schema'][0][2]->options['password']))throw new \RuntimeException('error explanations tab missing its AI choice or key field');
- if(($tabs[7]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
+ if(($tabs[7]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null||$tabs[2]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
  echo "PASS separate setup pages, matching numbered navigation, final-step submit, category tabs and editable modpack resource columns\n";
 }

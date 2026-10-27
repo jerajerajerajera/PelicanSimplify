@@ -367,7 +367,9 @@ class SimplifySettings extends Page implements HasForms
                     ->submitAction(new \Illuminate\Support\HtmlString(view('pelican-simplify::setup-submit')->render())),
             ]);
         }
-        $categories['Server banners'] = [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')];
+        // Server banners sit with the other appearance settings; the add-ons follow in the order of their switches under General.
+        $banners = ['Server banners' => [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')]];
+        $categories = [...array_slice($categories, 0, 2, true), ...$banners, ...array_slice($categories, 2, null, true)];
         $icons['Server banners'] = 'tabler-photo';
         $addons['Error explanations'] = $this->errorExplainerSections();
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();

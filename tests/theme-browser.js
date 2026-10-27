@@ -473,7 +473,7 @@ const { start } = require('./browser-harness');
     // 15. Account-level pages from other plugins (such as Legal Pages) open from the account menu.
     for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
       const account = await open('/?mode=overview&theme=light', viewport);
-      const pluginButton = account.locator('#ps-account-actions [aria-label="Plugin pages"]');
+      const pluginButton = account.locator('#ps-account-actions [aria-label="Pages from other plugins"]');
       assert.equal(await pluginButton.count(), 1);
       await data(account, (d) => { d.boot.plugin_pages = [{ key: 'ext-imprint', label: 'Imprint', url: '/frame/native', plugin: 'Legal Pages' }, { key: 'ext-termsofservice', label: 'Terms of Service', url: '/frame/native', plugin: 'Legal Pages' }]; });
       if (viewport.width < 600) await data(account, (d) => { d.navMenu = true; });
