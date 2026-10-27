@@ -100,13 +100,12 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-server-scroll:focus-visible { outline: 2px solid var(--ps-line); outline-offset: 2px; border-radius: var(--ps-radius); }
 .ps-server-stage { flex: none; width: 100%; max-width: var(--ps-grid-width); margin: auto; }
 .ps-server-stage.is-list { max-width: 1088px; margin: clamp(4px, calc(4dvh - 28px), 24px) auto 0; }
-.ps-overview-toolbar { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 12px; }
-.ps-overview-toolbar > .ps-game-filters { margin-left: auto; order: 2; }
-.ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
+.ps-overview-toolbar { display: flex; align-items: flex-start; gap: 8px 16px; margin: 0 0 12px; }
+.ps-overview-filters { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-width: 0; }
+.ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px; min-width: 0; }
 .ps-node-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-owner-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--ps-line); }
-.ps-overview-toolbar > .ps-owner-filters { order: 2; }
 .ps-owner-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-node-search { width: 170px; min-height: var(--ps-h-sm); padding: 4px 10px; font-size: 13px; }
 /* Node groups: a heading row spanning the grid (or list) before each node's servers. */
@@ -242,45 +241,9 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) .ps-card-graph { height: 30px; }
 .ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: translateY(calc(-1 * var(--ps-power-h))); }
 
-/* Creation tiles: a large logo that makes room for its label on hover. */
-.ps-create-tiles { display: flex; align-items: center; gap: 12px; order: -1; min-width: 0; margin-right: 8px; }
-.ps-create-card {
-  --ps-create-icon: 80px;
-  --ps-create-small: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  min-height: 0;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)), var(--ps-surface));
-  color: var(--ps-ink);
-  cursor: pointer;
-  transition: background var(--ps-slow), gap var(--ps-slow);
-}
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) {
-  gap: 16px;
-  background-color: var(--ps-surface);
-  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 12%, transparent) 0 2px, transparent 2px 10px), linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)), var(--ps-surface));
-}
-.ps-create-card:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 3px; }
-.ps-create-card:disabled { cursor: default; opacity: .65; }
-.ps-create-plus { position: relative; display: grid; place-items: center; flex: none; width: var(--ps-create-icon); height: var(--ps-create-icon); overflow: hidden; border-radius: var(--ps-radius-lg); background: var(--ps-raised); color: var(--ps-accent); transition: width var(--ps-slow), height var(--ps-slow); }
-.ps-create-plus > svg { width: 70%; height: 70%; }
-.ps-create-add { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ps-surface); border-radius: 50%; background: var(--ps-raised); color: var(--ps-accent); }
-.ps-create-add svg { width: 14px; height: 14px; }
-.ps-create-card h3 { text-align: left; display: flex; flex-direction: column; flex: none; max-width: 0; overflow: hidden; opacity: 0; transform: translateX(-8px); font-size: 16px; font-weight: 400; line-height: 1.35; white-space: nowrap; transition: max-width var(--ps-slow), opacity var(--ps-fast), transform var(--ps-slow); }
-.ps-create-card h3 strong { width: fit-content; font-weight: 700; background: linear-gradient(115deg, var(--ps-ink), var(--ps-accent)); background-clip: text; -webkit-background-clip: text; color: transparent; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) h3 { max-width: 120px; opacity: 1; transform: none; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus > svg { animation: ps-logo-bump 1.8s ease-in-out infinite; }
-@keyframes ps-logo-bump { 0%, 65%, 100% { transform: none; } 20% { transform: translateY(-4px) scale(1.06); } 35% { transform: translateY(1px) scale(.98); } }
-@media (hover: none) {
-  .ps-create-card { gap: 12px; }
-  .ps-create-card .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
-  .ps-create-card h3 { max-width: 120px; opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) { .ps-create-plus > svg { animation: none !important; } }
+/* Create buttons: one main button (the Server Maker) and, for administrators, Pelican's own forms. */
+.ps-create-buttons { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; }
+.ps-create-button svg { width: 16px; height: 16px; }
 
 /* Compact cards: icon, name, status and players only, so more servers fit on a screen. */
 .ps-server-grid.is-compact { --ps-compact-h: 156px; --ps-compact-pad: 14px; gap: 12px; }
@@ -367,9 +330,26 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
 }
 
-/* Host health dock: compact summary row that expands upward into node details. */
+/* Host health dock: compact summary row that expands upward into node details. and can sit above the servers instead,
+   or open as details under the health button in the top bar. */
 .ps-health-panel { position: relative; z-index: 1; flex: none; width: var(--ps-health-width, calc(100% - 8px)); margin: 0 var(--ps-health-left, auto) 0 var(--ps-health-left, auto); overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 -4px 12px rgb(0 0 0 / .1); }
 .ps.dark .ps-health-panel { box-shadow: none; }
+.ps-overview { position: relative; }
+.ps-overview > .ps-health-panel.is-above { order: -1; margin-bottom: 4px; box-shadow: none; }
+.ps-health-panel.is-popover { position: absolute; top: 2px; right: 4px; z-index: var(--ps-z-dropdown); width: min(560px, calc(100% - 8px)); margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
+.ps-health-panel.is-popover .ps-host-health { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; padding: 14px 16px; }
+.ps-health-panel.is-popover .ps-host-state { grid-column: 1 / -1; }
+.ps-health-panel.is-popover .ps-node-summary { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ps-health-panel.is-popover .ps-node-server { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ps-health-panel.is-popover .ps-node-server > div { grid-column: 1 / -1; }
+/* The top-bar side of it: the health button and the create buttons, in front of the panel icons. */
+.ps-top-overview { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+.ps-health-pill { --ps-tone: var(--ps-muted); gap: 6px; border-color: color-mix(in srgb, var(--ps-tone) 40%, var(--ps-line)); border-radius: 999px; background: color-mix(in srgb, var(--ps-tone) 10%, var(--ps-surface)); color: var(--ps-tone); font-weight: 650; }
+.ps-health-pill.healthy { --ps-tone: var(--ps-ok); }
+.ps-health-pill.warning { --ps-tone: var(--ps-warn); }
+.ps-health-pill.critical { --ps-tone: var(--ps-danger); }
+.ps-health-pill svg { width: 16px; height: 16px; fill: color-mix(in srgb, currentColor 18%, transparent); }
+.ps-health-pill[aria-expanded="true"] { border-color: var(--ps-tone); }
 .ps-host-health { display: grid; grid-template-columns: minmax(200px, 1.2fr) repeat(4, minmax(0, 1fr)); align-items: center; gap: 18px; padding: 10px 16px; cursor: pointer; transition: background-color var(--ps-fast); }
 .ps-host-health:hover { background: color-mix(in srgb, var(--ps-raised) 40%, var(--ps-surface)); }
 .ps-host-health:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; border-radius: var(--ps-radius-lg); }
@@ -1104,17 +1084,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-banner-swatch { display: block; width: 100%; height: 56px; margin-bottom: 10px; border-radius: 10px; background-color: var(--ps-surface); }
 .ps-background-color { cursor: pointer; }
 
-/* Create buttons: icon-only, in the toolbar next to the game filters; the label slides out on hover. */
-.ps-create-card { --ps-create-icon: 48px; --ps-create-small: 48px; gap: 0; width: auto; padding: 4px; border: 0; border-radius: var(--ps-radius); background: none; box-shadow: none; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) { gap: 10px; background: none; }
-.ps-create-card .ps-create-plus { overflow: visible; border: 2px dashed color-mix(in srgb, var(--ps-accent) 55%, transparent); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-raised)); }
-.ps-create-card .ps-create-plus > svg { width: 58%; height: 58%; }
-.ps-create-card .ps-create-add { right: -6px; bottom: -6px; width: 22px; height: 22px; border: 3px solid var(--ps-bg, var(--ps-surface)); background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
-.ps-create-card .ps-create-add svg { width: 12px; height: 12px; stroke-width: 3; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { border-style: solid; border-color: var(--ps-accent); }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-add { transform: rotate(90deg) scale(1.1); }
-.ps-create-card h3 { font-size: 13px; line-height: 1.2; }
-@media (hover: none) { .ps-create-card h3 { max-width: 0; opacity: 0; } }
 
 /* Cards in the style of the server page: rounder corners, a softer accent border that brightens on hover,
    and icons in rounded tinted squares. */
@@ -1129,19 +1098,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 /* Docked sections are part of the page: scrolling past their content scrolls the page on. */
 .ps-dock :is(.ps-modal-layer, .ps-modal-body, .ps-tab-panels) { overscroll-behavior: auto; }
 
-/* Create buttons: a little bigger, a larger plus, and the shine only on the icon, never on the label. */
-.ps-create-card { --ps-create-icon: 56px; --ps-create-small: 56px; }
-.ps-create-card .ps-create-add { right: -7px; bottom: -7px; width: 28px; height: 28px; }
-.ps-create-card .ps-create-add svg { width: 16px; height: 16px; stroke-width: 3.2; }
-.ps-create-card h3 strong { background: none; color: var(--ps-ink); -webkit-text-fill-color: currentColor; }
-.ps-create-card h3 { font-size: 14px; }
-/* The Server Maker tile: always labelled, a little larger, a real button instead of a bare icon. */
-.ps-create-card.is-server { gap: 14px; padding: 8px 20px 8px 8px; border: 1px solid color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-accent) 7%, var(--ps-surface)); }
-.ps-create-card.is-server:is(:hover, :focus-visible):not(:disabled) { gap: 14px; border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-surface)); }
-.ps-create-card.is-server h3, .ps-create-card.is-server:is(:hover, :focus-visible):not(:disabled) h3 { max-width: none; opacity: 1; transform: none; gap: 1px; }
-.ps-create-card.is-server h3 strong { font-size: 16px; }
-.ps-create-card.is-server h3 span { color: var(--ps-muted); font-size: 12px; }
-@media (hover: none) { .ps-create-card.is-server h3 { max-width: none; opacity: 1; } }
 /* Phones: a status bar whose name shrinks before the buttons. */
 @media (max-width: 700px) {
   .ps-statusbar { gap: 8px; padding: 6px 6px 6px 12px; }
@@ -1260,13 +1216,17 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   /* One swipeable filter row; creating moves to the tab bar. */
   .ps .ps-overview-toolbar { flex-wrap: nowrap; justify-content: flex-start; gap: 8px; margin: 0 -14px 12px; padding: 2px 14px 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
   .ps .ps-overview-toolbar::-webkit-scrollbar { display: none; }
-  .ps .ps-overview-toolbar > .ps-create-tiles, .ps .ps-node-search { display: none !important; }
-  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
-  .ps .ps-overview-toolbar > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
+  .ps .ps-overview-toolbar > .ps-create-buttons, .ps .ps-top-overview .ps-create-button, .ps .ps-node-search { display: none !important; }
+  .ps .ps-overview-filters { display: contents; }
+  .ps .ps-overview-filters > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
+  .ps .ps-overview-filters > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
   .ps .ps-overview-toolbar .ps-chip { min-height: 40px; padding-inline: 14px; white-space: nowrap; }
 
   /* Host health: one summary line above the servers; tapping still opens the node details. */
   .ps .ps-overview > .ps-health-panel { order: -1; margin: 0 0 14px; box-shadow: none; }
+  /* At the bottom: after the servers, at the end of the page. In the top bar: a dropdown over the filter row. */
+  .ps .ps-overview > .ps-health-panel:not(.is-above, .is-popover) { order: 1; margin: 14px 0 0; }
+  .ps .ps-overview > .ps-health-panel.is-popover { top: -6px; right: 0; width: 100%; margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
   .ps .ps-host-health { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; }
   .ps .ps-host-health > .ps-host-metric, .ps .ps-host-state small:not(.ps-health-phone-summary), .ps .ps-host-server-badge, .ps .ps-host-state .ps-host-heading h3 { display: none; }
   .ps .ps-host-state { flex: 1; }

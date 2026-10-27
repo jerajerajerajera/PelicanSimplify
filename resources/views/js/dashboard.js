@@ -4,10 +4,10 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, serverBiggerConsole: false, serverConsoleLog: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, serverBiggerConsole: false, serverConsoleLog: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true, healthPlace: 'top-bar' };
   const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'serverFullWidth', 'serverBiggerConsole', 'serverConsoleLog', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
-  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'], healthPlace: ['top-bar', 'above', 'bottom'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
@@ -93,6 +93,7 @@
       groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
+      healthPopover: false,
       healthOpenNodes: [],
       healthRefreshing: false,
       hostMetrics: [
@@ -1862,6 +1863,15 @@
           { key: 'other', label: 'Other server (Pelican form)', icon: 'gamepad' },
           { key: 'native', label: 'New server', icon: 'host' },
         ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'server' ? this.canCreateGame('server') : this.pelicanFormForOthers()));
+      },
+      /** Create buttons for the overview (top bar or toolbar): the Server Maker first, as the one main button. */
+      createButtons() {
+        const labels = { server: 'Create server', other: 'Other server', native: 'New server' };
+        return this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? 'Create server' : labels[c.key], primary: index === 0 }));
+      },
+      /** Where host health shows on the overview: a button in the top bar (default), a bar above the servers or at the bottom. */
+      healthPlace() {
+        return this.boot.features?.host_health ? this.overviewPreferences.healthPlace : null;
       },
       openCreate(game = 'server') {
         if (!['server', 'minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
