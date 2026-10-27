@@ -431,7 +431,7 @@ const { start } = require('./browser-harness');
           return { docked: d.docked(), top: Math.round(modal.top), bottom: Math.round(modal.bottom) === innerHeight, foot: Math.round(foot.bottom) === innerHeight, locked: getComputedStyle(document.documentElement).overflow === 'hidden' };
         });
         assert.deepEqual(sheet, { docked: false, top: 12, bottom: true, foot: true, locked: true }, 'workspace sheet with the save bar at the bottom: ' + JSON.stringify(sheet));
-        const head = await phone.locator('.ps-modal-head').boundingBox();
+        const head = await phone.locator('.ps-modal-layer:not(.ps-explain-layer) .ps-modal-head').boundingBox();
         const touch = await phone.context().newCDPSession(phone);
         const drag = (type, y) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: head.x + 60, y }] });
         await drag('touchStart', head.y + 20);
