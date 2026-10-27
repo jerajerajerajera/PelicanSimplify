@@ -1869,6 +1869,16 @@
         const labels = { server: 'Create server', other: 'Other server', native: 'New server' };
         return this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? 'Create server' : labels[c.key], primary: index === 0 }));
       },
+      /** Puts the top-bar health details right under the Healthy button, left edges in line, inside the screen. */
+      placeHealthPopover() {
+        const pill = this.$root?.querySelector('.ps-health-pill'), panel = this.$root?.querySelector('.ps-health-panel');
+        if (!pill || !panel || typeof window === 'undefined') return;
+        const scale = this.uiScale || 1, rect = pill.getBoundingClientRect(), screen = window.innerWidth / scale, gap = 8;
+        const width = Math.min(560, screen - 2 * gap);
+        panel.style.setProperty('--ps-pop-width', width + 'px');
+        panel.style.setProperty('--ps-pop-left', Math.max(gap, Math.min(rect.left / scale, screen - width - gap)) + 'px');
+        panel.style.setProperty('--ps-pop-top', rect.bottom / scale + gap + 'px');
+      },
       /** Where host health shows on the overview: a button in the top bar (default), a bar above the servers or at the bottom. */
       healthPlace() {
         return this.boot.features?.host_health ? this.overviewPreferences.healthPlace : null;
