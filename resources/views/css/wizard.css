@@ -494,3 +494,35 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ssc-navbar :is(.ssc-draft-status, .ssc-discard > span) { display: none; }
   .ssc-navbar .ssc-draft-indicator { width: 32px; height: 32px; }
 }
+
+/* One look for every control in the Server Maker bar: the same height, radius, border and background, with
+   smaller inner buttons (steps, Discard) that keep the same shape. */
+.ssc-maker { --ssc-ctl: 40px; --ssc-inner: 32px; --ssc-inner-radius: calc(var(--ps-radius) - 3px); --ssc-gap: 8px; --ssc-bar: 64px; --ssc-bar-left: calc(16px + 104px + var(--ssc-gap)); --ssc-bar-right: calc(16px + 104px + var(--ssc-gap)); }
+.ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: calc(16px + 140px + var(--ssc-gap)); }
+.ssc-maker .fi-sc-wizard-footer :is(.ssc-next-button, .ssc-back-button, .ssc-create-button) { box-sizing: border-box; min-width: 104px; height: var(--ssc-ctl); min-height: var(--ssc-ctl); padding: 0 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius) !important; font-size: 14px; }
+.ssc-maker .fi-sc-wizard-footer .ssc-create-button { min-width: 140px; }
+.ssc-maker .fi-sc-wizard-footer .fi-btn:disabled { border-color: var(--ps-line); background: var(--ps-surface); color: var(--ps-muted); }
+.ssc-navbar { gap: var(--ssc-gap); }
+.ssc-navbar :is(.ssc-progress, .ssc-draft-bar) { box-sizing: border-box; height: var(--ssc-ctl); border: 1px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-surface); }
+.ssc-navbar .ssc-progress { flex: 0 1 auto; margin: 0 auto; padding: 0 3px; gap: 2px; overflow: hidden; }
+.ssc-navbar .ssc-progress > button { height: var(--ssc-inner); min-height: var(--ssc-inner); padding: 0 10px 0 4px; gap: 7px; border: 0; border-radius: var(--ssc-inner-radius); }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) { padding: 0 4px; }
+.ssc-navbar .ssc-progress > button > span { width: 24px; height: 24px; border-radius: calc(var(--ssc-inner-radius) - 2px); }
+.ssc-navbar .ssc-draft-bar { gap: 2px; padding: 0 3px 0 12px; }
+.ssc-navbar .ssc-draft-status { margin-right: 2px; font-size: 13px; }
+.ssc-navbar .ssc-draft-indicator { width: var(--ssc-inner); height: var(--ssc-inner); }
+.ssc-navbar .ssc-discard { height: var(--ssc-inner); min-height: var(--ssc-inner); padding: 0 10px; border: 0; border-radius: var(--ssc-inner-radius) !important; background: none; }
+.ssc-navbar .ssc-discard:hover:not(:disabled) { background: var(--ps-raised); }
+.ssc-navbar .ssc-delete-confirm .ps-btn { width: var(--ssc-inner); height: var(--ssc-inner); min-height: var(--ssc-inner); border-radius: var(--ssc-inner-radius); }
+@media (max-width: 600px) {
+  .ssc-maker { --ssc-gap: 6px; --ssc-bar: 60px; --ssc-bar-left: calc(10px + 72px + var(--ssc-gap)); --ssc-bar-right: calc(10px + 72px + var(--ssc-gap)); }
+  .ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: calc(10px + 118px + var(--ssc-gap)); }
+  .ssc-maker .fi-sc-wizard-footer :is(.fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { min-width: 72px; height: var(--ssc-ctl); min-height: var(--ssc-ctl); padding: 0 12px; }
+  .ssc-maker .fi-sc-wizard-footer .ssc-create-button { min-width: 118px; }
+  .ssc-navbar .ssc-progress { flex: 1 1 auto; padding: 0; overflow: visible; }
+  .ssc-navbar .ssc-progress-phone { height: 100%; justify-content: center; padding: 0 4px; border-radius: var(--ps-radius); }
+  .ssc-navbar .ssc-progress-phone strong { line-height: 1.2; }
+  .ssc-navbar .ssc-progress-phone > .ssc-progress-count { line-height: 1.2; }
+  .ssc-navbar .ssc-progress-phone::after { content: none; }
+  .ssc-navbar .ssc-draft-bar { padding: 0 3px; }
+}
