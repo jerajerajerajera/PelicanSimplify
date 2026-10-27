@@ -1,5 +1,12 @@
 # Changes
 
+## 0.6.0-snapshot.11 (snapshot channel)
+A calmer overview.
+- Host health sits in the top bar by default, as a Healthy button that opens the details. Create server sits next to it.
+- Customize → Layout → Host health lets you pick Top bar, Above or Bottom.
+- With Above or Bottom, Create server sits at the end of the filter row.
+- The large create tiles are plain buttons now.
+
 ## 0.6.0-snapshot.10 (snapshot channel)
 Two fixes.
 - The hover and selected row in the settings menu fill the whole menu width again.
