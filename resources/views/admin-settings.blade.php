@@ -39,11 +39,12 @@
         @endif
         @if(!$this->needsSetup() || $setupStarted)
             @if($this->needsSetup())
-                <header class="ps-setup-heading ps-setup-welcome"><span class="ps-setup-mark"><x-tabler-adjustments /></span><div><span class="ps-setup-eyebrow">First setup · Preferences</span><h2>Make Simplify yours</h2><p>Choose your features, access rules and resource limits. You can change these later.</p></div></header>
+                <header class="ps-setup-heading ps-setup-welcome"><span class="ps-setup-mark"><x-tabler-adjustments /></span><div><span class="ps-setup-eyebrow">First setup · Preferences</span><h2>Make Simplify yours</h2><p>A few short steps: what Simplify does, who may do what, and how it looks. Everything else keeps a sensible default and can be changed later in Simplify settings.</p></div></header>
             @endif
             <div class="ssc-wizard ps-settings-form" @if($this->needsSetup()) x-data="simplifySetupProgress()" @endif>
                 @if($this->needsSetup())
-                    <nav class="ssc-progress" wire:ignore style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="Simplify setup progress">
+                    {{-- Re-rendered by Livewire: an add-on switched on in the first step adds its own step here. --}}
+                    <nav class="ssc-progress" style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="Simplify setup progress">
                         @foreach($this->setupSteps() as $index => $label)
                             <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                             @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless

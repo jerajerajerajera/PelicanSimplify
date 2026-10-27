@@ -198,10 +198,10 @@ class SimplifySettings extends Page implements HasForms
     }
 
     /** Feature toggles of one group (FeatureSettings::definitions()[key][3]) as a titled section. */
-    private static function featureSection(string $title, string $group, ?string $description = null): Section
+    private static function featureSection(string $title, string $group, ?string $description = null, bool $live = false): Section
     {
         $definitions = array_filter(\Simplify\Panel\Services\FeatureSettings::definitions(), fn ($item) => ($item[3] ?? 'Server features') === $group);
-        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key), array_keys($definitions)));
+        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key, $live), array_keys($definitions)));
         return $description ? $section->description($description) : $section;
     }
 
@@ -226,13 +226,14 @@ class SimplifySettings extends Page implements HasForms
     /** Which Simplify releases the plugin manager offers; stored as the simplify_beta and simplify_snapshot switches. */
     private const UPDATE_CHANNELS = ['stable' => 'Stable', 'beta' => 'Beta', 'snapshot' => 'Snapshot'];
 
-    private static function featureToggle(string $key): Toggle
+    private static function featureToggle(string $key, bool $live = false): Toggle
     {
         $definition = \Simplify\Panel\Services\FeatureSettings::definitions()[$key] ?? [$key, null];
         $overlap = class_exists(\Simplify\Panel\Services\ExternalPlugins::class) ? \Simplify\Panel\Services\ExternalPlugins::overlapFor($key) : null;
         // The saved choice is kept; it applies again once the overlapping plugin is disabled.
         $help = $overlap ? 'Off while the '.$overlap['name'].' plugin is enabled. '.$overlap['reason'] : $definition[1];
-        return Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
+        $toggle = Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
+        return $live ? $toggle->live() : $toggle;
     }
 
     public function form(Schema $schema): Schema
@@ -357,11 +358,8 @@ class SimplifySettings extends Page implements HasForms
             $icons['Website'] = 'tabler-world';
         }
         if ($this->needsSetup()) {
-            $categories = [...$categories, ...$addons];
             return $schema->statePath('data')->components([
-                \Filament\Schemas\Components\Wizard::make(
-                    array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->schema($content), array_keys($categories), array_values($categories))
-                )->skippable(false)->columnSpanFull()
+                \Filament\Schemas\Components\Wizard::make($this->setupWizardSteps($categories, $addons))->skippable(false)->columnSpanFull()
                     ->nextAction(fn (\Filament\Actions\Action $action) => $action->label('Next')->color('gray')->extraAttributes(['class' => 'ssc-next-button']))
                     ->previousAction(fn (\Filament\Actions\Action $action) => $action->label('Back')->color('gray')->extraAttributes(['class' => 'ssc-back-button']))
                     ->submitAction(new \Illuminate\Support\HtmlString(view('pelican-simplify::setup-submit')->render())),
@@ -434,11 +432,61 @@ class SimplifySettings extends Page implements HasForms
         $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''), (string) data_get($this->data, 'explainer.provider', ''));
         Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
+    /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. */
+    private const ADDON_STEPS = ['Easy Minecraft server creator' => 'easy_creator', 'Automatic subdomains' => 'subdomains'];
+
+    /** Labels of the wizard steps for the progress bar, in order; follows the add-on switches as they are flipped. */
     public function setupSteps(): array
     {
-        $steps = array_keys(self::CATEGORIES);
+        $features = (array) ($this->data['features'] ?? []);
+        $steps = ['Features', 'People & access', 'Look'];
+        foreach (self::ADDON_STEPS as $label => $feature) if (!empty($features[$feature])) $steps[] = $label;
         if (\Simplify\Panel\Services\Extensions::webInstalled()) $steps[] = 'Website';
-        return [...$steps, ...array_keys(self::ADDONS)];
+        $steps[] = 'Ready';
+        return $steps;
+    }
+
+    /**
+     * The first setup asks four things: what Simplify does, who may do what, how it looks, and a check before finishing.
+     * Add-ons that need a value (hosting machines, a domain) get a step of their own only while they are on; everything
+     * else keeps its default and has a tab in the settings afterwards.
+     */
+    private function setupWizardSteps(array $categories, array $addons): array
+    {
+        $step = fn (string $label, string $hint, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->description($hint)->schema($content);
+        $steps = [
+            $step('Features', 'Needed', [
+                self::featureSection('What Simplify replaces', 'Interface', 'The Simplify dashboard, console and server pages in place of Pelican\'s own. Each can be turned off again later.'),
+                self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
+            ]),
+            $step('People & access', 'Needed', $categories['Users & access']),
+            $step('Look', 'Optional', $categories['Appearance']),
+        ];
+        foreach (self::ADDON_STEPS as $label => $feature) {
+            if (isset($addons[$label])) $steps[] = $step($label, 'Add-on', $addons[$label])->visible(fn (Get $get) => (bool) $get('features.'.$feature));
+        }
+        if (isset($categories['Website'])) $steps[] = $step('Website', 'Optional', $categories['Website']);
+        $steps[] = $step('Ready', 'Finish', [
+            Section::make('Ready to finish')->description('Check what you chose. Everything not asked here (server workspaces, backups, refresh rates, each add-on\'s details) keeps a sensible default and has its own tab in Simplify settings, under Admin tools → Panel.')->schema([
+                \Filament\Schemas\Components\Text::make(fn (Get $get) => new \Illuminate\Support\HtmlString(self::setupSummary((array) $get('features'), (array) ($get('roles.everyone.abilities') ?? []))))->columnSpanFull(),
+            ]),
+        ]);
+        return $steps;
+    }
+
+    /** Plain summary for the last wizard step: what is on, and what everyone may do. */
+    public static function setupSummary(array $features, array $everyone): string
+    {
+        $definitions = \Simplify\Panel\Services\FeatureSettings::definitions();
+        $names = fn (string $group) => array_values(array_map(fn ($item) => $item[0], array_filter($definitions, fn ($item, $key) => ($item[3] ?? '') === $group && !empty($features[$key]), ARRAY_FILTER_USE_BOTH)));
+        $abilities = \Simplify\Panel\Services\RoleAccess::ABILITIES;
+        $can = array_values(array_map(fn ($key) => $abilities[$key][0] ?? $key, array_filter($everyone, fn ($key) => isset($abilities[$key]))));
+        $rows = [
+            ['Simplify replaces', $names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay']],
+            ['Add-ons on', $names('Add-ons') ?: ['None']],
+            ['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']],
+        ];
+        return '<dl class="ps-setup-summary">'.implode('', array_map(fn ($row) => '<dt>'.e($row[0]).'</dt><dd>'.e(implode(', ', $row[1])).'</dd>', $rows)).'</dl>';
     }
 
     public function save(): void

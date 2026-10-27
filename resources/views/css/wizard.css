@@ -452,3 +452,9 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ps-announcement { grid-template-columns: 20px minmax(0, 1fr) auto; }
   .ps-announcement .ps-person-actions { grid-column: 2 / -1; justify-content: flex-start; min-width: 0; }
 }
+
+/* Last setup step: a short summary of the choices made. */
+.ps-setup-summary { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; margin: 0; }
+.ps-setup-summary dt { color: var(--ps-muted); font: 600 12px/1.5 var(--ps-font); }
+.ps-setup-summary dd { margin: 0; color: var(--ps-ink); font: 500 13px/1.5 var(--ps-font); }
+@media (max-width: 600px) { .ps-setup-summary { grid-template-columns: minmax(0, 1fr); gap: 2px; } .ps-setup-summary dd { margin-bottom: 8px; } }

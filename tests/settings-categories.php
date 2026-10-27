@@ -13,7 +13,7 @@ namespace Filament\Schemas\Components\Wizard {class Step extends \Test\Component
 namespace Filament\Schemas\Components\Tabs {class Tab extends \Test\Component {}}
 namespace Illuminate\Support {class HtmlString {public function __construct($value){}}}
 namespace Simplify\Panel\Services {
- class FeatureSettings {public static bool $complete=false;public static function enabled($key){return self::$complete;}public static function definitions(){return ['dashboard'=>['Dashboard','Description',true,'Interface'],'theme'=>['Theme','Description',true,'Appearance']];}}
+ class FeatureSettings {public static bool $complete=false;public static function enabled($key){return self::$complete;}public static function definitions(){return ['dashboard'=>['Dashboard','Description',true,'Interface'],'theme'=>['Theme','Description',true,'Appearance'],'easy_creator'=>['Easy Minecraft server creator','Description',false,'Add-ons']];}}
  class CurseForge {public static function panelHasKey(){return false;}public static function allowUserKeys(){return false;}}
  class ErrorExplainer {public const AUDIENCES=['everyone'=>'Everyone'];public const PER_USER=6;public const PER_DAY=200;public static function settings(){return ['has_key'=>false,'saved_keys'=>[]];}public static function providers(){return ['anthropic'=>'Claude by Anthropic'];}public static function models($p){return ['claude-opus-5-5'=>'Opus'];}public static function provider($p){return ErrorExplainer::class;}public static function name(){return 'Anthropic';}public static function keyPlaceholder(){return 'sk-ant-';}public static function keyHelp(){return 'help';}}
  class Extensions {public static function webInstalled(){return false;}}
@@ -27,8 +27,15 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  function view($name){return new class{function render(){return '<button>Finish setup</button>';}};}
  $page=new \Simplify\Panel\Filament\Admin\Pages\SimplifySettings;
  $schema=$page->form(new \Filament\Schemas\Schema);$wizard=$schema->options['components'][0][0];$steps=$wizard->options['steps'];
- if(array_map(fn($step)=>$step->label,$steps)!==$page->setupSteps())throw new \RuntimeException('progress navigation and wizard steps disagree');
- if(array_map(fn($step)=>$step->label,$steps)!==['General','Appearance','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains']||$steps[1]->options['schema'][0][1]->label!=='Colours')throw new \RuntimeException('categories not separate pages');
+ if(array_values(array_map(fn($step)=>$step->label,array_filter($steps,fn($step)=>!isset($step->options['visible']))))!==$page->setupSteps())throw new \RuntimeException('progress navigation and wizard steps disagree');
+ // Four questions plus a step per add-on that needs a value; those steps are hidden while their add-on is off, and the progress bar follows.
+ if(array_map(fn($step)=>$step->label,$steps)!==['Features','People & access','Look','Easy Minecraft server creator','Automatic subdomains','Ready']||$steps[2]->options['schema'][0][1]->label!=='Colours'||$steps[0]->options['schema'][0][1]->label!=='Add-ons')throw new \RuntimeException('wizard steps are not the four questions plus add-on steps');
+ if(!isset($steps[3]->options['visible'])||isset($steps[0]->options['visible'])||!isset($steps[0]->options['schema'][0][1]->options['schema'][0][0]->options['live']))throw new \RuntimeException('add-on steps not conditional on live add-on switches');
+ if($page->setupSteps()!==['Features','People & access','Look','Ready'])throw new \RuntimeException('progress bar shows steps of add-ons that are off');
+ $page->data=['features'=>['easy_creator'=>true,'subdomains'=>false]];if($page->setupSteps()!==['Features','People & access','Look','Easy Minecraft server creator','Ready'])throw new \RuntimeException('progress bar does not follow the add-on switches');$page->data=[];
+ if(!function_exists('e')){function e($v){return htmlspecialchars((string)$v);}}
+ $summary=\Simplify\Panel\Filament\Admin\Pages\SimplifySettings::setupSummary(['dashboard'=>true,'theme'=>true],['files','create']);
+ if(!str_contains($summary,'Dashboard')||!str_contains($summary,'Files, Create')||!str_contains($summary,'ps-setup-summary'))throw new \RuntimeException('setup summary misses the chosen features and abilities');
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
