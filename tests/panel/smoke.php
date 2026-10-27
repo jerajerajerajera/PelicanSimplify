@@ -164,7 +164,7 @@ $admin=User::withoutEvents(fn()=>User::factory()->create(['username'=>'smoke-adm
 $admin->syncRoles(Role::getRootAdmin());
 $server=Server::factory()->create(['owner_id'=>$admin->id,'name'=>'Smoke server']);
 // Finish Simplify's setup as the admin does in the setup wizard (until then every page sends the admin to the settings), with every feature on so every page is reachable.
-auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
+auth()->setUser($admin);\Simplify\Panel\Services\FeatureSettings::save([...array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),'addons_only'=>false],true);
 // Explain this error on, with a key that is only stored (encrypted with the panel's APP_KEY) and never sent anywhere.
 \Simplify\Panel\Services\ErrorExplainer::save(['provider'=>'anthropic','key'=>'sk-ant-smoke-test-not-a-real-key','model'=>'claude-haiku-5-5','audience'=>'everyone']);
 

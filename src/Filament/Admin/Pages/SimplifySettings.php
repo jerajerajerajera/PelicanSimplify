@@ -595,7 +595,7 @@ class SimplifySettings extends Page implements HasForms
         $rows = [
             ['Simplify replaces', $addonsOnly ? ['Nothing: Pelican\'s own pages and look stay (only the add-ons)'] : ($names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay'])],
             ['Add-ons on', $names('Add-ons') ?: ['None']],
-            ['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']],
+            ...($addonsOnly ? [] : [['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']]]),
         ];
         return '<dl class="ps-setup-summary">'.implode('', array_map(fn ($row) => '<dt>'.e($row[0]).'</dt><dd>'.e(implode(', ', $row[1])).'</dd>', $rows)).'</dl>';
     }

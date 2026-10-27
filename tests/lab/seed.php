@@ -23,5 +23,6 @@ foreach($names as $i=>$name){
 }
 echo json_encode($list),"\n";
 auth()->setUser($admin);
-\Simplify\Panel\Services\FeatureSettings::save(array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),true);
+// Every Simplify feature on, as the full panel ("Only the add-ons" off).
+\Simplify\Panel\Services\FeatureSettings::save([...array_fill_keys(array_keys(\Simplify\Panel\Services\FeatureSettings::definitions()),true),'addons_only'=>false],true);
 fprintf(STDERR,"seeded %d servers on node %d (wings :%d)\n",count($list),$node->id,$port);

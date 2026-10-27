@@ -1,4 +1,4 @@
-@php($addonsOnly = \Simplify\Panel\Services\FeatureSettings::addonsOnly())
+@php $addonsOnly = \Simplify\Panel\Services\FeatureSettings::addonsOnly(); @endphp
 @if(\Simplify\Panel\Services\LegacyNavigation::topbarVisible() || ($addonsOnly && user()))
     {{-- Pelican's server list: "Create server" asks which creator to use, also with only the add-ons. --}}
     @if(request()->routeIs(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()))

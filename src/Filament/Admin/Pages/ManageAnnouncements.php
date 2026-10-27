@@ -25,6 +25,7 @@ final class ManageAnnouncements extends Page
     protected static ?string $slug = 'simplify-announcements';
     protected string $view = 'pelican-simplify::admin-announcements';
     protected static bool $shouldRegisterNavigation = false;
+    protected static string|\BackedEnum|null $navigationIcon = 'tabler-speakerphone';
 
     /** The browser's time zone (set by the view), so "Show from" and "Show until" are the admin's own clock time. */
     public string $browserTimezone = '';
