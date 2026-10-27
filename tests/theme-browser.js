@@ -154,6 +154,7 @@ const { start } = require('./browser-harness');
     // 7b2. Bigger console and the log in the mini console are remembered for the next server page.
     const remember = await open('/?mode=server&theme=dark');
     await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
     // Sections fold: only Layout starts open; opening Console is remembered on this device.
     assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), false, 'Console section folded by default');
     await remember.locator('.ps-customize-head', { hasText: 'Console' }).click();
@@ -164,6 +165,8 @@ const { start } = require('./browser-harness');
     await remember.waitForFunction(() => window.Alpine && document.querySelector('.ps') && !document.querySelector('.ps').hasAttribute('x-cloak'));
     assert.deepEqual(await data(remember, (d) => [d.consoleFocus, d.consolePeek]), [true, true], 'remembered after a reload');
     await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), true, 'opened Console section remembered');
     await remember.locator('.ps-console-grow').click();
     assert.equal(await data(remember, (d) => d.overviewPreferences.serverBiggerConsole), false, 'the console button changes the same preference');
