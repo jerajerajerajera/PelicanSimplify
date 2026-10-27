@@ -1,7 +1,8 @@
 /* PelicanSimplify website embed: draws the panel's public server list on any website.
    <div id="simplify-servers"></div><script src="https://panel.example.com/simplify/embed.js" defer></script>
    Optional data-* attributes on the script: style (auto|light|dark), accent (#rrggbb), corners (round|square),
-   players, modpack, join (on|off), server (short ID: only that server), game (only this game), target (CSS selector). */
+   players, modpack, join (on|off), server (short ID: only that server), servers (short IDs, comma separated),
+   game (only this game), target (CSS selector). */
 (() => {
   const script = document.currentScript;
   if (!script || !script.src) return;
@@ -88,6 +89,7 @@
     const corners = (attr.corners || options.corners) === 'square' ? '4px' : '12px';
     let servers = Array.isArray(data.servers) ? data.servers : [];
     if (attr.server) servers = servers.filter((server) => server.id === attr.server);
+    if (attr.servers) { const ids = attr.servers.split(','); servers = servers.filter((server) => ids.includes(server.id)); }
     if (attr.game) servers = servers.filter((server) => String(server.game).toLowerCase() === attr.game.toLowerCase());
     const list = el('div', { class: `list ${style}`, style: `--accent:${accent};--r:${corners}`, role: 'list', 'aria-label': `${data.name || 'Game'} servers` });
     for (const server of servers) { const item = card(server, show); item.setAttribute('role', 'listitem'); list.append(item); }

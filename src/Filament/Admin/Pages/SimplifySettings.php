@@ -171,7 +171,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -455,10 +455,40 @@ class SimplifySettings extends Page implements HasForms
                 \Filament\Forms\Components\CheckboxList::make('embed.servers')->hiddenLabel()->options(fn () => Server::query()->orderBy('name')->limit(500)->pluck('name', 'uuid')->all())
                     ->searchable()->bulkToggleable()->columns(2)->noSearchResultsMessage('No servers found.'),
             ]),
-            Section::make('Code for your website')->description('Paste one of these into any page of your website. Save first: changes here reach websites within a minute.')->schema([
-                \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.website-embed'),
+            Section::make('Code for your website')->columns(2)->description('Paste one of these into any page of your website. Save first: changes here reach websites within a minute. Use one code per page, for example all Minecraft servers on one page and a single server on another.')->schema([
+                Select::make('embed_code.show')->label('What this code shows')->live()->selectablePlaceholder(false)
+                    ->options(fn () => ['all' => 'Every server on the website', 'server' => 'One server', 'game' => 'One game'] + ($this->embedGroups() !== [] ? ['group' => 'One of your server groups'] : [])),
+                Select::make('embed_code.server')->label('Server')->live()->options(fn (Get $get) => $this->embedChosen($get)->mapWithKeys(fn (Server $s) => [(string) $s->uuid_short => $s->name])->all())
+                    ->placeholder('Pick a server')->helperText('The page link below is a status page for this server.')->visible(fn (Get $get) => $get('embed_code.show') === 'server'),
+                Select::make('embed_code.game')->label('Game')->live()->options(fn (Get $get) => $this->embedChosen($get)->map(fn (Server $s) => \Simplify\Panel\Services\WebsiteEmbed::game($s))->unique()->sort()->mapWithKeys(fn (string $g) => [$g => $g])->all())
+                    ->placeholder('Pick a game')->visible(fn (Get $get) => $get('embed_code.show') === 'game'),
+                Select::make('embed_code.group')->label('Server group')->live()->options(fn () => array_column($this->embedGroups(), 'name', 'id'))
+                    ->placeholder('Pick a group')->helperText('Takes the servers in this group that are on the website now. Copy the code again after you change the group.')->visible(fn (Get $get) => $get('embed_code.show') === 'group'),
+                \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.website-embed')->columnSpanFull()->viewData(fn (Get $get) => ['show' => $this->embedShow($get) ?? [], 'waiting' => $this->embedShow($get) === null]),
             ]),
         ];
+    }
+    /** The servers ticked above (also before saving), so the code choices match the list. */
+    private function embedChosen(Get $get): \Illuminate\Support\Collection
+    {
+        $chosen = array_map('strval', (array) $get('embed.servers'));
+        return $chosen === [] ? collect() : Server::query()->with('egg')->whereIn('uuid', $chosen)->orderBy('name')->limit(500)->get();
+    }
+    /** This admin's own server groups from the dashboard. */
+    private function embedGroups(): array
+    {
+        try { return \Simplify\Panel\Services\OverviewGroups::get(user())['groups'] ?? []; } catch (\Throwable $e) { report($e); return []; }
+    }
+    /** What the code is limited to; null while the choice is not complete, so no code shows that would list every server. */
+    private function embedShow(Get $get): ?array
+    {
+        $show = match ($get('embed_code.show')) {
+            'server' => ['server' => (string) $get('embed_code.server')],
+            'game' => ['game' => (string) $get('embed_code.game')],
+            'group' => ['servers' => $this->embedChosen($get)->whereIn('uuid', collect($this->embedGroups())->firstWhere('id', $get('embed_code.group'))['servers'] ?? [])->pluck('uuid_short')->map(fn ($id) => (string) $id)->values()->all()],
+            default => [],
+        };
+        return $show === [] || array_filter($show) !== [] ? $show : null;
     }
     private function saveEmbed(array $embed): void
     {
