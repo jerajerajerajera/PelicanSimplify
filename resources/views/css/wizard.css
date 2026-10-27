@@ -49,6 +49,9 @@
 .ssc-summary-item dd { margin: 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
 .ssc-summary-item code { font: 12px var(--ps-mono); }
 .ssc-summary-wide { grid-column: 1 / -1; }
+.ssc-port-notice { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); border-radius: var(--ps-radius); background: color-mix(in srgb, var(--ps-danger) 8%, var(--ps-surface)); font-size: 13px; line-height: 1.5; }
+.ssc-port-notice strong { color: var(--ps-danger); }
+.ssc-port-notice a { color: var(--ps-accent); }
 .ssc-summary-notice { padding: 0 24px 24px; color: var(--ps-warn); font-size: 13px; }
 .ssc-overview-footer { padding: 14px 24px; border-top: 1px solid var(--ps-line); }
 .ssc-advanced-editor[hidden] { display: none !important; }

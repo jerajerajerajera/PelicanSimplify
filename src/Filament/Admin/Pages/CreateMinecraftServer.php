@@ -274,6 +274,28 @@ class CreateMinecraftServer extends Page implements HasForms
     {
         return $this->memo('multiple-nodes', fn (): bool => CreatorAccess::admin() && CreatorAccess::nodes()->count() > 1);
     }
+    private function hasFreePort(mixed $nodeId): bool
+    {
+        return $this->memo('free-port-'.(int) $nodeId, fn (): bool => Allocation::query()->where('node_id', (int) $nodeId)->whereNull('server_id')->exists());
+    }
+    /** @return array{node: string, url: ?string} */
+    private function noFreePortNotice(mixed $nodeId): array
+    {
+        $node = $this->memo('node-'.(int) $nodeId, fn () => Node::find((int) $nodeId));
+        $url = $node && user()?->isRootAdmin() ? rescue(fn () => route('filament.admin.resources.nodes.edit', ['record' => $node]), null, false) : null;
+        return ['node' => $node?->name ?? 'this node', 'url' => $url];
+    }
+    /** Next on the Server step: stop with a visible message when the node has no free port. */
+    public function assertFreePort(): void
+    {
+        $nodeId = $this->data['node_id'] ?? null;
+        if ($this->hasFreePort($nodeId)) return;
+        $node = $this->noFreePortNotice($nodeId)['node'];
+        $message = 'There is no free port on '.$node.'. '.(user()?->isRootAdmin() ? 'Add a port under Nodes → '.$node.' → Allocations, then click Next again.' : 'Ask an admin to add a port to '.$node.'.');
+        Notification::make()->title('No free port')->body($message)->danger()->send();
+        // On one node the port field is hidden; the notice and the notification carry the message there.
+        throw ValidationException::withMessages(['data.allocation_id' => $message]);
+    }
     /** Filament 4 can toggle visibility in the browser; older versions fall back to a server round trip. */
     private static function clientVisibility(): bool
     {
@@ -656,7 +678,8 @@ class CreateMinecraftServer extends Page implements HasForms
                                 }),
                             Select::make('allocation_id')
                                 ->dehydratedWhenHidden()->label('Port / allocation')->visible(fn () => $this->multipleNodes())
-                                ->required()->searchable()
+                                // A hidden field is still validated (dehydrated); on one node a missing port is reported by assertFreePort().
+                                ->required(fn () => $this->multipleNodes())->searchable()
                                 // Also built when hidden (single node): Select validates the auto-picked allocation against these options.
                                 ->options(fn (Get $get) => $this->memo('allocations-'.$get('node_id'), fn () => Allocation::query()
                                     ->where('node_id', $get('node_id'))
@@ -665,8 +688,12 @@ class CreateMinecraftServer extends Page implements HasForms
                                         $allocation->id => $allocation->address ?? ($allocation->ip . ':' . $allocation->port),
                                     ])->all()))
                                 ->helperText('Only free allocations are shown. Create an allocation under Nodes if this is empty.'),
+                            // Without a free port the server cannot be made; say so here instead of stopping silently on Next.
+                            View::make('pelican-simplify::filament.admin.no-free-port')
+                                ->viewData(fn (Get $get) => $this->noFreePortNotice($get('node_id')))
+                                ->visible(fn (Get $get) => !$this->hasFreePort($get('node_id'))),
                             Hidden::make('owner_id'),
-                        ])->columns(1),
+                        ])->columns(1)->afterValidation(fn () => $this->assertFreePort()),
                     Step::make('Resources')->schema([
                             Section::make('Resources')->description(fn (Get $get) => 'Starting values follow the '.($this->gameNow($get) === 'other' ? 'game' : 'server type').'. Choose a preset or enter your own allocation.')->schema([
                             self::liveForVisibility(Radio::make('ram_gb')

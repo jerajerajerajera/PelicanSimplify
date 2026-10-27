@@ -33,11 +33,11 @@
                  x-on:keydown.escape.stop="navMenu=false; accountMenu=false">
                 {{-- Overview with health in the top bar: the health button (opens the details below it) and the create buttons. --}}
                 <div class="ps-top-overview" x-show="!server && !hostMode && healthPlace()==='top-bar'" x-cloak>
-                    <button type="button" class="ps-btn ps-health-pill" :class="boot.host_health?.state || 'unavailable'" x-on:click="healthPopover=!healthPopover; healthExpanded=false; healthOpenNodes=[]" :aria-expanded="healthPopover" aria-controls="ps-health-panel" :aria-label="'Host health: '+(boot.host_health?.label || 'Unavailable')">
+                    <button type="button" class="ps-btn ps-health-pill" :class="boot.host_health?.state || 'unavailable'" x-on:click="healthPopover=!healthPopover; healthExpanded=false; healthOpenNodes=[]; placeHealthPopover()" :aria-expanded="healthPopover" aria-controls="ps-health-panel" :aria-label="'Host health: '+(boot.host_health?.label || 'Unavailable')">
                         <svg aria-hidden="true"><use href="#ps-heart"/></svg><span x-text="boot.host_health?.label || 'Unavailable'"></span>
                     </button>
                     <template x-for="choice in createButtons()" :key="choice.key">
-                        <button type="button" class="ps-btn ps-create-button" :class="{'is-primary': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><svg aria-hidden="true"><use :href="'#ps-'+choice.icon"/></svg><span x-text="choice.label"></span></button>
+                        <button type="button" class="ps-btn ps-create-button" :class="{'is-main': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><span class="ps-create-icon"><svg aria-hidden="true"><use :href="'#ps-'+(choice.primary ? 'host' : choice.icon)"/></svg><span class="ps-create-badge" x-show="choice.primary"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span><span x-text="choice.label"></span></button>
                     </template>
                 </div>
                 <button type="button" class="ps-btn is-icon is-subtle ps-mobile-menu" aria-label="Panel navigation" aria-controls="ps-navigation-items" :aria-expanded="navMenu"
@@ -545,7 +545,7 @@
                         {{-- Create buttons at the end of the filter row, unless they sit in the top bar with host health. --}}
                         <div class="ps-create-buttons" x-show="healthPlace()!=='top-bar' && createButtons().length">
                             <template x-for="choice in createButtons()" :key="choice.key">
-                                <button type="button" class="ps-btn ps-create-button" :class="{'is-primary': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><svg aria-hidden="true"><use :href="'#ps-'+choice.icon"/></svg><span x-text="choice.label"></span></button>
+                                <button type="button" class="ps-btn ps-create-button" :class="{'is-main': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><span class="ps-create-icon"><svg aria-hidden="true"><use :href="'#ps-'+(choice.primary ? 'host' : choice.icon)"/></svg><span class="ps-create-badge" x-show="choice.primary"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span><span x-text="choice.label"></span></button>
                             </template>
                         </div>
                     </div>
@@ -648,7 +648,7 @@
             </div>
 
             {{-- Host health: a bar at the bottom (as before), a bar above the servers, or details under the top-bar button. --}}
-            <section id="ps-health-panel" class="ps-health-panel" :style="accentStyle('overview')" x-on:click.outside="if (!$event.target.closest('.ps-health-pill')) { healthExpanded=false; healthOpenNodes=[]; healthPopover=false }" x-on:keydown.escape="if (healthPopover) { healthPopover=false; $root.querySelector('.ps-health-pill')?.focus() }" x-show="healthPlace() && (healthPlace()!=='top-bar' || healthPopover)" :class="{'expanded': healthExpanded, 'is-popover': healthPlace()==='top-bar', 'is-above': healthPlace()==='above'}">
+            <section id="ps-health-panel" class="ps-health-panel" :style="accentStyle('overview')" x-on:click.outside="if (!$event.target.closest('.ps-health-pill')) { healthExpanded=false; healthOpenNodes=[]; healthPopover=false }" x-on:keydown.escape="if (healthPopover) { healthPopover=false; $root.querySelector('.ps-health-pill')?.focus() }" x-on:resize.window="healthPopover && placeHealthPopover()" x-on:scroll.window.passive="healthPopover && placeHealthPopover()" x-show="healthPlace() && (healthPlace()!=='top-bar' || healthPopover)" :class="{'expanded': healthExpanded, 'is-popover': healthPlace()==='top-bar', 'is-above': healthPlace()==='above'}">
                 <article class="ps-host-health" role="button" tabindex="0" aria-label="View health by node" :aria-expanded="healthExpanded" aria-controls="ps-health-details"
                          x-on:click="openHostHealth()" x-on:keydown.enter.prevent="openHostHealth()" x-on:keydown.space.prevent="openHostHealth()">
                     <div class="ps-host-state">
@@ -807,6 +807,8 @@
                     </div>
                 </div>
                 <div class="ps-motd-preview ps-motd-display ps-info-motd" x-show="server?.properties?.motd || server?.pack?.motd" x-data="{observer:null,init(){this.observer=new ResizeObserver(()=>this.fitMotd(this.$el));this.observer.observe(this.$el)},destroy(){this.observer?.disconnect()}}" x-effect="server?.properties?.motd; server?.pack?.motd; $nextTick(()=>fitMotd($el))" aria-label="Message of the day"><template x-for="(part,index) in motdPreview(server?.properties?.motd || server?.pack?.motd || '')" :key="index"><span :style="part.style" x-text="part.text"></span></template></div>
+                {{-- Low screens (a phone on its side) fold the pinned bars into chips here, so the console keeps the screen. --}}
+                <div class="ps-pins-low">@include('pelican-simplify::announcement-chips')</div>
                 {{-- Power: one button that follows the state (Start or Stop), Restart, and the rest under ⋯. --}}
                 <div class="ps-info-power" :inert="['installing','restoring_backup'].includes(serverSetup())" :class="{'is-locked': ['installing','restoring_backup'].includes(serverSetup())}" x-on:click.outside="colorMenu=false; infoMenu=false" x-on:keydown.escape.stop="colorMenu=false; infoMenu=false">
                     <button type="button" class="ps-btn ps-power-main" :class="{'is-primary': mainPower().action==='start'}" x-on:click="power(mainPower().action)" :disabled="busy || !server?.permissions['control.'+mainPower().action] || ['starting','stopping'].includes(status)" :aria-label="mainPower().label+' server'"><svg aria-hidden="true"><use :href="'#ps-'+mainPower().icon"/></svg><span x-text="mainPower().label"></span></button>
@@ -1027,7 +1029,7 @@
     </template>
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
-    <div class="ps-modal-layer" :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak>
+    <div class="ps-modal-layer" data-ps-workspace :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak x-on:keydown.escape="modal && !docked() && close()">
         <section class="ps-modal" :class="modalSize()" x-on:touchstart="sheetStart($event)" x-on:touchmove="sheetMove($event)" x-on:touchend="sheetEnd()" x-on:touchcancel="sheetEnd()" :role="docked() ? 'region' : 'dialog'" :aria-modal="modal && !docked() ? 'true' : null" :aria-label="modalTitle()" x-trap.noscroll="modal && !docked()">
             <header class="ps-modal-head">
                 <h2 x-text="modalTitle()"></h2>
