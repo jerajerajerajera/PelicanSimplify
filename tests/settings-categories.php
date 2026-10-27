@@ -5,9 +5,10 @@ namespace Livewire {trait WithFileUploads {}}
 namespace Filament\Pages {class Page {}}
 namespace Filament\Forms\Concerns {trait InteractsWithForms {}}
 namespace Filament\Forms\Contracts {interface HasForms {}}
-namespace Filament\Forms\Components {class Repeater extends \Test\Component {}class CheckboxList extends \Test\Component {}class Toggle extends \Test\Component {}class TextInput extends \Test\Component {}class Select extends \Test\Component {}class ColorPicker extends \Test\Component {}}
+namespace Filament\Forms\Components {class Repeater extends \Test\Component {}class CheckboxList extends \Test\Component {}class Toggle extends \Test\Component {}class TextInput extends \Test\Component {}class Select extends \Test\Component {}class ColorPicker extends \Test\Component {}class Radio extends \Test\Component {}}
 namespace Filament\Schemas {class Schema extends \Test\Component {}}
 namespace Filament\Schemas\Components {class Text extends \Test\Component {}class View extends \Test\Component {}class Section extends \Test\Component {}class Wizard extends \Test\Component {public static function make($steps=null){$instance=new self;$instance->options['steps']=$steps;return $instance;}}class Tabs extends \Test\Component {}class Grid extends \Test\Component {}class Actions extends \Test\Component {}}
+namespace Filament\Schemas\Components\Utilities {class Get {public function __construct(public array $state=[]){}public function __invoke($key){return $this->state[$key]??null;}}}
 namespace Filament\Actions {class Action extends \Test\Component {}}
 namespace Filament\Schemas\Components\Wizard {class Step extends \Test\Component {}}
 namespace Filament\Schemas\Components\Tabs {class Tab extends \Test\Component {}}
@@ -29,12 +30,14 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  function view($name){return new class{function render(){return '<button>Finish setup</button>';}};}
  $page=new \Simplify\Panel\Filament\Admin\Pages\SimplifySettings;
  $schema=$page->form(new \Filament\Schemas\Schema);$wizard=$schema->options['components'][0][0];$steps=$wizard->options['steps'];
- if(array_values(array_map(fn($step)=>$step->label,array_filter($steps,fn($step)=>!isset($step->options['visible']))))!==$page->setupSteps())throw new \RuntimeException('progress navigation and wizard steps disagree');
- // Four questions plus a step per add-on that needs a value; those steps are hidden while their add-on is off, and the progress bar follows.
- if(array_map(fn($step)=>$step->label,$steps)!==['Features','People & access','Look','Server Maker','Automatic subdomains','Ready']||$steps[2]->options['schema'][0][1]->label!=='Colours'||$steps[0]->options['schema'][0][1]->label!=='Add-ons')throw new \RuntimeException('wizard steps are not the four questions plus add-on steps');
- if(!isset($steps[3]->options['visible'])||isset($steps[0]->options['visible'])||!isset($steps[0]->options['schema'][0][1]->options['schema'][0][0]->options['live']))throw new \RuntimeException('add-on steps not conditional on live add-on switches');
- if($page->setupSteps()!==['Features','People & access','Look','Ready'])throw new \RuntimeException('progress bar shows steps of add-ons that are off');
- $page->data=['features'=>['game_creator'=>true,'subdomains'=>false]];if($page->setupSteps()!==['Features','People & access','Look','Server Maker','Ready'])throw new \RuntimeException('progress bar does not follow the add-on switches');$page->data=[];
+ // Which steps show for a wizard state; the progress bar must list the same ones.
+ $shown=fn(array $state)=>array_values(array_map(fn($step)=>$step->label,array_filter($steps,fn($step)=>!isset($step->options['visible'])||($step->options['visible'][0])(new \Filament\Schemas\Components\Utilities\Get($state)))));
+ // How much Simplify first, then four questions (full) or the add-ons (only the add-ons), plus a step per add-on that needs a value.
+ if(array_map(fn($step)=>$step->label,$steps)!==['How much Simplify?','Features','Add-ons','People & access','Look','Server Maker','Automatic subdomains','Ready']||$steps[4]->options['schema'][0][1]->label!=='Colours'||$steps[1]->options['schema'][0][1]->label!=='Add-ons'||$steps[0]->options['schema'][0][0]->label!=='How much Simplify?')throw new \RuntimeException('wizard steps are not the experience choice, the questions and add-on steps');
+ if($shown([])!==$page->setupSteps()||$page->setupSteps()!==['How much Simplify?','Features','People & access','Look','Ready'])throw new \RuntimeException('progress navigation and full wizard steps disagree');
+ $page->data=['experience'=>'addons'];if($shown(['experience'=>'addons'])!==$page->setupSteps()||$page->setupSteps()!==['How much Simplify?','Add-ons','Ready'])throw new \RuntimeException('only the add-ons does not skip the full panel questions');$page->data=[];
+ if(!isset($steps[5]->options['visible'])||!isset($steps[1]->options['schema'][0][1]->options['schema'][0][0]->options['live'])||!isset($steps[0]->options['schema'][0][0]->options['schema'][0][0]->options['live']))throw new \RuntimeException('steps not conditional on live switches');
+ $page->data=['features'=>['game_creator'=>true,'subdomains'=>false]];if($page->setupSteps()!==['How much Simplify?','Features','People & access','Look','Server Maker','Ready'])throw new \RuntimeException('progress bar does not follow the add-on switches');$page->data=[];
  if(!function_exists('e')){function e($v){return htmlspecialchars((string)$v);}}
  $summary=\Simplify\Panel\Filament\Admin\Pages\SimplifySettings::setupSummary(['dashboard'=>true,'theme'=>true],['files','create']);
  if(!str_contains($summary,'Dashboard')||!str_contains($summary,'Files, Create')||!str_contains($summary,'ps-setup-summary'))throw new \RuntimeException('setup summary misses the chosen features and abilities');
@@ -42,6 +45,9 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
  if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Server banners','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites','Website embed','General','Mail'])throw new \RuntimeException('settings tabs lost a setup category');
+ // Only the add-ons hides the tabs of the full panel and keeps the rest.
+ $tabShown=fn(array $state)=>array_values(array_map(fn($tab)=>$tab->label,array_filter(array_slice($tabs,0,13),fn($tab)=>!is_callable($tab->options['visible'][0]??null)||($tab->options['visible'][0])(new \Filament\Schemas\Components\Utilities\Get($state)))));
+ if(count($tabShown([]))!==13||array_intersect(['Appearance','Server banners','Backups & performance'],$tabShown(['experience'=>'addons']))!==[]||!in_array('Plugin manager',$tabShown(['experience'=>'addons']),true))throw new \RuntimeException('only the add-ons does not hide the full panel tabs');
  // Pelican's own settings close the menu: own key and id (no clash with Simplify's General), one frame per tab, counted for the heading.
  $pelican=$tabs[13];if(($pelican->options['key'][0]??null)!=='pelican-general'||($pelican->options['id'][0]??null)!=='pelican-general'||$pelican->options['schema'][0][0]->label!=='pelican-simplify::filament.admin.pelican-settings-frame'||($pelican->options['schema'][0][0]->options['viewData'][0]['label']??null)!=='General'||$page->pelicanTabs!==2||($tabs[13]->options['badge'][0]??null)!==null)throw new \RuntimeException('Pelican settings tabs not framed inside Simplify settings');
  $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];

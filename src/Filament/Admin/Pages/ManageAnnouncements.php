@@ -31,6 +31,12 @@ final class ManageAnnouncements extends Page
 
     public static function canAccess(): bool { return (bool) user()?->isRootAdmin(); }
 
+    /** "Only the add-ons": listed in Pelican's own menu under Simplify. */
+    public static function shouldRegisterNavigation(): bool { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() && static::canAccess(); }
+    public static function getNavigationGroup(): ?string { return 'Simplify'; }
+    public static function getNavigationLabel(): string { return 'Announcements'; }
+    public static function getNavigationSort(): ?int { return 2; }
+
     /** ?tz= is the browser's time zone (from "New announcement" in the dashboard's notifications, which opens with ?action=addAnnouncement). */
     public function mount(): void
     {
