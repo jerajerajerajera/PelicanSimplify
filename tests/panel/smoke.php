@@ -49,6 +49,10 @@ if(($argv[1]??'')==='livewire'){
         if(!is_array($feed)||!in_array('Smoke notice 3',array_column($feed['items']??[],'title'),true)||($feed['unread']??0)<3)throw new \RuntimeException('the notification list does not show the new notifications');
         $overview->call('markAllNotificationsRead');
         if(\Simplify\Panel\Services\PanelNotifications::unreadCount()!==0)throw new \RuntimeException('mark all read left unread notifications');
+        // Clear read: the read ones move to Archived (a second list), the current list keeps none of them.
+        $overview->call('clearReadNotifications')->call('notificationPage',1,true);
+        $archiveAt=\Simplify\Panel\Services\Announcements::archivedAt($admin);
+        if(!in_array('Smoke notice 3',array_column(\Simplify\Panel\Services\PanelNotifications::page(1,20,$archiveAt,true)['items'],'title'),true)||in_array('Smoke notice 3',array_column(\Simplify\Panel\Services\PanelNotifications::page(1,20,$archiveAt)['items'],'title'),true))throw new \RuntimeException('clear read did not move read notifications to Archived');
         foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth'],['announcements'],['dismissAnnouncement','own-0000000000000000'],['restoreAnnouncement','own-0000000000000000'],['pushSettings',null],['savePushPreferences',['updates'=>false]]] as $call){
             $name=array_shift($call);$overview->call($name,...$call);
         }
@@ -73,7 +77,7 @@ if(($argv[1]??'')==='livewire'){
         $page->call('explainConsole');
         $explained=\Simplify\Panel\Services\ErrorExplainer::explain($server);
         if(($explained['ok']??true)!==false||!str_contains((string)($explained['error']??''),'Wings'))throw new \RuntimeException('explaining without Wings did not answer with a plain error: '.json_encode($explained));
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; the full notification list shows real notifications and mark all read clears them all; Panel update check runs; the announcement form opens (browser time zone) and a saved, pinned announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; the full notification list shows real notifications and mark all read clears them all and clear read archives them; Panel update check runs; the announcement form opens (browser time zone) and a saved, pinned announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 

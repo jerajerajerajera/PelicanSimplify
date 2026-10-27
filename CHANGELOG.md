@@ -1,5 +1,15 @@
 # Changes
 
+## 0.5.3-beta.8 (beta channel)
+New servers show how far their installation is, and Clear read tidies your notifications (0.5.3-snapshot.11 below).
+
+## 0.5.3-snapshot.11 (snapshot channel)
+New servers show how far their installation is, and Clear read tidies your notifications.
+- New servers show an installation view with steps and the installation log; the normal page returns with "Your server is ready" and a Start button.
+- Kill stops the first installation of a new server; change its resources and try again.
+- The Minecraft EULA is accepted in Simplify's own banner; Pelican's popup no longer appears.
+- Clear read moves read notifications to Archived, at the bottom of the full notification list; pinned announcements stay.
+
 ## 0.5.3-beta.7 (beta channel)
 Error explanations can use Claude, GPT or Gemini (0.5.3-snapshot.10 below).
 

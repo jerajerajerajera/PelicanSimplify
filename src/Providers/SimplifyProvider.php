@@ -18,6 +18,14 @@ final class SimplifyProvider extends ServiceProvider
         $this->app->scoped(\Simplify\Panel\Services\Extensions::class);
         $this->app->scoped(\Simplify\Panel\Services\CreatorAccess::class);
         $this->app->scoped(\Simplify\Panel\Services\PerformanceSettings::class);
+        // Simplify's EULA step replaces Pelican's popup; the first registration of an id wins, so ours goes in first.
+        if(class_exists(\App\Extensions\Features\FeatureService::class)&&class_exists(\App\Extensions\Features\Schemas\MinecraftEulaSchema::class)){
+            $this->app->extend(\App\Extensions\Features\FeatureService::class,function($features){
+                $replaced=new \App\Extensions\Features\FeatureService();$replaced->register(new \Simplify\Panel\Features\MinecraftEula());
+                foreach($features->getAll() as $schema)$replaced->register($schema);
+                return $replaced;
+            });
+        }
     }
     public function boot(): void
     {
@@ -44,6 +52,7 @@ final class SimplifyProvider extends ServiceProvider
         \App\Models\Server::deleted(function($server):void{
             // Removed after the response; simplify:subdomains retries when Cloudflare is unavailable.
             $uuid=(string)$server->uuid;
+            \Illuminate\Support\Facades\Storage::disk('local')->delete('simplify/install/'.$uuid.'.json');
             if(\Simplify\Panel\Services\FeatureSettings::enabled('subdomains'))app()->terminating(function()use($uuid):void{try{\Simplify\Panel\Services\Subdomains::forget($uuid);}catch(\Throwable $e){report($e);}});
         });
         \App\Models\User::creating(function():void {

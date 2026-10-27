@@ -43,6 +43,8 @@
       // Every Pelican notification (read ones too), loaded a page at a time when the bell or the full list opens.
       panelUnread: 0,
       feed: { items: [], page: 0, more: false, loading: false, loaded: false },
+      // Notifications that "Clear read" archived: a closed section of the full list, loaded when it opens.
+      archive: { open: false, items: [], page: 0, more: false, loading: false, loaded: false, any: false },
       // "What's new" of an update: three lines, or every line once opened (by notification id).
       openNotes: {},
       announcements: [],
@@ -65,6 +67,15 @@
       // "Explain this error": null, or { loading, error, answer } while its popup is open.
       explain: null,
       consoleFocus: false,
+      // Installation view: lines and completion seen on this page, a clock for the elapsed time, the ready banner.
+      installLines: 0,
+      installCompleted: false,
+      installNow: Date.now(),
+      installReady: false,
+      installNotify: false,
+      installMenu: false,
+      // The Minecraft EULA still needs accepting: after an installation (from finishInstall) or when a start stopped on it.
+      eulaNeeded: false,
       infoMenu: false,
       adminPage: null,
       overviewCompact: false,
@@ -225,6 +236,12 @@
           return;
         }
         this.fillSettings();
+        // Opened halfway through an installation: show what already happened.
+        if (this.server.install_log?.length) {
+          this.logs = [...this.server.install_log];
+          this.installLines = this.logs.length;
+          this.$nextTick?.(() => this.renderLogs());
+        }
         await this.connect();
         if (this.destroyed) return;
         this.startServerTimers();
@@ -252,6 +269,8 @@
         } catch {}
       },
       startServerTimers() {
+        // The elapsed time on the installation view.
+        this.installTimer = setInterval(() => this.serverSetup() === 'installing' && (this.installNow = Date.now()), 1000);
         // A restart that is due is followed closely; otherwise the page refreshes at the normal pace.
         this.pendingTimer = setInterval(() => this.restartDue() && this.refreshServerInfo(), this.intervals.restart);
         this.refreshTimer = setInterval(() => this.modal || this.refreshServerInfo(), this.intervals.server);
@@ -262,6 +281,7 @@
         clearInterval(this.refreshTimer);
         clearInterval(this.pendingTimer);
         clearInterval(this.setupTimer);
+        clearInterval(this.installTimer);
       },
       restartDue() {
         const pending = this.server?.pending;
@@ -507,6 +527,7 @@
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
         this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
         this.panelUnread = Number.isFinite(Number(this.boot.panel_unread)) ? Number(this.boot.panel_unread) : this.panelNotices.length;
+        this.archive.any = !!this.boot.notifications_archived;
         this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
@@ -540,7 +561,7 @@
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, archived: !!item.archived, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.
@@ -552,7 +573,56 @@
         return this.notifications().filter((item) => item.pinned);
       },
       otherNotifications() {
-        return this.notifications().filter((item) => !item.pinned);
+        return this.notifications().filter((item) => !item.pinned && !item.archived);
+      },
+      /** What "Clear read" moved away: archived announcements and the loaded pages of archived Pelican notifications. */
+      archivedNotifications() {
+        const announcements = this.notifications().filter((item) => item.archived);
+        return [...announcements, ...this.archive.items.map((notice) => ({ action: null, ...notice, unread: false, pelican: true }))];
+      },
+      hasArchive() {
+        return this.archive.any || this.notifications().some((item) => item.archived);
+      },
+      /** "Clear read" shows when the list has read notifications or announcements that are not pinned. */
+      canClearRead() {
+        return this.otherNotifications().some((item) => (item.pelican || item.announcement) && item.unread === false);
+      },
+      async toggleArchive() {
+        this.archive.open = !this.archive.open;
+        if (this.archive.open && !this.archive.loaded) await this.loadArchivePage(true);
+      },
+      async loadArchivePage(reset = false) {
+        if (typeof wire.notificationPage !== 'function' || (this.archive.loading && !reset)) return;
+        const page = reset ? 1 : this.archive.page + 1;
+        this.archive.loading = true;
+        try {
+          const result = await wire.notificationPage(page, true);
+          if (!Array.isArray(result?.items)) return;
+          const known = new Set(reset ? [] : this.archive.items.map((n) => n.key));
+          this.archive = { ...this.archive, items: reset ? result.items : [...this.archive.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loaded: true };
+        } catch {
+          this.toast('Archived notifications could not be loaded.', 'warn');
+        } finally {
+          this.archive.loading = false;
+        }
+      },
+      /** Moves every read notification and announcement (not an admin's pinned ones) to Archived, for this account only. */
+      async clearReadNotifications() {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive };
+        const read = this.feed.items.filter((n) => n.unread === false);
+        this.announcements = this.announcements.map((item) => (!item.pinned && (item.unread ?? !item.dismissed) === false ? { ...item, archived: true } : item));
+        this.feed = { ...this.feed, items: this.feed.items.filter((n) => n.unread !== false) };
+        this.archive = { ...this.archive, any: true, items: this.archive.loaded ? [...read, ...this.archive.items] : this.archive.items };
+        if (typeof wire.clearReadNotifications !== 'function') return;
+        try {
+          const items = await wire.clearReadNotifications();
+          if (Array.isArray(items)) this.announcements = items;
+          // The next page of current notifications may hold more read ones; start the list again.
+          if (this.feed.more) this.loadNotificationPage(true);
+        } catch {
+          Object.assign(this, before);
+          this.toast('Read notifications could not be cleared.', 'warn');
+        }
       },
       /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
       unreadNotifications() {
@@ -584,6 +654,7 @@
       },
       /** Every notification in a popup (a full-screen sheet on phones), with "Show more" for older ones. */
       openAllNotifications() {
+        this.archive = { ...this.archive, open: false, items: [], page: 0, more: false, loaded: false };
         this.openPopup('inbox');
         this.refreshAnnouncements();
         this.loadNotificationPage(true);
@@ -1122,7 +1193,7 @@
       canOverviewPower(s, action) {
         const permission = { start: 'control.start', stop: 'control.stop', kill: 'control.stop', restart: 'control.restart' }[action];
         return this.quickActionsMode() !== 'off' && !!permission && !!s.linked && !!s.permissions?.[permission]
-          && !['installing', 'restoring'].includes(s.status)
+          && !['installing', 'install failed', 'restoring'].includes(s.status)
           && (action !== 'start' || s.status === 'offline')
           && (!['stop', 'kill', 'restart'].includes(action) || s.status !== 'offline');
       },
@@ -2173,6 +2244,7 @@
             }
             if (['console output', 'install output', 'daemon error'].includes(event)) {
               const line = String(args[0] ?? '').replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '');
+              if (event === 'install output') this.installLines++;
               this.logs.push(line);
               if (this.logs.length > 1200) this.logs.splice(0, this.logs.length - 1200);
               this.renderLogs();
@@ -2210,7 +2282,18 @@
                 socket.close();
               }
             }
-            if (event === 'install completed') this.toast('Installation completed. Refresh this dashboard to load the new software details.', 'ok');
+            if (event === 'install started') this.installCompleted = false;
+            if (event === 'install completed') {
+              this.installCompleted = true;
+              this.refreshServerInfo();
+            }
+            // Wings matched the EULA line itself (Pelican's console features): ask in Simplify's own way.
+            if (event === 'feature match') {
+              try {
+                const match = typeof args[0] === 'string' ? JSON.parse(args[0]) : args[0];
+                if (match?.key === 'eula') this.promptEula();
+              } catch {}
+            }
           };
           socket.onerror = () => (this.connected = false);
           socket.onclose = () => {
@@ -2322,6 +2405,105 @@
       serverSetup() {
         return this.server?.setup_state || null;
       },
+      /** True while a new or reinstalled server is not usable yet: the page then shows only the steps and the log. */
+      installView() {
+        return ['installing', 'install_failed', 'reinstall_failed', 'restoring_backup'].includes(this.serverSetup());
+      },
+      installFailed() {
+        return ['install_failed', 'reinstall_failed'].includes(this.serverSetup());
+      },
+      installKilled() {
+        return this.installFailed() && !!this.server?.install_killed;
+      },
+      /** Kill: only the first installation of a new server, by its owner (a reinstall would lose the server's files). */
+      canKillInstall() {
+        return this.serverSetup() === 'installing' && !!this.server?.install_fresh && !!this.server?.owner && !!this.server?.permissions?.['control.stop'];
+      },
+      installTitle() {
+        if (this.serverSetup() === 'restoring_backup') return 'Restoring a backup…';
+        if (this.installKilled()) return 'Installation stopped';
+        if (this.installFailed()) return 'The installation did not finish';
+        return 'Setting up ' + (this.server?.alias || this.server?.name);
+      },
+      installText() {
+        if (this.serverSetup() === 'restoring_backup') return 'Everything opens again when the restore is done.';
+        if (this.installKilled()) return 'You stopped the installation and its files were removed. Change the resources if needed, then try again.';
+        if (this.installFailed()) return 'The last lines of the installation log are below. Nothing was started.';
+        return 'This takes a few minutes, longer for big games. You can leave this page; the server keeps installing.';
+      },
+      /**
+       * The steps as far as Pelican and Wings report them: the server exists, Wings prepares the installer
+       * (no output yet), the install script runs (output arrives), Wings reports it finished.
+       */
+      installSteps() {
+        const software = this.server?.software || this.server?.pack?.modpack_name || 'the game';
+        const reached = this.installFailed() ? 2 : this.installCompleted ? 3 : this.installLines || this.server?.install_log ? 2 : 1;
+        const steps = [
+          { key: 'created', label: 'Server created', detail: 'Resources reserved' },
+          { key: 'prepare', label: 'Preparing', detail: 'Wings gets the installer ready' },
+          { key: 'install', label: 'Installing ' + software, detail: this.installKilled() ? 'Stopped' : this.installFailed() ? 'Stopped with an error' : 'Downloading the game files' },
+          { key: 'ready', label: 'Ready to start', detail: 'Everything opens' },
+        ];
+        return steps.map((step, index) => ({ ...step, state: index < reached ? 'done' : index > reached ? 'todo' : this.installFailed() ? 'failed' : 'active' }));
+      },
+      /** Time since Pelican started the installation, such as "2:14". */
+      installElapsed() {
+        const since = this.server?.install_since;
+        if (!since || this.serverSetup() !== 'installing') return '';
+        const seconds = Math.max(0, Math.floor(this.installNow / 1000 - since));
+        return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+      },
+      /** How long this egg usually takes on this panel (from earlier installations), such as "usually about 2 min". */
+      installTypical() {
+        const seconds = this.server?.install_typical;
+        return seconds ? 'usually about ' + Math.max(1, Math.round(seconds / 60)) + ' min' : '';
+      },
+      installLogText() {
+        return this.logs.join('\n');
+      },
+      async toggleInstallNotify() {
+        if (!this.installNotify && typeof Notification === 'function' && Notification.permission === 'default') {
+          try { await Notification.requestPermission(); } catch {}
+        }
+        this.installNotify = !this.installNotify;
+      },
+      notifyInstalled() {
+        const name = this.server?.alias || this.server?.name;
+        try {
+          if (typeof Notification === 'function' && Notification.permission === 'granted' && document.hidden) new Notification(name + ' is ready', { body: 'You can now start your server.' });
+        } catch {}
+        this.toast(name + ' is ready. You can now start it.', 'ok');
+      },
+      installFiles() {
+        window.open(this.server.files_url, '_blank', 'noopener');
+      },
+      installStartup() {
+        window.open(this.server.native_sections?.startup, '_blank', 'noopener');
+      },
+      async killInstall() {
+        if (!(await this.ask({ title: 'Stop the installation?', message: 'The installer stops right away and the files it downloaded are removed. The server stays here: change its resources if needed and try again, or delete it.', confirmLabel: 'Kill', tone: 'danger' }))) return;
+        const result = await this.run(() => wire.killInstallation(), 'Installation stopped');
+        if (result === SKIPPED || !result) return;
+        Object.assign(this.server, result);
+        this.logs.push('[Simplify]: Installation stopped.');
+        this.renderLogs();
+      },
+      async cancelInstall() {
+        const name = this.server?.alias || this.server?.name;
+        if (!(await this.ask({ title: 'Delete ' + name + '?', message: (this.serverSetup() === 'installing' ? 'The installation stops and the server' : 'The server') + ' is deleted with all its files. This cannot be undone.', confirmLabel: 'Delete server', tone: 'danger' }))) return;
+        await this.run(() => wire.deleteSetupServer(this.server.name), 'Server deleted');
+      },
+      async reinstall() {
+        if (!(await this.ask({ title: 'Try the installation again?', message: 'Pelican runs the install script again. Files the script replaces are overwritten.', confirmLabel: 'Reinstall' }))) return;
+        const result = await this.run(() => wire.reinstallServer(), 'Installation started');
+        if (result !== SKIPPED && result) {
+          this.installLines = 0;
+          this.installCompleted = false;
+          this.logs = [];
+          this.renderLogs();
+          Object.assign(this.server, result);
+        }
+      },
       async refreshServerInfo() {
         if (globalThis.document?.hidden || this.busy || this.refreshingInfo || this.destroyed) return;
         this.refreshingInfo = true;
@@ -2330,20 +2512,41 @@
           if (this.destroyed) return;
           const wasSettingUp = this.serverSetup() === 'installing';
           Object.assign(this.server, info);
-          if (wasSettingUp && !this.serverSetup()) this.toast('Your server is ready.', 'ok');
+          if (wasSettingUp && !this.serverSetup()) {
+            this.installReady = true;
+            if (this.installNotify) this.notifyInstalled();
+            this.refitWorkspace();
+            this.finishInstall();
+          }
           this.renderLogs();
         } catch {
         } finally {
           this.refreshingInfo = false;
         }
       },
-      /** Minecraft stops until its EULA is accepted; offer to accept it once per page view. */
-      async promptEula() {
+      /** Minecraft stops until its EULA is accepted: the banner above the server card asks for it (once per page view). */
+      promptEula() {
         const p = this.server?.permissions || {};
         if (this.eulaPrompted || !p['file.update'] || !p['control.start']) return;
         this.eulaPrompted = true;
-        if (!(await this.ask({ title: 'Accept the Minecraft EULA?', message: 'This server stopped because the Minecraft EULA has not been accepted yet. Read it at minecraft.net/eula. Accepting writes eula=true to eula.txt and starts the server.', confirmLabel: 'Accept and start' }))) return;
-        await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
+        this.eulaNeeded = true;
+      },
+      async acceptEula() {
+        const result = await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
+        if (result === SKIPPED) return;
+        this.eulaNeeded = false;
+        this.installReady = false;
+      },
+      /** After an installation finished on this page: the creator's settings are applied, then the EULA is checked once. */
+      async finishInstall() {
+        try {
+          const result = await wire.finishInstall();
+          if (result?.eula === false) this.promptEula();
+        } catch {}
+      },
+      /** The banner's main button: accept the EULA first when it is still needed, otherwise just start. */
+      readyStart() {
+        return this.eulaNeeded ? this.acceptEula() : this.power('start');
       },
       async power(action) {
         if (action === 'kill' && !(await this.ask({ title: 'Force stop this server?', message: 'The server stops immediately. Unsaved game progress may be lost.', confirmLabel: 'Force stop', tone: 'danger' }))) return;
@@ -2415,7 +2618,8 @@
           Object.assign(this.server, await wire.refreshInfo());
         } catch {}
         if (result?.changed === false) this.toast('No changes to save.', 'info');
-        else if (result?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
+        else if (result?.pending && this.server?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
+        else if (resources && this.installFailed()) this.toast('Resources changed. They are used when you try again.', 'ok');
         else this.toast('Changes applied. They will load at the next start.', 'ok');
       },
       async renameServer() {
