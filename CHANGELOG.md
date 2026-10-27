@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.3-snapshot.7 (snapshot channel)
+Explain this error now checks first: a healthy log shows "Everything seems in order", with anything noteworthy as options to open.
+- When something is really wrong, the popup shows "Something needs attention" with the explanation already open.
+- Things you may notice, such as a slow panel, are listed under "Noticed something?" and can be opened for an explanation and steps.
+- An empty console or a panel log without warnings gives a calm answer without asking Claude.
+
 ## 0.5.3-snapshot.6 (snapshot channel)
 Announcements have a pin button. They are pinned while they are live; unpin one to remove its bar, and pin it again from the bell.
 - The pin button on each announcement is shown pressed while it is pinned; this replaces the small pills from the previous snapshot.
