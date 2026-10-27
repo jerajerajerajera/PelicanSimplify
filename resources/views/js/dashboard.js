@@ -970,7 +970,7 @@
       hostSections() {
         // Grouped by what an admin wants to do; Simplify's own pages never land under "Other plugins".
         const plan = [
-          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'gamecreator', 'eggresource', 'mountresource'] },
+          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'eggresource', 'mountresource'] },
           { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'databasehostresource', 'backuphostresource'] },
           { key: 'people', label: 'People', icon: 'players', color: '#a78bfa', pages: ['userresource', 'roleresource'] },
           { key: 'announcements', label: 'Announcements', icon: 'bell', color: '#fbbf24', pages: ['manageannouncements'] },

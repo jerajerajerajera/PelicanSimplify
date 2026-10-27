@@ -433,14 +433,17 @@ class SimplifySettings extends Page implements HasForms
         Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. */
-    private const ADDON_STEPS = ['Easy Minecraft server creator' => 'easy_creator', 'Automatic subdomains' => 'subdomains'];
+    private const ADDON_STEPS = [
+        'Server Maker' => ['tab' => 'Easy Minecraft server creator', 'features' => ['easy_creator', 'game_creator']],
+        'Automatic subdomains' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
+    ];
 
     /** Labels of the wizard steps for the progress bar, in order; follows the add-on switches as they are flipped. */
     public function setupSteps(): array
     {
         $features = (array) ($this->data['features'] ?? []);
         $steps = ['Features', 'People & access', 'Look'];
-        foreach (self::ADDON_STEPS as $label => $feature) if (!empty($features[$feature])) $steps[] = $label;
+        foreach (self::ADDON_STEPS as $label => $addon) if (array_filter($addon['features'], fn (string $feature) => !empty($features[$feature]))) $steps[] = $label;
         if (\Simplify\Panel\Services\Extensions::webInstalled()) $steps[] = 'Website';
         $steps[] = 'Ready';
         return $steps;
@@ -462,8 +465,9 @@ class SimplifySettings extends Page implements HasForms
             $step('People & access', 'Needed', $categories['Users & access']),
             $step('Look', 'Optional', $categories['Appearance']),
         ];
-        foreach (self::ADDON_STEPS as $label => $feature) {
-            if (isset($addons[$label])) $steps[] = $step($label, 'Add-on', $addons[$label])->visible(fn (Get $get) => (bool) $get('features.'.$feature));
+        foreach (self::ADDON_STEPS as $label => $addon) {
+            if (!isset($addons[$addon['tab']])) continue;
+            $steps[] = $step($label, 'Add-on', $addons[$addon['tab']])->visible(fn (Get $get) => (bool) array_filter($addon['features'], fn (string $feature) => (bool) $get('features.'.$feature)));
         }
         if (isset($categories['Website'])) $steps[] = $step('Website', 'Optional', $categories['Website']);
         $steps[] = $step('Ready', 'Finish', [
