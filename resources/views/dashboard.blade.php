@@ -476,7 +476,6 @@
                         <h2 class="ps-host-server-name" x-text="hostServer ? cardNames(hostServer).large : ''"></h2>
                         <small x-text="hostServer ? hostServerVersion(hostServer) : ''"></small>
                         <span class="ps-host-head-actions">
-                            <a class="ps-btn is-sm" :href="hostServer?.url"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
                             <button type="button" class="ps-btn is-sm is-icon" x-on:click="closeHostServer()" data-tip="Close" aria-label="Close server"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
                         </span>
                     </header>
@@ -484,9 +483,6 @@
                         <svg class="ps-host-head-icon" aria-hidden="true"><use :href="'#ps-'+(hostSection?.icon||'host')"/></svg>
                         <h2 x-text="hostSection?.label"></h2>
                         <small x-show="hostSection?.pages.length > 1" x-text="hostPage?.label"></small>
-                        <span class="ps-host-head-actions" x-show="hostPage?.url">
-                            <a class="ps-btn is-sm" :href="hostPage?.url" target="_top"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
-                        </span>
                     </header>
                     <div class="ps-host-frame is-server" x-show="hostServer" :style="accentStyle(hostServer?.uuid || 'overview')">
                         <template x-for="s in hostServer ? [hostServer] : []" :key="s.uuid">
