@@ -880,12 +880,16 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
 .ps-server-workspace.has-dock .ps-console-dot.connected::after { inset: -2px; }
 .ps-server-workspace.has-dock .ps-console-peek { grid-area: peek; }
 .ps-server-workspace.has-dock .ps-console-full { grid-area: full; }
+.ps-server-workspace.has-dock .ps-console.can-explain { grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-areas: "dot cmd explain peek full"; }
+.ps-server-workspace.has-dock .ps-console-explain { grid-area: explain; }
+.ps-server-workspace.has-dock .ps-console-explain span { display: none; }
 .ps-server-workspace.has-dock .ps-console-output { display: none; }
 .ps-server-workspace.has-dock .ps-quick-commands { display: none; }
 .ps-server-workspace.has-dock .ps-command { grid-area: cmd; min-height: 0; padding: 0; border: 0; background: none; }
 .ps-server-workspace.has-dock .ps-command input { height: 34px; font-size: 12.5px; }
 .ps-server-workspace.has-dock .ps-command button { width: 34px; height: 34px; }
 .ps-server-workspace.has-dock.is-peek .ps-console { grid-template-rows: 200px 48px; grid-template-areas: "log log log log" "dot cmd peek full"; }
+.ps-server-workspace.has-dock.is-peek .ps-console.can-explain { grid-template-areas: "log log log log log" "dot cmd explain peek full"; }
 .ps-server-workspace.has-dock.is-peek .ps-console-output { display: block; grid-area: log; height: 200px; margin: 0 -8px 0 -14px; padding: 8px 14px; overflow-y: auto; white-space: pre-wrap; font-size: 11px; line-height: 1.6; border-bottom: 1px solid var(--ps-console-line); }
 /* Bigger console: the menu steps aside and the console takes the whole block. */
 .ps-server-workspace.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main"; }
@@ -1350,3 +1354,22 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-tab-plus.is-pumpkin .ps-hw-tab { width: 46px; height: 34px; }
 }
 @media (prefers-reduced-motion: reduce) { .ps-hw-face { animation: none; } .ps-hw-bat { display: none; } }
+
+/* Explain this error: a compact popup that grows with the answer. */
+.ps-modal.ps-explain { --ps-modal-w: 620px; height: auto; max-height: calc(100dvh - 2 * var(--ps-modal-gap)); }
+.ps-explain .ps-modal-body { scrollbar-gutter: auto; }
+.ps-explain-error { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-danger) 35%, var(--ps-line)); border-radius: var(--ps-radius); background: color-mix(in srgb, var(--ps-danger) 8%, var(--ps-surface)); }
+.ps-explain-error svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--ps-danger); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-error p { margin: 0; }
+.ps-explain-answer { display: grid; gap: 18px; }
+.ps-explain-problem { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; }
+.ps-explain-problem svg { flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-answer.is-fine .ps-explain-problem svg { color: var(--ps-ok); }
+.ps-explain-answer h3 { margin: 0 0 6px; color: var(--ps-muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.ps-explain-answer section p { margin: 0; overflow-wrap: anywhere; }
+.ps-explain-answer ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; list-style: decimal; }
+.ps-explain-answer li::marker { color: var(--ps-muted); font-weight: 600; }
+.ps-explain-answer li { padding-left: 2px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .ps-modal.ps-explain { height: auto; max-height: calc(100dvh - 12px); }
+}

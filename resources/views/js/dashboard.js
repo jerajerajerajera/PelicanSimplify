@@ -57,6 +57,8 @@
       // The console alone, in its own browser window (opened from the console's title bar).
       consoleWindow: /[?&]simplify_console=/.test(globalThis.location?.search || ''),
       consolePeek: false,
+      // "Explain this error": null, or { loading, error, answer } while its popup is open.
+      explain: null,
       consoleFocus: false,
       infoMenu: false,
       adminPage: null,
@@ -2134,6 +2136,30 @@
           el.textContent = text;
           if (bottom) el.scrollTop = el.scrollHeight;
         });
+      },
+      /** The Explain button shows once an admin saved an Anthropic API key, for people who may watch this console. */
+      canExplain() {
+        return !!(this.boot.explain_errors && this.server?.permissions?.['websocket.connect']);
+      },
+      /** Sends the last console lines (read again by the panel from Wings) to Claude and shows the answer. */
+      async explainError() {
+        if (!this.canExplain() || this.explain?.loading) return;
+        const request = (this.explainRequest = (this.explainRequest || 0) + 1);
+        this.explain = { loading: true, error: null, answer: null };
+        let result;
+        try {
+          result = await wire.explainConsole();
+        } catch {
+          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+        }
+        if (this.explainRequest !== request || !this.explain) return;
+        this.explain = result?.ok
+          ? { loading: false, error: null, answer: { found: result.found !== false, problem: result.problem, cause: result.cause || '', steps: result.steps || [], lines: result.lines, model: result.model } }
+          : { loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+      },
+      closeExplain() {
+        this.explainRequest = (this.explainRequest || 0) + 1;
+        this.explain = null;
       },
       sendCommand() {
         const cmd = this.command.trim();
