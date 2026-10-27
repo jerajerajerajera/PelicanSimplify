@@ -243,15 +243,14 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 
 /* Create buttons: one main button (the Server Maker) and, for administrators, Pelican's own forms. */
 .ps-create-buttons { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; }
-/* The main button keeps the look of the old create tile: a server icon with a round plus at its corner. */
-.ps-create-icon { position: relative; display: inline-grid; flex: none; place-items: center; }
+/* The main button keeps the server icon of the old create tile, with its round plus on the button's bottom-right corner. */
+.ps-create-icon { display: inline-grid; flex: none; place-items: center; }
 .ps-create-icon > svg { width: 16px; height: 16px; }
-.ps-create-button.is-main { gap: 10px; padding-left: 8px; border-color: color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); color: var(--ps-ink); font-weight: 650; }
+.ps-create-button.is-main { position: relative; overflow: visible; border-color: color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); color: var(--ps-ink); font-weight: 650; }
 .ps-create-button.is-main:hover:not(:disabled) { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-surface)); }
-.ps-create-button.is-main .ps-create-icon { width: 26px; height: 26px; border: 1.5px dashed color-mix(in srgb, var(--ps-accent) 55%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--ps-accent) 10%, var(--ps-raised)); color: var(--ps-accent); }
-.ps-create-button.is-main:hover:not(:disabled) .ps-create-icon { border-style: solid; border-color: var(--ps-accent); }
-.ps-create-badge { position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 15px; height: 15px; border: 2px solid var(--ps-surface); border-radius: 50%; background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
-.ps-create-badge svg { width: 8px; height: 8px; stroke-width: 3.4; }
+.ps-create-button.is-main .ps-create-icon > svg { width: 19px; height: 19px; color: var(--ps-accent); }
+.ps-create-badge { position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 17px; height: 17px; border: 2px solid var(--ps-bg, var(--ps-surface)); border-radius: 50%; background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
+.ps-create-badge svg { width: 9px; height: 9px; stroke-width: 3.4; }
 .ps-create-button.is-main:hover:not(:disabled) .ps-create-badge { transform: rotate(90deg) scale(1.1); }
 @media (prefers-reduced-motion: reduce) { .ps-create-badge { transition: none; } }
 
