@@ -560,7 +560,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                     'proxy' => 'Connects several servers behind one address. Velocity is the modern choice.',
                                     default => null,
                                 })
-                                ->view('pelican-simplify::filament.admin.card-radio')->extraAttributes(['class' => 'ssc-ram-options'])
+                                ->view('pelican-simplify::filament.admin.card-radio')->extraAttributes(['class' => 'ssc-chip-options'])
                                 ->options(fn (Get $get) => MinecraftCatalog::SOFTWARE[$get('server_type')] ?? [])
                                 ->visible(fn (Get $get) => isset(MinecraftCatalog::SOFTWARE[$get('server_type')]))
                                 ->required(fn (Get $get) => isset(MinecraftCatalog::SOFTWARE[$get('server_type')]))
