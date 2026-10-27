@@ -9,6 +9,9 @@ final class Translations
 {
     public const NAMESPACE = 'pelican-simplify';
     public const FALLBACK = 'en';
+    /** Plural forms per language as Laravel picks them (trans_choice); every other language has two (one|many). */
+    public const PLURAL_FORMS = ['ar' => 6, 'be' => 3, 'bs' => 3, 'cs' => 3, 'hr' => 3, 'lt' => 3, 'pl' => 3, 'ro' => 3, 'ru' => 3, 'sk' => 3, 'sl' => 4, 'sr' => 3, 'uk' => 3,
+        'id' => 1, 'ja' => 1, 'ko' => 1, 'tr' => 1, 'vi' => 1, 'zh' => 1];
 
     /** One group for the current locale, with English filling every missing key. */
     public static function group(string $group, ?string $locale = null): array
@@ -102,17 +105,37 @@ final class Translations
         return $names;
     }
 
-    /** Problems in one translated group compared with English: unknown keys and placeholders that differ. */
-    public static function audit(array $english, array $local, string $prefix = ''): array
+    /** How many plural forms a 'one|many' text needs in $locale (pt_BR follows pt, zh_TW follows zh). */
+    public static function pluralForms(string $locale): int
+    {
+        return self::PLURAL_FORMS[$locale] ?? self::PLURAL_FORMS[explode('_', $locale)[0]] ?? 2;
+    }
+
+    /**
+     * Whether a translated plural text fits: the same {0}/[2,*] conditions as English, or plain forms in the
+     * number $locale needs (a language with three forms may drop English's {0} and [2,*]).
+     */
+    public static function pluralFits(string $english, string $text, ?string $locale): bool
+    {
+        if (!str_contains($english, '|')) return true;
+        $conditions = fn (string $s) => preg_match_all('/(?:^|\|)\s*(\{\d+\}|\[[^\]]*\])/', $s, $found) ? $found[1] : [];
+        $parts = substr_count($text, '|') + 1;
+        if ($parts === substr_count($english, '|') + 1 && $conditions($text) === $conditions($english)) return true;
+        return $locale !== null && $conditions($text) === [] && $parts === self::pluralForms($locale);
+    }
+
+    /** Problems in one translated group compared with English: unknown keys, placeholders and plural forms that differ. */
+    public static function audit(array $english, array $local, string $prefix = '', ?string $locale = null): array
     {
         $problems = [];
         foreach ($local as $key => $text) {
             $path = $prefix.$key;
             if (!array_key_exists($key, $english)) { $problems[] = $path.': not in English'; continue; }
             if (is_array($english[$key]) !== is_array($text)) { $problems[] = $path.': different shape than English'; continue; }
-            if (is_array($text)) { array_push($problems, ...self::audit($english[$key], $text, $path.'.')); continue; }
+            if (is_array($text)) { array_push($problems, ...self::audit($english[$key], $text, $path.'.', $locale)); continue; }
             if (!is_string($text)) { $problems[] = $path.': not text'; continue; }
             if (self::placeholders($text) !== self::placeholders((string) $english[$key])) $problems[] = $path.': placeholders differ from English';
+            if (!self::pluralFits((string) $english[$key], $text, $locale)) $problems[] = $path.': plural forms differ from English';
             if (strip_tags($text) !== $text && strip_tags((string) $english[$key]) === (string) $english[$key]) $problems[] = $path.': adds HTML';
         }
         return $problems;

@@ -36,11 +36,11 @@
     }
     if (text === null) {
       const plain = forms.map((form) => form.replace(/^\s*(\{\d+\}|\[(\d+|\*),\s*(\d+|\*)\])\s*/, ''));
-      let index = count === 1 ? 0 : 1;
-      if (plain.length > 2) {
-        try { index = { one: 0, two: 1, few: 1 }[new Intl.PluralRules(root.lang || 'en').select(count)] ?? 2; } catch { index = count === 1 ? 0 : 2; }
-      }
-      text = plain[Math.min(index, plain.length - 1)];
+      // The order of Laravel's plural forms: two (one|many), three (one|few|many), four (Slovenian) or six (Arabic).
+      const order = { 2: { one: 0 }, 3: { one: 0, few: 1 }, 4: { one: 0, two: 1, few: 2 }, 6: { zero: 0, one: 1, two: 2, few: 3, many: 4 } }[plain.length] || {};
+      let category = count === 1 ? 'one' : 'other';
+      try { category = new Intl.PluralRules((root.lang || 'en').replace('_', '-')).select(count); } catch { /* English rule */ }
+      text = plain[plain.length === 1 ? 0 : order[category] ?? plain.length - 1];
     }
     return fill(text, { count, ...params });
   };

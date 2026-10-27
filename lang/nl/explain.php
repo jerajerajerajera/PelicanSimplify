@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Kon :host niet bereiken vanaf het paneel. Controleer of de paneelserver verbinding met internet mag maken.',
+        'no_key' => 'Vul eerst een API-sleutel in.',
+        'not_set_up' => 'Foutuitleg is niet ingesteld op dit paneel.',
+        'unknown_log' => 'Onbekend log.',
+        'read_panel' => 'Kon het paneellog niet lezen.',
+        'read_wings' => 'Kon het Wings-log niet lezen. Probeer het opnieuw als de node bereikbaar is.',
+        'read_console' => 'Kon de console niet lezen via Wings. Probeer het opnieuw als de node bereikbaar is.',
+        'too_many' => 'Je hebt veel vragen gesteld in korte tijd. Probeer het over :count minuut opnieuw.|Je hebt veel vragen gesteld in korte tijd. Probeer het over :count minuten opnieuw.',
+        'daily_limit' => 'Dit paneel heeft het daglimiet van :count uitleggen bereikt. Probeer het morgen opnieuw.',
+        'no_answer' => ':model kon deze regels niet uitleggen. Probeer het opnieuw als de fout weer verschijnt.',
+    ],
+    'test' => [
+        'works' => 'De sleutel werkt met :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Console',
+            'empty' => 'De console is leeg, er is dus nog niets uit te leggen.',
+        ],
+        'panel' => [
+            'label' => 'Paneellog',
+            'empty' => 'Het paneellog heeft op dit moment geen waarschuwingen of fouten.',
+        ],
+        'wings' => [
+            'label' => 'Wings-log',
+            'empty' => 'Het Wings-log van deze node is leeg.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Er zijn geen opgeslagen logregels voor deze plugin.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Log eerst in op het paneel en open deze pagina dan opnieuw.',
+        'owner_only' => 'Alleen de eigenaar van het paneel (een root-admin) kan deze pagina gebruiken.',
+        'expired' => 'Dit adres is verlopen of vervangen door een nieuwer adres.',
+        'no_key' => 'Er is geen API-sleutel van :provider opgeslagen op dit paneel. Een root-admin voegt er een toe in Simplify-instellingen, onder Foutuitleg.',
+        'no_key_terminal' => 'Als het paneel niet opent, draai dan :command op de paneelserver. Dat vraagt om een sleutel en slaat hem niet op.',
+        'choose_node' => 'Kies een node.',
+        'panel_log' => 'Paneellog',
+        'wings_log_of' => 'Wings-log van :node',
+        'wings_log' => 'Wings-log',
+        'no_database' => 'De database was niet bereikbaar, dus de Wings-logs zijn hier niet beschikbaar. Het paneellog laat vaak zien waarom.',
+        'lead' => 'Gebruik deze pagina als het paneel een fout zoals 500 geeft en de gewone pagina\'s niet openen. De AI die in Simplify-instellingen is gekozen leest het log, zegt of er iets mis is en hoe je het oplost.',
+        'check_panel' => 'Paneellog controleren',
+        'check_wings' => 'Wings-log van :node controleren',
+        'wait' => 'Het log wordt gecontroleerd. Dit kan tot een minuut duren.',
+        'attention' => 'Er heeft iets aandacht nodig',
+        'in_order' => 'Alles lijkt in orde',
+        'noticed' => 'Iets opgevallen?',
+        'checked' => ':count regel gecontroleerd door :model. Adressen, e-mailadressen en wachtwoorden zijn eerst weggehaald.|:count regels gecontroleerd door :model. Adressen, e-mailadressen en wachtwoorden zijn eerst weggehaald.',
+        'terminal_hint' => 'Als het paneel niet opent, draai dan :command op de paneelserver, of :url_command voor een tijdelijk adres naar deze pagina.',
+        'broken' => 'Deze pagina kon niet afmaken',
+        'title' => 'Paneelfouten uitleggen',
+    ],
+    'failures' => [
+        'invalid_key' => 'De API-sleutel van :name is niet geldig. Een beheerder kan een nieuwe invullen in Simplify-instellingen.',
+        'no_credit' => 'Het :name-account achter deze sleutel heeft geen tegoed meer. Een beheerder kan tegoed toevoegen of de facturering bij :name nakijken.',
+        'forbidden' => 'Deze API-sleutel van :name mag het gekozen model niet gebruiken. Een beheerder kan een ander model kiezen in Simplify-instellingen.',
+        'no_model' => 'Het gekozen model van :name is niet beschikbaar voor deze sleutel. Een beheerder kan een ander model kiezen in Simplify-instellingen.',
+        'busy' => ':name is nu druk voor deze sleutel. Probeer het over een minuut opnieuw.',
+        'unavailable' => ':name is tijdelijk niet beschikbaar. Probeer het over een minuut opnieuw.',
+        'other_status' => ':name kon deze vraag niet beantwoorden (fout :status). Probeer het later opnieuw.',
+        'other' => ':name kon deze vraag niet beantwoorden. Probeer het later opnieuw.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude van Anthropic',
+            'key_help' => 'Maak een sleutel op console.anthropic.com → API keys. Elke vraag wordt gefactureerd aan dat Anthropic-account, meestal een paar cent of minder; stel daar voor de zekerheid een maandlimiet in.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini van Google',
+            'key_help' => 'Maak een sleutel op aistudio.google.com → Get API key. Vragen worden gefactureerd aan dat Google Cloud-project, meestal minder dan een cent per vraag; stel daar voor de zekerheid een budget in.',
+        ],
+        'openai' => [
+            'label' => 'GPT van OpenAI',
+            'key_help' => 'Maak een sleutel op platform.openai.com → API keys. Elke vraag wordt gefactureerd aan dat OpenAI-account, meestal een paar cent of minder; stel daar voor de zekerheid een maandbudget in.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'beste antwoorden, een paar cent',
+        'about_a_cent' => 'ongeveer een cent',
+        'cheapest' => 'goedkoopst',
+        'good_answers_under_a_cent' => 'goede antwoorden, minder dan een cent',
+        'good_answers_about_a_cent' => 'goede antwoorden, ongeveer een cent',
+    ],
+];

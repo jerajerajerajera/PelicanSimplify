@@ -10,6 +10,8 @@ check(T::placeholders(':count servers on :node, :count total') === ['count', 'no
 check(T::audit($en, ['hello' => 'Hallo :naam'])[0] === 'hello: placeholders differ from English', 'a renamed placeholder is reported');
 check(T::audit($en, ['gone' => 'Weg']) === ['gone: not in English'], 'a key English does not have is reported');
 check(T::audit($en, ['save' => '<b>Opslaan</b>']) === ['save: adds HTML'], 'HTML English does not use is reported');
+check(T::audit(['n' => ':count item|:count items'], ['n' => ':count stuk'], '', 'nl') === ['n: plural forms differ from English'], 'a missing plural form is reported');
+check(T::audit(['n' => '{0} None|{1} One|[2,*] :count'], ['n' => ':count сервер|:count сервера|:count серверов'], '', 'ru') === [] && T::audit(['n' => 'one|many'], ['n' => '件'], '', 'ja') === [], 'languages use their own number of plural forms');
 check(T::audit($en, ['nested' => 'plat']) === ['nested: different shape than English'], 'a flattened group is reported');
 
 // Every shipped language: same files as English, nothing unknown, placeholders intact.
@@ -21,7 +23,7 @@ foreach (glob($lang.'/*', GLOB_ONLYDIR) as $dir) {
     check((bool) preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $locale), "$locale is a locale name Pelican uses");
     foreach (glob($dir.'/*.php') as $file) {
         check(in_array(basename($file), $groups, true), "$locale/".basename($file).' has an English original');
-        $problems = T::audit(require $lang.'/en/'.basename($file), require $file);
+        $problems = T::audit(require $lang.'/en/'.basename($file), require $file, '', $locale);
         check($problems === [], "$locale/".basename($file).' matches English'.($problems ? ': '.implode('; ', $problems) : ''));
     }
 }
