@@ -72,6 +72,10 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-brand .ps-brand-logo { max-width: 240px; width: auto; object-fit: contain; }
 .ps-top-actions { position: relative; display: flex; align-items: center; gap: 6px; }
 .ps-nav-items { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+/* Desktop order: admin buttons left, own view in the middle, the bell next to the account. Phones keep the markup order (see below). */
+.ps-nav-items > .ps-nav-admin { order: -2; }
+.ps-nav-items > .ps-nav-view { order: -1; }
+.ps-nav-heading { display: none; }
 .ps-mobile-menu, .ps-mobile-label { display: none !important; }
 .ps-overview-appearance, .ps-notify { position: relative; }
 .ps-overview-appearance-menu { width: 300px; }
@@ -528,6 +532,8 @@ a.ps-info-modpack:hover > span { text-decoration: underline; text-underline-offs
 .ps-info-power.is-locked { opacity: .45; filter: grayscale(.4); pointer-events: none; }
 .ps-info-menu { top: calc(100% + 8px); width: 230px; }
 .ps-info-menu hr { margin: 4px 0; border: 0; border-top: 1px solid var(--ps-line); }
+.ps-menu-heading { display: block; margin: 6px 10px 2px; }
+.ps-menu-item + .ps-menu-heading { margin-top: 10px; }
 .ps-info-menu .ps-menu-item.is-danger { color: var(--ps-danger); }
 .ps-info-menu .ps-menu-item.is-danger svg { color: var(--ps-danger); }
 .ps-info-menu .ps-menu-item:disabled { opacity: .45; cursor: not-allowed; }
@@ -746,6 +752,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps h1 { font-size: 22px; }
   .ps-mobile-menu { display: inline-flex !important; }
   .ps-mobile-label { display: block !important; font-size: 14px; font-weight: 500; }
+  .ps-nav-items > .ps-nav-admin, .ps-nav-items > .ps-nav-view { order: 0; }
+  .ps-nav-heading { display: block; margin: 6px 12px 0; }
   .ps-nav-items { position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--ps-z-dropdown); display: none; flex-direction: column; align-items: stretch; gap: 4px; width: 250px; max-width: calc(100vw - 28px); max-height: calc(100dvh - 100px); padding: 8px; overflow-y: auto; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: var(--ps-shadow-lg); }
   .nav-open .ps-nav-items { display: flex; }
   .ps-nav-items > .ps-btn.is-icon, .ps-nav-items > div > .ps-btn.is-icon { justify-content: flex-start; gap: 12px; width: 100%; padding: 0 12px; }
@@ -1168,6 +1176,16 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-customize .ps-segmented > button { min-height: 28px; padding: 4px 10px; border-radius: 8px; font-size: 12px; }
 .ps-customize-head { margin: 10px 0 0; padding-top: 12px; border-top: 1px solid var(--ps-line); color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .ps-customize-head + .ps-customize-switch { border-top: 0; }
+.ps-customize-head.is-first { margin-top: 0; padding-top: 0; border-top: 0; }
+.ps-customize-head + .ps-customize-row { border-top: 0; }
+.ps-customize-head.is-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding-right: 0; padding-left: 0; padding-bottom: 0; border-right: 0; border-bottom: 0; border-left: 0; background: none; cursor: pointer; text-align: left; }
+.ps-customize-head.is-toggle:hover, .ps-customize-head.is-toggle:focus-visible { color: var(--ps-ink); outline: none; }
+.ps-customize-head.is-toggle:focus-visible span { text-decoration: underline; }
+.ps-customize-chevron { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; transition: transform .15s; }
+.ps-customize-head.is-toggle[aria-expanded="true"] .ps-customize-chevron { transform: rotate(90deg); }
+.ps-customize-section { display: grid; gap: 2px; }
+.ps-customize-section > :first-child { border-top: 0; }
+.ps-customize-sub { margin: 8px 0 0; color: var(--ps-muted); font-size: 12px; font-weight: 600; }
 .ps-customize-switch { cursor: pointer; border-radius: 0; }
 .ps-customize-switch:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; border-radius: 6px; }
 .ps-customize-switch .ps-switch { flex: none; }

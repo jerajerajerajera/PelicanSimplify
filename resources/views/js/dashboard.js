@@ -82,6 +82,7 @@
       phone: false,
       sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
+      customizeSections: null,
       overviewGroups: [],
       overviewGroupsTimer: null,
       overviewServerOrder: 'name',
@@ -975,6 +976,7 @@
         if (page) this.setHostPage(page);
       },
       setHostPage(item) {
+        if (this.runAdminAction(item)) return;
         this.hostPage = item;
         this.rememberHostPlace();
       },
@@ -992,18 +994,20 @@
       },
       /** Admin pages merged into a few colour-coded sections; pages from other plugins go to Extensions. */
       hostSections() {
+        // Grouped by what an admin wants to do; Simplify's own pages never land under "Other plugins".
         const plan = [
-          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'gamecreator', 'eggresource', 'mountresource'] },
-          { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'backuphostresource'] },
+          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'eggresource', 'mountresource'] },
+          { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'databasehostresource', 'backuphostresource'] },
           { key: 'people', label: 'People', icon: 'players', color: '#a78bfa', pages: ['userresource', 'roleresource'] },
-          { key: 'integrations', label: 'Integrations', icon: 'database', color: '#f0a35b', pages: ['databasehostresource', 'apikeyresource', 'webhookresource'] },
-          { key: 'plugins', label: 'Plugins', icon: 'plugins', color: '#f472b6', pages: ['pluginresource'] },
-          { key: 'panel', label: 'Panel', icon: 'gear', color: '#94a3b8', pages: ['settings', 'listlogs'] },
-          { key: 'legacy', label: 'Legacy', icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
-          { key: 'extensions', label: 'External', icon: 'plugins', color: '#2dd4bf', pages: [] },
+          { key: 'announcements', label: 'Announcements', icon: 'bell', color: '#fbbf24', pages: ['manageannouncements'] },
+          { key: 'tools', label: 'Tools', icon: 'plugins', color: '#f472b6', pages: ['pluginresource', 'serverdirectory', 'explain'] },
+          { key: 'integrations', label: 'Integrations', icon: 'link', color: '#f0a35b', pages: ['apikeyresource', 'webhookresource'] },
+          { key: 'panel', label: 'Panel', icon: 'gear', color: '#94a3b8', pages: ['simplifysettings', 'settings', 'listlogs'] },
+          { key: 'extensions', label: 'Other plugins', icon: 'plugins', color: '#2dd4bf', pages: [] },
           { key: 'health', label: 'Health', icon: 'heart', color: '#f87171', pages: ['health'] },
+          { key: 'legacy', label: 'Legacy', icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
         ];
-        const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || [])];
+        const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || []), ...this.adminActions()];
         const known = new Set(plan.flatMap((section) => section.pages));
         if (this.boot.features?.legacy_pages === false) plan.splice(plan.findIndex((section) => section.key === 'legacy'), 1);
         return plan.map((section) => ({
@@ -1011,10 +1015,24 @@
           pages: section.key === 'extensions' ? items.filter((item) => !known.has(item.key)) : section.pages.map((key) => items.find((item) => item.key === key)).filter(Boolean),
         })).filter((section) => section.pages.length);
       },
+      /** Simplify's own tools that open a popup instead of an admin page; listed with the admin pages. */
+      adminActions() {
+        const items = [];
+        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Simplify settings', icon: 'simplify', action: 'settings' });
+        if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: 'Explain panel errors', icon: 'question', action: 'explain' });
+        return items;
+      },
+      /** True when the item ran as an action (popup) rather than opening as a page. */
+      runAdminAction(item) {
+        if (item?.action === 'settings') this.openPanelSettings();
+        else if (item?.action === 'explain') this.explainError('panel');
+        else return false;
+        return true;
+      },
       openHostSection(section) {
         if (!section) return;
         this.hostSection = section;
-        this.hostPage = section.pages[0] || null;
+        this.hostPage = section.pages.find((item) => !item.action) || null;
         this.rememberHostPlace();
         // Phones show the sections as one sideways row: keep the open one in view.
         if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
@@ -1036,6 +1054,7 @@
       },
       openAdminPage(item) {
         this.adminMenu = false;
+        if (this.runAdminAction(item)) return;
         this.adminPage = item;
         this.openPopup('admin-page');
       },
@@ -1514,6 +1533,23 @@
           }
         } catch {}
         this.overviewPreferences = preferences;
+      },
+      /** Customize menus fold their sections; the first stays open by default and each choice is remembered on this device. */
+      customizeOpen(key) {
+        if (!this.customizeSections) {
+          let saved = {};
+          try {
+            saved = JSON.parse(localStorage.getItem('ps.customize.sections') || '{}') || {};
+          } catch {}
+          this.customizeSections = typeof saved === 'object' ? saved : {};
+        }
+        return key in this.customizeSections ? !!this.customizeSections[key] : key.endsWith('.layout');
+      },
+      toggleCustomize(key) {
+        this.customizeSections = { ...this.customizeSections, [key]: !this.customizeOpen(key) };
+        try {
+          localStorage.setItem('ps.customize.sections', JSON.stringify(this.customizeSections));
+        } catch {}
       },
       setOverviewPreference(key, value) {
         if (OVERVIEW_SWITCHES.includes(key)) {
