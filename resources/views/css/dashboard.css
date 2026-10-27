@@ -1434,7 +1434,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 /* Host mode folds the pinned bars into chips on the workspace's top row (a chip opens its bar); pages inside its frame leave them out. */
 .is-embedded .ps-announcements-pinned { display: none !important; }
 .ps-host-main { position: relative; }
-.ps-host-pins { position: absolute; top: 0; right: 58px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 6px; max-width: 46%; height: var(--ps-host-row); }
+.ps-host-pins { position: absolute; top: 0; right: 14px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 6px; max-width: 46%; height: var(--ps-host-row); }
 .ps-host-pin { --ps-tone: var(--ps-info); display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 220px; height: 28px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--ps-tone) 35%, var(--ps-line)); border-radius: 999px; background: color-mix(in srgb, var(--ps-tone) 10%, var(--ps-surface)); color: var(--ps-ink); font: 600 12px/1 var(--ps-font); cursor: pointer; }
 .ps-host-pin.is-ok { --ps-tone: var(--ps-ok); } .ps-host-pin.is-warn { --ps-tone: var(--ps-warn); } .ps-host-pin.is-danger { --ps-tone: var(--ps-danger); }
 .ps-host-pin svg { flex: none; width: 14px; height: 14px; color: var(--ps-tone); }
@@ -1442,7 +1442,10 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-host-pin:is(:hover, :focus-visible, [aria-expanded="true"]) { background: color-mix(in srgb, var(--ps-tone) 18%, var(--ps-surface)); }
 .ps-host-pin-open { top: calc(100% - 4px); right: 0; width: min(520px, calc(100vw - 32px)); padding: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
 .ps-host-pin-open .ps-announcement-bar { box-shadow: var(--ps-shadow-lg); }
-@media (max-width: 900px) { .ps-host-pins { right: 12px; max-width: 60%; } .ps-host-pin { max-width: 140px; } }
+.ps-host-pins.is-server { right: 58px; }
+@media (max-width: 900px) { .ps-host-pins { max-width: 60%; } .ps-host-pin { max-width: 140px; } }
+/* Phones hide the page header (the menu button names the page), so there the chips take their own row. */
+@media (max-width: 760px) { .ps-host-pins:not(.is-server) { position: relative; right: auto; justify-content: flex-start; max-width: none; height: auto; flex-wrap: wrap; padding: 8px 12px; } .ps-host-pins:not(.is-server) .ps-host-pin-open { left: 12px; right: 12px; width: auto; } }
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
 .ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
 .ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
