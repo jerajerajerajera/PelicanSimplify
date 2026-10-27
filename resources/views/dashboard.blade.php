@@ -1029,7 +1029,7 @@
     </template>
 
     {{-- Workspace popup: one shell with fixed sizes (sm, md, lg); only the body scrolls. ------------------- --}}
-    <div class="ps-modal-layer" data-ps-workspace :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak x-on:keydown.escape="modal && !docked() && close()">
+    <div class="ps-modal-layer" data-ps-workspace :data-open="!!modal && !docked()" :data-docked="docked()" x-show="modal" x-cloak x-effect="modal && !docked() && focusPopup($el)" x-on:keydown.escape="modal && !docked() && close()">
         <section class="ps-modal" :class="modalSize()" x-on:touchstart="sheetStart($event)" x-on:touchmove="sheetMove($event)" x-on:touchend="sheetEnd()" x-on:touchcancel="sheetEnd()" :role="docked() ? 'region' : 'dialog'" :aria-modal="modal && !docked() ? 'true' : null" :aria-label="modalTitle()" x-trap.noscroll="modal && !docked()">
             <header class="ps-modal-head">
                 <h2 x-text="modalTitle()"></h2>

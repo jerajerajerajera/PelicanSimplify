@@ -2248,6 +2248,23 @@
         // Phones open workspaces as sheets over the page instead of docking them next to the console.
         return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
       },
+      /**
+       * Puts focus in a workspace popup once it shows, so Escape and Tab work in it. x-show reveals the layer on the
+       * next frame while x-trap focuses after 15 ms; when that frame comes late (a layout transition is still running)
+       * the trap finds nothing visible and focus stays on the page.
+       */
+      focusPopup(layer) {
+        let frames = 0;
+        const check = () => {
+          if (!this.modal || this.docked() || layer.contains(document.activeElement)) return;
+          if (getComputedStyle(layer).display === 'none') { if (++frames < 30) requestAnimationFrame(check); return; }
+          const usable = (el) => !el.disabled && el.checkVisibility?.() !== false;
+          const target = [...layer.querySelectorAll('[autofocus]')].find(usable)
+            || [...layer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].find(usable);
+          target?.focus();
+        };
+        requestAnimationFrame(check);
+      },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
         // Only the workspace layer moves; the Explain layer next to it stays a popup.
