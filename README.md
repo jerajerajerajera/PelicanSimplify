@@ -48,12 +48,12 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 <summary><strong>Creating servers</strong></summary>
 
 - Simplify Server Maker: one creator for Minecraft and 170+ other games from the official Pelican eggs; missing eggs are installed automatically
-- Minecraft: Vanilla, servers for plugins or mods, Bedrock, and modpacks from Modrinth, CurseForge, FTB and Technic
+- Minecraft: Vanilla, Paper or Purpur for plugins, Fabric, Forge, NeoForge or Quilt for mods, the official Bedrock server, Velocity or BungeeCord as a proxy, and modpacks from Modrinth, CurseForge, FTB and Technic
 - Steam banners and icons for games, and automatic Steam game server tokens for games that need one
 - Resource presets, per-user limits, a name generator *(Pelican)*, and server color and icon choice
 - Drafts are saved automatically and can be discarded
 - An installation view with steps and the installation log, Kill to stop a first installation, and "Your server is ready" with a Start button
-- The Minecraft EULA is accepted in Simplify's own banner, without Pelican's popup
+- The Minecraft EULA is accepted in the new server's setup view, without Pelican's popup
 - Automatic subdomains *(add-on, Cloudflare)*: choose a name such as `oak` in the creator or the server's Network section; Simplify creates the DNS records (a CNAME, plus an SRV record so Minecraft players need no port) and removes them with the server
 - Pelican's own creator stays available
 
@@ -68,7 +68,9 @@ Items marked *(Pelican)* are existing Pelican or Wings features that Simplify sh
 - Power controls and resource usage *(Pelican)*
 - Minecraft settings with a live MOTD preview: players, difficulty, game mode, PvP, whitelist and more
 - Player management: whitelist, operators, kicks and bans
-- Plugins from Modrinth, Hangar and SpigotMC and mods from Modrinth: search, install, switch off, update and remove
+- Plugins on one page: search Modrinth, Hangar and SpigotMC (and CurseForge with a free API key) on the left, installed plugins on the right; mods from Modrinth
+- Install, switch off, update and remove plugins and mods
+- A plugin that fails to load at the next start is switched off automatically, with the reason and a ? to ask the AI why
 - A plugin without a release for your Minecraft version can still be installed after a warning
 - Change software, version or modpack, with a recent backup required first
 - Files, schedules, activity log, databases and SFTP details *(Pelican)*
