@@ -1,5 +1,10 @@
 # Changes
 
+## 0.6.0-beta.4 (beta channel)
+Browse the Pelican Hub from the plugin manager.
+- A new Browse Hub tab shows the themes, plugins and languages on the Hub, with the people who made them first. Install on Hub opens the item on the Hub, so every download counts for its maker.
+- The Themes tab says which commands to run when Node.js or Yarn is missing for building a theme.
+
 ## 0.6.0-beta.3 (beta channel)
 Clear a single notification, and Host health waits longer for Wings.
 - Each notification has a small ✕ at the top right that moves just that one to Archived.

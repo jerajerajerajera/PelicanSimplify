@@ -123,6 +123,16 @@ final class DependencyCheck
         return array_values(array_unique($errors));
     }
 
+    /** Whether Pelican can build a theme after it is installed (Node.js and Yarn on the PATH); kept for ten minutes. */
+    public static function themeBuildReady(string $panel): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('simplify.theme-build-ready', 600, function () use ($panel): array {
+            $node = self::commandVersion('node', $panel);
+            $yarn = self::commandVersion('yarn', $panel);
+            return ['node' => self::nodeSupported($node), 'yarn' => preg_match('/^\d+\.\d+/', $yarn) === 1];
+        });
+    }
+
     private static function commandVersion(string $command, string $panel): string
     {
         try {
