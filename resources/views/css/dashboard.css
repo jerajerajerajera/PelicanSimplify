@@ -839,17 +839,87 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
 .ps-plugin-action-layer iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
 @media (max-width: 600px) { .ps-console-plugin-action > span:not(.ps-plugin-action-icon) { display: none; } }
 
-/* Server still being installed by Pelican. */
-.ps-setup-state { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); }
-.ps-setup-state > div { display: grid; gap: 4px; min-width: 0; }
-.ps-setup-state strong { font-size: 16px; }
-.ps-setup-state small { color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
-.ps-setup-state > svg { flex: none; width: 26px; height: 26px; fill: none; stroke: var(--ps-danger); stroke-width: 1.8; }
-.ps-setup-state.is-install_failed, .ps-setup-state.is-reinstall_failed { border-color: color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-danger) 7%, var(--ps-surface)); }
-.ps-setup-spinner { flex: none; width: 30px; height: 30px; border: 3px solid color-mix(in srgb, var(--ps-accent) 25%, transparent); border-top-color: var(--ps-accent); border-radius: 50%; animation: ps-setup-spin .9s linear infinite; }
+/* Server still being installed by Pelican: only the steps and the installation log, nothing else to click. */
+.ps-server-dashboard.is-installing :is(.ps-statusbar, .ps-pending, .ps-server-info, .ps-server-stats, .ps-plugin-widgets, .ps-widget-grid, .ps-phone-sections, .ps-quick-commands, .ps-command, .ps-console-grow, .ps-console-window, .ps-console-plugin-action) { display: none !important; }
+.ps-server-dashboard.is-installing .ps-server-workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main"; }
+/* Change resources after a failed or stopped installation: the workspace opens above the small console. */
+.ps-server-dashboard.is-installing .ps-server-workspace.has-dock { grid-template-areas: "main" "mini"; }
+.ps-install { display: grid; gap: 18px; margin-bottom: 14px; padding: 20px 22px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+.ps-install-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.ps-install-icon { display: grid; flex: none; place-items: center; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--ps-line); border-radius: 12px; background: var(--ps-raised); color: var(--ps-muted); }
+.ps-install-icon img { width: 100%; height: 100%; object-fit: cover; }
+.ps-install-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ps-install-title { flex: 1; min-width: 0; }
+.ps-install-title h2 { margin: 0; font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.ps-install-title p { margin: 3px 0 0; color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
+.ps-install-time { display: grid; flex: none; justify-items: end; gap: 1px; color: var(--ps-muted); }
+.ps-install-time strong { color: var(--ps-ink); font: 600 15px var(--ps-mono); font-variant-numeric: tabular-nums; }
+.ps-install-time small { font-size: 12px; }
+.ps-install-actions { position: relative; display: flex; flex: none; gap: 8px; }
+.ps-install-actions .ps-btn.is-on { border-color: color-mix(in srgb, var(--ps-ok) 45%, var(--ps-line)); color: var(--ps-ok); }
+.ps-install-menu { min-width: 230px; }
+.ps-install-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; }
+.ps-install-step { position: relative; display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding-right: 12px; }
+.ps-install-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; right: 12px; left: 38px; height: 2px; border-radius: 2px; background: var(--ps-line); }
+.ps-install-step.is-done:not(:last-child)::after { background: var(--ps-accent); }
+.ps-install-step-text { position: relative; z-index: 1; display: grid; gap: 2px; min-width: 0; margin-top: 36px; margin-left: -38px; }
+.ps-install-step-text strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.ps-install-step-text small { color: var(--ps-muted); font-size: 12px; line-height: 1.35; }
+.ps-install-step.is-todo .ps-install-step-text strong { color: var(--ps-muted); font-weight: 500; }
+.ps-install-mark { position: relative; z-index: 1; display: grid; flex: none; place-items: center; width: 28px; height: 28px; border: 2px solid var(--ps-line); border-radius: 50%; background: var(--ps-surface); color: var(--ps-muted); }
+.ps-install-mark svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ps-install-mark b { font: 600 12px var(--ps-mono); }
+.ps-install-mark i { width: 100%; height: 100%; margin: -2px; border: 2px solid color-mix(in srgb, var(--ps-accent) 25%, transparent); border-top-color: var(--ps-accent); border-radius: 50%; box-sizing: content-box; animation: ps-setup-spin .9s linear infinite; }
+.ps-install-step.is-done .ps-install-mark { border-color: var(--ps-accent); background: var(--ps-accent); color: var(--ps-on-accent); }
+.ps-install-step.is-active .ps-install-mark { border-color: transparent; }
+.ps-install-step.is-failed .ps-install-mark { border-color: var(--ps-danger); background: var(--ps-danger); color: #fff; }
+.ps-install-step.is-failed small { color: var(--ps-danger); }
+.ps-install:is(.is-install_failed, .is-reinstall_failed) { border-color: color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); }
 @keyframes ps-setup-spin { to { transform: rotate(360deg); } }
-.ps-settings-column.is-locked { opacity: .45; filter: grayscale(.4); pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .ps-setup-spinner { animation-duration: 3s; } }
+@media (prefers-reduced-motion: reduce) { .ps-install-mark i { animation-duration: 3s; } }
+@media (max-width: 760px) {
+  .ps-install { gap: 14px; padding: 16px; }
+  .ps-install-head { flex-wrap: wrap; }
+  .ps-install-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .ps-install-title { flex-basis: calc(100% - 52px); }
+  .ps-install-title h2 { font-size: 16px; }
+  .ps-install-time { display: flex; flex-basis: 100%; align-items: baseline; gap: 8px; order: 1; }
+  .ps-install-actions { order: 2; }
+  .ps-install-actions { flex-basis: 100%; }
+  .ps-install-actions { flex-wrap: wrap; }
+  .ps-install-actions .ps-btn:not(.is-icon) { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .ps-install-actions .ps-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Phone: the steps stack, so every label stays readable. */
+  .ps-install-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .ps-install-step { align-items: center; padding: 0 0 12px; }
+  .ps-install-step:not(:last-child)::after { top: 30px; right: auto; bottom: 2px; left: 13px; width: 2px; height: auto; }
+  .ps-install-step-text { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 8px; margin: 0; }
+  .ps-install-step-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (max-width: 420px) { .ps-install-long { display: none; } }
+@media (max-width: 600px) { .ps-server-dashboard.is-installing .ps-console-state { display: none; } }
+
+/* After an installation finished on this page: the one next step. */
+.ps-ready { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 14px 16px 14px 18px; border: 1px solid color-mix(in srgb, var(--ps-ok) 40%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-ok) 8%, var(--ps-surface)); }
+.ps-ready > div { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.ps-ready strong { font-size: 16px; font-weight: 650; }
+.ps-ready small { color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
+.ps-ready-mark { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ps-ok); color: #fff; }
+.ps-ready-mark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ps-ready-start { min-height: 42px; padding-inline: 18px; font-size: 15px; }
+.ps-ready small a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.ps-ready.is-eula { border-color: color-mix(in srgb, var(--ps-accent) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); }
+.ps-ready.is-eula .ps-ready-mark { background: var(--ps-accent); color: var(--ps-on-accent); }
+@media (max-width: 600px) {
+  .ps-ready { flex-wrap: wrap; }
+  .ps-ready > div { flex-basis: calc(100% - 50px); }
+  .ps-ready > .ps-btn:not(.is-icon) { order: 3; flex: 1 1 auto; min-width: 0; justify-content: center; padding-inline: 10px; font-size: 14px; }
+  .ps-ready > .ps-btn:not(.is-icon) > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ps-ready { position: relative; padding-right: 48px; }
+  .ps-ready > .ps-btn:not(.is-icon) > svg { display: none; }
+  .ps-ready > .ps-btn.is-icon { position: absolute; top: 8px; right: 8px; }
+}
 .ps-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Server page layout: the section menu on the left and one block next to it (the console, or the open
