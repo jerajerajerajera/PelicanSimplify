@@ -381,6 +381,144 @@
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
   };
+  /* Header tools: a Pelican page in a Simplify popup (or host mode) shows its search field and its own buttons
+     (New, Import, Save, …) in the Simplify header, so the page reads as part of the popup instead of a page inside it.
+     The buttons there press the page's real buttons; dropdown groups and bulk actions stay on the page. */
+  let unbridgeHeadTools = null;
+  const bridgeHeadTools = () => {
+    unbridgeHeadTools?.();
+    unbridgeHeadTools = null;
+    if (frameKind !== 'native' || frameTab || !window.MutationObserver || !document.body) return;
+    let head;
+    try {
+      const host = window.frameElement;
+      head = host.closest('.ps-modal')?.querySelector(':scope > .ps-modal-head') || host.closest('.ps-host-main')?.querySelector(':scope > .ps-host-head.is-page');
+    } catch {}
+    if (!head) return;
+    const pdoc = head.ownerDocument;
+    head.querySelectorAll(':scope > .ps-frame-tools').forEach((el) => el.remove());
+    const bar = pdoc.createElement('div');
+    bar.className = 'ps-frame-tools';
+    head.insertBefore(bar, head.querySelector(':scope > .ps-close'));
+    const tooltip = (el) => el.getAttribute('x-tooltip')?.match(/content:\s*'((?:[^'\\]|\\.)*)'/)?.[1]?.replace(/\\'/g, "'") || '';
+    const label = (el) => el.getAttribute('aria-label') || el.getAttribute('title') || tooltip(el) || el.textContent.trim();
+    // The page's own table, not one inside a form, tab or relation manager (those keep their toolbar).
+    const mainTable = () => [...document.querySelectorAll('.fi-ta-ctn')].find((el) => !el.parentElement.closest('.fi-resource-relation-managers, .fi-resource-relation-manager, .fi-sc-tabs, .fi-section, .fi-modal, .fi-ta-ctn'));
+    const sourceButtons = (table) => [...document.querySelectorAll('.fi-header-actions-ctn .fi-ac > :is(button, a)'), ...(table?.querySelectorAll('.fi-ta-header-toolbar > .fi-ta-actions > :is(button, a)') || [])];
+    let filtersTimer = 0;
+    const openFilters = (trigger) => {
+      // The filter panel belongs to the page's toolbar: that row shows while the panel is open.
+      root.classList.add('ps-tools-open');
+      requestAnimationFrame(() => {
+        const panel = trigger.closest('.fi-dropdown')?.querySelector('.fi-dropdown-panel');
+        trigger.closest('.fi-dropdown-trigger')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+        setTimeout(() => !panel?.offsetParent && trigger.click(), 60);
+        clearInterval(filtersTimer);
+        filtersTimer = setInterval(() => {
+          if (panel?.isConnected && panel.offsetParent) return;
+          clearInterval(filtersTimer);
+          root.classList.remove('ps-tools-open');
+        }, 400);
+      });
+    };
+    const button = (source, text, primary) => {
+      const btn = pdoc.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ps-btn is-sm' + (primary ? ' is-primary' : ' is-icon is-subtle') + (source.classList.contains('fi-color-danger') ? ' is-danger' : '');
+      btn.setAttribute('aria-label', text);
+      // The page's tooltip says more ("Save changes", why Delete is off); the primary button shows it as its text.
+      if (!primary) btn.dataset.tip = tooltip(source) || text;
+      btn.disabled = source.disabled || source.getAttribute('aria-disabled') === 'true';
+      const icon = source.querySelector('svg');
+      if (icon) btn.append(pdoc.importNode(icon, true));
+      if (primary) btn.append(pdoc.createTextNode(text));
+      return btn;
+    };
+    let signature = null;
+    const build = () => {
+      const visible = pdoc.defaultView.getComputedStyle(head).display !== 'none';
+      const table = visible ? mainTable() : null;
+      const sources = visible ? sourceButtons(table) : [];
+      const search = table?.querySelector('.fi-ta-search-field input') || null;
+      const filters = table?.querySelector('.fi-ta-filters-dropdown .fi-dropdown-trigger > :is(button, a)') || null;
+      const heading = document.querySelector('.fi-header-heading')?.textContent.trim() || '';
+      const titles = [...head.querySelectorAll(':scope > :is(h2, small)')].map((el) => el.textContent.trim().toLowerCase()).filter(Boolean);
+      const crumb = heading && titles.length && !titles.some((t) => heading.toLowerCase().includes(t) || t.includes(heading.toLowerCase())) ? heading : '';
+      const next = JSON.stringify([crumb, !!search, !!filters, sources.map((s) => [label(s), s.disabled || s.getAttribute('aria-disabled')])]);
+      if (next === signature) return;
+      signature = next;
+      bar.replaceChildren();
+      const bridged = !!(sources.length || search || filters);
+      root.toggleAttribute('data-ps-head-tools', bridged);
+      bar.hidden = !bridged && !crumb;
+      if (crumb) {
+        const span = pdoc.createElement('span');
+        span.className = 'ps-frame-crumb';
+        span.textContent = crumb;
+        bar.append(span);
+      }
+      if (search) {
+        const field = pdoc.createElement('label');
+        field.className = 'ps-frame-search';
+        field.innerHTML = '<svg aria-hidden="true"><use href="#ps-search"/></svg>';
+        const input = pdoc.createElement('input');
+        input.type = 'search';
+        input.placeholder = search.placeholder || 'Search';
+        input.setAttribute('aria-label', input.placeholder);
+        input.value = search.value;
+        input.addEventListener('input', () => {
+          search.value = input.value;
+          search.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        field.append(input);
+        bar.append(field);
+      }
+      const primaries = [];
+      const seen = new Set();
+      for (const source of sources) {
+        if (source.closest('.fi-dropdown')) continue;
+        const text = /^save$/i.test(label(source)) ? tooltip(source) || label(source) : label(source);
+        if (seen.has(text)) continue;
+        seen.add(text);
+        const primary = /\/create(\?|$)/.test(source.getAttribute('href') || '') || /^(save|create)\b/i.test(source.getAttribute('aria-label') || '');
+        const btn = button(source, text, primary);
+        btn.addEventListener('click', () => source.click());
+        if (primary) primaries.push(btn);
+        else bar.append(btn);
+      }
+      if (filters) {
+        const btn = button(filters, label(filters) || 'Filter', false);
+        btn.querySelectorAll('.fi-icon-btn-badge-ctn').forEach((el) => el.remove());
+        btn.addEventListener('click', () => openFilters(filters));
+        bar.append(btn);
+      }
+      bar.append(...primaries);
+    };
+    let queued = 0;
+    const queue = () => {
+      if (queued) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        build();
+      });
+    };
+    build();
+    const observer = new MutationObserver(queue);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-disabled', 'disabled'] });
+    pdoc.defaultView.addEventListener('resize', queue);
+    unbridgeHeadTools = () => {
+      observer.disconnect();
+      clearInterval(filtersTimer);
+      pdoc.defaultView.removeEventListener('resize', queue);
+      root.removeAttribute('data-ps-head-tools');
+      bar.remove();
+    };
+  };
+  if (document.body) bridgeHeadTools();
+  else document.addEventListener('DOMContentLoaded', bridgeHeadTools, { once: true });
+  // Pelican links inside the page (New Egg, Edit) navigate without a reload: the header follows the new page.
+  document.addEventListener('livewire:navigated', bridgeHeadTools);
+  window.addEventListener('pagehide', () => unbridgeHeadTools?.());
   /* Save bar: the same floating bar on every form. It slides in once something changed; when saving
      worked the button shows a check and the bar slides away again. */
   let pendingSaves = [];
