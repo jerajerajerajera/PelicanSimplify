@@ -162,7 +162,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -178,6 +178,11 @@ class SimplifySettings extends Page implements HasForms
         'People & roles' => 'tabler-users-group',
         'Plugin manager' => 'tabler-plug',
         'Automatic subdomains' => 'tabler-world-www',
+    ];
+
+    /** Add-ons set up later from their own tab, not during the first setup. */
+    private const LATER_ADDONS = [
+        'Error explanations' => 'tabler-help-circle',
     ];
 
     /** Pages other plugins add (empty when the service is not available, as in unit tests). */
@@ -362,13 +367,41 @@ class SimplifySettings extends Page implements HasForms
         }
         $categories['Server banners'] = [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')];
         $icons['Server banners'] = 'tabler-photo';
+        $addons['Error explanations'] = $this->errorExplainerSections();
+        $icons = [...$icons, ...self::LATER_ADDONS];
         $categories = [...$categories, ...$addons];
         $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs(
-            array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories))
+            array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories))
         );
         if (method_exists($tabs, 'vertical')) $tabs->vertical();
         if (method_exists($tabs, 'persistTabInQueryString')) $tabs->persistTabInQueryString('section');
         return $schema->statePath('data')->components([$tabs]);
+    }
+    /** "Explain this error" on server pages, paid by the admin's own Anthropic API key. */
+    private function errorExplainerSections(): array
+    {
+        $explainer = \Simplify\Panel\Services\ErrorExplainer::class;
+        return [
+            Section::make('Explain this error')->columns(2)->description('Adds an "Explain" button to the console of every server. It sends the last 100 console lines to Claude by Anthropic and shows in plain words what went wrong and what to try. IP addresses, e-mail addresses, passwords and tokens are removed from the lines first. Without an API key the button does not show.')->schema([
+                TextInput::make('explainer.key')->label('Anthropic API key')->password()->autocomplete(false)->maxLength(300)->columnSpanFull()
+                    ->placeholder(fn () => $explainer::settings()['has_key'] ? 'A key is saved. Leave empty to keep it.' : 'sk-ant-…')
+                    ->helperText('Create a key at console.anthropic.com → API keys. Every question is billed to that Anthropic account, usually a few cents or less; set a monthly limit there to be safe. Simplify stores the key encrypted and never shows it again.'),
+                Select::make('explainer.model')->label('Model')->options($explainer::MODELS)->selectablePlaceholder(false)->required(),
+                Select::make('explainer.audience')->label('Who can use it')->options($explainer::AUDIENCES)->selectablePlaceholder(false)->required()
+                    ->helperText('Each person can ask '.$explainer::PER_USER.' questions per 10 minutes, the whole panel '.$explainer::PER_DAY.' per day.'),
+                Toggle::make('explainer.remove_key')->label('Remove the saved key when saving')->helperText('Turns error explanations off.')->visible(fn () => $explainer::settings()['has_key'])->columnSpanFull(),
+                \Filament\Schemas\Components\Actions::make([
+                    \Filament\Actions\Action::make('testErrorExplainer')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testErrorExplainer()),
+                ])->columnSpanFull(),
+            ]),
+        ];
+    }
+    /** Tries the typed key, or the saved one, with the chosen model (Test key button). */
+    public function testErrorExplainer(): void
+    {
+        abort_unless(static::canAccess(), 403);
+        $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''));
+        Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     public function setupSteps(): array
     {
@@ -412,6 +445,11 @@ class SimplifySettings extends Page implements HasForms
         \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']??[]);
         \Simplify\Panel\Services\PerformanceSettings::save($state['performance']??[]);
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
+        if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
+            \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
+            data_set($this->data, 'explainer.key', '');
+            data_set($this->data, 'explainer.remove_key', false);
+        }
         \Simplify\Panel\Services\RoleAccess::save($roles);
         if (!Storage::disk('local')->put(CreatorAccess::FILE, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) {
             throw new \RuntimeException('Could not save creator settings.');
