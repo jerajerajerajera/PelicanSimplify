@@ -471,7 +471,7 @@
                     </template>
                 </aside>
                 <div class="ps-host-main">
-                    @include('pelican-simplify::announcement-bars')
+                    @include('pelican-simplify::announcement-chips')
                     <header class="ps-host-head" x-show="hostServer" x-cloak :style="accentStyle(hostServer?.uuid || 'overview')">
                         <i class="ps-host-dot ps-status" :class="hostServer?.status"></i>
                         <h2 class="ps-host-server-name" x-text="hostServer ? cardNames(hostServer).large : ''"></h2>

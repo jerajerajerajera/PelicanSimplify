@@ -59,6 +59,8 @@
       hostSection: null,
       hostTab: 'admin',
       hostMenuOpen: false,
+      // Host mode: the pinned announcement whose chip is open.
+      hostPin: null,
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
