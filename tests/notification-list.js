@@ -14,6 +14,7 @@ const wire={
   notificationPage:async(page,archived=false)=>{calls.push((archived?'archive ':'page ')+page);if(fail)throw new Error('down');return archived?archivedPages[page]:pages[page];},
   clearReadNotifications:async()=>{calls.push('clear');if(fail)throw new Error('down');return announcements().map((a)=>a.unread||a.pinned?a:{...a,archived:true});},
   markAllNotificationsRead:async()=>{calls.push('all');if(fail)throw new Error('down');return announcements().map((a)=>({...a,unread:false}));},
+  archiveNotification:async(key,pelican)=>{calls.push('archive-one '+key+(pelican?' pelican':''));if(fail)throw new Error('down');return announcements().map((a)=>a.key===key?{...a,archived:true,unread:false}:a);},
   markPanelNotificationsRead:async(ids)=>{calls.push('read '+ids.length);return [];},
   announcements:async()=>announcements(),panelNotifications:async()=>[],
 };
@@ -64,6 +65,17 @@ const page=(extra={})=>{const d=context.window.pelicanSimplify(wire,{server:null
   assert.deepEqual(c.archivedNotifications().map((i)=>i.title),['Backup 8 finished','Backup 9 finished']);
   assert.equal(page({notifications_archived:true}).hasArchive(),true,'after a reload the archive is still offered');
   assert.equal(page().hasArchive(),false,'no Archived before the first Clear read');
+  // ✕ on one: it moves to Archived; not on an admin's pinned one or in Archived itself.
+  const x=page();await x.toggleNotifications();
+  const backup=x.otherNotifications().find((i)=>i.title==='Backup 1 finished');
+  assert.ok(x.canArchive(backup)&&!x.canArchive(x.pinnedNotifications()[0]),'✕ on notifications, not on pinned ones');
+  await x.archiveNotification(backup);
+  assert.ok(calls.includes('archive-one '+backup.key+' pelican'),'a Pelican notification is archived by id');
+  assert.ok(!x.otherNotifications().some((i)=>i.title==='Backup 1 finished')&&x.hasArchive(),'it leaves the list for Archived');
+  assert.equal(x.panelUnread,6,'an unread one no longer counts');
+  const news=x.otherNotifications().find((i)=>i.title==='New modpack');
+  await x.archiveNotification(news);
+  assert.ok(x.archivedNotifications().some((i)=>i.title==='New modpack'&&!x.canArchive(i)),'an announcement too; no ✕ in Archived');
   // Failures put things back.
   fail=true;const e=page();await e.markAllNotificationsRead();
   assert.equal(e.unreadNotifications(),8,'a failed mark all read keeps the count');assert.equal(toasts.at(-1)[1],'warn');
