@@ -7,6 +7,9 @@
         const fit = () => { const tabs = $el.querySelector('.ps-settings-tabs.fi-vertical'); if (!tabs) return; const top = tabs.getBoundingClientRect().top + window.scrollY; tabs.style.setProperty('--ps-settings-height', Math.max(420, window.innerHeight - top - 16) + 'px'); };
         fit(); window.addEventListener('resize', fit); new MutationObserver(() => requestAnimationFrame(fit)).observe($el, { childList: true, subtree: true });
     ">
+        @if($this->pelicanTabs > 0)
+            <style>.ps-settings-tabs .fi-tabs-item:nth-last-child({{ (int) $this->pelicanTabs }}) { margin-top: 30px; position: relative; } .ps-settings-tabs .fi-tabs-item:nth-last-child({{ (int) $this->pelicanTabs }})::before { content: "Pelican"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }</style>
+        @endif
         @if(!$this->needsSetup())
             <header class="ps-settings-hero">
                 <span class="ps-settings-logo">@include('pelican-simplify::simplify-icon')</span>
@@ -17,7 +20,7 @@
                 @if(!$this->embedded && !$showDiagnostics)
                     <div class="ps-settings-hero-actions">
                         <button type="button" class="ps-btn is-sm" wire:click="toggleDiagnostics" wire:loading.attr="disabled"><x-tabler-shield-check class="ps-ico" />System checks</button>
-                        <button type="button" class="ps-btn is-sm" wire:loading.attr="disabled" x-on:click="Simplify.confirm({title:'Run the setup wizard again?', message:'You walk through the system checks and every settings page again, starting from your current settings. Nothing changes until you finish the wizard.', confirmLabel:'Start setup'}).then((ok) => ok && $wire.startSetupAgain())"><x-tabler-wand class="ps-ico" />Setup wizard</button>
+                        <button type="button" class="ps-btn is-sm" wire:loading.attr="disabled" x-on:click="Simplify.confirm({title:'Run the setup wizard again?', message:'You walk through the system checks and the setup questions again, starting from your current settings. Nothing changes until you finish the wizard.', confirmLabel:'Start setup'}).then((ok) => ok && $wire.startSetupAgain())"><x-tabler-wand class="ps-ico" />Setup wizard</button>
                     </div>
                 @endif
             </header>
@@ -39,11 +42,12 @@
         @endif
         @if(!$this->needsSetup() || $setupStarted)
             @if($this->needsSetup())
-                <header class="ps-setup-heading ps-setup-welcome"><span class="ps-setup-mark"><x-tabler-adjustments /></span><div><span class="ps-setup-eyebrow">First setup · Preferences</span><h2>Make Simplify yours</h2><p>Choose your features, access rules and resource limits. You can change these later.</p></div></header>
+                <header class="ps-setup-heading ps-setup-welcome"><span class="ps-setup-mark"><x-tabler-adjustments /></span><div><span class="ps-setup-eyebrow">First setup · Preferences</span><h2>Make Simplify yours</h2><p>A few short steps: what Simplify does, who may do what, and how it looks. Everything else keeps a sensible default and can be changed later in Simplify settings.</p></div></header>
             @endif
             <div class="ssc-wizard ps-settings-form" @if($this->needsSetup()) x-data="simplifySetupProgress()" @endif>
                 @if($this->needsSetup())
-                    <nav class="ssc-progress" wire:ignore style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="Simplify setup progress">
+                    {{-- Re-rendered by Livewire: an add-on switched on in the first step adds its own step here. --}}
+                    <nav class="ssc-progress" style="--ssc-steps: {{ count($this->setupSteps()) }}" :style="{'--ssc-step': step}" aria-label="Simplify setup progress">
                         @foreach($this->setupSteps() as $index => $label)
                             <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                             @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless

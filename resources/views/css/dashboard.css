@@ -72,10 +72,16 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-brand .ps-brand-logo { max-width: 240px; width: auto; object-fit: contain; }
 .ps-top-actions { position: relative; display: flex; align-items: center; gap: 6px; }
 .ps-nav-items { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+/* Desktop order: admin buttons left, own view in the middle, the bell next to the account. Phones keep the markup order (see below). */
+.ps-nav-items > .ps-nav-admin { order: -2; }
+.ps-nav-items > .ps-nav-view { order: -1; }
+.ps-nav-heading { display: none; }
 .ps-mobile-menu, .ps-mobile-label { display: none !important; }
 .ps-overview-appearance, .ps-notify { position: relative; }
 .ps-overview-appearance-menu { width: 300px; }
 .ps-notify-menu { width: 340px; }
+/* Menus under the top bar use the height left on the screen before they scroll. */
+.ps-top .ps-dropdown { max-height: calc(100dvh - 96px); }
 .ps-account { position: relative; display: flex; align-items: center; flex: none; }
 .ps-account-button { max-width: 200px; padding: 0 10px 0 4px; gap: 8px; }
 .ps-account-avatar { display: grid; place-items: center; flex: none; width: 30px; height: 30px; overflow: hidden; border-radius: 50%; background: var(--ps-raised); }
@@ -94,13 +100,12 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-server-scroll:focus-visible { outline: 2px solid var(--ps-line); outline-offset: 2px; border-radius: var(--ps-radius); }
 .ps-server-stage { flex: none; width: 100%; max-width: var(--ps-grid-width); margin: auto; }
 .ps-server-stage.is-list { max-width: 1088px; margin: clamp(4px, calc(4dvh - 28px), 24px) auto 0; }
-.ps-overview-toolbar { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 12px; }
-.ps-overview-toolbar > .ps-game-filters { margin-left: auto; order: 2; }
-.ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; }
+.ps-overview-toolbar { display: flex; align-items: flex-start; gap: 8px 16px; margin: 0 0 12px; }
+.ps-overview-filters { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-width: 0; }
+.ps-game-filters { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px; min-width: 0; }
 .ps-node-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-node-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-owner-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; padding-left: 10px; border-left: 1px solid var(--ps-line); }
-.ps-overview-toolbar > .ps-owner-filters { order: 2; }
 .ps-owner-filters .ps-chip svg { width: 13px; height: 13px; }
 .ps-node-search { width: 170px; min-height: var(--ps-h-sm); padding: 4px 10px; font-size: 13px; }
 /* Node groups: a heading row spanning the grid (or list) before each node's servers. */
@@ -236,45 +241,18 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) .ps-card-graph { height: 30px; }
 .ps-server-grid:not(.is-list) .has-power:not(.power-shown):is(:hover, :focus-within, .confirming-power) :is(.ps-card-background, .ps-offline-artwork) { transform: translateY(calc(-1 * var(--ps-power-h))); }
 
-/* Creation tiles: a large logo that makes room for its label on hover. */
-.ps-create-tiles { display: flex; align-items: center; gap: 12px; order: -1; min-width: 0; margin-right: 8px; }
-.ps-create-card {
-  --ps-create-icon: 80px;
-  --ps-create-small: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  min-height: 0;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)), var(--ps-surface));
-  color: var(--ps-ink);
-  cursor: pointer;
-  transition: background var(--ps-slow), gap var(--ps-slow);
-}
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) {
-  gap: 16px;
-  background-color: var(--ps-surface);
-  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 12%, transparent) 0 2px, transparent 2px 10px), linear-gradient(135deg, color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)), var(--ps-surface));
-}
-.ps-create-card:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 3px; }
-.ps-create-card:disabled { cursor: default; opacity: .65; }
-.ps-create-plus { position: relative; display: grid; place-items: center; flex: none; width: var(--ps-create-icon); height: var(--ps-create-icon); overflow: hidden; border-radius: var(--ps-radius-lg); background: var(--ps-raised); color: var(--ps-accent); transition: width var(--ps-slow), height var(--ps-slow); }
-.ps-create-plus > svg { width: 70%; height: 70%; }
-.ps-create-add { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ps-surface); border-radius: 50%; background: var(--ps-raised); color: var(--ps-accent); }
-.ps-create-add svg { width: 14px; height: 14px; }
-.ps-create-card h3 { text-align: left; display: flex; flex-direction: column; flex: none; max-width: 0; overflow: hidden; opacity: 0; transform: translateX(-8px); font-size: 16px; font-weight: 400; line-height: 1.35; white-space: nowrap; transition: max-width var(--ps-slow), opacity var(--ps-fast), transform var(--ps-slow); }
-.ps-create-card h3 strong { width: fit-content; font-weight: 700; background: linear-gradient(115deg, var(--ps-ink), var(--ps-accent)); background-clip: text; -webkit-background-clip: text; color: transparent; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) h3 { max-width: 120px; opacity: 1; transform: none; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus > svg { animation: ps-logo-bump 1.8s ease-in-out infinite; }
-@keyframes ps-logo-bump { 0%, 65%, 100% { transform: none; } 20% { transform: translateY(-4px) scale(1.06); } 35% { transform: translateY(1px) scale(.98); } }
-@media (hover: none) {
-  .ps-create-card { gap: 12px; }
-  .ps-create-card .ps-create-plus { width: var(--ps-create-small); height: var(--ps-create-small); }
-  .ps-create-card h3 { max-width: 120px; opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) { .ps-create-plus > svg { animation: none !important; } }
+/* Create buttons: one main button (the Server Maker) and, for administrators, Pelican's own forms. */
+.ps-create-buttons { display: flex; flex: none; align-items: center; gap: 8px; margin-left: auto; }
+/* The main button keeps the server icon of the old create tile, with its round plus on the button's bottom-right corner. */
+.ps-create-icon { display: inline-grid; flex: none; place-items: center; }
+.ps-create-icon > svg { width: 16px; height: 16px; }
+.ps-create-button.is-main { position: relative; overflow: visible; border-color: color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); color: var(--ps-ink); font-weight: 650; }
+.ps-create-button.is-main:hover:not(:disabled) { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-surface)); }
+.ps-create-button.is-main .ps-create-icon > svg { width: 19px; height: 19px; color: var(--ps-accent); }
+.ps-create-badge { position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 17px; height: 17px; border: 2px solid var(--ps-bg, var(--ps-surface)); border-radius: 50%; background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
+.ps-create-badge svg { width: 9px; height: 9px; stroke-width: 3.4; }
+.ps-create-button.is-main:hover:not(:disabled) .ps-create-badge { transform: rotate(90deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .ps-create-badge { transition: none; } }
 
 /* Compact cards: icon, name, status and players only, so more servers fit on a screen. */
 .ps-server-grid.is-compact { --ps-compact-h: 156px; --ps-compact-pad: 14px; gap: 12px; }
@@ -361,14 +339,33 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
   .ps-server-grid.is-list .has-power:is(:hover, :focus-within, .confirming-power, .power-shown) :is(.ps-card-background, .ps-offline-artwork) { transform: none; }
 }
 
-/* Host health dock: compact summary row that expands upward into node details. */
+/* Host health dock: compact summary row that expands upward into node details. and can sit above the servers instead,
+   or open as details under the health button in the top bar. */
 .ps-health-panel { position: relative; z-index: 1; flex: none; width: var(--ps-health-width, calc(100% - 8px)); margin: 0 var(--ps-health-left, auto) 0 var(--ps-health-left, auto); overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 -4px 12px rgb(0 0 0 / .1); }
 .ps.dark .ps-health-panel { box-shadow: none; }
-.ps-host-health { display: grid; grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(0, 1fr)); gap: 18px; padding: 16px 18px; cursor: pointer; transition: background-color var(--ps-fast); }
+.ps-overview { position: relative; }
+.ps-overview > .ps-health-panel.is-above { order: -1; margin-bottom: 4px; box-shadow: none; }
+/* Opens like a dropdown: right under the Healthy button, left edges in line, moved left only as far as the screen needs. */
+.ps-health-panel.is-popover { position: fixed; top: var(--ps-pop-top, 72px); left: var(--ps-pop-left, 8px); z-index: var(--ps-z-dropdown); width: var(--ps-pop-width, 560px); margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
+.ps-health-panel.is-popover .ps-host-health { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; padding: 14px 16px; }
+.ps-health-panel.is-popover .ps-host-state { grid-column: 1 / -1; }
+.ps-health-panel.is-popover .ps-node-summary { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ps-health-panel.is-popover .ps-node-server { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ps-health-panel.is-popover .ps-node-server > div { grid-column: 1 / -1; }
+/* The top-bar side of it: the health button and the create buttons, in front of the panel icons. */
+.ps-top-overview { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+.ps-health-pill { --ps-tone: var(--ps-muted); gap: 6px; border-color: color-mix(in srgb, var(--ps-tone) 40%, var(--ps-line)); border-radius: 999px; background: color-mix(in srgb, var(--ps-tone) 10%, var(--ps-surface)); color: var(--ps-tone); font-weight: 650; }
+.ps-health-pill.healthy { --ps-tone: var(--ps-ok); }
+.ps-health-pill.warning { --ps-tone: var(--ps-warn); }
+.ps-health-pill.critical { --ps-tone: var(--ps-danger); }
+.ps-health-pill svg { width: 16px; height: 16px; fill: color-mix(in srgb, currentColor 18%, transparent); }
+.ps-health-pill[aria-expanded="true"] { border-color: var(--ps-tone); }
+.ps-health-place button { white-space: nowrap; }
+.ps-host-health { display: grid; grid-template-columns: minmax(200px, 1.2fr) repeat(4, minmax(0, 1fr)); align-items: center; gap: 18px; padding: 10px 16px; cursor: pointer; transition: background-color var(--ps-fast); }
 .ps-host-health:hover { background: color-mix(in srgb, var(--ps-raised) 40%, var(--ps-surface)); }
 .ps-host-health:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; border-radius: var(--ps-radius-lg); }
 .ps-host-state { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ps-host-state > div { display: grid; align-content: center; gap: 5px; min-width: 0; }
+.ps-host-state > div { display: grid; align-content: center; gap: 2px; min-width: 0; }
 .ps-host-metric { min-width: 0; }
 .ps-host-heading { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--ps-muted); font-size: 12px; }
 .ps-host-state .ps-host-heading { margin: 0; }
@@ -379,20 +376,33 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-host-heading > .ps-health-heart.healthy { display: none; }
 .ps-health-expand { width: 16px; height: 16px; margin-left: auto; transform: rotate(-90deg); transition: transform var(--ps-slow); }
 .ps-health-expand.expanded { transform: rotate(90deg); }
-.ps-health-status { --ps-tone: var(--ps-muted); display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ps-tone); font-size: 17px; line-height: 22px; }
+.ps-health-status { --ps-tone: var(--ps-muted); display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--ps-tone); font-size: 15px; line-height: 20px; }
+.ps-host-state .ps-health-status small { margin: 0; white-space: nowrap; }
 .ps-health-status strong { overflow-wrap: anywhere; }
 .ps-health-heart { --ps-tone: var(--ps-muted); display: inline-flex; align-items: center; color: var(--ps-tone); }
 .ps-health-heart svg { width: 16px; height: 16px; fill: currentColor; stroke: currentColor; stroke-width: 1; }
 :is(.ps-health-status, .ps-health-heart).healthy { --ps-tone: var(--ps-ok); }
 :is(.ps-health-status, .ps-health-heart).warning { --ps-tone: var(--ps-warn); }
 :is(.ps-health-status, .ps-health-heart).critical { --ps-tone: var(--ps-danger); }
-.ps-host-emblem { position: relative; display: grid; flex: none; place-items: center; width: 64px; height: 64px; }
-.ps-host-emblem .ps-host-heart { width: 60px; height: 60px; fill: color-mix(in srgb, currentColor 15%, transparent); stroke: currentColor; stroke-width: 1.5; }
-.ps-host-server-badge { position: absolute; right: -1px; bottom: 2px; display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid var(--ps-line); border-radius: 6px; background: var(--ps-surface); color: var(--ps-ink); }
-.ps-host-server-badge svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.ps-health-refresh { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--ps-muted); cursor: pointer; }
+.ps-health-refresh:hover, .ps-health-refresh:focus-visible { color: var(--ps-ink); background: color-mix(in srgb, currentColor 12%, transparent); }
+.ps-health-refresh svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-health-refresh.is-busy svg { animation: ps-setup-spin 1s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .ps-health-refresh.is-busy svg { animation: none; } }
+.ps-host-emblem { position: relative; display: grid; flex: none; place-items: center; width: 42px; height: 42px; }
+.ps-host-emblem .ps-host-heart { width: 40px; height: 40px; fill: color-mix(in srgb, currentColor 15%, transparent); stroke: currentColor; stroke-width: 1.5; }
+.ps-host-server-badge { position: absolute; right: -3px; bottom: 0; display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid var(--ps-line); border-radius: 5px; background: var(--ps-surface); color: var(--ps-ink); }
+.ps-host-server-badge svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .ps-host-state small, .ps-host-metric > small { display: block; margin-top: 3px; color: var(--ps-muted); font-size: 10px; line-height: 1.3; }
+.ps-host-state small.ps-health-problem { color: var(--ps-warn); }
+.ps-node-summary .ps-health-problem { display: block; margin-top: 6px; color: var(--ps-warn); font-size: 12px; }
 .ps-host-metric > strong { display: block; overflow-wrap: anywhere; color: var(--ps-ink); font-size: 15px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
 .ps-host-metric > .ps-network-value { font-size: 13px; white-space: normal; }
+/* The dock's meters: label and value share one line, the bar sits right under it. */
+.ps-host-health > .ps-host-metric > .ps-host-heading { flex-wrap: wrap; row-gap: 2px; margin-bottom: 0; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > strong { margin-left: auto; color: var(--ps-ink); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > .ps-network-value { flex-basis: 100%; margin-left: 0; font-size: 12px; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > .ps-health-heart { margin-left: 0; }
 .ps-meter { display: block; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--ps-accent) 13%, transparent); }
 .ps-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--ps-accent); opacity: .65; transition: width .65s ease; }
 .ps-health-drawer { --ps-health-details-height: clamp(100px, calc(100dvh - 420px), 320px); max-height: 0; opacity: 0; transition: max-height .3s ease, opacity var(--ps-slow); }
@@ -441,8 +451,10 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-back-overview { align-self: flex-start; }
 .ps-server-dashboard { width: 100%; max-width: 1400px; min-width: 0; margin-inline: auto; }
 .ps-statusbar { position: fixed; top: 10px; left: 50%; z-index: var(--ps-z-sticky, 30); display: flex; align-items: center; gap: 14px; width: min(1400px, calc(100% - 32px)); padding: 8px 10px 8px 16px; border: 1px solid var(--ps-line); border-left: 3px solid var(--ps-accent); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 88%, transparent); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgb(0 0 0 / .18); opacity: 0; pointer-events: none; transform: translate(-50%, -16px); transition: opacity var(--ps-fast), transform var(--ps-slow); }
-/* Full screen width (Customize overview): only the overview drops its centred column; server pages and host mode keep theirs, phones are full width already. */
+/* Full screen width: the overview (Customize overview) and server pages (Customize server page) each have their own switch; host mode keeps its column, phones are full width already. */
 .ps.is-full-width:not(.server-active, .host-mode) :is(.ps-top, .ps-server-stage, .ps-server-stage.is-list) { max-width: none; }
+.ps.server-active.is-server-full-width :is(.ps-top, .ps-server-dashboard) { max-width: none; }
+.ps.server-active.is-server-full-width .ps-statusbar { width: calc(100% - 32px); }
 .ps-statusbar.is-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
 .ps-statusbar-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 700; color: var(--ps-accent); text-overflow: ellipsis; white-space: nowrap; }
 .ps-statusbar-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ps-muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
@@ -475,7 +487,7 @@ button.ps-statusbar-item:hover { color: var(--ps-ink); }
   border-radius: var(--ps-radius-lg);
   background: var(--ps-surface);
 }
-.ps-server-info:has(.ps-info-menu:not([style*="display: none"])) { overflow: visible; }
+.ps-server-info:has(.ps-info-menu:not([style*="display: none"]), .ps-host-pin[aria-expanded="true"]) { overflow: visible; }
 .ps-info-decor { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: calc(var(--ps-radius-lg) - 1px); pointer-events: none; }
 .ps-server-banner { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: .5; filter: blur(6px); pointer-events: none; transform: scale(1.04); mask-image: linear-gradient(to right, transparent 45%, #000 100%); }
 .ps.dark .ps-server-banner { opacity: .55; }
@@ -517,6 +529,8 @@ a.ps-info-modpack:hover > span { text-decoration: underline; text-underline-offs
 .ps-info-power.is-locked { opacity: .45; filter: grayscale(.4); pointer-events: none; }
 .ps-info-menu { top: calc(100% + 8px); width: 230px; }
 .ps-info-menu hr { margin: 4px 0; border: 0; border-top: 1px solid var(--ps-line); }
+.ps-menu-heading { display: block; margin: 6px 10px 2px; }
+.ps-menu-item + .ps-menu-heading { margin-top: 10px; }
 .ps-info-menu .ps-menu-item.is-danger { color: var(--ps-danger); }
 .ps-info-menu .ps-menu-item.is-danger svg { color: var(--ps-danger); }
 .ps-info-menu .ps-menu-item:disabled { opacity: .45; cursor: not-allowed; }
@@ -659,6 +673,58 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 .ps-package strong { font-size: 13px; }
 .ps-package p { display: -webkit-box; margin: 4px 0; overflow: hidden; color: var(--ps-muted); font-size: 12px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .ps-package small { color: var(--ps-muted); font-size: 11px; }
+.ps-packages > .ps-alert { margin-bottom: 14px; }
+.ps-packages-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: start; }
+.ps-packages-add { min-width: 0; }
+.ps-packages-installed { position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-raised); }
+.ps-packages-installed > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.ps-packages-installed .ps-section-title { margin: 0; }
+.ps-installed-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.ps-installed-list > li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 0; border-top: 1px solid var(--ps-line); }
+.ps-installed-list > li:first-child { border-top: 0; }
+.ps-installed-list img { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: contain; }
+.ps-installed-list img.is-placeholder { padding: 4px; background: var(--ps-surface); }
+.ps-installed-list > li > div:first-of-type { flex: 1; min-width: 0; }
+.ps-installed-list strong { display: block; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-installed-list small { display: block; overflow: hidden; color: var(--ps-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-installed-list > li.is-off :is(img, strong) { opacity: .5; }
+.ps-installed-list small.ps-installed-failed { display: flex; align-items: center; gap: 4px; color: var(--ps-warn); }
+.ps-installed-failed svg { width: 12px; height: 12px; flex: none; }
+.ps-installed-list small.ps-installed-reason { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.ps-help-dot { display: inline-grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: transparent; color: var(--ps-accent); cursor: pointer; }
+.ps-help-dot:hover, .ps-help-dot:focus-visible { background: color-mix(in srgb, var(--ps-accent) 14%, transparent); outline: none; }
+.ps-help-dot svg { width: 11px !important; height: 11px !important; }
+.ps-installed-more { position: relative; flex: none; }
+.ps-installed-menu { width: 200px; padding: 4px; }
+.ps-installed-menu .ps-menu-item.is-danger, .ps-installed-menu .ps-menu-item.is-danger svg { color: var(--ps-danger); }
+.ps-installed-menu .ps-menu-item:disabled { opacity: .45; cursor: not-allowed; }
+.ps-folder-link { align-self: flex-start; }
+.ps-package-search .ps-version-input { flex: 0 1 150px; }
+.ps-packages .ps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 14px; }
+.ps-package-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.ps-package-list .ps-package { align-items: flex-start; padding: 12px 14px; }
+.ps-package img.is-placeholder { padding: 8px; background: var(--ps-surface); }
+.ps-package > .ps-btn, .ps-package > .ps-badge { flex: none; align-self: center; }
+.ps-package-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--ps-muted); font-size: 12px; }
+.ps-source { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--ps-radius-pill); background: color-mix(in srgb, var(--ps-source) 14%, transparent); color: color-mix(in srgb, var(--ps-source) 75%, var(--ps-ink)); font-weight: 650; text-decoration: none; --ps-source: var(--ps-muted); }
+.ps-source.is-modrinth { --ps-source: #1bd96a; }
+.ps-source.is-hangar { --ps-source: #3b82f6; }
+.ps-source.is-spigot { --ps-source: #ed8106; }
+.ps-source.is-curseforge { --ps-source: #f16436; }
+.ps-source:hover { text-decoration: underline; }
+.ps-curseforge-own { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 12px; }
+.ps-curseforge-own .ps-link, .ps-package-also .ps-link { padding: 0; border: 0; background: none; color: var(--ps-accent); font: inherit; cursor: pointer; }
+.ps-package-also .ps-link:hover { text-decoration: underline; }
+/* Narrow: what is installed first (short), the search below. */
+@media (max-width: 900px) {
+  .ps-packages-layout { grid-template-columns: minmax(0, 1fr); }
+  .ps-packages-installed { position: static; order: -1; }
+}
+@media (max-width: 600px) {
+  .ps-package-list .ps-package { flex-wrap: wrap; }
+  .ps-package-list .ps-package > div { flex: 1 1 calc(100% - 60px); }
+  .ps-package-list .ps-package > :is(.ps-btn, .ps-badge) { margin-left: 57px; }
+}
 .ps-background-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
 .ps-background-choice { display: flex; flex-direction: column; min-width: 0; padding: 0; overflow: hidden; border: 2px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-surface); color: var(--ps-ink); text-align: left; }
 .ps-background-choice[aria-pressed="true"] { border-color: var(--ps-accent); box-shadow: 0 0 0 1px var(--ps-accent); }
@@ -683,11 +749,15 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps h1 { font-size: 22px; }
   .ps-mobile-menu { display: inline-flex !important; }
   .ps-mobile-label { display: block !important; font-size: 14px; font-weight: 500; }
+  .ps-nav-items > .ps-nav-admin, .ps-nav-items > .ps-nav-view { order: 0; }
+  .ps-nav-heading { display: block; margin: 6px 12px 0; }
   .ps-nav-items { position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--ps-z-dropdown); display: none; flex-direction: column; align-items: stretch; gap: 4px; width: 250px; max-width: calc(100vw - 28px); max-height: calc(100dvh - 100px); padding: 8px; overflow-y: auto; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: var(--ps-shadow-lg); }
   .nav-open .ps-nav-items { display: flex; }
   .ps-nav-items > .ps-btn.is-icon, .ps-nav-items > div > .ps-btn.is-icon { justify-content: flex-start; gap: 12px; width: 100%; padding: 0 12px; }
   .ps-nav-items > div { width: 100%; }
-  .ps-nav-items .ps-dropdown { position: static; width: 100%; margin-top: 4px; box-shadow: none; }
+  .ps-nav-items .ps-dropdown { position: static; width: 100%; max-height: none; margin-top: 4px; overflow: visible; box-shadow: none; }
+  /* Inside the phone menu only the menu itself scrolls; the admin groups stack in one column. */
+  .ps-nav-items .ps-admin-groups { grid-template-columns: minmax(0, 1fr); }
   .ps-notify-count { position: static; margin-left: auto; }
   .ps-account { flex-wrap: wrap; width: 100%; }
   .ps-account .ps-plugin-pages { flex-basis: 100%; }
@@ -701,9 +771,7 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-server-grid.is-compact { --ps-compact-h: 132px; --ps-compact-pad: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .ps-server-grid.is-compact .ps-card-title-row h3 { font-size: 16px; }
   .ps-health-panel { width: 100%; margin: 0; }
-  .ps-host-health { gap: 12px; padding: 12px; }
-  .ps-host-emblem { width: 58px; height: 58px; }
-  .ps-host-emblem .ps-host-heart { width: 54px; height: 54px; }
+  .ps-host-health { gap: 12px; padding: 10px 12px; }
   .ps-health-drawer { --ps-health-details-height: clamp(80px, calc(100dvh - 440px), 320px); }
   .ps-node-health-list, .ps-health-detail-toolbar { padding-inline: 10px; }
   .ps-console-title { height: 48px; padding: 0 12px; }
@@ -715,109 +783,127 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 }
 
 /* Host mode (admins, large hosts) ---------------------------------------------------------------
-   Server buttons per node | colour-coded admin rail (folds to icons) | the selected admin page. */
-.ps-host { display: grid; flex: 1 1 0; grid-template-columns: 290px 220px minmax(0, 1fr); gap: 14px 0; width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; transition: grid-template-columns var(--ps-slow); }
-.ps-host-servers, .ps-host-rail, .ps-host-main { min-height: 0; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+   Straight on the page, no frame around it: a menu on the left (admin pages as a tree, or the servers per
+   node, with health at the bottom) and the open page or server next to it, split by one line. Icons without
+   tiles, underlined tabs. Menu and page each scroll on their own. */
+/* The title and the top navigation line up with the host workspace below them. */
+.ps.host-mode .ps-top { max-width: 1680px; }
+.ps-host { position: relative; display: grid; flex: 1 1 0; grid-template-columns: 252px minmax(0, 1fr); width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; overflow: hidden; }
+.ps-host-menu-toggle, .ps-host-backdrop, .ps-host-menu-close { display: none; }
+.ps-host-side { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--ps-line); }
+/* The menu tabs and the page header form one row: same height, same bottom line. */
+.ps-host { --ps-host-row: 48px; }
+.ps-host-tabs { display: flex; flex: none; align-items: stretch; box-sizing: border-box; height: var(--ps-host-row); border-bottom: 1px solid var(--ps-line); }
+.ps-host-tabs > button:not(.ps-btn) { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 7px; padding: 2px 10px 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ps-muted); font: 600 13px/1 var(--ps-font); cursor: pointer; }
+.ps-host-tabs > button:not(.ps-btn):hover { color: var(--ps-ink); }
+.ps-host-tabs > button[aria-pressed="true"] { border-bottom-color: var(--ps-accent); color: var(--ps-ink); }
+.ps-host-tabs > button svg { width: 16px; height: 16px; }
+.ps-host-tabs small { color: var(--ps-muted); font-size: 12px; font-weight: 600; }
+.ps-host-side-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
 
-.ps-host-servers { display: flex; flex-direction: column; margin-right: 14px; }
-/* The admin menu and the page it opens form one card. */
-.ps-host-rail { border-right: 0; border-radius: var(--ps-radius-lg) 0 0 var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-raised) 55%, var(--ps-surface)); }
-.ps-host-main { border-radius: 0 var(--ps-radius-lg) var(--ps-radius-lg) 0; }
-.ps-host-servers-toggle { display: none; }
-.ps-host-server-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 10px; }
-.ps-host-node + .ps-host-node { margin-top: 16px; }
-.ps-host-node > .ps-label { display: flex; align-items: center; gap: 6px; margin: 0 4px 8px; }
+/* The admin tree: a section, with its pages hung underneath on ↳ lines. */
+.ps-host-group + .ps-host-group { margin-top: 2px; }
+.ps-host-group-head, .ps-host-leaf { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-ink); text-align: left; cursor: pointer; }
+.ps-host-group-head { min-height: 32px; padding: 0 8px; font: 600 13px/1.2 var(--ps-font); }
+.ps-host-leaf { min-height: 28px; padding: 0 9px; font: 550 12.5px/1.2 var(--ps-font); }
+.ps-host-group-head svg { width: 17px; height: 17px; color: var(--ps-tone); }
+.ps-host-leaf svg { width: 15px; height: 15px; color: var(--ps-tone); }
+.ps-host-group-head svg, .ps-host-leaf svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ps-host-group-head span, .ps-host-leaf span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-group-head:hover, .ps-host-leaf:hover { background: var(--ps-raised); }
+.ps-host-group-head[aria-current="page"], .ps-host-leaf[aria-current="page"] { background: color-mix(in srgb, var(--ps-tone) 14%, transparent); }
+.ps-host-branch { display: grid; gap: 1px; margin-left: 16px; padding: 0 0 4px 16px; }
+.ps-host-leaf { position: relative; overflow: visible; }
+.ps-host-leaf::before { content: ""; position: absolute; top: -3px; left: -16px; width: 11px; height: 17px; border-bottom: 1.5px solid var(--ps-line-strong); border-left: 1.5px solid var(--ps-line-strong); border-bottom-left-radius: 7px; }
+.ps-host-leaf:not(:last-child)::after { content: ""; position: absolute; top: 12px; bottom: -4px; left: -16px; border-left: 1.5px solid var(--ps-line-strong); }
+.ps-host-legacy { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 8px; padding: 10px 4px 0; border-top: 1px solid var(--ps-line); }
+.ps-host-legacy .ps-label { width: 100%; margin: 0 4px 4px; }
+.ps-host-legacy button { padding: 5px 6px; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); font: 500 12px/1.2 var(--ps-font); cursor: pointer; }
+.ps-host-legacy button:hover, .ps-host-legacy button[aria-current="page"] { background: var(--ps-raised); color: var(--ps-ink); }
+
+/* Servers per node: one row each, status dot, name in the server colour, version and players. */
+.ps-host-node + .ps-host-node { margin-top: 12px; }
+.ps-host-node > .ps-label { display: flex; align-items: center; gap: 6px; margin: 4px 6px 6px; }
 .ps-host-node > .ps-label svg { width: 13px; height: 13px; }
 .ps-host-node > .ps-label small { margin-left: auto; font-weight: 500; text-transform: none; letter-spacing: 0; }
-.ps-host-server { display: grid; gap: 6px; margin-bottom: 6px; padding: 10px 12px; border: 1px solid var(--ps-line); border-left: 3px solid var(--ps-accent); border-radius: var(--ps-radius); background: var(--ps-raised); color: var(--ps-ink); text-decoration: none; transition: border-color var(--ps-fast), transform var(--ps-fast), background-color var(--ps-fast); }
-.ps-host-server:hover { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 7%, var(--ps-raised)); transform: translateX(2px); }
-.ps-host-server[aria-disabled="true"] { opacity: .55; cursor: default; transform: none; }
-.ps-host-server-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ps-host-server-top strong { flex: 1; min-width: 0; overflow: hidden; color: var(--ps-accent); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.ps-host-server-top .ps-badge { flex: none; min-height: 18px; padding: 1px 7px; font-size: 10px; }
-.ps-host-server-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ps-muted); font-size: 12px; }
-.ps-host-server-meta > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ps-host-players { display: inline-flex; flex: none; align-items: center; gap: 4px; color: var(--ps-ink); font-weight: 600; }
+.ps-host-server { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 2px 10px; padding: 7px 8px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-decoration: none; }
+.ps-host-server:hover { background: var(--ps-raised); }
+.ps-host-server[aria-current="page"] { background: color-mix(in srgb, var(--ps-accent) 13%, transparent); }
+.ps-host-server[aria-disabled="true"] { opacity: .55; cursor: default; }
+.ps-host-server strong { min-width: 0; overflow: hidden; color: var(--ps-accent); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-server small { grid-column: 2; min-width: 0; overflow: hidden; color: var(--ps-muted); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-dot { --ps-tone: var(--ps-muted); flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ps-tone); }
+.ps-host-server > .ps-host-dot { grid-row: 1 / 3; }
+.ps-host-players { display: inline-flex; grid-row: 1 / 3; grid-column: 3; align-items: center; gap: 4px; color: var(--ps-ink); font-size: 12px; font-weight: 600; }
 .ps-host-players svg { width: 13px; height: 13px; }
 
-.ps-host-rail { display: flex; flex-direction: column; gap: 4px; padding: 10px; overflow: hidden; }
-.ps-host-rail-title { margin: 4px 6px 6px; }
-.ps-host-rail-items { display: grid; flex: 1; align-content: start; gap: 4px; min-height: 0; overflow-y: auto; }
-.ps-host-rail-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 4px; border: 1px solid transparent; border-radius: var(--ps-radius); background: transparent; color: var(--ps-ink); font: 600 13px/1.2 var(--ps-font); text-align: left; white-space: nowrap; cursor: pointer; }
-.ps-host-rail-item:hover { background: var(--ps-raised); }
-.ps-host-rail-item[aria-current="page"] { border-color: color-mix(in srgb, var(--ps-accent) 45%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-surface)); }
-.ps-host-head > .ps-host-title .ps-host-rail-icon { --ps-tone: var(--ps-accent); }
-.ps-host-rail-item.is-health { margin-top: auto; border-top-color: var(--ps-line); }
+/* Health strip at the bottom of the menu. */
+.ps-host-health-bar { flex: none; display: grid; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid var(--ps-line); }
+.ps-host-health-bar.is-current { background: color-mix(in srgb, #f87171 7%, transparent); }
+.ps-host-health-open { display: grid; gap: 8px; padding: 0; border: 0; background: none; color: var(--ps-ink); text-align: left; cursor: pointer; }
+.ps-host-health-state { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ps-host-health-state svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ps-host-health-state strong { font-size: 13px; }
+.ps-host-health-state small { margin-left: auto; color: var(--ps-muted); font-size: 11px; }
+.ps-host-health-open:hover strong { text-decoration: underline; }
+.ps-host-health-meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ps-host-health-meters > span { display: grid; gap: 4px; min-width: 0; color: var(--ps-muted); font-size: 11px; white-space: nowrap; }
+.ps-host-health-meters b { color: var(--ps-ink); font-weight: 650; }
+.ps-host-health-meters .ps-meter { height: 4px; }
+.ps-host-health-bar .ps-health-grid { grid-template-columns: repeat(auto-fill, 18px); gap: 6px; }
+.ps-host-health-bar .ps-health-check { width: 18px; height: 18px; border: 0; background: none; }
+.ps-host-health-bar .ps-health-check svg { width: 14px; height: 14px; }
+
+/* The page side: one header line (section and the open page, or the open server) above the frame; the pages
+   themselves are only in the menu tree. */
+.ps-host-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.ps-host-head { display: flex; flex: none; align-items: center; gap: 10px; box-sizing: border-box; min-width: 0; height: var(--ps-host-row); padding: 0 14px; border-bottom: 1px solid var(--ps-line); }
+.ps-host-head h2 { margin: 0; overflow: hidden; font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-head > h2 { flex: none; max-width: 40%; }
+.ps-host-head > small::before { content: "›"; margin-right: 8px; }
+.ps-host-head > small { min-width: 0; overflow: hidden; color: var(--ps-muted); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-head-icon { flex: none; width: 18px; height: 18px; color: var(--ps-tone, var(--ps-accent)); }
+.ps-host-head > .ps-host-dot { width: 9px; height: 9px; }
+.ps-host-server-name { color: var(--ps-accent); }
+.ps-host-head-actions { display: flex; flex: none; gap: 6px; margin-left: auto; }
+.ps-host-frame { flex: 1; min-height: 0; }
+.ps-host-frame iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+.ps-host-frame.is-server { padding: 12px 0 0 12px; }
+/* Used by the Admin tools menu: a section icon in a tinted square. */
 .ps-host-rail-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 18%, transparent); color: var(--ps-tone, var(--ps-accent)); }
 .ps-host-rail-icon svg { width: 17px; height: 17px; }
-.ps-host-rail-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.ps-host-rail .ps-health-grid { grid-template-columns: repeat(4, 26px); justify-content: space-evenly; gap: 8px; padding: 8px 4px 2px; }
 
-.ps-host-main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.ps-host-head { display: grid; flex: none; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px 16px; padding: 12px 14px; border-bottom: 1px solid var(--ps-line); }
-.ps-host-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ps-host-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
-/* Pages of the open section: centred at the top, in the section colour. */
-.ps-host-subtabs { justify-self: center; padding: 4px; }
-.ps-host-subtabs { max-width: 100%; overflow-x: auto; }
-.ps-host-subtabs > button { flex: none; gap: 7px; min-width: max-content; min-height: 36px; padding: 6px 16px; font-size: 14px; white-space: nowrap; }
-.ps-host-subtabs > button svg { width: 16px; height: 16px; }
-.ps-host-subtabs > button[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--ps-accent); color: var(--ps-ink); }
-.ps-host-frame { flex: 1; min-height: 0; }
-.ps-host-serverpane { grid-column: 2 / -1; grid-row: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
-.ps-host.has-server > .ps-host-rail, .ps-host.has-server > .ps-host-main { display: none; }
-.ps-host-serverpane .ps-host-head { grid-template-columns: minmax(0, 1fr) auto; }
-.ps-host-server[aria-current="page"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 12%, var(--ps-raised)); }
+/* Tablets and phones: the page takes the whole frame; the menu opens as a sheet from one button on top. */
+@media (max-width: 760px) {
+  .ps-host { display: flex; flex-direction: column; overflow: visible; }
+  .ps-host-menu-toggle { display: inline-flex; flex: none; justify-content: flex-start; width: 100%; min-height: 44px; margin-bottom: 10px; font-size: 14px; }
+  .ps-host-menu-toggle > span { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+  .ps-host-menu-chevron { flex: none; width: 16px; height: 16px; transform: rotate(90deg); }
+  .ps-host-main { flex: 1 0 auto; height: max(440px, calc(100dvh - 190px)); overflow: hidden; }
+  .ps-host-side { position: fixed; right: 0; bottom: 0; left: 0; z-index: var(--ps-z-modal, 80); max-height: 82dvh; border: 0; border-top: 1px solid var(--ps-line); border-radius: 18px 18px 0 0; background: var(--ps-surface); box-shadow: var(--ps-shadow-modal); transform: translateY(105%); visibility: hidden; transition: transform var(--ps-slow), visibility var(--ps-slow); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .ps-host.menu-open .ps-host-side { transform: none; visibility: visible; }
+  .ps-host-backdrop { display: block; position: fixed; inset: 0; z-index: calc(var(--ps-z-modal, 80) - 1); background: var(--ps-backdrop); }
+  .ps-host-menu-close { display: inline-flex; flex: none; align-self: center; margin: 0 6px; }
+  .ps-host-group-head { min-height: 42px; }
+  .ps-host-leaf { min-height: 40px; }
+  .ps-host-leaf::before { top: 0; height: 21px; }
+  .ps-host-frame.is-server { padding: 0; }
+  .ps-host-server { min-height: 48px; }
+  .ps-host-head { padding: 0; }
+  /* The menu button already names the open page. */
+  .ps-host-head.is-page { display: none !important; }
+    }
+/* Low screens (a phone on its side) scroll the page as a whole, so the host block sizes itself instead of sharing what is left of the screen (nothing). */
+@media (max-height: 500px) { .ps-host { flex: none; } }
+@media (max-height: 500px) and (min-width: 761px) { .ps-host { height: max(260px, calc(100dvh - 16px)); } }
+@media (max-height: 500px) and (max-width: 760px) { .ps-host-main { height: max(260px, calc(100dvh - 16px)); } }
+@media (prefers-reduced-motion: reduce) { .ps-host-side { transition: none; } }
+
 .ps.is-embedded .ps-top { display: none; }
 .ps.is-embedded .ps-main { padding: 0; }
 .ps.is-embedded .ps-server-dashboard { max-width: none; }
 body:has(.ps.is-embedded) :is(.fi-footer, [data-ps-footer], [data-ps-footer-wrapper]) { display: none !important; }
 body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: none !important; padding-inline: 0 !important; }
-.ps-host-frame iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--ps-surface); }
-@media (prefers-reduced-motion: reduce) { .ps-host, .ps-host-server { transition: none; } }
-@media (max-width: 1100px) {
-  .ps-host { grid-template-columns: 58px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 14px 0; }
-  .ps-host-servers { grid-column: 1 / -1; margin-right: 0; }
-  .ps-host-head { grid-template-columns: 1fr; }
-  .ps-host-subtabs { justify-self: start; }
-  .ps-host-servers-toggle { display: inline-flex; margin: 8px; }
-  .ps-host-server-list { display: none; max-height: 45dvh; }
-  .ps-host-servers.is-open .ps-host-server-list { display: block; }
-  .ps-host .ps-host-rail-label, .ps-host-rail-title { display: none; }
-  .ps-host-rail { padding: 8px; }
-  .ps-host-rail .ps-health-grid { justify-content: center; padding: 6px 0 0; }
-}
-
-/* Host mode on phones: one column. A server switcher on top (servers grouped per node, the open server's
-   name on the button), the admin sections as a row of labelled chips that swipes sideways, and the selected
-   page or server below at full width. */
-.ps-host-switch-chevron { display: none; }
-@media (max-width: 600px) {
-  .ps-host { display: flex; flex-direction: column; gap: 10px; }
-  .ps-host-servers { position: relative; z-index: 3; flex: none; border-radius: var(--ps-radius-lg); }
-  .ps-host-servers-toggle { justify-content: space-between; width: calc(100% - 16px); min-height: 44px; font-size: 14px; }
-  .ps-host-servers-toggle > span { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-  .ps-host-servers-toggle > .ps-host-switch-chevron { display: block; flex: none; width: 16px; height: 16px; transform: rotate(90deg); transition: transform var(--ps-fast); }
-  .ps-host-servers.is-open .ps-host-switch-chevron { transform: rotate(-90deg); }
-  .ps-host-servers.is-open .ps-host-server-list { position: absolute; top: calc(100% + 6px); right: 0; left: 0; max-height: min(70dvh, 560px); border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: var(--ps-shadow-lg); }
-  .ps-host-server { min-height: 56px; }
-  .ps-host-server:hover { transform: none; }
-  .ps-host-rail { flex: none; flex-direction: row; align-items: center; gap: 6px; padding: 6px; overflow-x: auto; border-right: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); scrollbar-width: none; overscroll-behavior-x: contain; }
-  .ps-host-rail::-webkit-scrollbar { display: none; }
-  .ps-host-rail-items { display: flex; flex: none; gap: 6px; overflow: visible; }
-  .ps-host .ps-host-rail-label { display: inline; }
-  .ps-host-rail-item { flex: none; width: auto; min-height: 44px; padding: 4px 12px 4px 6px; }
-  .ps-host-rail-item.is-health { margin: 0; }
-  .ps-host-rail .ps-health-grid { display: none; }
-  .ps-host-main, .ps-host-serverpane { flex: 1 0 auto; height: max(440px, calc(100dvh - 190px)); border-radius: var(--ps-radius-lg); }
-  .ps-host-head { padding: 10px 12px; }
-  .ps-host-head > .ps-host-title { display: none; }
-  .ps-host-head:has(.ps-host-subtabs[style*="none"]) { display: none !important; }
-  .ps-host-subtabs { justify-self: stretch; }
-  .ps-host-subtabs > button { min-height: 40px; padding: 6px 12px; }
-  .ps-host .ps-host-pane-actions { position: static; flex: none; justify-content: flex-end; padding: 6px 8px; border-bottom: 1px solid var(--ps-line); }
-  .ps-host .ps-host-pane-actions .ps-btn { width: 40px; height: 40px; box-shadow: none; backdrop-filter: none; }
-}
 
 /* Buttons from other plugins: a row under the overview toolbar, small buttons in the console title, and the
    transparent layer a button runs in (visible only while the plugin's own dialog is open). */
@@ -833,17 +919,87 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
 .ps-plugin-action-layer iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
 @media (max-width: 600px) { .ps-console-plugin-action > span:not(.ps-plugin-action-icon) { display: none; } }
 
-/* Server still being installed by Pelican. */
-.ps-setup-state { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--ps-accent) 35%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); }
-.ps-setup-state > div { display: grid; gap: 4px; min-width: 0; }
-.ps-setup-state strong { font-size: 16px; }
-.ps-setup-state small { color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
-.ps-setup-state > svg { flex: none; width: 26px; height: 26px; fill: none; stroke: var(--ps-danger); stroke-width: 1.8; }
-.ps-setup-state.is-install_failed, .ps-setup-state.is-reinstall_failed { border-color: color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-danger) 7%, var(--ps-surface)); }
-.ps-setup-spinner { flex: none; width: 30px; height: 30px; border: 3px solid color-mix(in srgb, var(--ps-accent) 25%, transparent); border-top-color: var(--ps-accent); border-radius: 50%; animation: ps-setup-spin .9s linear infinite; }
+/* Server still being installed by Pelican: only the steps and the installation log, nothing else to click. */
+.ps-server-dashboard.is-installing :is(.ps-statusbar, .ps-pending, .ps-server-info, .ps-server-stats, .ps-plugin-widgets, .ps-widget-grid, .ps-phone-sections, .ps-quick-commands, .ps-command, .ps-console-grow, .ps-console-window, .ps-console-plugin-action) { display: none !important; }
+.ps-server-dashboard.is-installing .ps-server-workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main"; }
+/* Change resources after a failed or stopped installation: the workspace opens above the small console. */
+.ps-server-dashboard.is-installing .ps-server-workspace.has-dock { grid-template-areas: "main" "mini"; }
+.ps-install { display: grid; gap: 18px; margin-bottom: 14px; padding: 20px 22px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+.ps-install-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.ps-install-icon { display: grid; flex: none; place-items: center; width: 44px; height: 44px; overflow: hidden; border: 1px solid var(--ps-line); border-radius: 12px; background: var(--ps-raised); color: var(--ps-muted); }
+.ps-install-icon img { width: 100%; height: 100%; object-fit: cover; }
+.ps-install-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ps-install-title { flex: 1; min-width: 0; }
+.ps-install-title h2 { margin: 0; font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.ps-install-title p { margin: 3px 0 0; color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
+.ps-install-time { display: grid; flex: none; justify-items: end; gap: 1px; color: var(--ps-muted); }
+.ps-install-time strong { color: var(--ps-ink); font: 600 15px var(--ps-mono); font-variant-numeric: tabular-nums; }
+.ps-install-time small { font-size: 12px; }
+.ps-install-actions { position: relative; display: flex; flex: none; gap: 8px; }
+.ps-install-actions .ps-btn.is-on { border-color: color-mix(in srgb, var(--ps-ok) 45%, var(--ps-line)); color: var(--ps-ok); }
+.ps-install-menu { min-width: 230px; }
+.ps-install-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; }
+.ps-install-step { position: relative; display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding-right: 12px; }
+.ps-install-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; right: 12px; left: 38px; height: 2px; border-radius: 2px; background: var(--ps-line); }
+.ps-install-step.is-done:not(:last-child)::after { background: var(--ps-accent); }
+.ps-install-step-text { position: relative; z-index: 1; display: grid; gap: 2px; min-width: 0; margin-top: 36px; margin-left: -38px; }
+.ps-install-step-text strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.ps-install-step-text small { color: var(--ps-muted); font-size: 12px; line-height: 1.35; }
+.ps-install-step.is-todo .ps-install-step-text strong { color: var(--ps-muted); font-weight: 500; }
+.ps-install-mark { position: relative; z-index: 1; display: grid; flex: none; place-items: center; width: 28px; height: 28px; border: 2px solid var(--ps-line); border-radius: 50%; background: var(--ps-surface); color: var(--ps-muted); }
+.ps-install-mark svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ps-install-mark b { font: 600 12px var(--ps-mono); }
+.ps-install-mark i { width: 100%; height: 100%; margin: -2px; border: 2px solid color-mix(in srgb, var(--ps-accent) 25%, transparent); border-top-color: var(--ps-accent); border-radius: 50%; box-sizing: content-box; animation: ps-setup-spin .9s linear infinite; }
+.ps-install-step.is-done .ps-install-mark { border-color: var(--ps-accent); background: var(--ps-accent); color: var(--ps-on-accent); }
+.ps-install-step.is-active .ps-install-mark { border-color: transparent; }
+.ps-install-step.is-failed .ps-install-mark { border-color: var(--ps-danger); background: var(--ps-danger); color: #fff; }
+.ps-install-step.is-failed small { color: var(--ps-danger); }
+.ps-install:is(.is-install_failed, .is-reinstall_failed) { border-color: color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); }
 @keyframes ps-setup-spin { to { transform: rotate(360deg); } }
-.ps-settings-column.is-locked { opacity: .45; filter: grayscale(.4); pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .ps-setup-spinner { animation-duration: 3s; } }
+@media (prefers-reduced-motion: reduce) { .ps-install-mark i { animation-duration: 3s; } }
+@media (max-width: 760px) {
+  .ps-install { gap: 14px; padding: 16px; }
+  .ps-install-head { flex-wrap: wrap; }
+  .ps-install-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .ps-install-title { flex-basis: calc(100% - 52px); }
+  .ps-install-title h2 { font-size: 16px; }
+  .ps-install-time { display: flex; flex-basis: 100%; align-items: baseline; gap: 8px; order: 1; }
+  .ps-install-actions { order: 2; }
+  .ps-install-actions { flex-basis: 100%; }
+  .ps-install-actions { flex-wrap: wrap; }
+  .ps-install-actions .ps-btn:not(.is-icon) { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .ps-install-actions .ps-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Phone: the steps stack, so every label stays readable. */
+  .ps-install-steps { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .ps-install-step { align-items: center; padding: 0 0 12px; }
+  .ps-install-step:not(:last-child)::after { top: 30px; right: auto; bottom: 2px; left: 13px; width: 2px; height: auto; }
+  .ps-install-step-text { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 8px; margin: 0; }
+  .ps-install-step-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (max-width: 420px) { .ps-install-long { display: none; } }
+@media (max-width: 600px) { .ps-server-dashboard.is-installing .ps-console-state { display: none; } }
+
+/* After an installation finished on this page: the one next step. */
+.ps-ready { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 14px 16px 14px 18px; border: 1px solid color-mix(in srgb, var(--ps-ok) 40%, var(--ps-line)); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-ok) 8%, var(--ps-surface)); }
+.ps-ready > div { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.ps-ready strong { font-size: 16px; font-weight: 650; }
+.ps-ready small { color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
+.ps-ready-mark { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ps-ok); color: #fff; }
+.ps-ready-mark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ps-ready-start { min-height: 42px; padding-inline: 18px; font-size: 15px; }
+.ps-ready small a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.ps-ready.is-eula { border-color: color-mix(in srgb, var(--ps-accent) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-surface)); }
+.ps-ready.is-eula .ps-ready-mark { background: var(--ps-accent); color: var(--ps-on-accent); }
+@media (max-width: 600px) {
+  .ps-ready { flex-wrap: wrap; }
+  .ps-ready > div { flex-basis: calc(100% - 50px); }
+  .ps-ready > .ps-btn:not(.is-icon) { order: 3; flex: 1 1 auto; min-width: 0; justify-content: center; padding-inline: 10px; font-size: 14px; }
+  .ps-ready > .ps-btn:not(.is-icon) > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ps-ready { position: relative; padding-right: 48px; }
+  .ps-ready > .ps-btn:not(.is-icon) > svg { display: none; }
+  .ps-ready > .ps-btn.is-icon { position: absolute; top: 8px; right: 8px; }
+}
 .ps-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Server page layout: the section menu on the left and one block next to it (the console, or the open
@@ -878,12 +1034,16 @@ body:has(.ps.is-embedded) :is(.fi-main, .fi-page, .fi-main-ctn) { max-width: non
 .ps-server-workspace.has-dock .ps-console-dot.connected::after { inset: -2px; }
 .ps-server-workspace.has-dock .ps-console-peek { grid-area: peek; }
 .ps-server-workspace.has-dock .ps-console-full { grid-area: full; }
+.ps-server-workspace.has-dock .ps-console.can-explain { grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-areas: "dot cmd explain peek full"; }
+.ps-server-workspace.has-dock .ps-console-explain { grid-area: explain; }
+.ps-server-workspace.has-dock .ps-console-explain span { display: none; }
 .ps-server-workspace.has-dock .ps-console-output { display: none; }
 .ps-server-workspace.has-dock .ps-quick-commands { display: none; }
 .ps-server-workspace.has-dock .ps-command { grid-area: cmd; min-height: 0; padding: 0; border: 0; background: none; }
 .ps-server-workspace.has-dock .ps-command input { height: 34px; font-size: 12.5px; }
 .ps-server-workspace.has-dock .ps-command button { width: 34px; height: 34px; }
 .ps-server-workspace.has-dock.is-peek .ps-console { grid-template-rows: 200px 48px; grid-template-areas: "log log log log" "dot cmd peek full"; }
+.ps-server-workspace.has-dock.is-peek .ps-console.can-explain { grid-template-areas: "log log log log log" "dot cmd explain peek full"; }
 .ps-server-workspace.has-dock.is-peek .ps-console-output { display: block; grid-area: log; height: 200px; margin: 0 -8px 0 -14px; padding: 8px 14px; overflow-y: auto; white-space: pre-wrap; font-size: 11px; line-height: 1.6; border-bottom: 1px solid var(--ps-console-line); }
 /* Bigger console: the menu steps aside and the console takes the whole block. */
 .ps-server-workspace.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main"; }
@@ -936,17 +1096,6 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-banner-swatch { display: block; width: 100%; height: 56px; margin-bottom: 10px; border-radius: 10px; background-color: var(--ps-surface); }
 .ps-background-color { cursor: pointer; }
 
-/* Create buttons: icon-only, in the toolbar next to the game filters; the label slides out on hover. */
-.ps-create-card { --ps-create-icon: 48px; --ps-create-small: 48px; gap: 0; width: auto; padding: 4px; border: 0; border-radius: var(--ps-radius); background: none; box-shadow: none; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) { gap: 10px; background: none; }
-.ps-create-card .ps-create-plus { overflow: visible; border: 2px dashed color-mix(in srgb, var(--ps-accent) 55%, transparent); background: color-mix(in srgb, var(--ps-accent) 8%, var(--ps-raised)); }
-.ps-create-card .ps-create-plus > svg { width: 58%; height: 58%; }
-.ps-create-card .ps-create-add { right: -6px; bottom: -6px; width: 22px; height: 22px; border: 3px solid var(--ps-bg, var(--ps-surface)); background: var(--ps-accent); color: #fff; transition: transform var(--ps-slow); }
-.ps-create-card .ps-create-add svg { width: 12px; height: 12px; stroke-width: 3; }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-plus { border-style: solid; border-color: var(--ps-accent); }
-.ps-create-card:is(:hover, :focus-visible):not(:disabled) .ps-create-add { transform: rotate(90deg) scale(1.1); }
-.ps-create-card h3 { font-size: 13px; line-height: 1.2; }
-@media (hover: none) { .ps-create-card h3 { max-width: 0; opacity: 0; } }
 
 /* Cards in the style of the server page: rounder corners, a softer accent border that brightens on hover,
    and icons in rounded tinted squares. */
@@ -954,38 +1103,13 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-server-card:not(.locked):hover { border-color: var(--ps-accent); }
 .ps-card-icon, .ps-card-egg-icon { border-radius: 14px; }
 .ps-server-grid.is-list .ps-server-card { border-radius: 16px; }
-.ps-host-servers, .ps-host-serverpane { border-radius: 20px; }
-.ps-host-rail { border-radius: 20px 0 0 20px; }
-.ps-host-main { border-radius: 0 20px 20px 0; }
-.ps-host-server { border: 1px solid color-mix(in srgb, var(--ps-accent) 30%, var(--ps-line)); border-left-width: 1px; border-radius: 14px; background: color-mix(in srgb, var(--ps-accent) 5%, var(--ps-raised)); }
-.ps-host-server:hover { transform: none; border-color: var(--ps-accent); }
-.ps-host-server[aria-current="page"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 14%, var(--ps-raised)); }
 /* Inside the host mode pane the pane header already names the server: no floating status bar there,
    and the section menu sticks to the top of the frame. */
 .ps.is-embedded .ps-statusbar { display: none; }
 .ps.is-embedded .ps-server-workspace .ps-widget-grid { top: 12px; }
 /* Docked sections are part of the page: scrolling past their content scrolls the page on. */
 .ps-dock :is(.ps-modal-layer, .ps-modal-body, .ps-tab-panels) { overscroll-behavior: auto; }
-/* Host mode server pane: the page fills the whole pane; open/close float at the top right. */
-.ps-host-serverpane { position: relative; }
-.ps-host-pane-actions { position: absolute; top: 9px; right: 12px; z-index: 2; display: flex; gap: 6px; }
-.ps-host-pane-actions .ps-btn { background: color-mix(in srgb, var(--ps-surface) 80%, transparent); backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgb(0 0 0 / .2); }
-.ps-host-serverpane .ps-host-frame { border-radius: inherit; overflow: hidden; }
-/* The open server points at the pane; clicking the arrow closes it. */
-.ps-host-server { position: relative; }
-.ps-host-server-arrow { position: absolute; top: 50%; right: -1px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 9px 0 0 9px; background: var(--ps-accent); color: var(--ps-on-accent, #111); cursor: pointer; transform: translateY(-50%); animation: ps-arrow-nudge 1.6s ease-in-out infinite; }
-.ps-host-server-arrow svg { width: 15px; height: 15px; stroke-width: 2.6; }
-.ps-host-server-arrow:hover { animation: none; filter: brightness(1.1); }
-.ps-host-server[aria-current="page"] .ps-host-server-top, .ps-host-server[aria-current="page"] .ps-host-server-meta { padding-right: 26px; }
-@keyframes ps-arrow-nudge { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(3px, -50%); } }
-@media (prefers-reduced-motion: reduce) { .ps-host-server-arrow { animation: none; } }
 
-/* Create buttons: a little bigger, a larger plus, and the shine only on the icon, never on the label. */
-.ps-create-card { --ps-create-icon: 56px; --ps-create-small: 56px; }
-.ps-create-card .ps-create-add { right: -7px; bottom: -7px; width: 28px; height: 28px; }
-.ps-create-card .ps-create-add svg { width: 16px; height: 16px; stroke-width: 3.2; }
-.ps-create-card h3 strong { background: none; color: var(--ps-ink); -webkit-text-fill-color: currentColor; }
-.ps-create-card h3 { font-size: 14px; }
 /* Phones: a status bar whose name shrinks before the buttons. */
 @media (max-width: 700px) {
   .ps-statusbar { gap: 8px; padding: 6px 6px 6px 12px; }
@@ -1007,6 +1131,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-server-scroll { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
 /* A clear gap between the (fading) server list and the health tile, so no card peeks past its corners. */
 .ps-overview > .ps-health-panel { margin-top: 10px; }
+.ps-overview > .ps-health-panel.is-popover { margin: 0; }
 .ps-server-scroll { mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent calc(100% - 4px)); }
 /* Customize overview: each option has a name, a one-line explanation and its control on the right. */
 .ps-overview-appearance-menu { width: 400px; padding: 16px; border-radius: 18px; }
@@ -1022,6 +1147,16 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-customize .ps-segmented > button { min-height: 28px; padding: 4px 10px; border-radius: 8px; font-size: 12px; }
 .ps-customize-head { margin: 10px 0 0; padding-top: 12px; border-top: 1px solid var(--ps-line); color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .ps-customize-head + .ps-customize-switch { border-top: 0; }
+.ps-customize-head.is-first { margin-top: 0; padding-top: 0; border-top: 0; }
+.ps-customize-head + .ps-customize-row { border-top: 0; }
+.ps-customize-head.is-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding-right: 0; padding-left: 0; padding-bottom: 0; border-right: 0; border-bottom: 0; border-left: 0; background: none; cursor: pointer; text-align: left; }
+.ps-customize-head.is-toggle:hover, .ps-customize-head.is-toggle:focus-visible { color: var(--ps-ink); outline: none; }
+.ps-customize-head.is-toggle:focus-visible span { text-decoration: underline; }
+.ps-customize-chevron { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; transition: transform .15s; }
+.ps-customize-head.is-toggle[aria-expanded="true"] .ps-customize-chevron { transform: rotate(90deg); }
+.ps-customize-section { display: grid; gap: 2px; }
+.ps-customize-section > :first-child { border-top: 0; }
+.ps-customize-sub { margin: 8px 0 0; color: var(--ps-muted); font-size: 12px; font-weight: 600; }
 .ps-customize-switch { cursor: pointer; border-radius: 0; }
 .ps-customize-switch:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: 2px; border-radius: 6px; }
 .ps-customize-switch .ps-switch { flex: none; }
@@ -1061,11 +1196,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
    sits on the wrapper because the menu itself scrolls (and would clip it). */
 :is(.ps-notify, .ps-overview-appearance):has(> .ps-dropdown.is-end:not([style*="display: none"]))::after { content: ""; position: absolute; top: calc(100% + 2px); right: 19px; z-index: calc(var(--ps-z-dropdown) + 1); width: 12px; height: 12px; border-top: 1px solid var(--ps-line); border-left: 1px solid var(--ps-line); background: var(--ps-surface); transform: rotate(45deg); pointer-events: none; }
 .ps-theme-option[aria-pressed="true"] { border-color: var(--ps-accent); color: var(--ps-accent); }
-/* The server page fills the pane edge to edge: the pane has no frame of its own, the page's cards form its edges. */
-.ps-host-serverpane { border: 0; background: none; border-radius: 0; }
-.ps-host-serverpane .ps-host-frame iframe { background: transparent; }
 .ps.is-embedded .ps-server-info { margin-bottom: 14px; }
-.ps-host-pane-actions { top: 12px; right: 14px; }
 .ps-widget-group { margin: 10px 8px 2px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 @media (max-width: 960px) { .ps-widget-group { display: none; } }
 
@@ -1085,7 +1216,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 /* Phone layout (overview). The page scrolls as a whole instead of a server list inside a fixed-height
    dock, filters share one swipeable row, cards become compact rows with one large power button, host
    health is a one-line summary and a tab bar keeps Servers, New and Menu within thumb reach. */
-.ps-tabbar, .ps-health-phone-summary { display: none; }
+/* The CPU/RAM line only stands in for the meters on a phone; on wider screens the meters show it already. */
+.ps-tabbar, .ps-host-state .ps-health-phone-summary { display: none; }
 @media (max-width: 600px) {
   body:has(.ps:not(.server-active, .host-mode)), body:has(.ps:not(.server-active, .host-mode)) :is(.fi-layout, .fi-main-ctn) { height: auto; overflow: visible; }
   body:has(.ps:not(.server-active, .host-mode)) :is(.fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content), .ps:not(.server-active, .host-mode), .ps:not(.server-active, .host-mode) .ps-main { flex: 1 0 auto; min-height: auto; overflow: visible; }
@@ -1097,13 +1229,17 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   /* One swipeable filter row; creating moves to the tab bar. */
   .ps .ps-overview-toolbar { flex-wrap: nowrap; justify-content: flex-start; gap: 8px; margin: 0 -14px 12px; padding: 2px 14px 4px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
   .ps .ps-overview-toolbar::-webkit-scrollbar { display: none; }
-  .ps .ps-overview-toolbar > .ps-create-tiles, .ps .ps-node-search { display: none !important; }
-  .ps .ps-overview-toolbar > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
-  .ps .ps-overview-toolbar > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
+  .ps .ps-overview-toolbar > .ps-create-buttons, .ps .ps-top-overview .ps-create-button, .ps .ps-node-search { display: none !important; }
+  .ps .ps-overview-filters { display: contents; }
+  .ps .ps-overview-filters > :is(.ps-game-filters, .ps-node-filters, .ps-owner-filters) { flex: none; flex-wrap: nowrap; margin: 0; order: 0; }
+  .ps .ps-overview-filters > :is(.ps-node-filters, .ps-owner-filters) { padding-left: 8px; border-left: 1px solid var(--ps-line); }
   .ps .ps-overview-toolbar .ps-chip { min-height: 40px; padding-inline: 14px; white-space: nowrap; }
 
   /* Host health: one summary line above the servers; tapping still opens the node details. */
   .ps .ps-overview > .ps-health-panel { order: -1; margin: 0 0 14px; box-shadow: none; }
+  /* At the bottom: after the servers, at the end of the page. In the top bar: a dropdown over the filter row. */
+  .ps .ps-overview > .ps-health-panel:not(.is-above, .is-popover) { order: 1; margin: 14px 0 0; }
+  .ps .ps-overview > .ps-health-panel.is-popover { margin: 0; box-shadow: 0 16px 40px rgb(0 0 0 / .28); }
   .ps .ps-host-health { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; }
   .ps .ps-host-health > .ps-host-metric, .ps .ps-host-state small:not(.ps-health-phone-summary), .ps .ps-host-server-badge, .ps .ps-host-state .ps-host-heading h3 { display: none; }
   .ps .ps-host-state { flex: 1; }
@@ -1115,6 +1251,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-host-emblem .ps-host-heart { width: 24px; height: 24px; }
   .ps .ps-health-status { font-size: 14px; line-height: 20px; }
   .ps .ps-health-phone-summary { display: block; margin: 0; color: var(--ps-muted); font-size: 12px; }
+  /* The line has no room for refresh: it shows once the details are open, where the per-node numbers take over from the summary. */
+  .ps .ps-health-panel:not(.expanded) .ps-health-refresh, .ps .ps-health-panel.expanded .ps-health-phone-summary { display: none; }
   .ps .ps-health-drawer, .ps .ps-health-drawer > div, .ps .ps-node-health-list { --ps-health-details-height: none; max-height: none; }
   .ps .ps-health-panel:not(.expanded) .ps-health-drawer { max-height: 0; }
   .ps .ps-node-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
@@ -1248,6 +1386,9 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-main { padding-top: 16px; }
   /* Landscape phone: a one-line header with icon buttons, the menu as a narrow icon column. */
   .ps .ps-top { margin-bottom: 10px; }
+  /* Room for the Customize button on server pages: the avatar alone, so the panel name keeps one line. */
+  .ps.server-active .ps-account-username { display: none; }
+  .ps.server-active .ps-account-button { padding-right: 4px; }
   .ps .ps-server-info { grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: "icons content power"; gap: 12px; margin-bottom: 10px; padding: 10px 14px; }
   .ps .ps-info-icon { width: 36px; height: 36px; border-radius: 10px; }
   .ps .ps-software-icon.is-badge { display: none; }
@@ -1264,12 +1405,35 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps .ps-server-workspace .ps-widget strong { display: none; }
   .ps-modal-layer { --ps-modal-gap: 8px; }
 }
-@media (max-height: 500px) and (max-width: 1100px) {
-  .ps-host { flex: none; grid-template-rows: auto max(260px, calc(100dvh - 16px)); }
-}
 
-/* Announcement bars above the overview (Admin tools → Announcements and the Panel's update notices). */
-.ps-announcement-bars { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
+/* Announcements above the overview and server pages (Admin tools → Announcements and the Panel's update notices).
+   Pinned while they are live; the pin button (shown pressed) unpins one, the bell pins it again. */
+.ps-announcements-pinned { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
+.ps-server-dashboard > .ps-announcements-pinned { margin-bottom: 14px; }
+/* Host mode folds the pinned bars into chips on the workspace's top row (a chip opens its bar); pages inside its frame leave them out. */
+.is-embedded .ps-announcements-pinned { display: none !important; }
+.ps-host-main { position: relative; }
+.ps-host-pins { position: absolute; top: 0; right: 58px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 6px; max-width: 46%; height: var(--ps-host-row); }
+.ps-host-pin { --ps-tone: var(--ps-info); display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 220px; height: 28px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--ps-tone) 35%, var(--ps-line)); border-radius: 999px; background: color-mix(in srgb, var(--ps-tone) 10%, var(--ps-surface)); color: var(--ps-ink); font: 600 12px/1 var(--ps-font); cursor: pointer; }
+.ps-host-pin.is-ok { --ps-tone: var(--ps-ok); } .ps-host-pin.is-warn { --ps-tone: var(--ps-warn); } .ps-host-pin.is-danger { --ps-tone: var(--ps-danger); }
+.ps-host-pin svg { flex: none; width: 14px; height: 14px; color: var(--ps-tone); }
+.ps-host-pin span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-host-pin:is(:hover, :focus-visible, [aria-expanded="true"]) { background: color-mix(in srgb, var(--ps-tone) 18%, var(--ps-surface)); }
+.ps-host-pin-open { top: calc(100% - 4px); right: 0; width: min(520px, calc(100vw - 32px)); padding: 0; border: 0; background: none; box-shadow: none; overflow: visible; }
+.ps-host-pin-open .ps-announcement-bar { box-shadow: var(--ps-shadow-lg); }
+@media (max-width: 900px) { .ps-host-pins { right: 12px; max-width: 60%; } .ps-host-pin { max-width: 140px; } }
+.ps-pins-low { display: none; }
+@media (max-height: 500px) {
+  .ps-server-dashboard > .ps-announcements-pinned { display: none !important; }
+  .ps .ps-server-info:has(.ps-pins-low .ps-host-pin) { grid-template-columns: 36px minmax(0, 1fr) auto auto; grid-template-areas: "icons content pins power"; }
+  .ps-pins-low:has(.ps-host-pin) { display: block; }
+  /* Round icon chips (the title shows on hover and when opened), so the server name keeps its room. */
+  .ps-pins-low { position: relative; grid-area: pins; align-self: center; }
+  .ps-pins-low .ps-host-pins { position: static; max-width: none; height: auto; }
+  .ps-pins-low .ps-host-pin { justify-content: center; width: 32px; height: 32px; padding: 0; }
+  .ps-pins-low .ps-host-pin span { display: none; }
+  .ps-pins-low .ps-host-pin-open { top: calc(100% + 8px); right: 0; }
+}
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
 .ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
 .ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
@@ -1277,18 +1441,23 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-announcement-copy span { white-space: pre-line; }
 .ps-announcement-copy small { display: block; margin-top: 1px; }
 .ps-announcement-bar .ps-btn { flex: none; }
+.ps-announcement-unpin { border-color: color-mix(in srgb, var(--ps-tone) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-tone) 18%, var(--ps-surface)); color: var(--ps-tone); }
+.ps-announcement-unpin:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ps-tone) 55%, var(--ps-line)); background: color-mix(in srgb, var(--ps-tone) 26%, var(--ps-surface)); }
 @media (max-width: 600px) {
   .ps-announcement-bar { position: relative; flex-wrap: wrap; padding-right: 44px; }
   .ps-announcement-copy { flex-basis: calc(100% - 40px); }
   .ps-announcement-copy strong { display: block; margin: 0; }
   .ps-announcement-action { margin-left: 32px; }
-  .ps-announcement-hide { position: absolute; top: 6px; right: 6px; }
+  .ps-announcement-unpin { position: absolute; top: 6px; right: 6px; }
 }
 
 /* App notifications: settings popup and the offer under the bell. */
 .ps-push { display: grid; gap: 4px; }
 .ps-push .ps-label { display: block; margin: 14px 0 2px; }
 .ps-push .ps-help, .ps-push .ps-error { margin: 0 0 8px; }
+.ps-push .ps-push-scheduler { margin: 0 0 4px; }
+.ps-push-scheduler code { display: block; margin-top: 6px; overflow-wrap: anywhere; font-size: 12px; }
+.ps-push-note { display: block; margin: 6px 0 0; color: var(--ps-muted); font-size: 12px; }
 .ps-push .ps-customize-switch:disabled { opacity: .55; cursor: default; }
 .ps-push-offer { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 8px 6px 8px 12px; border: 1px dashed var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-raised); font-size: 12.5px; }
 .ps-push-offer > svg { flex: none; width: 18px; height: 18px; color: var(--ps-accent); }
@@ -1326,3 +1495,34 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
   .ps-tab-plus.is-pumpkin .ps-hw-tab { width: 46px; height: 34px; }
 }
 @media (prefers-reduced-motion: reduce) { .ps-hw-face { animation: none; } .ps-hw-bat { display: none; } }
+
+/* Explain this error: a compact popup that grows with the answer. */
+.ps-modal.ps-explain { --ps-modal-w: 620px; height: auto; max-height: calc(100dvh - 2 * var(--ps-modal-gap)); }
+.ps-explain .ps-modal-body { scrollbar-gutter: auto; }
+.ps-explain-error { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-danger) 35%, var(--ps-line)); border-radius: var(--ps-radius); background: color-mix(in srgb, var(--ps-danger) 8%, var(--ps-surface)); }
+.ps-explain-error svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--ps-danger); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-error p { margin: 0; }
+.ps-explain-answer { display: grid; gap: 18px; }
+.ps-explain-verdict { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-warn) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--ps-warn) 8%, transparent); }
+.ps-explain-answer.is-fine .ps-explain-verdict { border-color: color-mix(in srgb, var(--ps-ok) 35%, transparent); background: color-mix(in srgb, var(--ps-ok) 8%, transparent); }
+.ps-explain-verdict svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-answer.is-fine .ps-explain-verdict svg { color: var(--ps-ok); }
+.ps-explain-verdict strong { display: block; font-size: 15px; line-height: 1.5; }
+.ps-explain-verdict p { margin: 2px 0 0; color: var(--ps-muted); overflow-wrap: anywhere; }
+.ps-explain-issue { border: 1px solid var(--ps-line); border-radius: 10px; }
+.ps-explain-issue + .ps-explain-issue { margin-top: 8px; }
+.ps-explain-issue summary { padding: 10px 12px; font-weight: 600; cursor: pointer; }
+.ps-explain-issue[open] summary { border-bottom: 1px solid var(--ps-line); }
+.ps-explain-issue > p, .ps-explain-issue > ol { margin: 10px 12px; }
+.ps-explain-issue > ol { padding-left: 24px; }
+.ps-explain-answer h3 { margin: 0 0 6px; color: var(--ps-muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.ps-explain-answer section p { overflow-wrap: anywhere; }
+.ps-explain-answer ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; list-style: decimal; }
+.ps-explain-answer li::marker { color: var(--ps-muted); font-weight: 600; }
+.ps-explain-answer li { padding-left: 2px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .ps-modal.ps-explain { height: auto; max-height: calc(100dvh - 12px); }
+}
+.ps-explain-sources { margin-bottom: 18px; }
+.ps-explain-sources > button { flex: 1 1 0; }
+.ps-admin-explain { margin-top: 4px; }

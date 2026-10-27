@@ -4,10 +4,10 @@
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
-  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true };
-  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'showGroupsButton', 'halloween'];
+  const OVERVIEW_DEFAULTS = { showMotd: false, largeIcon: 'server', largeName: 'alias', groupByNode: 'auto', showCpu: true, showRam: true, quickActions: 'hover', minecraftAlwaysGreen: true, fullWidth: false, serverFullWidth: false, serverBiggerConsole: false, serverConsoleLog: false, showGroupsButton: true, columns: 'auto', cardWidth: 'normal', serverScope: 'all', halloween: true, healthPlace: 'top-bar' };
+  const OVERVIEW_SWITCHES = ['showMotd', 'showCpu', 'showRam', 'minecraftAlwaysGreen', 'fullWidth', 'serverFullWidth', 'serverBiggerConsole', 'serverConsoleLog', 'showGroupsButton', 'halloween'];
   // Overview settings that pick one of a fixed set of values.
-  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'] };
+  const OVERVIEW_CHOICES = { largeIcon: ['server', 'egg'], largeName: ['alias', 'name'], groupByNode: ['auto', 'always', 'off'], quickActions: ['off', 'on', 'hover'], columns: ['auto', '2', '3', '4', '5', '6'], cardWidth: ['narrow', 'normal', 'wide'], serverScope: ['all', 'mine', 'others'], healthPlace: ['top-bar', 'above', 'bottom'] };
   const OVERVIEW_VIEWS = ['grid', 'compact', 'list'];
   // Own server groups in the overview: at most this many groups, names at most this long.
   const GROUP_LIMIT = 30;
@@ -40,6 +40,13 @@
       notifyMenu: false,
       noticeHistory: [],
       panelNotices: [],
+      // Every Pelican notification (read ones too), loaded a page at a time when the bell or the full list opens.
+      panelUnread: 0,
+      feed: { items: [], page: 0, more: false, loading: false, loaded: false },
+      // Notifications that "Clear read" archived: a closed section of the full list, loaded when it opens.
+      archive: { open: false, items: [], page: 0, more: false, loading: false, loaded: false, any: false },
+      // "What's new" of an update: three lines, or every line once opened (by notification id).
+      openNotes: {},
       announcements: [],
       // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
       push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
@@ -50,20 +57,35 @@
       hostMode: false,
       hostPage: null,
       hostSection: null,
-      hostServersOpen: false,
+      hostTab: 'admin',
+      hostMenuOpen: false,
+      // Host mode: the pinned announcement whose chip is open.
+      hostPin: null,
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
       // The console alone, in its own browser window (opened from the console's title bar).
       consoleWindow: /[?&]simplify_console=/.test(globalThis.location?.search || ''),
       consolePeek: false,
+      // "Explain this error": null, or { loading, error, answer } while its popup is open.
+      explain: null,
       consoleFocus: false,
+      // Installation view: lines and completion seen on this page, a clock for the elapsed time, the ready banner.
+      installLines: 0,
+      installCompleted: false,
+      installNow: Date.now(),
+      installReady: false,
+      installNotify: false,
+      installMenu: false,
+      // The Minecraft EULA still needs accepting: after an installation (from finishInstall) or when a start stopped on it.
+      eulaNeeded: false,
       infoMenu: false,
       adminPage: null,
       overviewCompact: false,
       phone: false,
       sheetDrag: null,
       overviewPreferences: { ...OVERVIEW_DEFAULTS },
+      customizeSections: null,
       overviewGroups: [],
       overviewGroupsTimer: null,
       overviewServerOrder: 'name',
@@ -71,7 +93,9 @@
       groupEditing: null,
       powerConfirmation: null,
       healthExpanded: false,
+      healthPopover: false,
       healthOpenNodes: [],
+      healthRefreshing: false,
       hostMetrics: [
         { key: 'cpu', label: 'CPU', icon: 'cpu' },
         { key: 'memory', label: 'RAM', icon: 'ram' },
@@ -111,7 +135,7 @@
       loading: false,
       closingCreator: false,
       modalRequest: 0,
-      createGame: 'minecraft',
+      createGame: 'server',
       settingsSection: 'settings',
       settingsChanged: false,
       // Server page
@@ -175,6 +199,15 @@
       packageQuery: '',
       packageVersion: '',
       packageResults: [],
+      packageDetails: {},
+      filesPath: '',
+      nextFilesPath: '',
+      pluginCheck: null,
+      pluginFailures: [],
+      packageSite: 'all',
+      packageSearched: false,
+      packageSearching: false,
+      packageOffline: [],
       installed: {},
       advanced: {},
       software: { server_type: 'vanilla', egg_id: '', minecraft_version: '', modpack_project: '', modpack_version: '' },
@@ -201,6 +234,8 @@
         if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
+        this.consoleFocus = this.overviewPreferences.serverBiggerConsole;
+        this.consolePeek = this.overviewPreferences.serverConsoleLog;
         this.restoreOverviewGroups();
         this.restoreHostMode();
         this.initTheme();
@@ -216,11 +251,17 @@
           return;
         }
         this.fillSettings();
+        // Opened halfway through an installation: show what already happened.
+        if (this.server.install_log?.length) {
+          this.logs = [...this.server.install_log];
+          this.installLines = this.logs.length;
+          this.$nextTick?.(() => this.renderLogs());
+        }
         await this.connect();
         if (this.destroyed) return;
         this.startServerTimers();
       },
-      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page. */
+      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page, ?settings=<tab> for Simplify settings. */
       openFromLink() {
         let params;
         try {
@@ -230,7 +271,10 @@
         }
         const admin = params.get('admin');
         const open = params.get('open');
-        if (admin && admin.startsWith('/')) {
+        const settings = params.get('settings');
+        if (settings && /^[a-z-]+$/.test(settings)) {
+          this.openPanelSettings(settings);
+        } else if (admin && admin.startsWith('/')) {
           const known = this.adminPages().flatMap((group) => group.items).find((item) => new URL(item.url, location.origin).pathname === admin);
           this.openAdminPage(known || { key: 'link', label: 'Admin', url: admin });
         } else if (open && this.server && this.widgets.some((widget) => widget.key === open)) {
@@ -239,10 +283,13 @@
         try {
           params.delete('admin');
           params.delete('open');
+          params.delete('settings');
           history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
         } catch {}
       },
       startServerTimers() {
+        // The elapsed time on the installation view.
+        this.installTimer = setInterval(() => this.serverSetup() === 'installing' && (this.installNow = Date.now()), 1000);
         // A restart that is due is followed closely; otherwise the page refreshes at the normal pace.
         this.pendingTimer = setInterval(() => this.restartDue() && this.refreshServerInfo(), this.intervals.restart);
         this.refreshTimer = setInterval(() => this.modal || this.refreshServerInfo(), this.intervals.server);
@@ -253,6 +300,7 @@
         clearInterval(this.refreshTimer);
         clearInterval(this.pendingTimer);
         clearInterval(this.setupTimer);
+        clearInterval(this.installTimer);
       },
       restartDue() {
         const pending = this.server?.pending;
@@ -433,7 +481,7 @@
       },
       openHostServer(s) {
         this.hostServer = s;
-        this.hostServersOpen = false;
+        this.hostMenuOpen = false;
       },
       closeHostServer() {
         this.hostServer = null;
@@ -497,6 +545,8 @@
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
         this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
+        this.panelUnread = Number.isFinite(Number(this.boot.panel_unread)) ? Number(this.boot.panel_unread) : this.panelNotices.length;
+        this.archive.any = !!this.boot.notifications_archived;
         this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
@@ -524,31 +574,194 @@
             action: this.showWidget('restart') && !pending.restart_requested ? { label: 'Restart now', url: '#', run: () => this.restartChanges(0) } : null,
           });
         }
+        for (const p of this.pluginFailures || []) {
+          items.push({
+            id: 'plugin-off-' + p.file,
+            tone: 'warn',
+            title: p.title + ' did not load and was switched off',
+            text: 'The server starts cleanly again without it. ' + p.reason,
+            action: this.canExplain() ? { label: 'Ask the AI assistant why', url: '#', run: () => this.explainPlugin(p.file) } : { label: 'Open plugins', url: '#', run: () => this.open('plugins') },
+          });
+        }
         const health = this.boot.host_health;
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        // Announcements (also the Panel's update announcements); hidden bars stay here until they end.
+        // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, archived: !!item.archived, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
-        for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
+        // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.
+        for (const notice of this.feed.loaded ? this.feed.items : this.panelNotices) items.push({ action: null, unread: true, ...notice, pelican: true });
         return items;
       },
-      /** The bell's count: everything except announcements this account already hid. */
-      unreadNotifications() {
-        return this.notifications().filter((item) => !item.dismissed).length;
+      /** Announcements an admin pinned to everyone's notifications: always on top, apart from the rest. */
+      pinnedNotifications() {
+        return this.notifications().filter((item) => item.pinned);
       },
-      /** Announcement bars above the overview: live and not hidden by this account. */
+      otherNotifications() {
+        return this.notifications().filter((item) => !item.pinned && !item.archived);
+      },
+      /** What "Clear read" moved away: archived announcements and the loaded pages of archived Pelican notifications. */
+      archivedNotifications() {
+        const announcements = this.notifications().filter((item) => item.archived);
+        return [...announcements, ...this.archive.items.map((notice) => ({ action: null, ...notice, unread: false, pelican: true, archived: true }))];
+      },
+      hasArchive() {
+        return this.archive.any || this.notifications().some((item) => item.archived);
+      },
+      /** "Clear read" shows when the list has read notifications or announcements that are not pinned. */
+      canClearRead() {
+        return this.otherNotifications().some((item) => (item.pelican || item.announcement) && item.unread === false);
+      },
+      async toggleArchive() {
+        this.archive.open = !this.archive.open;
+        if (this.archive.open && !this.archive.loaded) await this.loadArchivePage(true);
+      },
+      async loadArchivePage(reset = false) {
+        if (typeof wire.notificationPage !== 'function' || (this.archive.loading && !reset)) return;
+        const page = reset ? 1 : this.archive.page + 1;
+        this.archive.loading = true;
+        try {
+          const result = await wire.notificationPage(page, true);
+          if (!Array.isArray(result?.items)) return;
+          const known = new Set(reset ? [] : this.archive.items.map((n) => n.key));
+          this.archive = { ...this.archive, items: reset ? result.items : [...this.archive.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loaded: true };
+        } catch {
+          this.toast('Archived notifications could not be loaded.', 'warn');
+        } finally {
+          this.archive.loading = false;
+        }
+      },
+      /** Moves every read notification and announcement (not an admin's pinned ones) to Archived, for this account only. */
+      /** ✕ on one notification: Pelican notifications and announcements that are not pinned by an admin. */
+      canArchive(item) {
+        return !item.archived && !item.pinned && (item.pelican || item.announcement);
+      },
+      async archiveNotification(item) {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive, panelNotices: this.panelNotices, panelUnread: this.panelUnread };
+        if (item.pelican) {
+          const unread = item.unread !== false;
+          this.feed = { ...this.feed, items: this.feed.items.filter((n) => n.key !== item.key) };
+          this.panelNotices = this.panelNotices.filter((n) => n.key !== item.key);
+          if (unread) this.panelUnread = Math.max(0, this.panelUnread - 1);
+          this.archive = { ...this.archive, any: true, items: this.archive.loaded ? [{ ...item, unread: false }, ...this.archive.items] : this.archive.items };
+        } else {
+          this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, archived: true, unread: false } : a));
+          this.archive = { ...this.archive, any: true };
+        }
+        if (typeof wire.archiveNotification !== 'function') return;
+        try {
+          const items = await wire.archiveNotification(item.key, !!item.pelican);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          Object.assign(this, before);
+          this.toast('The notification could not be cleared.', 'warn');
+        }
+      },
+      async clearReadNotifications() {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive };
+        const read = this.feed.items.filter((n) => n.unread === false);
+        this.announcements = this.announcements.map((item) => (!item.pinned && (item.unread ?? !item.dismissed) === false ? { ...item, archived: true } : item));
+        this.feed = { ...this.feed, items: this.feed.items.filter((n) => n.unread !== false) };
+        this.archive = { ...this.archive, any: true, items: this.archive.loaded ? [...read, ...this.archive.items] : this.archive.items };
+        if (typeof wire.clearReadNotifications !== 'function') return;
+        try {
+          const items = await wire.clearReadNotifications();
+          if (Array.isArray(items)) this.announcements = items;
+          // The next page of current notifications may hold more read ones; start the list again.
+          if (this.feed.more) this.loadNotificationPage(true);
+        } catch {
+          Object.assign(this, before);
+          this.toast('Read notifications could not be cleared.', 'warn');
+        }
+      },
+      /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
+      unreadNotifications() {
+        return this.notifications().filter((item) => !item.pelican && (item.announcement ? item.unread : true)).length + this.panelUnread;
+      },
+      /** "What's new" lines to show: the first three, all of them once opened. */
+      /** What's new: one line in the bell (all on request), every line in the full notification list. */
+      noteLines(item, full = false) {
+        return full || this.openNotes[item.id] ? item.notes : item.notes.slice(0, 1);
+      },
+      toggleNotes(item) {
+        this.openNotes = { ...this.openNotes, [item.id]: !this.openNotes[item.id] };
+      },
+      /** Loads the first (reset) or next page of Pelican's notifications, read ones included. */
+      async loadNotificationPage(reset = false) {
+        if (typeof wire.notificationPage !== 'function' || (this.feed.loading && !reset)) return;
+        const page = reset ? 1 : this.feed.page + 1;
+        this.feed.loading = true;
+        try {
+          const result = await wire.notificationPage(page);
+          if (!Array.isArray(result?.items)) return;
+          const known = new Set(reset ? [] : this.feed.items.map((n) => n.key));
+          this.feed = { items: reset ? result.items : [...this.feed.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loading: false, loaded: true };
+          this.panelUnread = Number(result.unread) || 0;
+        } catch {
+          if (!reset) this.toast('Older notifications could not be loaded.', 'warn');
+        } finally {
+          this.feed.loading = false;
+        }
+      },
+      /** Every notification in a popup (a full-screen sheet on phones), with "Show more" for older ones. */
+      openAllNotifications() {
+        this.archive = { ...this.archive, open: false, items: [], page: 0, more: false, loaded: false };
+        this.openPopup('inbox');
+        this.refreshAnnouncements();
+        this.loadNotificationPage(true);
+      },
+      /** Root admins: the announcement form, straight from the notifications; closing it comes back to the list. */
+      announcementsPage() {
+        return this.adminPages().flatMap((group) => group.items).find((item) => item.key === 'manageannouncements') || null;
+      },
+      newAnnouncement() {
+        const page = this.announcementsPage();
+        if (!page) return;
+        const url = new URL(page.url, location.origin);
+        url.searchParams.set('action', 'addAnnouncement');
+        try {
+          url.searchParams.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+        } catch {}
+        this.openAdminPage({ ...page, url: url.pathname + url.search, returnTo: this.modal === 'inbox' ? 'inbox' : null });
+      },
+      /** Marks everything read on the server: all Pelican notifications and announcements, not only the loaded ones. */
+      async markAllNotificationsRead() {
+        const before = { announcements: this.announcements, feed: this.feed, panelNotices: this.panelNotices, panelUnread: this.panelUnread };
+        this.announcements = this.announcements.map((item) => ({ ...item, unread: false }));
+        this.feed = { ...this.feed, items: this.feed.items.map((n) => ({ ...n, unread: false })) };
+        this.panelNotices = [];
+        this.panelUnread = 0;
+        if (typeof wire.markAllNotificationsRead !== 'function') return;
+        try {
+          const items = await wire.markAllNotificationsRead();
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          Object.assign(this, before);
+          this.toast('Notifications could not be marked as read.', 'warn');
+        }
+      },
+      /** Announcement bars above the overview and server pages: live and pinned (not unpinned by this account). */
       announcementBars() {
         return this.announcements.filter((item) => !item.dismissed);
       },
       announcementMeta(item) {
-        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
+        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', this.announcementUntil(item)].filter(Boolean);
         // The category only as context for other details; the colour already says it.
         const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
         return (details.length && category ? [category, ...details] : details).join(' · ');
+      },
+      /** "until Sun 26 Oct 03:00" in this browser's time zone (the panel's own time zone can differ). */
+      announcementUntil(item) {
+        if (!Number.isFinite(item.ends_at) || typeof Intl === 'undefined') return item.until || '';
+        try {
+          const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(item.ends_at * 1000)).map((p) => [p.type, p.value]));
+          return 'until ' + parts.weekday + ' ' + parts.day + ' ' + parts.month + ' ' + parts.hour + ':' + parts.minute;
+        } catch {
+          return item.until || '';
+        }
       },
       externalLink(url) {
         try {
@@ -557,17 +770,25 @@
           return false;
         }
       },
-      /** Hides an announcement bar for this account (kept with the account, so every device follows). */
-      async dismissAnnouncement(key) {
+      /** Unpins an announcement for this account (kept with the account, so every device follows); it stays under the bell. */
+      dismissAnnouncement(key) {
+        return this.pinAnnouncement(key, false);
+      },
+      /** Pins an unpinned announcement above the overview and server pages again. */
+      restoreAnnouncement(key) {
+        return this.pinAnnouncement(key, true);
+      },
+      async pinAnnouncement(key, pinned) {
         const before = this.announcements;
-        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: true } : item));
-        if (typeof wire.dismissAnnouncement !== 'function') return;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: !pinned } : item));
+        const call = pinned ? wire.restoreAnnouncement : wire.dismissAnnouncement;
+        if (typeof call !== 'function') return;
         try {
-          const items = await wire.dismissAnnouncement(key);
+          const items = await call.call(wire, key);
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           this.announcements = before;
-          this.toast('The announcement could not be hidden.', 'warn');
+          this.toast(pinned ? 'The announcement could not be pinned.' : 'The announcement could not be unpinned.', 'warn');
         }
       },
       /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
@@ -757,14 +978,23 @@
           last = JSON.parse(sessionStorage.getItem(this.hostModeKey() + '.place') || '{}') || {};
         } catch {}
         const sections = this.hostSections();
-        const section = sections.find((x) => x.key === last.section) || sections.find((x) => x.key === 'health') || sections[0];
-        this.openHostSection(section);
+        const section = sections.find((x) => x.key === last.section && x.pages.some((item) => item.url || !item.action)) || sections.find((x) => x.key === 'health') || sections[0];
+        this.openHostSection(section, true);
         const page = section?.pages.find((item) => item.key === last.page);
         if (page) this.setHostPage(page);
       },
       setHostPage(item) {
+        if (!item?.url && this.runAdminAction(item)) return;
         this.hostPage = item;
+        this.hostServer = null;
+        this.hostMenuOpen = false;
         this.rememberHostPlace();
+      },
+      /** A page picked in the menu tree: opens with its section (popup tools keep the open page). */
+      openHostLeaf(section, item) {
+        if (!item?.url && this.runAdminAction(item)) return;
+        this.hostSection = section;
+        this.setHostPage(item);
       },
       rememberHostPlace() {
         try {
@@ -773,25 +1003,27 @@
       },
       setHostMode(on) {
         this.hostMode = !!on && this.adminPages().length > 0;
-        if (this.hostMode && !this.hostPage) this.openHostSection(this.hostSections().find((x) => x.key === 'health') || this.hostSections()[0]);
+        if (this.hostMode && !this.hostPage) this.openHostSection(this.hostSections().find((x) => x.key === 'health') || this.hostSections()[0], true);
         try {
           localStorage.setItem(this.hostModeKey(), this.hostMode ? '1' : '0');
         } catch {}
       },
       /** Admin pages merged into a few colour-coded sections; pages from other plugins go to Extensions. */
       hostSections() {
+        // Grouped by what an admin wants to do; Simplify's own pages never land under "Other plugins".
         const plan = [
-          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'gamecreator', 'eggresource', 'mountresource'] },
-          { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'backuphostresource'] },
+          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'eggresource', 'mountresource'] },
+          { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'databasehostresource', 'backuphostresource'] },
           { key: 'people', label: 'People', icon: 'players', color: '#a78bfa', pages: ['userresource', 'roleresource'] },
-          { key: 'integrations', label: 'Integrations', icon: 'database', color: '#f0a35b', pages: ['databasehostresource', 'apikeyresource', 'webhookresource'] },
-          { key: 'plugins', label: 'Plugins', icon: 'plugins', color: '#f472b6', pages: ['pluginresource'] },
-          { key: 'panel', label: 'Panel', icon: 'gear', color: '#94a3b8', pages: ['settings', 'listlogs'] },
-          { key: 'legacy', label: 'Legacy', icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
-          { key: 'extensions', label: 'External', icon: 'plugins', color: '#2dd4bf', pages: [] },
+          { key: 'announcements', label: 'Announcements', icon: 'bell', color: '#fbbf24', pages: ['manageannouncements'] },
+          { key: 'tools', label: 'Tools', icon: 'plugins', color: '#f472b6', pages: ['pluginresource', 'serverdirectory', 'explain'] },
+          { key: 'integrations', label: 'Integrations', icon: 'link', color: '#f0a35b', pages: ['apikeyresource', 'webhookresource'] },
+          { key: 'panel', label: 'Panel', icon: 'gear', color: '#94a3b8', pages: ['simplifysettings', 'settings', 'listlogs'] },
+          { key: 'extensions', label: 'Other plugins', icon: 'plugins', color: '#2dd4bf', pages: [] },
           { key: 'health', label: 'Health', icon: 'heart', color: '#f87171', pages: ['health'] },
+          { key: 'legacy', label: 'Legacy', icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
         ];
-        const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || [])];
+        const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || []), ...this.adminActions()];
         const known = new Set(plan.flatMap((section) => section.pages));
         if (this.boot.features?.legacy_pages === false) plan.splice(plan.findIndex((section) => section.key === 'legacy'), 1);
         return plan.map((section) => ({
@@ -799,13 +1031,31 @@
           pages: section.key === 'extensions' ? items.filter((item) => !known.has(item.key)) : section.pages.map((key) => items.find((item) => item.key === key)).filter(Boolean),
         })).filter((section) => section.pages.length);
       },
-      openHostSection(section) {
+      /** Simplify's own tools that open a popup instead of an admin page; listed with the admin pages. */
+      adminActions() {
+        const items = [];
+        // Admin tools open the settings in a popup; host mode shows the same page in its workspace (url).
+        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Settings', icon: 'gear', action: 'settings', url: this.boot.settings_url });
+        if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: 'Explain panel errors', icon: 'question', action: 'explain' });
+        return items;
+      },
+      /** True when the item ran as an action (popup) rather than opening as a page. */
+      runAdminAction(item) {
+        if (item?.action === 'settings') this.openPanelSettings();
+        else if (item?.action === 'explain') this.explainError('panel');
+        else return false;
+        return true;
+      },
+      /** Opens a section on its first page; a section of popup tools only (nothing to show) runs its first tool instead. */
+      openHostSection(section, restoring = false) {
         if (!section) return;
+        const page = section.pages.find((item) => item.url || !item.action) || null;
+        if (!page && !restoring) return this.runAdminAction(section.pages[0]);
         this.hostSection = section;
-        this.hostPage = section.pages[0] || null;
+        this.hostPage = page;
+        this.hostServer = null;
+        this.hostMenuOpen = false;
         this.rememberHostPlace();
-        // Phones show the sections as one sideways row: keep the open one in view.
-        if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
@@ -824,6 +1074,7 @@
       },
       openAdminPage(item) {
         this.adminMenu = false;
+        if (this.runAdminAction(item)) return;
         this.adminPage = item;
         this.openPopup('admin-page');
       },
@@ -834,7 +1085,9 @@
         this.groupsMenu = false;
         this.accountMenu = false;
         if (this.notifyMenu) this.refreshAnnouncements();
-        if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
+        if (!this.notifyMenu) return;
+        if (typeof wire.notificationPage === 'function') return this.loadNotificationPage(true);
+        if (typeof wire.panelNotifications !== 'function') return;
         try {
           const items = await wire.panelNotifications();
           if (Array.isArray(items)) this.panelNotices = items;
@@ -849,6 +1102,10 @@
           this.panelNotices = items;
           const fresh = items.filter((n) => !this.seenNoticeKeys.has(n.key));
           fresh.forEach((n) => this.seenNoticeKeys.add(n.key));
+          if (fresh.length) {
+            this.panelUnread += fresh.length;
+            if (this.feed.loaded) this.feed = { ...this.feed, items: [...fresh.map((n) => ({ ...n, unread: true })), ...this.feed.items.filter((n) => !fresh.some((f) => f.key === n.key))] };
+          }
           // A finished plugin update needs a fresh page load; it happens once the notice has been shown.
           if (fresh.some((n) => /^Plugin (updated|installed|uninstalled)$/.test(n.title || ''))) this.reloadAfterNotice = true;
           this.incomingQueue.push(...fresh.reverse());
@@ -899,10 +1156,50 @@
         const known = this.hostSections().flatMap((section) => section.pages).find((item) => new URL(item.url, location.origin).pathname === admin);
         this.openAdminPage(known || { key: 'link', label: action.label || 'Admin', url: admin });
       },
+      /** Mark as unread on one read notification: back in the list (also out of Archived) and counted again. */
+      async markNotificationUnread(item) {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive, panelUnread: this.panelUnread };
+        if (item.pelican) {
+          const back = { ...item, unread: true, archived: false };
+          const listed = this.feed.items.some((n) => n.key === item.key);
+          this.feed = { ...this.feed, items: listed ? this.feed.items.map((n) => (n.key === item.key ? back : n)) : [back, ...this.feed.items] };
+          this.archive = { ...this.archive, items: this.archive.items.filter((n) => n.key !== item.key) };
+          this.panelUnread += 1;
+        } else {
+          this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, unread: true, archived: false } : a));
+        }
+        if (typeof wire.markNotificationUnread !== 'function') return;
+        try {
+          const items = await wire.markNotificationUnread(item.key, !!item.pelican);
+          if (Array.isArray(items)) this.announcements = items;
+          // A notification from Archived returns in its place by date.
+          if (item.pelican && item.archived && this.feed.loaded) this.loadNotificationPage(true);
+        } catch {
+          Object.assign(this, before);
+          this.toast('The notification could not be marked as unread.', 'warn');
+        }
+      },
+      /** Mark read on one notification: Pelican's by id, announcements by key. */
+      async markNotificationRead(item) {
+        if (item.pelican) return this.markPanelNoticesRead([item.key]);
+        const before = this.announcements;
+        this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, unread: false } : a));
+        if (typeof wire.markAnnouncementRead !== 'function') return;
+        try {
+          const items = await wire.markAnnouncementRead(item.key);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          this.announcements = before;
+          this.toast('The announcement could not be marked as read.', 'warn');
+        }
+      },
       async markPanelNoticesRead(keys) {
         const ids = keys.filter(Boolean);
         if (!ids.length) return;
+        const wasUnread = new Set([...this.panelNotices, ...this.feed.items].filter((n) => ids.includes(n.key) && n.unread !== false).map((n) => n.key));
         this.panelNotices = this.panelNotices.filter((n) => !ids.includes(n.key));
+        this.feed = { ...this.feed, items: this.feed.items.map((n) => (ids.includes(n.key) ? { ...n, unread: false } : n)) };
+        this.panelUnread = Math.max(0, this.panelUnread - wasUnread.size);
         try {
           const items = await wire.markPanelNotificationsRead(ids);
           if (Array.isArray(items)) this.panelNotices = items;
@@ -1017,7 +1314,7 @@
       canOverviewPower(s, action) {
         const permission = { start: 'control.start', stop: 'control.stop', kill: 'control.stop', restart: 'control.restart' }[action];
         return this.quickActionsMode() !== 'off' && !!permission && !!s.linked && !!s.permissions?.[permission]
-          && !['installing', 'restoring'].includes(s.status)
+          && !['installing', 'install failed', 'restoring'].includes(s.status)
           && (action !== 'start' || s.status === 'offline')
           && (!['stop', 'kill', 'restart'].includes(action) || s.status !== 'offline');
       },
@@ -1294,6 +1591,23 @@
         } catch {}
         this.overviewPreferences = preferences;
       },
+      /** Customize menus fold their sections; the first stays open by default and each choice is remembered on this device. */
+      customizeOpen(key) {
+        if (!this.customizeSections) {
+          let saved = {};
+          try {
+            saved = JSON.parse(localStorage.getItem('ps.customize.sections') || '{}') || {};
+          } catch {}
+          this.customizeSections = typeof saved === 'object' ? saved : {};
+        }
+        return key in this.customizeSections ? !!this.customizeSections[key] : key.endsWith('.layout');
+      },
+      toggleCustomize(key) {
+        this.customizeSections = { ...this.customizeSections, [key]: !this.customizeOpen(key) };
+        try {
+          localStorage.setItem('ps.customize.sections', JSON.stringify(this.customizeSections));
+        } catch {}
+      },
       setOverviewPreference(key, value) {
         if (OVERVIEW_SWITCHES.includes(key)) {
           if (typeof value !== 'boolean') return;
@@ -1303,6 +1617,16 @@
         try {
           localStorage.setItem(this.overviewPreferencesKey(), JSON.stringify(this.overviewPreferences));
         } catch {}
+      },
+      /** Bigger console and the log in the mini console are remembered, so the next server page opens the same way. */
+      setConsoleFocus(on) {
+        this.consoleFocus = on;
+        this.setOverviewPreference('serverBiggerConsole', on);
+      },
+      setConsolePeek(on) {
+        this.consolePeek = on;
+        this.setOverviewPreference('serverConsoleLog', on);
+        this.renderLogs();
       },
       /** Off, on (always shown) or hover. A touch screen cannot hover, so there Hover shows them like On. */
       quickActionsMode() {
@@ -1487,6 +1811,20 @@
           this.overviewRefreshing = false;
         }
       },
+      /** The refresh button: fresh numbers now instead of at the next poll (the server allows one fetch every few seconds). */
+      async refreshHostHealth() {
+        if (this.healthRefreshing || !this.boot.features?.host_health) return;
+        this.healthRefreshing = true;
+        try {
+          const health = await wire.refreshHostHealth();
+          if (this.destroyed) return;
+          this.boot.host_health = health;
+          this.healthOpenNodes = this.healthOpenNodes.filter((id) => health.nodes?.some((n) => String(n.id) === String(id)));
+        } catch {
+        } finally {
+          this.healthRefreshing = false;
+        }
+      },
 
       /* Creation, settings and account popups (embedded pages) ---------------------------------- */
       /** Same-origin URL with the embed marker, or '' for anything else. */
@@ -1501,26 +1839,56 @@
         }
       },
       createFrameUrl() {
-        const url = this.frameUrl(this.createGame === 'minecraft' ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
+        const url = this.frameUrl(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
         if (!url) return '';
         const target = new URL(url);
-        if (this.createGame !== 'native') target.searchParams.set('game', this.createGame);
+        // The Server Maker shows Minecraft and the other games together; a game in the link opens straight on it.
+        if (['minecraft', 'other'].includes(this.createGame)) target.searchParams.set('game', this.createGame);
         return target.href;
       },
+      /** Simplify's own creators (Minecraft, other games) fill the popup edge to edge; Pelican's form is a native page. */
+      createFrameKind() {
+        return ['server', 'minecraft'].includes(this.createGame) || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
+      },
       canCreateGame(game) {
+        // 'server' is the Server Maker (Minecraft and/or other games, whichever add-ons are on).
+        if (game === 'server') return !!this.boot.can_create && (this.canCreateGame('minecraft') || (this.canCreateGame('other') && !!this.boot.game_create_url));
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
+      },
+      /** Pelican's own form for other games: administrators, when the game add-on is off but Minecraft is on. */
+      pelicanFormForOthers() {
+        return !this.boot.game_create_url && !this.canCreateGame('native') && this.canCreateGame('other');
       },
       /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
       createChoices() {
         return [
-          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
-          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'server', label: 'Server', icon: 'plus' },
+          { key: 'other', label: 'Other server (Pelican form)', icon: 'gamepad' },
           { key: 'native', label: 'New server', icon: 'host' },
-        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'server' ? this.canCreateGame('server') : this.pelicanFormForOthers()));
       },
-      openCreate(game = 'minecraft') {
-        if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
+      /** Create buttons for the overview (top bar or toolbar): the Server Maker first, as the one main button. */
+      createButtons() {
+        const labels = { server: 'Create server', other: 'Other server', native: 'New server' };
+        return this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? 'Create server' : labels[c.key], primary: index === 0 }));
+      },
+      /** Puts the top-bar health details right under the Healthy button, left edges in line, inside the screen. */
+      placeHealthPopover() {
+        const pill = this.$root?.querySelector('.ps-health-pill'), panel = this.$root?.querySelector('.ps-health-panel');
+        if (!pill || !panel || typeof window === 'undefined') return;
+        const scale = this.uiScale || 1, rect = pill.getBoundingClientRect(), screen = window.innerWidth / scale, gap = 8;
+        const width = Math.min(560, screen - 2 * gap);
+        panel.style.setProperty('--ps-pop-width', width + 'px');
+        panel.style.setProperty('--ps-pop-left', Math.max(gap, Math.min(rect.left / scale, screen - width - gap)) + 'px');
+        panel.style.setProperty('--ps-pop-top', rect.bottom / scale + gap + 'px');
+      },
+      /** Where host health shows on the overview: a button in the top bar (default), a bar above the servers or at the bottom. */
+      healthPlace() {
+        return this.boot.features?.host_health ? this.overviewPreferences.healthPlace : null;
+      },
+      openCreate(game = 'server') {
+        if (!['server', 'minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
         this.openPopup('create');
       },
@@ -1542,7 +1910,7 @@
         try {
           const current = new URL(frame.contentWindow.location.href, location.origin);
           const list = new URL(this.boot.list_url, location.origin);
-          const creator = new URL(this.createGame === 'minecraft' ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
+          const creator = new URL(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
           if (current.origin === location.origin) {
             completed = current.pathname === list.pathname && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(current.searchParams.get('server') || '');
             if (completed) createdUrl = current.href;
@@ -1566,13 +1934,14 @@
           this.toast('Server created. Installation has started.', 'ok');
           return;
         }
-        this.styleFrame(frame, this.createGame === 'minecraft' ? 'create' : 'native');
+        this.styleFrame(frame, this.createFrameKind());
       },
       panelSettingsUrl() {
         const url = this.frameUrl(this.boot.settings_url);
         if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', this.settingsSection);
+        // Filament names a tab by its slug plus where its state lives.
+        target.searchParams.set('section', this.settingsSection.includes('::') ? this.settingsSection : this.settingsSection + '::data::tab');
         return target.href;
       },
       openPanelSettings(section = 'settings') {
@@ -1846,10 +2215,11 @@
       modalTitle() {
         if (this.modal === 'alias') return 'Change server alias';
         if (this.modal === 'background') return 'Server background';
-        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
-        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
+        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Settings';
+        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Server Maker';
         if (this.modal === 'account') return 'Profile';
         if (this.modal === 'notifications') return 'Notifications';
+        if (this.modal === 'inbox') return 'Notifications';
         if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
         if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
@@ -1883,9 +2253,27 @@
         // Phones open workspaces as sheets over the page instead of docking them next to the console.
         return !!this.server && !!this.modal && !this.phone && (this.modal === 'external' || this.widgets.some((widget) => widget.key === this.modal));
       },
+      /**
+       * Puts focus in a workspace popup once it shows, so Escape and Tab work in it. x-show reveals the layer on the
+       * next frame while x-trap focuses after 15 ms; when that frame comes late (a layout transition is still running)
+       * the trap finds nothing visible and focus stays on the page.
+       */
+      focusPopup(layer) {
+        let frames = 0;
+        const check = () => {
+          if (!this.modal || this.docked() || layer.contains(document.activeElement)) return;
+          if (getComputedStyle(layer).display === 'none') { if (++frames < 30) requestAnimationFrame(check); return; }
+          const usable = (el) => !el.disabled && el.checkVisibility?.() !== false;
+          const target = [...layer.querySelectorAll('[autofocus]')].find(usable)
+            || [...layer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].find(usable);
+          target?.focus();
+        };
+        requestAnimationFrame(check);
+      },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
-        const layer = this.$root?.querySelector?.('.ps-modal-layer');
+        // Only the workspace layer moves; the Explain layer next to it stays a popup.
+        const layer = this.$root?.querySelector?.('.ps-modal-layer[data-ps-workspace]');
         if (!layer) return;
         if (docked && layer.parentElement !== dock) dock.appendChild(layer);
         if (!docked && layer.parentElement === dock) this.$root.appendChild(layer);
@@ -1925,6 +2313,10 @@
         return { settings: '#e0a050', players: '#6ea8fe', plugins: '#b48cf2', mods: '#b48cf2', files: '#5cc8c0', backups: '#7ad08a', schedules: '#f5b84a', software: '#c084fc', connection: '#60a5fa', performance: '#f2707a', web: '#38bdf8', activity: '#9a9aa6', advanced: '#9a9aa6' }[key] || 'var(--ps-accent)';
       },
       async open(key) {
+        if (key === 'files') {
+          this.filesPath = this.nextFilesPath;
+          this.nextFilesPath = '';
+        }
         if (this.busy || !this.showWidget(key)) return;
         const request = ++this.modalRequest;
         if (this.server && !this.phone && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
@@ -1941,12 +2333,11 @@
           if (key === 'web') this.website = await load(() => wire.website());
           if (key === 'players') this.playerLists = await load(() => wire.players());
           if (['mods', 'plugins'].includes(key)) {
-            this.packageQuery = '';
-            this.packageResults = [];
-            this.packageVersion = '';
+            Object.assign(this, { packageQuery: '', packageResults: [], packageDetails: {}, packageVersion: '', packageSite: 'all', packageSearched: false, packageOffline: [] });
             this.installed = await load(() => wire.installedPackages());
             if (this.installed.context?.kind !== key) throw new Error('This server does not support ' + key + '.');
             this.packageVersion = this.installed.context?.version || '';
+            this.openPackageSearch();
           }
           if (['advanced', 'software', 'connection'].includes(key) && (key !== 'software' || this.server?.minecraft)) {
             this.advanced = await load(() => (key === 'connection' ? wire.connectionData() : wire.advancedData()));
@@ -1997,6 +2388,7 @@
         this.fileEditorDirty = false;
         this.sftpOpen = false;
         const creating = this.modal === 'create', changedSettings = this.modal === 'panel-settings' && this.settingsChanged;
+        const backToInbox = this.modal === 'admin-page' && this.adminPage?.returnTo === 'inbox';
         if (creating) {
           this.closingCreator = true;
           try {
@@ -2016,6 +2408,7 @@
         this.loading = false;
         if (creating) this.refreshOverview();
         if (changedSettings) location.reload();
+        if (backToInbox) this.openAllNotifications();
       },
 
       /* Console --------------------------------------------------------------------------------- */
@@ -2051,12 +2444,15 @@
             }
             if (['console output', 'install output', 'daemon error'].includes(event)) {
               const line = String(args[0] ?? '').replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '');
+              if (event === 'install output') this.installLines++;
               this.logs.push(line);
               if (this.logs.length > 1200) this.logs.splice(0, this.logs.length - 1200);
               this.renderLogs();
               if (event === 'console output' && /agree to the EULA/i.test(line)) this.promptEula();
+              if (event === 'console output' && /Done \(\d/.test(line)) this.checkPluginHealth();
             }
             if (event === 'status') {
+              if (args[0] === 'offline' && ['starting', 'running'].includes(this.status)) this.checkPluginHealth();
               this.status = args[0];
               if (this.status === 'offline') {
                 this.networkPrevious = null;
@@ -2088,7 +2484,18 @@
                 socket.close();
               }
             }
-            if (event === 'install completed') this.toast('Installation completed. Refresh this dashboard to load the new software details.', 'ok');
+            if (event === 'install started') this.installCompleted = false;
+            if (event === 'install completed') {
+              this.installCompleted = true;
+              this.refreshServerInfo();
+            }
+            // Wings matched the EULA line itself (Pelican's console features): ask in Simplify's own way.
+            if (event === 'feature match') {
+              try {
+                const match = typeof args[0] === 'string' ? JSON.parse(args[0]) : args[0];
+                if (match?.key === 'eula') this.promptEula();
+              } catch {}
+            }
           };
           socket.onerror = () => (this.connected = false);
           socket.onclose = () => {
@@ -2110,6 +2517,59 @@
           el.textContent = text;
           if (bottom) el.scrollTop = el.scrollHeight;
         });
+      },
+      /** The Explain button shows once an admin saved an AI API key, for people who may watch this console. */
+      canExplain() {
+        return !!(this.boot.explain_errors && this.server?.permissions?.['websocket.connect']);
+      },
+      /** What the signed-in user may have explained here: the console, and for root admins the panel and Wings logs. */
+      explainSources() {
+        return (this.boot.explain_sources || []).filter((source) => source !== 'console' || this.canExplain());
+      },
+      explainLabel(source) {
+        return { console: 'Console', panel: 'Panel log', wings: 'Wings log', plugin: 'Plugin' }[source] || source;
+      },
+      /** The same name inside a sentence: "the last lines of the Wings log". */
+      explainNoun(source) {
+        return { console: 'console', panel: 'panel log', wings: 'Wings log', plugin: 'server log about this plugin' }[source] || 'log';
+      },
+      /** Why a plugin that Simplify switched off did not load, from the log lines saved at that moment. */
+      async explainPlugin(file) {
+        if (this.explain?.loading) return;
+        const request = (this.explainRequest = (this.explainRequest || 0) + 1);
+        this.explain = { source: 'plugin', file, loading: true, error: null, answer: null };
+        let result;
+        try {
+          result = await wire.explainPluginFailure(file);
+        } catch {
+          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+        }
+        if (this.explainRequest !== request || !this.explain) return;
+        this.explain = result?.ok
+          ? { source: 'plugin', file, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
+          : { source: 'plugin', file, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+      },
+      /** Sends the last lines of a log (read again by the panel) to the chosen AI and shows the answer. */
+      async explainError(source) {
+        if (!source && this.explain?.source === 'plugin') return this.explainPlugin(this.explain.file);
+        source = source || this.explain?.source || this.explainSources()[0];
+        if (!this.explainSources().includes(source) || this.explain?.loading) return;
+        const request = (this.explainRequest = (this.explainRequest || 0) + 1);
+        this.explain = { source, loading: true, error: null, answer: null };
+        let result;
+        try {
+          result = await wire.explainConsole(source);
+        } catch {
+          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+        }
+        if (this.explainRequest !== request || !this.explain) return;
+        this.explain = result?.ok
+          ? { source, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
+          : { source, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+      },
+      closeExplain() {
+        this.explainRequest = (this.explainRequest || 0) + 1;
+        this.explain = null;
       },
       sendCommand() {
         const cmd = this.command.trim();
@@ -2164,6 +2624,105 @@
       serverSetup() {
         return this.server?.setup_state || null;
       },
+      /** True while a new or reinstalled server is not usable yet: the page then shows only the steps and the log. */
+      installView() {
+        return ['installing', 'install_failed', 'reinstall_failed', 'restoring_backup'].includes(this.serverSetup());
+      },
+      installFailed() {
+        return ['install_failed', 'reinstall_failed'].includes(this.serverSetup());
+      },
+      installKilled() {
+        return this.installFailed() && !!this.server?.install_killed;
+      },
+      /** Kill: only the first installation of a new server, by its owner (a reinstall would lose the server's files). */
+      canKillInstall() {
+        return this.serverSetup() === 'installing' && !!this.server?.install_fresh && !!this.server?.owner && !!this.server?.permissions?.['control.stop'];
+      },
+      installTitle() {
+        if (this.serverSetup() === 'restoring_backup') return 'Restoring a backup…';
+        if (this.installKilled()) return 'Installation stopped';
+        if (this.installFailed()) return 'The installation did not finish';
+        return 'Setting up ' + (this.server?.alias || this.server?.name);
+      },
+      installText() {
+        if (this.serverSetup() === 'restoring_backup') return 'Everything opens again when the restore is done.';
+        if (this.installKilled()) return 'You stopped the installation and its files were removed. Change the resources if needed, then try again.';
+        if (this.installFailed()) return 'The last lines of the installation log are below. Nothing was started.';
+        return 'This takes a few minutes, longer for big games. You can leave this page; the server keeps installing.';
+      },
+      /**
+       * The steps as far as Pelican and Wings report them: the server exists, Wings prepares the installer
+       * (no output yet), the install script runs (output arrives), Wings reports it finished.
+       */
+      installSteps() {
+        const software = this.server?.software || this.server?.pack?.modpack_name || 'the game';
+        const reached = this.installFailed() ? 2 : this.installCompleted ? 3 : this.installLines || this.server?.install_log ? 2 : 1;
+        const steps = [
+          { key: 'created', label: 'Server created', detail: 'Resources reserved' },
+          { key: 'prepare', label: 'Preparing', detail: 'Wings gets the installer ready' },
+          { key: 'install', label: 'Installing ' + software, detail: this.installKilled() ? 'Stopped' : this.installFailed() ? 'Stopped with an error' : 'Downloading the game files' },
+          { key: 'ready', label: 'Ready to start', detail: 'Everything opens' },
+        ];
+        return steps.map((step, index) => ({ ...step, state: index < reached ? 'done' : index > reached ? 'todo' : this.installFailed() ? 'failed' : 'active' }));
+      },
+      /** Time since Pelican started the installation, such as "2:14". */
+      installElapsed() {
+        const since = this.server?.install_since;
+        if (!since || this.serverSetup() !== 'installing') return '';
+        const seconds = Math.max(0, Math.floor(this.installNow / 1000 - since));
+        return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+      },
+      /** How long this egg usually takes on this panel (from earlier installations), such as "usually about 2 min". */
+      installTypical() {
+        const seconds = this.server?.install_typical;
+        return seconds ? 'usually about ' + Math.max(1, Math.round(seconds / 60)) + ' min' : '';
+      },
+      installLogText() {
+        return this.logs.join('\n');
+      },
+      async toggleInstallNotify() {
+        if (!this.installNotify && typeof Notification === 'function' && Notification.permission === 'default') {
+          try { await Notification.requestPermission(); } catch {}
+        }
+        this.installNotify = !this.installNotify;
+      },
+      notifyInstalled() {
+        const name = this.server?.alias || this.server?.name;
+        try {
+          if (typeof Notification === 'function' && Notification.permission === 'granted' && document.hidden) new Notification(name + ' is ready', { body: 'You can now start your server.' });
+        } catch {}
+        this.toast(name + ' is ready. You can now start it.', 'ok');
+      },
+      installFiles() {
+        window.open(this.server.files_url, '_blank', 'noopener');
+      },
+      installStartup() {
+        window.open(this.server.native_sections?.startup, '_blank', 'noopener');
+      },
+      async killInstall() {
+        if (!(await this.ask({ title: 'Stop the installation?', message: 'The installer stops right away and the files it downloaded are removed. The server stays here: change its resources if needed and try again, or delete it.', confirmLabel: 'Kill', tone: 'danger' }))) return;
+        const result = await this.run(() => wire.killInstallation(), 'Installation stopped');
+        if (result === SKIPPED || !result) return;
+        Object.assign(this.server, result);
+        this.logs.push('[Simplify]: Installation stopped.');
+        this.renderLogs();
+      },
+      async cancelInstall() {
+        const name = this.server?.alias || this.server?.name;
+        if (!(await this.ask({ title: 'Delete ' + name + '?', message: (this.serverSetup() === 'installing' ? 'The installation stops and the server' : 'The server') + ' is deleted with all its files. This cannot be undone.', confirmLabel: 'Delete server', tone: 'danger' }))) return;
+        await this.run(() => wire.deleteSetupServer(this.server.name), 'Server deleted');
+      },
+      async reinstall() {
+        if (!(await this.ask({ title: 'Try the installation again?', message: 'Pelican runs the install script again. Files the script replaces are overwritten.', confirmLabel: 'Reinstall' }))) return;
+        const result = await this.run(() => wire.reinstallServer(), 'Installation started');
+        if (result !== SKIPPED && result) {
+          this.installLines = 0;
+          this.installCompleted = false;
+          this.logs = [];
+          this.renderLogs();
+          Object.assign(this.server, result);
+        }
+      },
       async refreshServerInfo() {
         if (globalThis.document?.hidden || this.busy || this.refreshingInfo || this.destroyed) return;
         this.refreshingInfo = true;
@@ -2172,20 +2731,41 @@
           if (this.destroyed) return;
           const wasSettingUp = this.serverSetup() === 'installing';
           Object.assign(this.server, info);
-          if (wasSettingUp && !this.serverSetup()) this.toast('Your server is ready.', 'ok');
+          if (wasSettingUp && !this.serverSetup()) {
+            this.installReady = true;
+            if (this.installNotify) this.notifyInstalled();
+            this.refitWorkspace();
+            this.finishInstall();
+          }
           this.renderLogs();
         } catch {
         } finally {
           this.refreshingInfo = false;
         }
       },
-      /** Minecraft stops until its EULA is accepted; offer to accept it once per page view. */
-      async promptEula() {
+      /** Minecraft stops until its EULA is accepted: the banner above the server card asks for it (once per page view). */
+      promptEula() {
         const p = this.server?.permissions || {};
         if (this.eulaPrompted || !p['file.update'] || !p['control.start']) return;
         this.eulaPrompted = true;
-        if (!(await this.ask({ title: 'Accept the Minecraft EULA?', message: 'This server stopped because the Minecraft EULA has not been accepted yet. Read it at minecraft.net/eula. Accepting writes eula=true to eula.txt and starts the server.', confirmLabel: 'Accept and start' }))) return;
-        await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
+        this.eulaNeeded = true;
+      },
+      async acceptEula() {
+        const result = await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
+        if (result === SKIPPED) return;
+        this.eulaNeeded = false;
+        this.installReady = false;
+      },
+      /** After an installation finished on this page: the creator's settings are applied, then the EULA is checked once. */
+      async finishInstall() {
+        try {
+          const result = await wire.finishInstall();
+          if (result?.eula === false) this.promptEula();
+        } catch {}
+      },
+      /** The banner's main button: accept the EULA first when it is still needed, otherwise just start. */
+      readyStart() {
+        return this.eulaNeeded ? this.acceptEula() : this.power('start');
       },
       async power(action) {
         if (action === 'kill' && !(await this.ask({ title: 'Force stop this server?', message: 'The server stops immediately. Unsaved game progress may be lost.', confirmLabel: 'Force stop', tone: 'danger' }))) return;
@@ -2257,7 +2837,8 @@
           Object.assign(this.server, await wire.refreshInfo());
         } catch {}
         if (result?.changed === false) this.toast('No changes to save.', 'info');
-        else if (result?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
+        else if (result?.pending && this.server?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
+        else if (resources && this.installFailed()) this.toast('Resources changed. They are used when you try again.', 'ok');
         else this.toast('Changes applied. They will load at the next start.', 'ok');
       },
       async renameServer() {
@@ -2338,23 +2919,147 @@
           } catch {}
         }, 1800);
       },
-      async searchPackages() {
-        const result = await this.run(() => wire.packageSearch(this.packageQuery, this.packageVersion));
-        if (result === SKIPPED || !result) return;
-        this.packageResults = result.items;
-        this.packageVersion = result.context.version;
+      packageTarget() {
+        const loader = { paper: 'Paper', purpur: 'Purpur', spigot: 'Spigot', bukkit: 'Bukkit', fabric: 'Fabric', forge: 'Forge', neoforge: 'NeoForge', quilt: 'Quilt' }[this.installed.context?.loader] || 'Minecraft';
+        return loader + ' ' + (this.installed.context?.version || this.packageVersion);
       },
-      async installPackage(id) {
-        const result = await this.run(() => wire.installPackage(id, this.packageVersion), 'Package installed. Start the server to load it.');
-        if (result !== SKIPPED) this.installed = await wire.installedPackages();
+      packageSites() {
+        const sites = [{ key: 'all', label: 'All sites' }, { key: 'modrinth', label: 'Modrinth' }];
+        if (['paper', 'purpur'].includes(this.installed.context?.loader)) sites.push({ key: 'hangar', label: 'Hangar' });
+        if (this.modal === 'plugins') sites.push({ key: 'spigot', label: 'SpigotMC' });
+        if (this.installed.context?.curseforge) sites.push({ key: 'curseforge', label: 'CurseForge' });
+        return sites;
+      },
+      packageHeading() {
+        const what = this.modal === 'plugins' ? 'plugins' : 'mods';
+        return this.packageSearched && this.packageQuery.trim() ? 'Results for “' + this.packageQuery.trim() + '”' : 'Popular ' + what + ' for ' + this.packageTarget();
+      },
+      /** Cards for the chosen site. A card whose plugin is also on that site switches to that site's listing. */
+      visiblePackages() {
+        if (this.packageSite === 'all') return this.packageResults;
+        return this.packageResults
+          .map((p) => (p.source === this.packageSite ? p : (p.also.find((o) => o.source === this.packageSite) && this.switchedSource(p, p.also.find((o) => o.source === this.packageSite)))))
+          .filter(Boolean);
+      },
+      switchedSource(p, other) {
+        return { ...p, key: other.key, source: other.source, label: other.label, page: other.page, fits: other.fits, also: [{ source: p.source, label: p.label, key: p.key, fits: p.fits, page: p.page }, ...p.also.filter((o) => o.key !== other.key)] };
+      },
+      useSource(p, other) {
+        const index = this.packageResults.findIndex((x) => x.key === p.key);
+        if (index < 0) return;
+        this.packageResults.splice(index, 1, this.switchedSource(p, other));
+        this.loadPackageDetails([other.key]);
+      },
+      versionLabel(version) {
+        return version ? (/^\d/.test(version) ? 'v' + version : version) : '';
+      },
+      packageDetail(p) {
+        return this.packageDetails[p.key] || null;
+      },
+      installedKey(key) {
+        return (this.installed.items || []).some((f) => f.key === key);
+      },
+      openPackageSearch() {
+        if (!this.packageSearched && !this.packageResults.length && (this.installed.context?.version || this.packageVersion)) this.searchPackages();
+      },
+      async searchPackages() {
+        const request = (this.packageRequest = (this.packageRequest || 0) + 1);
+        this.packageSearching = true;
+        try {
+          const result = await wire.packageSearch(this.packageQuery, this.packageVersion);
+          if (request !== this.packageRequest) return;
+          this.packageResults = result.items || [];
+          this.packageVersion = result.context?.version || this.packageVersion;
+          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC', curseforge: 'CurseForge' })[key] || key);
+          this.packageSearched = true;
+          this.loadPackageDetails(this.packageResults.map((p) => p.key));
+        } catch (e) {
+          if (request === this.packageRequest) this.toast(e?.message || 'Search failed. Try again in a moment.', 'danger');
+        } finally {
+          if (request === this.packageRequest) this.packageSearching = false;
+        }
+      },
+      /** Which version "Install" would download, filled in after the results show. */
+      async loadPackageDetails(keys) {
+        const missing = keys.filter((key) => !this.packageDetails[key]);
+        if (!missing.length) return;
+        try {
+          const details = await wire.packageDetails(missing, this.packageVersion);
+          this.packageDetails = { ...this.packageDetails, ...details };
+        } catch {}
+      },
+      async installPackage(p, update = false) {
+        const detail = this.packageDetails[p.key];
+        if (!update && detail && !detail.fits) {
+          const ok = await this.ask({
+            title: 'Install ' + p.title + ' anyway?',
+            message: 'There is no release of ' + p.title + ' for Minecraft ' + this.packageVersion + '. The newest one, ' + this.versionLabel(detail.version) + (detail.for ? ', is made for ' + detail.for : '') + '. It may not work on your version.',
+            confirmLabel: 'Install anyway',
+          });
+          if (!ok) return;
+        }
+        let result = await this.run(() => wire.installPackage(p.key, this.packageVersion, !update && !!detail && !detail.fits, { title: p.title, icon: p.icon, page: p.page }));
+        if (result === SKIPPED && update && this.notice.startsWith('There is no release')) {
+          if (await this.ask({ title: 'Update ' + p.title + ' anyway?', message: this.notice + ' The newest release may not work on your version.', confirmLabel: 'Update anyway' })) result = await this.run(() => wire.installPackage(p.key, this.packageVersion, true, p));
+        }
+        if (result === SKIPPED) return;
+        this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it; if it fails to load, Simplify switches it off again.', 'ok');
+        if (this.modal === 'plugins' && this.server) this.server.plugin_watch = true;
+        this.installed = await wire.installedPackages();
+      },
+      /** Bigger hosts can let people search CurseForge with their own free API key; an empty key removes it. */
+      async setCurseForgeKey() {
+        const key = await this.ask({
+          title: 'Your CurseForge API key',
+          message: 'Create a free key at console.curseforge.com (sign in, then API keys). It is stored encrypted on this panel and only sent to CurseForge.' + (this.installed.context?.curseforge_mine ? ' Leave the field empty and save to remove your key.' : ''),
+          input: true,
+          inputLabel: 'API key',
+          inputType: 'password',
+          placeholder: '$2a$10$…',
+          confirmLabel: 'Save',
+        });
+        if (key === false || key === null || key === undefined) return;
+        const result = await this.run(() => wire.saveCurseForgeKey(String(key)), String(key).trim() ? 'CurseForge key saved. Search now includes CurseForge.' : 'Your CurseForge key was removed.');
+        if (result === SKIPPED) return;
+        this.installed = result;
+        this.packageDetails = {};
+        this.searchPackages();
+      },
+      /** Opens the file manager in the plugins (or mods) folder. */
+      openPackageFolder() {
+        this.nextFilesPath = (this.installed.context?.directory || '/' + this.modal).replace(/^\/+/, '');
+        this.open('files');
+      },
+      filesStartUrl() {
+        const base = this.server?.files_url;
+        if (!base || !this.filesPath) return base;
+        return base.replace(/\/$/, '') + '/' + this.filesPath.split('/').map(encodeURIComponent).join('/');
+      },
+      /** After a start (or a crash) with a newly installed plugin: plugins that failed to load are switched off. */
+      checkPluginHealth() {
+        if (!this.server?.plugin_watch || this.pluginCheck) return;
+        this.pluginCheck = setTimeout(async () => {
+          this.pluginCheck = null;
+          try {
+            const result = await wire.checkPluginHealth();
+            this.server.plugin_watch = !!result.watching;
+            if (!(result.disabled || []).length) return;
+            this.pluginFailures = result.disabled;
+            for (const p of result.disabled) this.toast(p.title + ' did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.', 'warn');
+            if (this.isPackageModal()) this.installed = await wire.installedPackages();
+          } catch {}
+        }, 2500);
+      },
+      async togglePackage(f) {
+        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? f.title + ' is off. It stays in the folder.' : f.title + ' is on again.');
+        if (result === SKIPPED) return;
+        if (!f.enabled && f.key && this.server) this.server.plugin_watch = true;
+        this.installed = await wire.installedPackages();
       },
       async removePackage(file) {
         if (!(await this.ask({ title: 'Remove ' + file + '?', message: 'A copy is kept in the server package backup folder.', confirmLabel: 'Remove', tone: 'danger' }))) return;
         const result = await this.run(() => wire.removePackage(file), 'Package removed');
         if (result !== SKIPPED) this.installed = await wire.installedPackages();
-      },
-      tracked(file) {
-        return Object.values(this.installed.tracked || {}).find((x) => x.filename === file);
       },
       async searchPacks() {
         const result = await this.run(() => wire.packSearch(this.packQuery));

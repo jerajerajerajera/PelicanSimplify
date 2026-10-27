@@ -1,10 +1,17 @@
 # Changes
 
-## 0.5.3-beta.1 to 0.5.3-beta.3 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
-New in the beta channel, not in stable yet. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
-- beta.1: server pages have a Customize button with their own Full screen width switch, and the Halloween switch while it is in season. Announcements stay pinned while they are live, also show above server pages, and leave a small pin when you collapse them. Customize server page can remember the bigger console and the mini console log (not on phones).
-- beta.2: Explain this error, with your own Anthropic API key. Off until a root administrator enters a key under Simplify settings → Error explanations; for everyone who can see the console or for administrators only. IP addresses, e-mail addresses, passwords and tokens are removed before sending.
-- beta.3: Explain can also read the panel log and the Wings log for root administrators, and the admin menu has "Explain panel errors".
+## 0.6.0 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+The first stable release since 0.5.2. It brings everything from the 0.5.3 and 0.6.0 betas. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- **Simplify Server Maker:** one creator for Minecraft (Vanilla, plugins, mods, modpacks and Bedrock) and 170+ other games. New servers show how far their installation is, and the Minecraft EULA is accepted up front.
+- **Explain this error:** tells you in plain words what went wrong in the console, the panel log or the Wings log, with your own Claude, GPT or Gemini key. Off until a root administrator adds a key.
+- **Server plugins:** Minecraft plugins from Modrinth, Hangar, SpigotMC and CurseForge on one page.
+- **Plugin manager:** browse themes and plugins from the Pelican Hub.
+- **Announcements:** can also be sent in game, and the bell has Clear read and an Archived list. App notifications reach every device, also devices that turn them on later that day.
+- **Website embed:** a new add-on that puts your server list on your own website with one line of code.
+- **Only the add-ons:** the setup asks how much Simplify you want. Pick Only the add-ons and Pelican keeps its own look, with the add-ons in a Simplify group in its menu.
+- **Egg updates:** a notification when an egg has a new version, with Update all. Simplify can first test a new egg on a temporary server and keeps the current egg when the test fails.
+- **Server pages and overview:** a Customize menu for server pages, pinned announcements, a reworked dashboard and host mode, and Pelican's own pages fitted to Simplify.
+- Tested on fresh panels with Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2, on desktop and on phones.
 
 ## 0.5.2 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Hotfix for 0.5.1, so the release is accepted on the Pelican Hub. Nothing changes in how Simplify works.

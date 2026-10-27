@@ -7,10 +7,13 @@ use Illuminate\Support\Facades\Cache;
 final class FeatureSettings
 {
     public const FILE = 'simplify/features.json';
+    /** Parts of the full Simplify panel. "Only the add-ons" switches them off and keeps each saved choice for a switch back. */
+    public const FULL_ONLY = ['dashboard','host_mode','global_theme','legacy_theme','host_health'];
     private ?array $loaded = null;
     public static function definitions(): array
     {
         return [
+            'addons_only'=>['Only the add-ons','Pelican keeps its own dashboard, server pages and look; Simplify only adds the add-ons that are switched on. Off makes Simplify the whole panel.',false,'Experience'],
             'friends_mode'=>['Friends mode','Show all server cards to signed-in users. Only owners, assigned users and administrators can open or manage a server.',true,'Access and visibility'],
             'user_legacy'=>['Legacy mode for users','Allow ordinary users to open the native client panel. Administrators always retain legacy access.',false,'User access'],
             'user_advanced'=>['Advanced workspace for users','Show container, startup and advanced management to ordinary users with the required permissions.',false,'User access'],
@@ -40,6 +43,7 @@ final class FeatureSettings
             'backups'=>['Backup workspace','Show backups, downloads, restore actions and automatic backup policy.',true,'Server features'],
             'automatic_backups'=>['Automatic backups','Run configured backup policies through the existing Pelican scheduler. Off pauses policies without deleting them.',true,'Automation'],
             'subdomains'=>['Automatic subdomains','Give each server its own address, such as oak.example.com, chosen in the creator or in the server\'s Network section. The DNS records are created in Cloudflare automatically and removed with the server.',false,'Add-ons'],
+            'website_embed'=>['Website embed','Show your servers on your own website with one line of code: status, players, modpack and join address. Only servers whose owner chose "Show on the website" appear.',true,'Add-ons'],
             'people_manager'=>['Let Simplify manage people & roles','One People & roles page replaces Pelican\'s Users and Roles pages: invite people (they choose their own password), assign roles, and give each role Simplify permissions plus optional admin access. Built on Pelican\'s own roles. Off uses Pelican\'s pages.',false,'Add-ons'],
             'plugin_manager'=>['Let Simplify manage plugins','Simplify\'s plugin page replaces Pelican\'s, with import, install, removal and safe updates with automatic rollback. Off uses Pelican\'s own plugin page and stops automatic updates.',true,'Add-ons'],
             'auto_update_plugins'=>['Install plugin updates automatically','Install new plugin versions within about a minute of their release, safely: a backup is kept, the new version is installed and checked, and the previous version is restored if anything fails. Results appear in the notifications.',true,'Automation'],
@@ -54,6 +58,14 @@ final class FeatureSettings
         return ['setup_completed'=>false,...array_map(fn(array $v):bool=>$v[2],self::definitions())];
     }
     public static function all(): array { return app(self::class)->load(); }
+    /** True when the panel keeps Pelican's own pages and only uses the add-ons. */
+    public static function addonsOnly(): bool { return self::all()['addons_only']; }
+    /** The saved switches as they apply right now: with "Only the add-ons" the full panel's parts read as off. */
+    public static function effective(): array
+    {
+        $all = self::all();
+        return $all['addons_only'] ? array_replace($all, array_fill_keys(self::FULL_ONLY, false)) : $all;
+    }
     private function load(): array
     {
         if($this->loaded!==null)return $this->loaded;
@@ -66,7 +78,7 @@ final class FeatureSettings
         if ($feature === 'dashboard' && ExternalPlugins::conflicts() !== []) return false;
         // A plugin that does the same job is enabled (such as Subdomains): only that Simplify feature steps aside.
         if (class_exists(ExternalPlugins::class) && ExternalPlugins::overlapFor($feature) !== null) return false;
-        return self::all()[$feature]??false;
+        return self::effective()[$feature]??false;
     }
     public static function save(array $input,bool $complete=false): void
     {

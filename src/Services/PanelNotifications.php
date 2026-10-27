@@ -22,12 +22,68 @@ final class PanelNotifications
         }
     }
 
+    /**
+     * One page of notifications, newest first, for the bell and the full list: the current ones (unread, and read after
+     * the last "Clear read" at $archivedAt) or, with $archived, the ones that Clear read moved to Archived.
+     */
+    public static function page(int $page = 1, int $size = 20, int $archivedAt = 0, bool $archived = false, array $archivedIds = []): array
+    {
+        $user = user();
+        $page = max(1, min($page, 500));
+        if (!$user || !method_exists($user, 'notifications')) return ['items' => [], 'more' => false, 'unread' => 0];
+        try {
+            $query = $user->notifications()->latest();
+            $cutoff = date('Y-m-d H:i:s', $archivedAt);
+            // Archived: read before the last "Clear read", or closed one by one with ✕.
+            if ($archived) $query->where(fn ($q) => $q->where(fn ($q) => $q->whereNotNull('read_at')->where('read_at', '<=', $cutoff))->orWhereIn('id', $archivedIds));
+            else {
+                if ($archivedAt > 0) $query->where(fn ($q) => $q->whereNull('read_at')->orWhere('read_at', '>', $cutoff));
+                if ($archivedIds !== []) $query->whereNotIn('id', $archivedIds);
+            }
+            // One row more than asked tells whether there is another page, without counting them all.
+            $rows = $query->skip(($page - 1) * $size)->limit($size + 1)->get();
+            $items = $rows->take($size)->map(fn ($notification): ?array => self::present($notification))->filter()->values()->all();
+            return ['items' => $items, 'more' => $rows->count() > $size, 'unread' => self::unreadCount()];
+        } catch (\Throwable) {
+            return ['items' => [], 'more' => false, 'unread' => 0];
+        }
+    }
+
+    /** How many are unread, all of them (the bell's count). */
+    public static function unreadCount(): int
+    {
+        $user = user();
+        if (!$user || !method_exists($user, 'unreadNotifications')) return 0;
+        try {
+            return (int) $user->unreadNotifications()->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /** "Mark all read": every unread notification of this account, not only the ones loaded in the bell. */
+    public static function markAllRead(): void
+    {
+        $user = user();
+        if (!$user || !method_exists($user, 'unreadNotifications')) return;
+        $user->unreadNotifications()->update(['read_at' => now()]);
+    }
+
     public static function markRead(array $ids): void
     {
         $ids = array_values(array_filter($ids, fn ($id): bool => is_string($id) && preg_match('/^[0-9a-f-]{36}$/i', $id) === 1));
         $user = user();
         if ($ids === [] || !$user || !method_exists($user, 'unreadNotifications')) return;
         $user->unreadNotifications()->whereIn('id', $ids)->update(['read_at' => now()]);
+    }
+
+    /** Mark as unread: these notifications of this account are unread again. */
+    public static function markUnread(array $ids): void
+    {
+        $ids = array_values(array_filter($ids, fn ($id): bool => is_string($id) && preg_match('/^[0-9a-f-]{36}$/i', $id) === 1));
+        $user = user();
+        if ($ids === [] || !$user || !method_exists($user, 'notifications')) return;
+        $user->notifications()->whereIn('id', $ids)->update(['read_at' => null]);
     }
 
     private static function present(object $notification): ?array
@@ -45,13 +101,20 @@ final class PanelNotifications
                 break;
             }
         }
+        // What's new that Simplify added to its own "Plugin updated" notification.
+        $view = is_array($data['viewData'] ?? null) ? $data['viewData'] : [];
+        $notes = array_values(array_filter(array_map(fn ($line) => is_string($line) ? self::text($line) : '', is_array($view['simplify_notes'] ?? null) ? $view['simplify_notes'] : [])));
+        $notesUrl = is_string($view['simplify_notes_url'] ?? null) && str_starts_with($view['simplify_notes_url'], 'https://github.com/') ? $view['simplify_notes_url'] : null;
         return [
+            'notes' => array_slice($notes, 0, ReleaseNotes::LINES),
+            'notesUrl' => $notes ? $notesUrl : null,
             'id' => 'pelican-'.$notification->id,
             'key' => (string) $notification->id,
             'tone' => self::TONES[$data['status'] ?? $data['color'] ?? ''] ?? 'info',
             'title' => $title !== '' ? $title : $body,
             'text' => $title !== '' ? $body : '',
             'time' => $notification->created_at?->diffForHumans(),
+            'unread' => $notification->read_at === null,
             'action' => $action,
         ];
     }

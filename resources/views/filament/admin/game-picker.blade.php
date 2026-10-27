@@ -1,9 +1,42 @@
-{{-- Game picker: installed games and the Pelican egg index, searched in the browser (no request per keystroke). --}}
+{{-- Game step: Minecraft with its server types on top, then every other game (installed games and the Pelican egg
+     index, searched in the browser, no request per keystroke). A choice is sent with pickGame(); Minecraft moves on. --}}
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
-    @php($cards = $getViewData()['cards'] ?? [])
+    @php
+        $data = $getViewData();
+        $cards = $data['cards'] ?? [];
+        $minecraft = array_diff_key($data['minecraft'] ?? [], ['proxy' => true]);
+        $others = $cards !== [] || !$minecraft;
+    @endphp
+    @if ($minecraft)
+        <section @class(['ssc-minecraft', 'is-picked' => ($data['game'] ?? '') === 'minecraft']) aria-labelledby="ssc-minecraft-title"
+                 x-data="{ busy: false, pick(type) {
+                    if (this.busy) return;
+                    this.busy = true;
+                    // Moves on once Livewire has re-rendered and enabled Next again (the section itself may be replaced).
+                    const next = (tries) => {
+                        const button = [...document.querySelectorAll('.fi-sc-wizard .ssc-next-button')].find((b) => b.offsetParent);
+                        if (button && !button.disabled) button.click(); else if (tries > 0) setTimeout(() => next(tries - 1), 100);
+                    };
+                    $wire.pickGame('minecraft', type).then(() => next(30)).finally(() => this.busy = false);
+                 } }">
+            <div class="ssc-minecraft-head">
+                <span class="ssc-minecraft-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path fill="currentColor" stroke="none" d="M6 7h4v4H6zm8 0h4v4h-4zm-4 4h4v3h3v5h-3v-3h-4v3H7v-5h3z"/></svg></span>
+                <div><h3 id="ssc-minecraft-title">Minecraft</h3><p>Java and Bedrock. Pick what kind of Minecraft server you want.</p></div>
+            </div>
+            <div class="ssc-minecraft-types" role="group" aria-label="Minecraft server types">
+                @foreach ($minecraft as $key => [$label, $line])
+                    <button type="button" class="ssc-minecraft-type" aria-pressed="{{ ($data['game'] ?? '') === 'minecraft' && ($data['type'] ?? '') === $key ? 'true' : 'false' }}" x-on:click="pick(@js($key))" :disabled="busy">
+                        <strong>{{ $label }}</strong><small>{{ $line }}</small>
+                    </button>
+                @endforeach
+            </div>
+        </section>
+    @endif
+    @if ($others)
+    @if ($minecraft)<h3 class="ssc-games-heading">Other games</h3>@endif
     <div class="ssc-games" wire:ignore
          x-data="{
-            state: $wire.$entangle(@js($getStatePath()), true),
+            state: $wire.$entangle(@js($getStatePath())),
             cards: @js($cards),
             query: '',
             filter: 'all',
@@ -53,7 +86,7 @@
         <div class="ssc-games-bar">
             <label class="ssc-games-search">
                 <x-tabler-search class="ssc-games-search-icon" />
-                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="Search {{ count($cards) }} games…" aria-label="Search games" autocomplete="off" />
+                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="Search {{ count($cards) }} {{ $minecraft ? 'other ' : '' }}games…" aria-label="Search games" autocomplete="off" />
             </label>
             <div class="ssc-games-chips" role="group" aria-label="Filter games">
                 <button type="button" :aria-pressed="filter==='all'" x-on:click="filter='all'; limit=24">All</button>
@@ -63,7 +96,7 @@
         </div>
         <div class="ssc-games-grid" role="radiogroup" aria-label="Games">
             <template x-for="card in shown().slice(0, limit)" :key="card.key">
-                <button type="button" class="ssc-game" role="radio" :aria-checked="state===card.key" x-on:click="state = card.key">
+                <button type="button" class="ssc-game" role="radio" :aria-checked="state===card.key" x-on:click="state = card.key; $wire.pickGame('other', card.key)">
                     <span class="ssc-game-icon" :style="{'--hue': hue(card.name)}" x-text="initials(card.name)"></span>
                     <span class="ssc-game-text">
                         <strong x-text="card.name"></strong>
@@ -73,10 +106,11 @@
                 </button>
             </template>
         </div>
-        <p class="ssc-games-empty" x-show="!shown().length">No game matches “<span x-text="query"></span>”.</p>
+        <p class="ssc-games-empty" x-show="!shown().length">No game matches “<span x-text="query"></span>”.@if ($minecraft)<span x-show="/mine|craft|paper|purpur|forge|fabric|quilt|bedrock|modpack|spigot/i.test(query)"> Minecraft is at the top of this step.</span>@endif</p>
         <button type="button" class="ssc-games-more" x-show="shown().length > limit" x-on:click="limit += 48" x-text="'Show more (' + (shown().length - limit) + ')'"></button>
         <p class="ssc-games-note" x-show="selected() && !selected().installed">
             <strong x-text="selected()?.name"></strong> is not on this panel yet. Its egg is downloaded from the official Pelican egg index and installed when you continue.
         </p>
     </div>
+    @endif
 </x-dynamic-component>

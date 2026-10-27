@@ -14,8 +14,9 @@ final class JavaRuntime
 {
     public static function minecraftVersion(array $state): ?string
     {
-        if (($state['server_type'] ?? '') !== 'modded') {
-            return $state['minecraft_version'] ?? null;
+        $type = (string) ($state['server_type'] ?? '');
+        if ($type !== 'modded') {
+            return MinecraftCatalog::usesVersion($type) || $type === '' ? ($state['minecraft_version'] ?? null) : null;
         }
         return ModpackCatalog::runtime($state['modpack_project'] ?? null, (string) ($state['modpack_version'] ?? ''))['minecraft'] ?? null;
     }
@@ -47,6 +48,10 @@ final class JavaRuntime
         $selected = (string) ($state['java_version'] ?? 'auto');
         if ($selected !== 'auto') {
             return in_array($selected, ['8', '11', '16', '17', '21', '25'], true) ? (int) $selected : null;
+        }
+        // Proxies run on any current Java; Bedrock is no Java server at all.
+        if (($state['server_type'] ?? '') === 'proxy') {
+            return 21;
         }
         if (($state['server_type'] ?? '') === 'modded') {
             $packJava = ModpackCatalog::runtime($state['modpack_project'] ?? null, (string) ($state['modpack_version'] ?? ''))['java'] ?? null;
@@ -121,6 +126,10 @@ final class JavaRuntime
         $override = trim((string) ($state['image'] ?? ''));
         if ($override !== '') {
             return $override;
+        }
+        if (($state['server_type'] ?? '') === 'bedrock') {
+            $images = array_values(array_filter((array) ($egg?->docker_images ?? []), 'is_string'));
+            return $images[0] ?? null;
         }
         $major = self::major($state);
         return $major === null ? null : self::imageForMajor((array) ($egg?->docker_images ?? []), $major);
