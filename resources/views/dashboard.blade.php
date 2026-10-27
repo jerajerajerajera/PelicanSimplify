@@ -650,22 +650,20 @@
                         </span>
                         <div>
                             <div class="ps-host-heading"><h3>Host health</h3><button type="button" class="ps-health-refresh" :class="{'is-busy': healthRefreshing}" :disabled="healthRefreshing" x-on:click.stop="refreshHostHealth()" x-on:keydown.stop aria-label="Refresh host health" data-tip="Refresh now"><svg aria-hidden="true"><use href="#ps-restart"/></svg></button><svg class="ps-health-expand" :class="{'expanded': healthExpanded}" aria-hidden="true"><use href="#ps-chevron"/></svg></div>
-                            <span class="ps-health-status" :class="boot.host_health?.state || 'unavailable'"><strong x-text="boot.host_health?.label || 'Unavailable'"></strong></span>
-                            <small x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts reporting'"></small>
+                            <span class="ps-health-status" :class="boot.host_health?.state || 'unavailable'"><strong x-text="boot.host_health?.label || 'Unavailable'"></strong><small x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts reporting'"></small></span>
                             <small class="ps-health-problem" x-show="boot.host_health?.problem" x-text="boot.host_health?.problem"></small>
                             <small class="ps-health-phone-summary" x-text="'CPU '+hostValue('cpu')+' · RAM '+hostValue('memory')"></small>
                         </div>
                     </div>
                     <template x-for="metric in hostMetrics" :key="metric.key">
                         <div class="ps-host-metric">
+                            {{-- One line per meter: label, a heart only when it needs attention, and the value; the bar below. Network shows its rate on the second line and its total as a tip. --}}
                             <div class="ps-host-heading">
-                                <svg aria-hidden="true"><use :href="'#ps-'+metric.icon"/></svg><span x-text="metric.label"></span>
+                                <svg aria-hidden="true"><use :href="'#ps-'+metric.icon"/></svg><span x-text="metric.label" :data-tip="metric.key==='network' ? 'Used '+hostValue('network') : (metric.key==='cpu' && boot.host_health?.hosts>1 ? 'Average across reporting hosts' : null)"></span>
                                 <span class="ps-health-heart" :class="hostMetricState(metric.key)" role="img" :aria-label="metric.label+': '+hostMetricLabel(metric.key)" :data-tip="hostMetricLabel(metric.key)"><svg aria-hidden="true"><use href="#ps-heart"/></svg></span>
+                                <strong :class="{'ps-network-value': metric.key==='network'}" x-text="metric.key==='network' ? hostRate() : hostValue(metric.key)"></strong>
                             </div>
-                            <strong :class="{'ps-network-value': metric.key==='network'}" x-text="metric.key==='network' ? hostRate() : hostValue(metric.key)"></strong>
                             <span class="ps-meter" x-show="metric.key!=='network'"><span :style="{width: hostFill(metric.key)+'%'}"></span></span>
-                            <small x-show="metric.key==='network'" x-text="'Used '+hostValue('network')"></small>
-                            <small x-show="metric.key==='cpu' && boot.host_health?.hosts>1">Average across reporting hosts</small>
                         </div>
                     </template>
                 </article>
