@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3-snapshot.4 (snapshot channel)
+Explain this error can now also read the panel log and the Wings log for root administrators.
+- The Explain popup lets root administrators choose between the console, the panel log and the Wings log of the server's node.
+- The admin menu has "Explain panel errors" to explain the panel log from the overview.
+
 ## 0.5.3-snapshot.3 (snapshot channel)
 Explain this error: with your own Anthropic API key, an Explain button in the console tells you in plain words what went wrong and what to try.
 - Off until a root administrator enters an API key under Simplify settings → Error explanations; each administrator pays for their own questions.
