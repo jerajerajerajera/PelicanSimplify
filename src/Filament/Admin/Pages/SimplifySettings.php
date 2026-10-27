@@ -52,6 +52,8 @@ class SimplifySettings extends Page implements HasForms
     public bool $setupStarted = false;
     public bool $showDiagnostics = false;
     #[\Livewire\Attributes\Locked] public bool $embedded = false;
+    /** How many Pelican tabs close the settings menu; the view draws the "Pelican" heading above them. */
+    public int $pelicanTabs = 0;
     public function bannerServers(): array
     {
         abort_unless(static::canAccess(),403);
@@ -373,9 +375,15 @@ class SimplifySettings extends Page implements HasForms
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
         $icons = [...$icons, ...self::LATER_ADDONS];
         $categories = [...$categories, ...$addons];
-        $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs(
-            array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories))
-        );
+        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
+        // Pelican's own settings close the list: each tab shows Pelican's page on that tab, so all settings live in one place.
+        $pelican = \Simplify\Panel\Services\PelicanSettingsTabs::all();
+        $this->pelicanTabs = count($pelican);
+        foreach ($pelican as $tab) {
+            $tabList[] = \Filament\Schemas\Components\Tabs\Tab::make($tab['label'])->key('pelican-'.$tab['key'])->id('pelican-'.$tab['key'])->icon($tab['icon'])
+                ->schema([\Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.pelican-settings-frame')->viewData(['url' => $tab['url'], 'label' => $tab['label']])]);
+        }
+        $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs($tabList);
         if (method_exists($tabs, 'vertical')) $tabs->vertical();
         if (method_exists($tabs, 'persistTabInQueryString')) $tabs->persistTabInQueryString('section');
         return $schema->statePath('data')->components([$tabs]);

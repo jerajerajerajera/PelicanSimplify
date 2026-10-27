@@ -21,13 +21,22 @@
   // An embedded workspace learns its kind and accent from its own <iframe> element.
   let frameKind = '';
   let frameAccent = '';
+  let frameTab = '';
   try {
     const host = window.frameElement;
     if (host?.dataset?.psFrame) {
       frameKind = host.dataset.psFrame;
       frameAccent = host.dataset.psAccent || '';
+      frameTab = host.dataset.psTab || '';
     }
   } catch {}
+  // Simplify settings show one Pelican settings tab per frame: the tab bar is hidden (CSS) and the asked tab opened
+  // when the page did not already open it from the URL.
+  const focusFrameTab = () => {
+    if (!frameTab) return;
+    const item = [...document.querySelectorAll('.fi-tabs-item')].find((el) => el.textContent.trim() === frameTab);
+    if (item && !item.classList.contains('fi-active')) item.click();
+  };
 
   // A theme plugin can force one mode (Catppuccin is dark only); then the choice in the menu has no effect.
   const forced = () => options.panel_theme?.mode || '';
@@ -78,6 +87,7 @@
     if (frameKind) {
       root.classList.add('ps-frame');
       root.dataset.psFrame = frameKind;
+      if (frameTab) root.dataset.psTab = frameTab;
     }
     ui.layer?.classList.toggle('dark', dark());
     // The phone's status bar follows the chosen theme, not only the system one.
@@ -515,6 +525,7 @@
   };
   const scheduleEnhance = () => setTimeout(enhanceEditPages, 300);
   document.addEventListener('DOMContentLoaded', scheduleEnhance);
+  if (frameTab) window.addEventListener('load', () => setTimeout(focusFrameTab, 60));
   document.addEventListener('livewire:navigated', scheduleEnhance);
   window.Simplify.saveBar = saveBar;
   // Inline style for the panel name in the top-left corner; the font stack comes from the server's whitelist.

@@ -1018,7 +1018,7 @@
       /** Simplify's own tools that open a popup instead of an admin page; listed with the admin pages. */
       adminActions() {
         const items = [];
-        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Simplify settings', icon: 'simplify', action: 'settings' });
+        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Settings', icon: 'gear', action: 'settings' });
         if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: 'Explain panel errors', icon: 'question', action: 'explain' });
         return items;
       },
@@ -2138,7 +2138,7 @@
       modalTitle() {
         if (this.modal === 'alias') return 'Change server alias';
         if (this.modal === 'background') return 'Server background';
-        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
+        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Settings';
         if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Server Maker';
         if (this.modal === 'account') return 'Profile';
         if (this.modal === 'notifications') return 'Notifications';
