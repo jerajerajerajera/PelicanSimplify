@@ -1,6 +1,6 @@
 # PelicanSimplify
 
-Simplify is an all-in-one plugin for [Pelican](https://github.com/pelican/panel) that puts usability first. It gives you one clear overview of your servers and a set of add-ons you switch on when you need them. Pelican and [Wings](https://github.com/pelican/wings) keep doing the work underneath, and the original panel stays available.
+Simplify is an all-in-one plugin for [Pelican](https://github.com/pelican/panel) that puts usability first. It is packed with features that make the panel easier to use, starting with one clear overview of your servers and a set of add-ons you switch on when you need them. Pelican and [Wings](https://github.com/pelican/wings) keep doing the work underneath, and the original panel stays available. See the full feature list below.
 
 **Stable 0.5.2 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
 
