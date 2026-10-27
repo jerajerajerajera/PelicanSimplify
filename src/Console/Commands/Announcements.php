@@ -17,6 +17,8 @@ final class Announcements extends Command
     public function handle(): int
     {
         $now=time();
+        // Heartbeat for the notifications window: shows whether Pelican's scheduler (cron) runs, which real notifications need.
+        Cache::forever('simplify.announcements-at',$now);
         // Every ten minutes, and right after Simplify itself was updated.
         if((int)Cache::get('simplify.panel-updates-at',0)<=$now-600||!PanelUpdates::checked()){
             Cache::forever('simplify.panel-updates-at',$now);
