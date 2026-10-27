@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-beta.13 (beta channel)
+Plugin search can include CurseForge (0.5.3-snapshot.16 below).
+
+## 0.5.3-snapshot.16 (snapshot channel)
+Plugin search can include CurseForge.
+- A root administrator adds a free CurseForge API key under Simplify settings → Plugin sites, and can let people add their own key on the Plugins page.
+- CurseForge results are merged into the same cards; files that cannot be downloaded by other apps show a Website button.
+
 ## 0.5.3-beta.12 (beta channel)
 Plugins sit on one page, and a plugin that fails to start is switched off (0.5.3-snapshot.15 below).
 
