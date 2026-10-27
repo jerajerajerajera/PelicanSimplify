@@ -95,6 +95,7 @@ sudo corepack enable</pre>
                 <button type="button" class="ps-btn is-sm is-subtle" wire:click="refreshHub"><x-tabler-refresh class="ps-ico" />Read again</button>
             </footer>
 
+            <template x-teleport="body">
             <div class="ps-hub-layer" x-show="open" x-cloak @click.self="close()">
                 <div class="ps-hub-dialog" role="dialog" aria-modal="true" :aria-label="open?.title">
                     <template x-if="open">
@@ -122,6 +123,7 @@ sudo corepack enable</pre>
                     </template>
                 </div>
             </div>
+            </template>
         </div>
     @endif
 @endif

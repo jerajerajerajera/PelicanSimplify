@@ -451,10 +451,14 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 }
 
 /* Browse Hub (plugin manager) ------------------------------------------------------------------ */
+.ps-plugins > * { min-width: 0; }
 .ps-plugins-tabs { justify-self: start; }
-.ps-hub { display: grid; gap: 16px; }
+.ps-plugins-tabs > button { white-space: nowrap; }
+.ps-hub { display: grid; gap: 16px; min-width: 0; }
+.ps-hub > * { min-width: 0; }
 .ps-hub-loading { display: flex; align-items: center; gap: 10px; padding: 28px 4px; color: var(--ps-muted); }
 .ps-hub-intro small, .ps-hub .ps-alert small { display: block; }
+.ps-hub .ps-alert > div { min-width: 0; }
 .ps-hub-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .ps-hub-search { max-width: none; }
 .ps-hub-count { margin-left: 6px; padding: 0 6px; border-radius: var(--ps-radius-pill); background: var(--ps-raised); color: var(--ps-muted); font-size: 11px; }
