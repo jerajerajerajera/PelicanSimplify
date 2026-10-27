@@ -370,11 +370,11 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 /* Host health dock: compact summary row that expands upward into node details. */
 .ps-health-panel { position: relative; z-index: 1; flex: none; width: var(--ps-health-width, calc(100% - 8px)); margin: 0 var(--ps-health-left, auto) 0 var(--ps-health-left, auto); overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 -4px 12px rgb(0 0 0 / .1); }
 .ps.dark .ps-health-panel { box-shadow: none; }
-.ps-host-health { display: grid; grid-template-columns: minmax(180px, 1.2fr) repeat(4, minmax(0, 1fr)); gap: 18px; padding: 16px 18px; cursor: pointer; transition: background-color var(--ps-fast); }
+.ps-host-health { display: grid; grid-template-columns: minmax(200px, 1.2fr) repeat(4, minmax(0, 1fr)); align-items: center; gap: 18px; padding: 10px 16px; cursor: pointer; transition: background-color var(--ps-fast); }
 .ps-host-health:hover { background: color-mix(in srgb, var(--ps-raised) 40%, var(--ps-surface)); }
 .ps-host-health:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; border-radius: var(--ps-radius-lg); }
 .ps-host-state { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ps-host-state > div { display: grid; align-content: center; gap: 5px; min-width: 0; }
+.ps-host-state > div { display: grid; align-content: center; gap: 2px; min-width: 0; }
 .ps-host-metric { min-width: 0; }
 .ps-host-heading { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--ps-muted); font-size: 12px; }
 .ps-host-state .ps-host-heading { margin: 0; }
@@ -385,7 +385,8 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-host-heading > .ps-health-heart.healthy { display: none; }
 .ps-health-expand { width: 16px; height: 16px; margin-left: auto; transform: rotate(-90deg); transition: transform var(--ps-slow); }
 .ps-health-expand.expanded { transform: rotate(90deg); }
-.ps-health-status { --ps-tone: var(--ps-muted); display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ps-tone); font-size: 17px; line-height: 22px; }
+.ps-health-status { --ps-tone: var(--ps-muted); display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--ps-tone); font-size: 15px; line-height: 20px; }
+.ps-host-state .ps-health-status small { margin: 0; white-space: nowrap; }
 .ps-health-status strong { overflow-wrap: anywhere; }
 .ps-health-heart { --ps-tone: var(--ps-muted); display: inline-flex; align-items: center; color: var(--ps-tone); }
 .ps-health-heart svg { width: 16px; height: 16px; fill: currentColor; stroke: currentColor; stroke-width: 1; }
@@ -397,15 +398,20 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-health-refresh svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
 .ps-health-refresh.is-busy svg { animation: ps-setup-spin 1s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .ps-health-refresh.is-busy svg { animation: none; } }
-.ps-host-emblem { position: relative; display: grid; flex: none; place-items: center; width: 64px; height: 64px; }
-.ps-host-emblem .ps-host-heart { width: 60px; height: 60px; fill: color-mix(in srgb, currentColor 15%, transparent); stroke: currentColor; stroke-width: 1.5; }
-.ps-host-server-badge { position: absolute; right: -1px; bottom: 2px; display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid var(--ps-line); border-radius: 6px; background: var(--ps-surface); color: var(--ps-ink); }
-.ps-host-server-badge svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.ps-host-emblem { position: relative; display: grid; flex: none; place-items: center; width: 42px; height: 42px; }
+.ps-host-emblem .ps-host-heart { width: 40px; height: 40px; fill: color-mix(in srgb, currentColor 15%, transparent); stroke: currentColor; stroke-width: 1.5; }
+.ps-host-server-badge { position: absolute; right: -3px; bottom: 0; display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid var(--ps-line); border-radius: 5px; background: var(--ps-surface); color: var(--ps-ink); }
+.ps-host-server-badge svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .ps-host-state small, .ps-host-metric > small { display: block; margin-top: 3px; color: var(--ps-muted); font-size: 10px; line-height: 1.3; }
 .ps-host-state small.ps-health-problem { color: var(--ps-warn); }
 .ps-node-summary .ps-health-problem { display: block; margin-top: 6px; color: var(--ps-warn); font-size: 12px; }
 .ps-host-metric > strong { display: block; overflow-wrap: anywhere; color: var(--ps-ink); font-size: 15px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
 .ps-host-metric > .ps-network-value { font-size: 13px; white-space: normal; }
+/* The dock's meters: label and value share one line, the bar sits right under it. */
+.ps-host-health > .ps-host-metric > .ps-host-heading { flex-wrap: wrap; row-gap: 2px; margin-bottom: 0; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > strong { margin-left: auto; color: var(--ps-ink); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > .ps-network-value { flex-basis: 100%; margin-left: 0; font-size: 12px; }
+.ps-host-health > .ps-host-metric > .ps-host-heading > .ps-health-heart { margin-left: 0; }
 .ps-meter { display: block; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--ps-accent) 13%, transparent); }
 .ps-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--ps-accent); opacity: .65; transition: width .65s ease; }
 .ps-health-drawer { --ps-health-details-height: clamp(100px, calc(100dvh - 420px), 320px); max-height: 0; opacity: 0; transition: max-height .3s ease, opacity var(--ps-slow); }
@@ -774,9 +780,7 @@ button.ps-package:hover { border-color: var(--ps-accent); }
   .ps-server-grid.is-compact { --ps-compact-h: 132px; --ps-compact-pad: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .ps-server-grid.is-compact .ps-card-title-row h3 { font-size: 16px; }
   .ps-health-panel { width: 100%; margin: 0; }
-  .ps-host-health { gap: 12px; padding: 12px; }
-  .ps-host-emblem { width: 58px; height: 58px; }
-  .ps-host-emblem .ps-host-heart { width: 54px; height: 54px; }
+  .ps-host-health { gap: 12px; padding: 10px 12px; }
   .ps-health-drawer { --ps-health-details-height: clamp(80px, calc(100dvh - 440px), 320px); }
   .ps-node-health-list, .ps-health-detail-toolbar { padding-inline: 10px; }
   .ps-console-title { height: 48px; padding: 0 12px; }
@@ -1243,7 +1247,8 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 /* Phone layout (overview). The page scrolls as a whole instead of a server list inside a fixed-height
    dock, filters share one swipeable row, cards become compact rows with one large power button, host
    health is a one-line summary and a tab bar keeps Servers, New and Menu within thumb reach. */
-.ps-tabbar, .ps-health-phone-summary { display: none; }
+/* The CPU/RAM line only stands in for the meters on a phone; on wider screens the meters show it already. */
+.ps-tabbar, .ps-host-state .ps-health-phone-summary { display: none; }
 @media (max-width: 600px) {
   body:has(.ps:not(.server-active, .host-mode)), body:has(.ps:not(.server-active, .host-mode)) :is(.fi-layout, .fi-main-ctn) { height: auto; overflow: visible; }
   body:has(.ps:not(.server-active, .host-mode)) :is(.fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content), .ps:not(.server-active, .host-mode), .ps:not(.server-active, .host-mode) .ps-main { flex: 1 0 auto; min-height: auto; overflow: visible; }
