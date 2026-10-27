@@ -111,13 +111,17 @@ check(A::readState($person)['archived_ids']===[]&&\Simplify\Panel\Services\Panel
 A::delete($pin['id']);
 foreach(A::all() as $row)if($row['title']==='Later news')A::delete($row['id']);
 
-// App notifications: due once live and only when asked for; marked once sent, and editing keeps that mark.
+// App notifications: due from the start until a day later (each device gets it once); a round is recorded, editing keeps it.
 $pushed=A::save(['title'=>'Server restart','push'=>true,'starts_at'=>$now+600],null,'jera',$now);
 check(!in_array($pushed['id'],array_column(A::duePush($now),'id'),true)&&in_array($pushed['id'],array_column(A::duePush($now+600),'id'),true),'a scheduled announcement is pushed when it starts');
 check(!in_array($edited['id'],array_column(A::duePush($now),'id'),true),'announcements without push are never sent');
-A::markPushed($pushed['id'],$now+600);
-A::save(['title'=>'Server restart moved','push'=>true],$pushed['id'],'jera',$now+700);
-check(A::duePush($now+800)===[]&&A::find($pushed['id'])['pushed_at']===$now+600,'sent once; editing does not send it again');
+A::recordPush($pushed['id'],0,$now+600);
+check(A::find($pushed['id'])['pushed_at']===$now+600&&A::find($pushed['id'])['pushed_to']===0,'a round that reached no device is recorded');
+A::recordPush($pushed['id'],2,$now+660);
+A::save(['title'=>'Server restart moved','push'=>true,'starts_at'=>$now+600],$pushed['id'],'jera',$now+700);
+check(A::find($pushed['id'])['pushed_at']===$now+600&&A::find($pushed['id'])['pushed_to']===2,'first send time kept, devices counted up; editing keeps both');
+check(in_array($pushed['id'],array_column(A::duePush($now+800),'id'),true),'still due for devices that missed it');
+check(!in_array($pushed['id'],array_column(A::duePush($now+600+A::PUSH_CATCH_UP+1),'id'),true),'not sent to new devices after a day');
 A::delete($pushed['id']);
 
 // Deleting, broken files and limits.

@@ -13,6 +13,8 @@ final class PushNotifications
     public const KEYS='simplify/push/keys.json';
     public const DIR='simplify/push/accounts/';
     public const DEVICE_LIMIT=10;
+    /** Per device, the keys of the last messages it received once (announcements), so none arrives twice. */
+    public const RECEIVED_LIMIT=100;
     /** Kinds of notifications an account can turn off; updates only reach root admins. */
     public const KINDS=['announcements'=>true,'updates'=>true];
 
@@ -35,8 +37,10 @@ final class PushNotifications
         if(!WebPush::endpointAllowed($endpoint))throw new \InvalidArgumentException('This browser uses a push service the panel does not send to.');
         if(!WebPush::keysValid($p256dh,$auth))throw new \InvalidArgumentException('The browser sent invalid notification keys.');
         $data=self::read($user);$id=self::id($endpoint);
+        // The same browser keeps what it already received.
+        $received=current(array_filter($data['devices'],fn(array $d):bool=>$d['id']===$id))['received']??[];
         $data['devices']=array_values(array_filter($data['devices'],fn(array $d):bool=>$d['id']!==$id));
-        array_unshift($data['devices'],['id'=>$id,'endpoint'=>$endpoint,'p256dh'=>$p256dh,'auth'=>$auth,'label'=>self::label($label),'created_at'=>$now??time(),'last_sent_at'=>null]);
+        array_unshift($data['devices'],['id'=>$id,'endpoint'=>$endpoint,'p256dh'=>$p256dh,'auth'=>$auth,'label'=>self::label($label),'created_at'=>$now??time(),'last_sent_at'=>null,'received'=>$received]);
         $data['devices']=array_slice($data['devices'],0,self::DEVICE_LIMIT);
         self::write($user,$data);
         return self::settings($user,$endpoint);
@@ -74,13 +78,19 @@ final class PushNotifications
         };
     }
 
-    /** Sends to every device of this account that wants this kind; returns how many accepted it. */
-    public static function send(object $user,string $kind,array $message): int
+    /**
+     * Sends to every device of this account that wants this kind; returns how many accepted it.
+     * With $once, a device that already received that key is skipped, and the key is remembered after it accepts.
+     */
+    public static function send(object $user,string $kind,array $message,?string $once=null): int
     {
         $data=self::read($user);
         if(!($data['preferences'][$kind]??false))return 0;
         $sent=0;
-        foreach($data['devices'] as $device)if(self::deliver($user,$device,$message)==='sent')$sent++;
+        foreach($data['devices'] as $device){
+            if($once!==null&&in_array($once,$device['received'],true))continue;
+            if(self::deliver($user,$device,$message,$once)==='sent')$sent++;
+        }
         return $sent;
     }
 
@@ -102,7 +112,7 @@ final class PushNotifications
     }
 
     /** "sent", "gone" (the subscription expired; it is removed) or "failed". */
-    private static function deliver(object $user,array $device,array $message): string
+    private static function deliver(object $user,array $device,array $message,?string $once=null): string
     {
         try{
             $request=WebPush::request($device,json_encode($message,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),self::keys(),self::subject());
@@ -115,7 +125,10 @@ final class PushNotifications
         if(in_array($status,[404,410],true)){self::remove($user,$device['id']);return 'gone';}
         if($status<200||$status>=300)return 'failed';
         $data=self::read($user);
-        foreach($data['devices'] as &$known)if($known['id']===$device['id'])$known['last_sent_at']=time();
+        foreach($data['devices'] as &$known)if($known['id']===$device['id']){
+            $known['last_sent_at']=time();
+            if($once!==null)$known['received']=array_slice([$once,...array_diff($known['received'],[$once])],0,self::RECEIVED_LIMIT);
+        }
         unset($known);
         self::write($user,$data);
         return 'sent';
@@ -154,7 +167,8 @@ final class PushNotifications
         foreach(is_array($raw['devices']??null)?$raw['devices']:[] as $d){
             if(!is_array($d)||!is_string($d['endpoint']??null)||!WebPush::endpointAllowed($d['endpoint'])||!is_string($d['p256dh']??null)||!is_string($d['auth']??null))continue;
             $devices[]=['id'=>self::id($d['endpoint']),'endpoint'=>$d['endpoint'],'p256dh'=>$d['p256dh'],'auth'=>$d['auth'],'label'=>self::label($d['label']??''),
-                'created_at'=>is_int($d['created_at']??null)?$d['created_at']:0,'last_sent_at'=>is_int($d['last_sent_at']??null)?$d['last_sent_at']:null];
+                'created_at'=>is_int($d['created_at']??null)?$d['created_at']:0,'last_sent_at'=>is_int($d['last_sent_at']??null)?$d['last_sent_at']:null,
+                'received'=>array_slice(array_values(array_filter(is_array($d['received']??null)?$d['received']:[],fn($k):bool=>is_string($k)&&strlen($k)<=80)),0,self::RECEIVED_LIMIT)];
         }
         $preferences=[];
         foreach(self::KINDS as $kind=>$default)$preferences[$kind]=is_bool($raw['preferences'][$kind]??null)?$raw['preferences'][$kind]:$default;
