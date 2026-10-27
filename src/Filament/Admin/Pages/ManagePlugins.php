@@ -19,6 +19,49 @@ final class ManagePlugins extends Page
 
     private function canChange(Plugin $plugin): bool { return (bool) user()?->can('update', $plugin); }
 
+    /** Installed or Browse Hub (?tab=hub). */
+    public string $tab = 'installed';
+
+    /** Browse Hub reads the Hub list after the first render, so the page itself never waits for the Hub. */
+    public bool $hubLoaded = false;
+
+    public function mount(): void
+    {
+        $this->tab = request()->query('tab') === 'hub' ? 'hub' : 'installed';
+    }
+
+    public function loadHub(): void { $this->hubLoaded = true; }
+
+    /** Items for Browse Hub, with what is already installed on this panel marked. */
+    public function hub(): array
+    {
+        $catalog = \Simplify\Panel\Services\HubCatalog::catalog();
+        $installed = Plugin::query()->get()->mapWithKeys(fn (Plugin $plugin) => [$plugin->id => $plugin->status->value])->all();
+        $items = array_map(fn (array $item) => [...$item, 'installed' => $installed[$item['slug']] ?? null], $catalog['items']);
+        $build = collect($items)->contains(fn (array $item) => $item['type'] === 'theme')
+            ? \Simplify\Panel\Services\DependencyCheck::themeBuildReady(base_path()) : ['node' => true, 'yarn' => true];
+        return [
+            'items' => $items,
+            'makers' => ['theme' => \Simplify\Panel\Services\HubCatalog::makers($items, 'theme'), 'plugin' => \Simplify\Panel\Services\HubCatalog::makers($items, 'plugin'), 'language' => \Simplify\Panel\Services\HubCatalog::makers($items, 'language')],
+            'at' => $catalog['at'],
+            'error' => $catalog['error'],
+            'build' => $build,
+        ];
+    }
+
+    public function refreshHub(): void
+    {
+        // At most one fresh read per five minutes, however often the button is pressed.
+        $at = \Simplify\Panel\Services\HubCatalog::catalog()['at'];
+        if (is_int($at) && time() - $at < 300) {
+            Notification::make()->title('The list is up to date')->body('It was read from the Hub less than five minutes ago.')->info()->send();
+            return;
+        }
+        \Simplify\Panel\Services\HubCatalog::forget();
+        \Illuminate\Support\Facades\Cache::forget('simplify.theme-build-ready');
+        $this->js('window.location.reload()');
+    }
+
     /** True while an update, install or uninstall started here is running; the page reloads once it is done. */
     public bool $busy = false;
 
