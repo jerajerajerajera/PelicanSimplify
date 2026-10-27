@@ -21,21 +21,10 @@ For a few servers the simple mode is enough. Larger hosts can switch to host mod
 
 ### Highlights
 
-#### Explain this error
-
-When a server or the panel shows an error, the Explain button tells you in plain words what is wrong and what to try. You choose the AI: Claude, GPT or Gemini, each with your own API key. If the log looks fine, it says so and lists anything worth a look as options you can open. Root administrators can also check the panel log and the Wings log. When the panel itself is broken, a plain emergency page and a terminal command still work. IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent, and the feature stays off until an administrator turns it on.
-
-#### Simplify as an app
-
-You can add the panel to the home screen of your phone or computer, and it opens like an app. Turn on app notifications per device to get announcements and new versions of Pelican, Wings, Simplify and plugins as a notification. Every page works on a phone, upright and on its side, with a tab bar at the bottom and popups that slide up as sheets.
-
-#### Simplify Server Maker
-
-One creator for every server. Press Create server and the Server Maker first asks what you want to make: a Minecraft server (Vanilla, plugins, mods, a modpack or Bedrock) or one of 170+ other games. After that the steps are the same for every game: settings, server, resources and a review. Simplify installs the right egg, and a new server shows how far its installation is until it is ready to start.
-
-#### Plugins for the panel and for your servers
-
-Simplify works together with other Pelican plugins. Their pages, widgets and buttons show up inside Simplify, theme plugins set its colours and font, and each plugin can be switched on or off. For Minecraft servers, one page shows the plugins that are installed and searches Modrinth, Hangar and SpigotMC at once, with the source and the version that will be installed. If a new plugin stops the server from working after a restart, Simplify switches it off again and explains why.
+- Explain this error tells you in plain words what went wrong and what to try. It uses Claude, GPT or Gemini with your own API key.
+- Add the panel to your home screen and use it as an app, with notifications for announcements and updates.
+- Simplify Server Maker is one creator for Minecraft (Vanilla, plugins, mods, modpacks and Bedrock) and 170+ other games.
+- Other Pelican plugins show up inside Simplify. On Minecraft servers you find and install plugins from Modrinth, Hangar and SpigotMC on one page.
 
 ### All features
 
