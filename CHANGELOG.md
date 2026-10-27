@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.0-snapshot.5 (snapshot channel)
+The Server Maker bar looks tidier.
+- Back, the steps, the draft buttons and Next share one style and height, on a phone too.
+
 ## 0.6.0-snapshot.4 (snapshot channel)
 Browse the Pelican Hub from the plugin manager.
 - A new Browse Hub tab shows the themes, plugins and languages on the Hub, with the people who made them first. Install on Hub opens the item on the Hub, so every download counts for its maker.
