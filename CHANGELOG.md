@@ -1,5 +1,14 @@
 # Changes
 
+## 0.6.0-snapshot.9 (snapshot channel)
+Host mode is flatter, and pinned announcements show there too.
+- In host mode, Settings and the Server Maker sit flat in the workspace without a card.
+- The Open full page button is gone from the host mode header.
+- The panel name and the top navigation are as wide as the workspace in host mode.
+- Pinned announcements show in host mode as small chips in the top row. A chip opens its full bar.
+- Embedded pages no longer show their own announcement bars, so nothing shows twice.
+- The Halloween web shows once per window.
+
 ## 0.6.0-snapshot.8 (snapshot channel)
 Host mode is calmer, notifications can be marked unread, and three fixes for settings.
 - Host mode has one menu with two tabs. Admin shows every section as a tree with its pages underneath. Servers shows one row per server, grouped by node.
