@@ -339,9 +339,6 @@
                         </div>
                     </div>
 
-                    <button type="button" x-show="boot.settings_url" x-on:click="openPanelSettings()" class="ps-btn is-icon is-subtle ps-nav-admin" data-tip="Simplify settings" aria-label="Simplify settings" aria-haspopup="dialog">
-                        <span class="ps-settings-mark" aria-hidden="true"><svg><use href="#ps-simplify"/></svg><svg class="ps-settings-gear"><use href="#ps-gear"/></svg></span><span class="ps-mobile-label">Simplify settings</span>
-                    </button>
                     <a x-show="boot.admin_url" :href="server?.admin_server_url || boot.admin_url" class="ps-btn is-icon is-subtle ps-nav-admin" data-tip="Legacy panel" aria-label="Legacy panel">
                         <svg aria-hidden="true"><use href="#ps-legacy"/></svg><span class="ps-mobile-label">Legacy panel</span>
                     </a>

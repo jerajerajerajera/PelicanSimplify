@@ -72,6 +72,10 @@ html.ps-frame[data-ps-forward-notices] .fi-no:not(.fi-no-database) { display: no
 html.ps-frame { height: 100%; overflow: hidden; }
 html.ps-frame :is(body, .fi-body) { height: 100%; margin: 0; overflow: auto; overscroll-behavior: contain; background: var(--ps-surface) !important; color: var(--ps-ink); }
 .ps-frame :is(.fi-topbar, .fi-sidebar, .fi-breadcrumbs, .fi-layout-sidebar-toggle-btn-ctn, .fi-sidebar-close-overlay, .fi-footer, .fi-main-ctn > footer) { display: none !important; }
+/* One Pelican settings tab per frame (Simplify settings → Pelican): the tab bar stays out of sight. */
+.ps-frame[data-ps-tab] .fi-sc-tabs > .fi-tabs { display: none !important; }
+.ps-frame[data-ps-tab] .fi-sc-tabs { border: 0 !important; box-shadow: none !important; background: transparent !important; }
+.ps-frame[data-ps-tab] .fi-sc-tabs > .fi-sc-tabs-tab { padding: 0 !important; }
 .ps-frame :is(.fi-layout, .fi-main-ctn, .fi-main, .fi-page, .fi-page-header-main-ctn, .fi-page-main, .fi-page-content, .fi-page-content-ctn, .fi-simple-layout, .fi-simple-main-ctn, .fi-simple-main) {
   min-width: 0 !important;
   min-height: 0 !important;

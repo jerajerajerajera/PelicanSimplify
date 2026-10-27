@@ -7,6 +7,9 @@
         const fit = () => { const tabs = $el.querySelector('.ps-settings-tabs.fi-vertical'); if (!tabs) return; const top = tabs.getBoundingClientRect().top + window.scrollY; tabs.style.setProperty('--ps-settings-height', Math.max(420, window.innerHeight - top - 16) + 'px'); };
         fit(); window.addEventListener('resize', fit); new MutationObserver(() => requestAnimationFrame(fit)).observe($el, { childList: true, subtree: true });
     ">
+        @if($this->pelicanTabs > 0)
+            <style>.ps-settings-tabs .fi-tabs-item:nth-last-child({{ (int) $this->pelicanTabs }}) { margin-top: 30px; position: relative; } .ps-settings-tabs .fi-tabs-item:nth-last-child({{ (int) $this->pelicanTabs }})::before { content: "Pelican"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }</style>
+        @endif
         @if(!$this->needsSetup())
             <header class="ps-settings-hero">
                 <span class="ps-settings-logo">@include('pelican-simplify::simplify-icon')</span>
