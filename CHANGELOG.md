@@ -1,5 +1,12 @@
 # Changes
 
+## 0.6.0-beta.6 (beta channel)
+Menus grouped by what you want to do, a foldable Customize panel and a shorter setup wizard.
+- Admin tools and host mode are grouped as Servers, Nodes, People, Announcements, Tools, Integrations, Panel and Other plugins. The top bar, phone menu, account menu and settings tabs follow the same order.
+- Each section in Customize folds. Only Layout starts open, and each device remembers what you opened.
+- The setup wizard asks four questions plus a step for each add-on that needs a value. Finish setup works again in panels where it did nothing.
+- The Minecraft step of the Server Maker uses compact cards, and the software choice is one row of buttons.
+
 ## 0.6.0-beta.5 (beta channel)
 The Server Maker bar looks tidier.
 - Back, the steps, the draft buttons and Next share one style and height, on a phone too.

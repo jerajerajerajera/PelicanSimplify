@@ -36,59 +36,6 @@
                     <svg aria-hidden="true"><use href="#ps-menu"/></svg>
                 </button>
                 <div class="ps-nav-items" id="ps-navigation-items">
-                    @if(\Simplify\Panel\Services\Extensions::web()) @include('server-directory::simplify.navigation') @endif
-                    <a x-show="boot.admin_url" :href="server?.admin_server_url || boot.admin_url" class="ps-btn is-icon is-subtle" data-tip="Legacy panel" aria-label="Legacy panel">
-                        <svg aria-hidden="true"><use href="#ps-legacy"/></svg><span class="ps-mobile-label">Legacy panel</span>
-                    </a>
-                    <button type="button" x-show="boot.settings_url" x-on:click="openPanelSettings()" class="ps-btn is-icon is-subtle" data-tip="Simplify settings" aria-label="Simplify settings" aria-haspopup="dialog">
-                        <span class="ps-settings-mark" aria-hidden="true"><svg><use href="#ps-simplify"/></svg><svg class="ps-settings-gear"><use href="#ps-gear"/></svg></span><span class="ps-mobile-label">Simplify settings</span>
-                    </button>
-                    <button type="button" x-show="installable && !embedded" x-cloak x-on:click="installApp()" class="ps-btn is-icon is-subtle" data-tip="Install app" aria-label="Install app">
-                        <svg aria-hidden="true"><use href="#ps-download"/></svg><span class="ps-mobile-label">Install app</span>
-                    </button>
-
-                    {{-- Admin tools: Pelican admin pages Simplify does not replace, opened in a popup (admins only). --}}
-                    <div class="ps-notify" x-show="adminPages().length && !(hostMode && !server)" x-on:click.outside="adminMenu=false" x-on:keydown.escape.stop="adminMenu=false; $refs.adminButton.focus()">
-                        <button type="button" x-ref="adminButton" class="ps-btn is-icon is-subtle" data-tip="Admin tools" aria-label="Admin tools" aria-controls="ps-admin-menu" :aria-expanded="adminMenu"
-                                x-on:click="adminMenu=!adminMenu; notifyMenu=false; appearanceMenu=false; groupsMenu=false; accountMenu=false">
-                            <svg aria-hidden="true"><use href="#ps-shield"/></svg><span class="ps-mobile-label">Admin tools</span>
-                        </button>
-                        <div id="ps-admin-menu" class="ps-dropdown is-end ps-admin-menu" x-show="adminMenu" x-cloak x-transition.opacity>
-                            <strong class="ps-dropdown-title">Admin tools</strong>
-                            {{-- Same sections as host mode: coloured cards, Health with its checks and Legacy at the bottom. --}}
-                            <div class="ps-admin-groups">
-                                <template x-for="section in hostSections().filter((x) => !['health', 'legacy'].includes(x.key))" :key="section.key">
-                                    <div class="ps-admin-group" :style="{'--ps-tone': section.color}">
-                                        <span class="ps-admin-group-head"><span class="ps-host-rail-icon"><svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg></span><span x-text="section.label"></span></span>
-                                        <template x-for="item in section.pages" :key="item.key">
-                                            <button type="button" class="ps-admin-item" x-on:click="openAdminPage(item)">
-                                                <svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </template>
-                            </div>
-                            <template x-if="adminHealthPage()">
-                                <div class="ps-admin-health">
-                                    <button type="button" class="ps-admin-health-title" x-on:click="openAdminPage(adminHealthPage())"><svg aria-hidden="true"><use href="#ps-heart"/></svg><span>Host health checks</span></button>
-                                    <div class="ps-health-grid">
-                                        @include('pelican-simplify::health-checks', ['open' => 'openAdminPage(adminHealthPage())'])
-                                    </div>
-                                </div>
-                            </template>
-                            {{-- Explain the panel's own log (root admins with an AI key in Simplify settings). --}}
-                            <button type="button" class="ps-admin-health-title ps-admin-explain" x-show="explainSources().includes('panel')" x-on:click="adminMenu=false; explainError('panel')"><svg aria-hidden="true"><use href="#ps-question"/></svg><span>Explain panel errors</span></button>
-                            <template x-for="section in hostSections().filter((x) => x.key === 'legacy')" :key="section.key">
-                                <div class="ps-admin-legacy">
-                                    <span class="ps-label">Legacy</span>
-                                    <template x-for="item in section.pages" :key="item.key">
-                                        <button type="button" class="ps-btn is-sm is-subtle" x-on:click="openAdminPage(item)" x-text="item.label"></button>
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
                     {{-- Notifications: alerts, pending changes and plugin updates in one dropdown. --}}
                     <div class="ps-notify" x-on:click.outside="notifyMenu=false" x-on:keydown.escape.stop="notifyMenu=false; $refs.notifyButton.focus()">
             {{-- A new notification drops down from the bell and slides back up after a few seconds. --}}
@@ -146,7 +93,7 @@
                     </div>
 
                     {{-- Own server groups and server order, saved with the account; a server sits in one group at most. --}}
-                    <div class="ps-overview-appearance ps-overview-groups" x-show="!server && !hostMode && overviewPreferences.showGroupsButton" x-on:click.outside="groupsMenu=false" x-on:keydown.escape.stop="groupsMenu=false; $refs.overviewGroupsButton.focus()">
+                    <div class="ps-overview-appearance ps-overview-groups ps-nav-view" x-show="!server && !hostMode && overviewPreferences.showGroupsButton" x-on:click.outside="groupsMenu=false" x-on:keydown.escape.stop="groupsMenu=false; $refs.overviewGroupsButton.focus()">
                         <button type="button" x-ref="overviewGroupsButton" class="ps-btn is-icon is-subtle" data-tip="Server groups" aria-label="Server groups" aria-controls="ps-overview-groups-menu" :aria-expanded="groupsMenu"
                                 x-on:click="groupsMenu=!groupsMenu; appearanceMenu=false; accountMenu=false; notifyMenu=false">
                             <svg aria-hidden="true"><use href="#ps-files"/></svg><span class="ps-mobile-label">Server groups</span>
@@ -211,7 +158,7 @@
                     </div>
 
                     {{-- Personal appearance preferences. --}}
-                    <div class="ps-overview-appearance" x-show="!hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
+                    <div class="ps-overview-appearance ps-nav-view" x-show="!hostMode" x-on:click.outside="appearanceMenu=false" x-on:keydown.escape.stop="appearanceMenu=false; $refs.overviewAppearance.focus()">
                         <button type="button" x-ref="overviewAppearance" class="ps-btn is-icon is-subtle" :data-tip="server ? 'Customize server page' : 'Customize overview'" :aria-label="server ? 'Customize server page' : 'Customize overview'" aria-controls="ps-overview-appearance-menu" :aria-expanded="appearanceMenu"
                                 x-on:click="appearanceMenu=!appearanceMenu; groupsMenu=false; accountMenu=false; notifyMenu=false">
                             <svg aria-hidden="true"><use href="#ps-wand"/></svg><span class="ps-mobile-label" x-text="server ? 'Customize server page' : 'Customize overview'">Customize overview</span>
@@ -222,14 +169,15 @@
                             {{-- Server pages: the same personal preferences, stored with the overview ones. --}}
                             <template x-if="server">
                                 <div class="ps-customize">
-                                    <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
-                                        <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
-                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
-                                    </button>
+                                    <button type="button" class="ps-customize-head is-toggle is-first" :aria-expanded="customizeOpen('server.layout')" aria-controls="ps-customize-server-layout" x-on:click="toggleCustomize('server.layout')"><span>Layout</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-layout" x-show="customizeOpen('server.layout')">
                                     <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.serverFullWidth" x-on:click="setOverviewPreference('serverFullWidth', !overviewPreferences.serverFullWidth)">
                                         <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for server pages</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.serverFullWidth}" aria-hidden="true"></span>
                                     </button>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="!phone" :aria-expanded="customizeOpen('server.console')" aria-controls="ps-customize-server-console" x-on:click="toggleCustomize('server.console')"><span>Console</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-console" x-show="customizeOpen('server.console')">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consoleFocus" x-on:click="setConsoleFocus(!consoleFocus)">
                                         <span><strong>Bigger console</strong><small>Open server pages with the large console, without the menu next to it</small></span>
                                         <span class="ps-switch" :class="{'is-on': consoleFocus}" aria-hidden="true"></span>
@@ -238,14 +186,20 @@
                                         <span><strong>Log in the mini console</strong><small>While a section like Files is open, show the last log lines above the command field</small></span>
                                         <span class="ps-switch" :class="{'is-on': consolePeek}" aria-hidden="true"></span>
                                     </button>
-                                </div>
-                            </template>
-                            <template x-if="!server">
-                                <div class="ps-customize">
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-expanded="customizeOpen('server.more')" aria-controls="ps-customize-server-more" x-on:click="toggleCustomize('server.more')"><span>More</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-more" x-show="customizeOpen('server.more')">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
                                         <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
                                     </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!server">
+                                <div class="ps-customize">
+                                    <button type="button" class="ps-customize-head is-toggle is-first" :aria-expanded="customizeOpen('overview.layout')" aria-controls="ps-customize-overview-layout" x-on:click="toggleCustomize('overview.layout')"><span>Layout</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-layout" x-show="customizeOpen('overview.layout')">
                                     <div class="ps-customize-row">
                                         <div><strong>Layout</strong><small>Cards, small cards or rows</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Layout">
@@ -270,6 +224,13 @@
                                             </template>
                                         </div>
                                     </div>
+                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.fullWidth" x-on:click="setOverviewPreference('fullWidth', !overviewPreferences.fullWidth)">
+                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for the overview</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.fullWidth}" aria-hidden="true"></span>
+                                    </button>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" :aria-expanded="customizeOpen('overview.cards')" aria-controls="ps-customize-overview-cards" x-on:click="toggleCustomize('overview.cards')"><span>Cards</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-cards" x-show="customizeOpen('overview.cards')">
                                     <div class="ps-customize-row">
                                         <div><strong>Card icon</strong><small>The big picture at the top of each card</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Card icon">
@@ -284,23 +245,7 @@
                                             <button type="button" :aria-pressed="overviewPreferences.largeName==='name'" x-on:click="setOverviewPreference('largeName','name')">Name</button>
                                         </div>
                                     </div>
-                                    <div class="ps-customize-row">
-                                        <div><strong>Group by node</strong><small>Auto groups servers per node once you have more than one; Always also shows a single node</small></div>
-                                        <div class="ps-segmented" role="group" aria-label="Group by node">
-                                            <template x-for="mode in [{key:'auto',label:'Auto'},{key:'always',label:'Always'},{key:'off',label:'Off'}]" :key="mode.key">
-                                                <button type="button" :aria-pressed="overviewPreferences.groupByNode===mode.key" x-on:click="setOverviewPreference('groupByNode', mode.key)" x-text="mode.label"></button>
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.fullWidth" x-on:click="setOverviewPreference('fullWidth', !overviewPreferences.fullWidth)">
-                                        <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for the overview</small></span>
-                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.fullWidth}" aria-hidden="true"></span>
-                                    </button>
-                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.showGroupsButton" x-on:click="setOverviewPreference('showGroupsButton', !overviewPreferences.showGroupsButton)">
-                                        <span><strong>Server groups button</strong><small>A button in the top bar to make your own groups and choose the order of your servers</small></span>
-                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.showGroupsButton}" aria-hidden="true"></span>
-                                    </button>
-                                    <span class="ps-customize-head">Show on each card</span>
+                                    <span class="ps-customize-sub">Show on each card</span>
                                     <template x-for="option in [{key:'showMotd',label:'Message of the day',hint:'The Minecraft MOTD under the server name'},{key:'showCpu',label:'CPU usage',hint:'A small live CPU graph'},{key:'showRam',label:'Memory usage',hint:'A small live RAM graph'}]" :key="option.key">
                                         <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences[option.key]" x-on:click="setOverviewPreference(option.key, !overviewPreferences[option.key])">
                                             <span><strong x-text="option.label"></strong><small x-text="option.hint"></small></span>
@@ -315,16 +260,92 @@
                                             </template>
                                         </div>
                                     </div>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" :aria-expanded="customizeOpen('overview.grouping')" aria-controls="ps-customize-overview-grouping" x-on:click="toggleCustomize('overview.grouping')"><span>Grouping</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-grouping" x-show="customizeOpen('overview.grouping')">
+                                    <div class="ps-customize-row">
+                                        <div><strong>Group by node</strong><small>Auto groups servers per node once you have more than one; Always also shows a single node</small></div>
+                                        <div class="ps-segmented" role="group" aria-label="Group by node">
+                                            <template x-for="mode in [{key:'auto',label:'Auto'},{key:'always',label:'Always'},{key:'off',label:'Off'}]" :key="mode.key">
+                                                <button type="button" :aria-pressed="overviewPreferences.groupByNode===mode.key" x-on:click="setOverviewPreference('groupByNode', mode.key)" x-text="mode.label"></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.showGroupsButton" x-on:click="setOverviewPreference('showGroupsButton', !overviewPreferences.showGroupsButton)">
+                                        <span><strong>Server groups button</strong><small>A button in the top bar to make your own groups and choose the order of your servers</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.showGroupsButton}" aria-hidden="true"></span>
+                                    </button>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="(halloweenSeason() && boot.appearance?.seasonal !== false) || boot.settings_url" :aria-expanded="customizeOpen('overview.more')" aria-controls="ps-customize-overview-more" x-on:click="toggleCustomize('overview.more')"><span>More</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-more" x-show="customizeOpen('overview.more')">
+                                    <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
+                                        <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
+                                        <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
+                                    </button>
                                     {{-- Server colours are a panel setting; point administrators at it from here. Group colours live with each group. --}}
                                     <div class="ps-customize-row" x-show="boot.settings_url">
                                         <div><strong>Server colors</strong><small>One color for every server, or a color per server, for everyone on the panel. A color per group is under Server groups.</small></div>
                                         <button type="button" class="ps-btn is-sm" x-on:click="appearanceMenu=false; openPanelSettings('appearance')">Open settings</button>
+                                    </div>
                                     </div>
                                 </div>
                             </template>
                         </div>
                     </div>
 
+                    <button type="button" x-show="installable && !embedded" x-cloak x-on:click="installApp()" class="ps-btn is-icon is-subtle ps-nav-view" data-tip="Install app" aria-label="Install app">
+                        <svg aria-hidden="true"><use href="#ps-download"/></svg><span class="ps-mobile-label">Install app</span>
+                    </button>
+
+                    {{-- Phones list these buttons as a menu: first what everyone uses, then the admin buttons under their own heading. --}}
+                    <span class="ps-label ps-nav-heading" x-show="adminPages().length">Panel</span>
+                    {{-- Admin tools: Pelican admin pages Simplify does not replace, opened in a popup (admins only). --}}
+                    <div class="ps-notify ps-nav-admin" x-show="adminPages().length && !(hostMode && !server)" x-on:click.outside="adminMenu=false" x-on:keydown.escape.stop="adminMenu=false; $refs.adminButton.focus()">
+                        <button type="button" x-ref="adminButton" class="ps-btn is-icon is-subtle" data-tip="Admin tools" aria-label="Admin tools" aria-controls="ps-admin-menu" :aria-expanded="adminMenu"
+                                x-on:click="adminMenu=!adminMenu; notifyMenu=false; appearanceMenu=false; groupsMenu=false; accountMenu=false">
+                            <svg aria-hidden="true"><use href="#ps-shield"/></svg><span class="ps-mobile-label">Admin tools</span>
+                        </button>
+                        <div id="ps-admin-menu" class="ps-dropdown is-end ps-admin-menu" x-show="adminMenu" x-cloak x-transition.opacity>
+                            <strong class="ps-dropdown-title">Admin tools</strong>
+                            {{-- Same sections as host mode: coloured cards, Health with its checks and Legacy at the bottom. --}}
+                            <div class="ps-admin-groups">
+                                <template x-for="section in hostSections().filter((x) => !['health', 'legacy'].includes(x.key))" :key="section.key">
+                                    <div class="ps-admin-group" :style="{'--ps-tone': section.color}">
+                                        <span class="ps-admin-group-head"><span class="ps-host-rail-icon"><svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg></span><span x-text="section.label"></span></span>
+                                        <template x-for="item in section.pages" :key="item.key">
+                                            <button type="button" class="ps-admin-item" x-on:click="openAdminPage(item)">
+                                                <svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <template x-if="adminHealthPage()">
+                                <div class="ps-admin-health">
+                                    <button type="button" class="ps-admin-health-title" x-on:click="openAdminPage(adminHealthPage())"><svg aria-hidden="true"><use href="#ps-heart"/></svg><span>Host health checks</span></button>
+                                    <div class="ps-health-grid">
+                                        @include('pelican-simplify::health-checks', ['open' => 'openAdminPage(adminHealthPage())'])
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-for="section in hostSections().filter((x) => x.key === 'legacy')" :key="section.key">
+                                <div class="ps-admin-legacy">
+                                    <span class="ps-label">Legacy</span>
+                                    <template x-for="item in section.pages" :key="item.key">
+                                        <button type="button" class="ps-btn is-sm is-subtle" x-on:click="openAdminPage(item)" x-text="item.label"></button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <button type="button" x-show="boot.settings_url" x-on:click="openPanelSettings()" class="ps-btn is-icon is-subtle ps-nav-admin" data-tip="Simplify settings" aria-label="Simplify settings" aria-haspopup="dialog">
+                        <span class="ps-settings-mark" aria-hidden="true"><svg><use href="#ps-simplify"/></svg><svg class="ps-settings-gear"><use href="#ps-gear"/></svg></span><span class="ps-mobile-label">Simplify settings</span>
+                    </button>
+                    <a x-show="boot.admin_url" :href="server?.admin_server_url || boot.admin_url" class="ps-btn is-icon is-subtle ps-nav-admin" data-tip="Legacy panel" aria-label="Legacy panel">
+                        <svg aria-hidden="true"><use href="#ps-legacy"/></svg><span class="ps-mobile-label">Legacy panel</span>
+                    </a>
+                    @if(\Simplify\Panel\Services\Extensions::web()) @include('server-directory::simplify.navigation') @endif
                     {{-- Account: avatar with inline profile and sign-out actions. --}}
                     <div class="ps-account" x-data="{ themeOpen: false, pluginMenu: false }" x-effect="accountMenu || (themeOpen = pluginMenu = false)" :class="{'account-open': accountMenu}" x-on:click.outside="accountMenu=false" x-on:keydown.escape.stop="accountMenu=false">
                         <button type="button" x-on:click="accountMenu=!accountMenu; appearanceMenu=false; groupsMenu=false; notifyMenu=false" class="ps-btn ps-account-button" aria-label="Profile options" aria-controls="ps-account-actions" :aria-expanded="accountMenu">
@@ -339,13 +360,6 @@
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="Profile settings" aria-label="Profile settings" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
                                 </button>
-                                <button type="button" class="ps-btn is-icon" x-on:click="openNotifications()" data-tip="Notifications on your devices" aria-label="Notifications on your devices" aria-haspopup="dialog">
-                                    <svg aria-hidden="true"><use href="#ps-bell"/></svg>
-                                </button>
-                                {{-- Account-level pages other plugins add (such as Legal Pages), listed below the menu. --}}
-                                <button type="button" class="ps-btn is-icon" x-show="pluginPages().length" x-on:click="pluginMenu=!pluginMenu; themeOpen=false" data-tip="Plugin pages" aria-label="Plugin pages" aria-controls="ps-plugin-pages" :aria-expanded="pluginMenu">
-                                    <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
-                                </button>
                                 {{-- Theme: the current choice; clicking it unfolds Light, Dark and System. --}}
                                 <button type="button" class="ps-btn is-icon" x-show="!themeOpen && !themeForced" x-on:click="themeOpen=true" :data-tip="'Theme: '+(theme==='light' ? 'Light' : theme==='dark' ? 'Dark' : 'System')" aria-label="Choose theme" :aria-expanded="themeOpen">
                                     <svg aria-hidden="true"><use :href="theme==='light' ? '#ps-sun' : theme==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
@@ -355,8 +369,15 @@
                                         <svg aria-hidden="true"><use :href="t==='light' ? '#ps-sun' : t==='dark' ? '#ps-moon' : '#ps-monitor'"/></svg>
                                     </button>
                                 </template>
+                                <button type="button" class="ps-btn is-icon" x-on:click="openNotifications()" data-tip="Notifications on this device" aria-label="Notifications on this device" aria-haspopup="dialog">
+                                    <svg aria-hidden="true"><use href="#ps-bell"/></svg>
+                                </button>
                                 <button type="button" class="ps-btn is-icon" x-show="adminPages().length && !server" x-on:click="setHostMode(!hostMode); accountMenu=false" :data-tip="hostMode ? 'Switch to simple mode' : 'Switch to host mode'" :aria-label="hostMode ? 'Switch to simple mode' : 'Switch to host mode'">
                                     <svg aria-hidden="true"><use :href="hostMode ? '#ps-grid' : '#ps-host'"/></svg>
+                                </button>
+                                {{-- Account-level pages other plugins add (such as Legal Pages), listed below the menu. --}}
+                                <button type="button" class="ps-btn is-icon" x-show="pluginPages().length" x-on:click="pluginMenu=!pluginMenu; themeOpen=false" data-tip="Pages from other plugins" aria-label="Pages from other plugins" aria-controls="ps-plugin-pages" :aria-expanded="pluginMenu">
+                                    <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
                                 </button>
                                 <form method="post" action="{{ route('filament.app.auth.logout') }}">@csrf
                                     <button type="submit" class="ps-btn is-icon" data-tip="Sign out" aria-label="Sign out"><svg aria-hidden="true"><use href="#ps-logout"/></svg></button>
@@ -364,7 +385,7 @@
                             </div>
                         </div>
                         <div id="ps-plugin-pages" class="ps-dropdown is-end ps-plugin-pages" x-show="accountMenu && pluginMenu" x-cloak x-transition.opacity>
-                            <strong class="ps-dropdown-title">Plugin pages</strong>
+                            <strong class="ps-dropdown-title">Pages from other plugins</strong>
                             <div class="ps-notify-list">
                                 <template x-for="page in pluginPages()" :key="page.key">
                                     <button type="button" class="ps-notify-item" style="--ps-tone: #2dd4bf" x-on:click="openPluginPage(page)">
@@ -761,9 +782,11 @@
                     <button type="button" class="ps-btn ps-power-restart" x-on:click="power('restart')" :disabled="busy || !server?.permissions['control.restart'] || status!=='running'" aria-label="Restart server"><svg aria-hidden="true"><use href="#ps-restart"/></svg><span>Restart</span></button>
                     <button type="button" class="ps-btn is-icon ps-info-more-button" x-ref="infoMore" aria-label="More server options" aria-controls="ps-info-menu" :aria-expanded="infoMenu" x-on:click="infoMenu=!infoMenu; colorMenu=false"><svg aria-hidden="true"><use href="#ps-dots"/></svg></button>
                     <div id="ps-info-menu" class="ps-dropdown is-end ps-info-menu" x-show="infoMenu" x-cloak x-transition.opacity role="menu">
+                        <span class="ps-label ps-menu-heading" x-show="server?.permissions['settings.rename']">Look</span>
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; toggleColorMenu($refs.infoMore)"><span class="ps-color-dot" aria-hidden="true"></span><span>Server color</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg><span>Server background</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.permissions['settings.rename']" x-on:click="infoMenu=false; openAlias()"><svg aria-hidden="true"><use href="#ps-edit"/></svg><span>Change alias</span></button>
+                        <span class="ps-label ps-menu-heading" x-show="server?.website_listing" x-cloak>Website</span>
                         <button type="button" class="ps-menu-item ps-web-listing" role="menuitemcheckbox" x-show="server?.website_listing" x-cloak :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)"><svg aria-hidden="true"><use href="#ps-web"/></svg><span>Show on the website</span><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span></button>
                         <hr>
                         <button type="button" class="ps-menu-item is-danger" role="menuitem" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" x-on:click="infoMenu=false; power('kill')"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>Force stop</span></button>
@@ -873,7 +896,7 @@
                         </template>
                         {{-- Pages other plugins add to the server panel. --}}
                         <template x-if="server?.external_pages?.length">
-                            <span class="ps-widget-group">External</span>
+                            <span class="ps-widget-group">Other plugins</span>
                         </template>
                         <template x-for="page in server?.external_pages || []" :key="page.key">
                             <button type="button" class="ps-widget" style="--ps-tone: #2dd4bf" :aria-current="modal==='external' && externalPage?.key===page.key ? 'page' : null" x-on:click="openExternal(page)" :aria-label="page.label+' — from '+page.plugin" :data-tip="'From the '+page.plugin+' plugin'">
