@@ -240,3 +240,62 @@ window.simplifySetupProgress = function () {
     },
   };
 };
+
+// Browse Hub (plugin manager): filters, sorting and the screenshot viewer run in the browser on the list the page
+// already has, so typing never waits for the server.
+window.simplifyHubBrowser = function (hub) {
+  const items = Array.isArray(hub.items) ? hub.items : [];
+  const types = ['theme', 'plugin', 'language'].filter((t) => items.some((item) => item.type === t));
+  return {
+    items,
+    types,
+    makers: hub.makers || {},
+    build: hub.build || { node: true, yarn: true },
+    type: types[0] || 'theme',
+    q: '',
+    sort: 'downloads',
+    maker: null,
+    slide: {},
+    open: null,
+    shot: 0,
+    count(type) { return items.filter((item) => item.type === type).length; },
+    typeLabel(type, n, title = false) {
+      const word = { theme: 'theme', plugin: 'plugin', language: 'language' }[type] + (n === 1 ? '' : 's');
+      return title ? word[0].toUpperCase() + word.slice(1) : word;
+    },
+    setType(type) { this.type = type; this.maker = null; },
+    list() {
+      const q = this.q.trim().toLowerCase();
+      const sorts = {
+        downloads: (a, b) => b.downloads - a.downloads,
+        updated: (a, b) => String(b.updated || '').localeCompare(String(a.updated || '')),
+        name: (a, b) => a.title.localeCompare(b.title),
+      };
+      return items
+        .filter((item) => item.type === this.type && (!this.maker || item.author === this.maker)
+          && (!q || [item.title, item.author, item.summary].join(' ').toLowerCase().includes(q)))
+        .sort(sorts[this.sort] || sorts.downloads);
+    },
+    step(item, by) {
+      const n = item.screenshots.length;
+      this.slide[item.slug] = ((this.slide[item.slug] || 0) + by + n) % n;
+    },
+    show(item) { this.open = item; this.shot = this.slide[item.slug] || 0; },
+    close() { this.open = null; },
+    makerLine(item) {
+      const count = this.makers[item.type]?.find((m) => m.name === item.author)?.count || 1;
+      const parts = [count + ' ' + this.typeLabel(item.type, count) + ' on the Hub'];
+      if (item.based) parts.push('based on the work of ' + item.based.name);
+      return parts.join(' · ');
+    },
+    initial(name) { return (Array.from(String(name).replace(/[^\p{L}\p{N}]/gu, ''))[0] || '?').toUpperCase(); },
+    avatar(name) {
+      let hue = 0;
+      for (const c of String(name)) hue = (hue * 31 + c.codePointAt(0)) % 360;
+      return 'background: hsl(' + hue + ' 46% 42%)';
+    },
+    date(value) {
+      try { return new Date(value + 'T12:00:00Z').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return value; }
+    },
+  };
+};
