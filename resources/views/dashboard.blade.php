@@ -396,73 +396,104 @@
             </nav>
         </header>
 
-        {{-- Host mode (admins, large hosts): server buttons per node, a colour-coded admin rail and the page. --}}
-        <section class="ps-host" :class="{'has-server': !!hostServer}" x-show="!server && hostMode" x-cloak :style="accentStyle('overview')">
-                <aside class="ps-host-servers" :class="{'is-open': hostServersOpen}" aria-label="Servers">
-                    <button type="button" class="ps-btn is-sm ps-host-servers-toggle" x-on:click="hostServersOpen=!hostServersOpen" :aria-expanded="hostServersOpen"><svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="hostServer ? cardNames(hostServer).large : 'Servers ('+(boot.servers||[]).length+')'"></span><svg class="ps-host-switch-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
-                    <div class="ps-host-server-list">
-                        <template x-for="node in hostNodes()" :key="node.id">
-                            <div class="ps-host-node">
-                                <span class="ps-label"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="node.name"></span><small x-text="node.servers.length+(node.servers.length===1?' server':' servers')"></small></span>
-                                <template x-for="s in node.servers" :key="s.uuid">
-                                    <a class="ps-host-server" :href="s.linked ? s.url : null" :style="accentStyle(s.uuid)" :aria-disabled="!s.linked" :aria-current="hostServer?.uuid===s.uuid ? 'page' : null" x-on:click="if (s.linked && !$event.ctrlKey && !$event.metaKey && !$event.shiftKey) { $event.preventDefault(); openHostServer(s); }">
-                                        <span class="ps-host-server-arrow" x-show="hostServer?.uuid===s.uuid" x-on:click.prevent.stop="closeHostServer()" role="button" aria-label="Close this server" data-tip="Close"><svg aria-hidden="true"><use href="#ps-arrow-right"/></svg></span>
-                                        <span class="ps-host-server-top">
+        {{-- Host mode (admins, large hosts): one frame with a menu on the left (admin pages as a tree, or the servers
+             per node) and the page or server on the right; each side scrolls on its own. Phones open the menu as a sheet. --}}
+        <section class="ps-host" :class="{'menu-open': hostMenuOpen}" x-show="!server && hostMode" x-cloak :style="accentStyle('overview')" x-on:keydown.escape="hostMenuOpen=false">
+                <button type="button" class="ps-btn ps-host-menu-toggle" x-on:click="hostMenuOpen=true" aria-controls="ps-host-side" :aria-expanded="hostMenuOpen">
+                    <svg aria-hidden="true"><use href="#ps-list"/></svg><span x-text="hostServer ? cardNames(hostServer).large : (hostPage && hostSection?.pages.length > 1 ? hostSection.label+' · '+hostPage.label : hostSection?.label || 'Admin')"></span><svg class="ps-host-menu-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg>
+                </button>
+                <div class="ps-host-backdrop" x-show="hostMenuOpen" x-cloak x-on:click="hostMenuOpen=false"></div>
+                <aside id="ps-host-side" class="ps-host-side" aria-label="Host menu">
+                    <div class="ps-host-tabs" role="group" aria-label="Menu">
+                        <button type="button" :aria-pressed="hostTab==='admin'" x-on:click="hostTab='admin'"><svg aria-hidden="true"><use href="#ps-shield"/></svg>Admin</button>
+                        <button type="button" :aria-pressed="hostTab==='servers'" x-on:click="hostTab='servers'"><svg aria-hidden="true"><use href="#ps-host"/></svg>Servers<small x-text="(boot.servers||[]).length"></small></button>
+                        <button type="button" class="ps-btn is-icon is-subtle ps-host-menu-close" x-on:click="hostMenuOpen=false" aria-label="Close menu"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                    </div>
+                    <div class="ps-host-side-scroll">
+                        {{-- Admin pages as a tree: every section with its pages hung underneath; a section with one page opens it directly. --}}
+                        <nav class="ps-host-tree" x-show="hostTab==='admin'" aria-label="Admin sections">
+                            <template x-for="section in hostSections().filter((x) => !['health', 'legacy'].includes(x.key))" :key="section.key">
+                                <div class="ps-host-group" :style="{'--ps-tone': section.color}">
+                                    <button type="button" class="ps-host-group-head" :aria-current="hostSection?.key===section.key && !hostServer && (section.pages.length === 1 || !hostPage) ? 'page' : null" x-on:click="openHostSection(section)">
+                                        <svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg><span x-text="section.label"></span>
+                                    </button>
+                                    <div class="ps-host-branch" x-show="section.pages.length > 1">
+                                        <template x-for="item in section.pages" :key="item.key">
+                                            <button type="button" class="ps-host-leaf" :aria-current="hostSection?.key===section.key && hostPage?.key===item.key && !hostServer ? 'page' : null" x-on:click="openHostLeaf(section, item)">
+                                                <svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-for="section in hostSections().filter((x) => x.key === 'legacy')" :key="section.key">
+                                <div class="ps-host-legacy">
+                                    <span class="ps-label">Legacy</span>
+                                    <template x-for="item in section.pages" :key="item.key">
+                                        <button type="button" x-on:click="openHostLeaf(section, item)" :aria-current="hostPage?.key===item.key && !hostServer ? 'page' : null" x-text="item.label"></button>
+                                    </template>
+                                </div>
+                            </template>
+                        </nav>
+                        {{-- Servers per node; a server opens on the right, ctrl/cmd-click opens its full page. --}}
+                        <div class="ps-host-server-list" x-show="hostTab==='servers'">
+                            <template x-for="node in hostNodes()" :key="node.id">
+                                <div class="ps-host-node">
+                                    <span class="ps-label"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="node.name"></span><small x-text="node.servers.length+(node.servers.length===1?' server':' servers')"></small></span>
+                                    <template x-for="s in node.servers" :key="s.uuid">
+                                        <a class="ps-host-server" :href="s.linked ? s.url : null" :style="accentStyle(s.uuid)" :aria-disabled="!s.linked" :aria-current="hostServer?.uuid===s.uuid ? 'page' : null" x-on:click="if (s.linked && !$event.ctrlKey && !$event.metaKey && !$event.shiftKey) { $event.preventDefault(); openHostServer(s); }">
+                                            <i class="ps-host-dot ps-status" :class="s.status" :aria-label="s.status"></i>
                                             <strong x-text="cardNames(s).large"></strong>
-                                            <span class="ps-badge ps-status" :class="s.status"><i></i><span x-text="s.status"></span></span>
-                                        </span>
-                                        <span class="ps-host-server-meta">
-                                            <span x-text="hostServerVersion(s)"></span>
+                                            <small x-text="hostServerVersion(s)"></small>
                                             <span class="ps-host-players"><svg aria-hidden="true"><use href="#ps-players"/></svg><span x-text="playerCount(s)"></span></span>
-                                        </span>
-                                    </a>
-                                </template>
-                            </div>
-                        </template>
-                        <p class="ps-empty" x-show="!(boot.servers||[]).length">No servers yet.</p>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+                            <p class="ps-empty" x-show="!(boot.servers||[]).length">No servers yet.</p>
+                        </div>
                     </div>
-                </aside>
-                <nav class="ps-host-rail" aria-label="Admin sections" x-init="scrollHint($el)">
-                    <span class="ps-label ps-host-rail-title">Admin</span>
-                    <div class="ps-host-rail-items">
-                        <template x-for="section in hostSections().filter((x) => x.key !== 'health')" :key="section.key">
-                            <button type="button" class="ps-host-rail-item" :style="{'--ps-tone': section.color}" :aria-current="hostSection?.key===section.key ? 'page' : null" x-on:click="openHostSection(section)" :aria-label="section.label">
-                                <span class="ps-host-rail-icon"><svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg></span><span class="ps-host-rail-label" x-text="section.label"></span>
-                            </button>
-                        </template>
-                    </div>
+                    {{-- Health at the bottom of the menu: state, CPU and RAM, and one mark per health check. --}}
                     <template x-for="section in hostSections().filter((x) => x.key === 'health')" :key="section.key">
-                        <button type="button" class="ps-host-rail-item is-health" :style="{'--ps-tone': section.color}" :aria-current="hostSection?.key===section.key ? 'page' : null" x-on:click="openHostSection(section)" :aria-label="section.label">
-                            <span class="ps-host-rail-icon"><svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg></span><span class="ps-host-rail-label" x-text="section.label"></span>
-                        </button>
+                        <div class="ps-host-health-bar" :class="{'is-current': hostSection?.key==='health' && !hostServer}">
+                            <button type="button" class="ps-host-health-open" x-on:click="openHostSection(section)">
+                                <span class="ps-host-health-state"><svg class="ps-health-heart" :class="boot.host_health?.state || 'unavailable'" aria-hidden="true"><use href="#ps-heart"/></svg><strong x-text="boot.features.host_health ? (boot.host_health?.label || 'Unavailable') : 'Health'"></strong><small x-show="boot.features.host_health" x-text="(boot.host_health?.available ?? 0)+' / '+(boot.host_health?.hosts ?? 0)+' hosts'"></small></span>
+                                <span class="ps-host-health-meters" x-show="boot.features.host_health">
+                                    <template x-for="kind in ['cpu', 'memory']" :key="kind">
+                                        <span><span><span x-text="kind==='cpu' ? 'CPU' : 'RAM'"></span> <b x-text="hostValue(kind)"></b></span><span class="ps-meter"><span :style="{width: hostFill(kind)+'%'}"></span></span></span>
+                                    </template>
+                                </span>
+                            </button>
+                            <div class="ps-health-grid" x-show="healthChecks().length" role="group" aria-label="Current health checks">
+                                @include('pelican-simplify::health-checks', ['open' => 'openHostSection(hostSections().find((x) => x.key === \'health\'))'])
+                            </div>
+                        </div>
                     </template>
-                    <div class="ps-health-grid" x-show="healthChecks().length" role="group" aria-label="Current health checks">
-                        @include('pelican-simplify::health-checks', ['open' => 'openHostSection(hostSections().find((x) => x.key === \'health\'))'])
-                    </div>
-                </nav>
-                {{-- A server picked on the left opens here, over the admin pages; the cross or another server closes it. --}}
-                <div class="ps-host-serverpane" x-show="hostServer" x-cloak :style="accentStyle(hostServer?.uuid || 'overview')">
-                    <div class="ps-host-pane-actions">
-                        <a class="ps-btn is-sm is-icon" :href="hostServer?.url" data-tip="Open full page" aria-label="Open full page"><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
-                        <button type="button" class="ps-btn is-sm is-icon" x-on:click="closeHostServer()" data-tip="Close" aria-label="Close server"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
-                    </div>
-                    <div class="ps-host-frame">
+                </aside>
+                <div class="ps-host-main">
+                    <header class="ps-host-head" x-show="hostServer" x-cloak :style="accentStyle(hostServer?.uuid || 'overview')">
+                        <i class="ps-host-dot ps-status" :class="hostServer?.status"></i>
+                        <h2 class="ps-host-server-name" x-text="hostServer ? cardNames(hostServer).large : ''"></h2>
+                        <small x-text="hostServer ? hostServerVersion(hostServer) : ''"></small>
+                        <span class="ps-host-head-actions">
+                            <a class="ps-btn is-sm" :href="hostServer?.url"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
+                            <button type="button" class="ps-btn is-sm is-icon" x-on:click="closeHostServer()" data-tip="Close" aria-label="Close server"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+                        </span>
+                    </header>
+                    <header class="ps-host-head is-page" x-show="!hostServer && hostSection" :style="{'--ps-tone': hostSection?.color}">
+                        <svg class="ps-host-head-icon" aria-hidden="true"><use :href="'#ps-'+(hostSection?.icon||'host')"/></svg>
+                        <h2 x-text="hostSection?.label"></h2>
+                        <small x-show="hostSection?.pages.length > 1" x-text="hostPage?.label"></small>
+                        <span class="ps-host-head-actions" x-show="hostPage?.url">
+                            <a class="ps-btn is-sm" :href="hostPage?.url" target="_top"><svg aria-hidden="true"><use href="#ps-external"/></svg><span>Open full page</span></a>
+                        </span>
+                    </header>
+                    <div class="ps-host-frame is-server" x-show="hostServer" :style="accentStyle(hostServer?.uuid || 'overview')">
                         <template x-for="s in hostServer ? [hostServer] : []" :key="s.uuid">
                             <iframe :src="frameUrl(s.url)" :title="s.name"></iframe>
                         </template>
                     </div>
-                </div>
-                <div class="ps-host-main">
-                    <header class="ps-host-head" x-show="hostSection">
-                        <div class="ps-host-title"><span class="ps-host-rail-icon"><svg aria-hidden="true"><use :href="'#ps-'+(hostSection?.icon||'host')"/></svg></span>
-                        <h2 x-text="hostSection?.label"></h2></div>
-                        <div class="ps-segmented ps-host-subtabs" x-show="hostSection?.pages.length > 1" role="group" aria-label="Pages">
-                            <template x-for="item in hostSection?.pages || []" :key="item.key">
-                                <button type="button" :aria-pressed="hostPage?.key===item.key" x-on:click="setHostPage(item)"><svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span></button>
-                            </template>
-                        </div>
-                    </header>
-                    <div class="ps-host-frame">
+                    <div class="ps-host-frame" x-show="!hostServer">
                         <template x-if="hostPage">
                             <iframe data-ps-frame="native" data-ps-host="1" :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
                         </template>

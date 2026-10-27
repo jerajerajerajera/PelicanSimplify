@@ -71,6 +71,8 @@ html.ps-frame[data-ps-forward-notices] .fi-no:not(.fi-no-database) { display: no
    The popup gives the iframe a fixed size; only <body> scrolls inside it. */
 html.ps-frame { height: 100%; overflow: hidden; }
 html.ps-frame :is(body, .fi-body) { height: 100%; margin: 0; overflow: auto; overscroll-behavior: contain; background: var(--ps-surface) !important; color: var(--ps-ink); }
+/* Host mode shows the page straight on the Simplify page, not on a card. */
+html.ps-frame[data-ps-host] :is(body, .fi-body), html.ps-frame[data-ps-host] .fi-ta-table thead :is(th, td) { background: var(--ps-bg) !important; }
 .ps-frame :is(.fi-topbar, .fi-sidebar, .fi-breadcrumbs, .fi-layout-sidebar-toggle-btn-ctn, .fi-sidebar-close-overlay, .fi-footer, .fi-main-ctn > footer) { display: none !important; }
 /* In host mode the header above the page already switches People / Roles; the page's own tabs would repeat it. */
 html.ps-frame[data-ps-host] .ps-people-tabs { display: none !important; }

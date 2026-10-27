@@ -57,7 +57,8 @@
       hostMode: false,
       hostPage: null,
       hostSection: null,
-      hostServersOpen: false,
+      hostTab: 'admin',
+      hostMenuOpen: false,
       hostServer: null,
       statusBarVisible: false,
       embedded: /[?&]simplify_embed=/.test(globalThis.location?.search || ''),
@@ -473,7 +474,7 @@
       },
       openHostServer(s) {
         this.hostServer = s;
-        this.hostServersOpen = false;
+        this.hostMenuOpen = false;
       },
       closeHostServer() {
         this.hostServer = null;
@@ -970,15 +971,23 @@
           last = JSON.parse(sessionStorage.getItem(this.hostModeKey() + '.place') || '{}') || {};
         } catch {}
         const sections = this.hostSections();
-        const section = sections.find((x) => x.key === last.section) || sections.find((x) => x.key === 'health') || sections[0];
-        this.openHostSection(section);
+        const section = sections.find((x) => x.key === last.section && x.pages.some((item) => item.url || !item.action)) || sections.find((x) => x.key === 'health') || sections[0];
+        this.openHostSection(section, true);
         const page = section?.pages.find((item) => item.key === last.page);
         if (page) this.setHostPage(page);
       },
       setHostPage(item) {
         if (!item?.url && this.runAdminAction(item)) return;
         this.hostPage = item;
+        this.hostServer = null;
+        this.hostMenuOpen = false;
         this.rememberHostPlace();
+      },
+      /** A page picked in the menu tree: opens with its section (popup tools keep the open page). */
+      openHostLeaf(section, item) {
+        if (!item?.url && this.runAdminAction(item)) return;
+        this.hostSection = section;
+        this.setHostPage(item);
       },
       rememberHostPlace() {
         try {
@@ -987,7 +996,7 @@
       },
       setHostMode(on) {
         this.hostMode = !!on && this.adminPages().length > 0;
-        if (this.hostMode && !this.hostPage) this.openHostSection(this.hostSections().find((x) => x.key === 'health') || this.hostSections()[0]);
+        if (this.hostMode && !this.hostPage) this.openHostSection(this.hostSections().find((x) => x.key === 'health') || this.hostSections()[0], true);
         try {
           localStorage.setItem(this.hostModeKey(), this.hostMode ? '1' : '0');
         } catch {}
@@ -1030,13 +1039,16 @@
         else return false;
         return true;
       },
-      openHostSection(section) {
+      /** Opens a section on its first page; a section of popup tools only (nothing to show) runs its first tool instead. */
+      openHostSection(section, restoring = false) {
         if (!section) return;
+        const page = section.pages.find((item) => item.url || !item.action) || null;
+        if (!page && !restoring) return this.runAdminAction(section.pages[0]);
         this.hostSection = section;
-        this.hostPage = section.pages.find((item) => item.url || !item.action) || null;
+        this.hostPage = page;
+        this.hostServer = null;
+        this.hostMenuOpen = false;
         this.rememberHostPlace();
-        // Phones show the sections as one sideways row: keep the open one in view.
-        if (this.phone) this.$nextTick?.(() => this.$root?.querySelector?.('.ps-host-rail-item[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
