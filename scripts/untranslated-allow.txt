@@ -1,3 +1,15 @@
 # Texts that stay as they are in every language: product names, Minecraft commands.
-say 
+say
 Samsung Internet
+* * * * * php schedule:run
+Java
+Dark blue
+Dark green
+Dark aqua
+Dark red
+Dark purple
+Dark gray
+Light purple
+Upload still in progress
+dark
+background: hsl(

@@ -20,29 +20,29 @@
                         <strong>{{ $row['title'] }}</strong>
                         @if($row['text'] !== '')<p>{{ $row['text'] }}</p>@endif
                         <small>
-                            {{ \Simplify\Panel\Services\Announcements::AUDIENCES[$row['audience']] }}
-                            @if($row['starts_at'] !== null) · from {{ $this->date($row['starts_at']) }}@endif
-                            @if($row['ends_at'] !== null) · until {{ $this->date($row['ends_at']) }}@else · no end date @endif
-                            @if($row['target']) · button “{{ $row['button']['label'] }}” → {{ $row['target'] }}@endif
-                            @if($row['pinned']) · pinned to everyone's notifications @endif
-                            @if($row['push']) · {{ $row['pushed_at'] === null ? 'app notification when it starts' : ($row['pushed_to'] === null ? 'sent as app notification' : 'app notification sent to '.$row['pushed_to'].' '.($row['pushed_to'] === 1 ? 'device' : 'devices')) }}@endif
-                            @if($row['created_by'] !== '') · by {{ $row['created_by'] }}@endif
+                            {{ \Simplify\Panel\Services\Translations::labels('announcements.audiences', \Simplify\Panel\Services\Announcements::AUDIENCES)[$row['audience']] }}
+                            @if($row['starts_at'] !== null) · {{ __('pelican-simplify::announcements.manage.from', ['date' => $this->date($row['starts_at'])]) }}@endif
+                            @if($row['ends_at'] !== null) · {{ __('pelican-simplify::announcements.manage.until', ['date' => $this->date($row['ends_at'])]) }}@else · {{ __('pelican-simplify::announcements.manage.no_end_date') }} @endif
+                            @if($row['target']) · {{ __('pelican-simplify::announcements.manage.button_target', ['label' => $row['button']['label'], 'target' => $row['target']]) }}@endif
+                            @if($row['pinned']) · {{ __('pelican-simplify::announcements.manage.pinned_everyone') }} @endif
+                            @if($row['push']) · {{ $row['pushed_at'] === null ? __('pelican-simplify::announcements.manage.push_when_starts') : ($row['pushed_to'] === null ? __('pelican-simplify::announcements.manage.push_sent') : trans_choice('pelican-simplify::announcements.manage.push_sent_to', $row['pushed_to'])) }}@endif
+                            @if($row['created_by'] !== '') · {{ __('pelican-simplify::announcements.manage.by', ['name' => $row['created_by']]) }}@endif
                         </small>
                         @if($row['ingame_status'])
                             <small class="ps-announcement-ingame"><x-tabler-message-chatbot class="ps-ico" />
-                                {{ $row['ingame']['targets'] === 'all' ? 'In game on all servers' : 'In game on chosen servers' }}{{ $row['ingame']['repeat'] ? ', '.strtolower(\Simplify\Panel\Services\InGameAnnouncements::REPEATS[$row['ingame']['repeat']]) : '' }}
+                                {{ $row['ingame']['targets'] === 'all' ? __('pelican-simplify::announcements.manage.ingame_all') : __('pelican-simplify::announcements.manage.ingame_chosen') }}{{ $row['ingame']['repeat'] ? ', '.mb_strtolower(\Simplify\Panel\Services\Translations::labels('announcements.repeats', \Simplify\Panel\Services\InGameAnnouncements::REPEATS)[$row['ingame']['repeat']]) : '' }}
                                 @if($row['ingame_status']['last']) · {{ $row['ingame_status']['last'] }}@endif
                                 @if($row['ingame_status']['next']) · {{ $row['ingame_status']['next'] }}@endif
                             </small>
                         @endif
                     </div>
-                    <span class="ps-badge {{ ['live' => 'is-ok', 'scheduled' => 'is-info', 'ended' => 'is-muted'][$row['state']] }}"><span>{{ ucfirst($row['state']) }}</span></span>
+                    <span class="ps-badge {{ ['live' => 'is-ok', 'scheduled' => 'is-info', 'ended' => 'is-muted'][$row['state']] }}"><span>{{ __('pelican-simplify::announcements.manage.states.'.$row['state']) }}</span></span>
                     <div class="ps-person-actions">
                         <button type="button" class="ps-btn is-sm" wire:click="mountAction('editAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-edit class="ps-ico" />{{ __('pelican-simplify::announcements.manage.edit') }}</button>
                         @if($row['state'] === 'live')
-                            <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="{{ __('pelican-simplify::announcements.manage.end_now') }}" aria-label="End {{ $row['title'] }} now" wire:click="mountAction('endAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-player-stop class="ps-ico" /></button>
+                            <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="{{ __('pelican-simplify::announcements.manage.end_now') }}" aria-label="{{ __('pelican-simplify::announcements.manage.end_name_now', ['name' => $row['title']]) }}" wire:click="mountAction('endAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-player-stop class="ps-ico" /></button>
                         @endif
-                        <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ __('pelican-simplify::announcements.manage.delete') }}" aria-label="Delete {{ $row['title'] }}" wire:click="mountAction('deleteAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-trash class="ps-ico" /></button>
+                        <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ __('pelican-simplify::announcements.manage.delete') }}" aria-label="{{ __('pelican-simplify::announcements.manage.delete_name', ['name' => $row['title']]) }}" wire:click="mountAction('deleteAnnouncement', { id: '{{ $row['id'] }}' })"><x-tabler-trash class="ps-ico" /></button>
                     </div>
                 </article>
             @empty
@@ -60,7 +60,7 @@
                         <div class="ps-announcement-main">
                             <strong>{{ $item['title'] }}</strong>
                             <p>{{ $item['text'] }}</p>
-                            <small>Panel · admins only · {{ $item['time'] }}</small>
+                            <small>{{ __('pelican-simplify::announcements.manage.panel_admins_only') }} · {{ $item['time'] }}</small>
                         </div>
                         <span class="ps-badge is-info"><span>{{ __('pelican-simplify::announcements.manage.live') }}</span></span>
                     </article>

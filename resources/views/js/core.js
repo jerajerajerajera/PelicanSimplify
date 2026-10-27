@@ -327,7 +327,7 @@
         '<div class="ps-modal-body"><p class="ps-help" data-message></p></div>' +
         '<footer class="ps-modal-foot"><button type="button" class="ps-btn" data-cancel></button><button type="button" class="ps-btn" data-confirm></button></footer>' +
         '</section>';
-      wrap.querySelector('h2').textContent = opts.title || 'Are you sure?';
+      wrap.querySelector('h2').textContent = opts.title || t('common.are_you_sure');
       const message = wrap.querySelector('[data-message]');
       if (opts.message) message.textContent = opts.message;
       else message.remove();
@@ -340,7 +340,7 @@
       if (opts.input || opts.requireText) {
         const label = document.createElement('label');
         label.className = 'ps-field';
-        label.textContent = opts.inputLabel || (opts.requireText ? 'Type “' + opts.requireText + '” to confirm' : '');
+        label.textContent = opts.inputLabel || (opts.requireText ? t('common.type_to_confirm', { text: opts.requireText }) : '');
         field = document.createElement('input');
         field.placeholder = opts.placeholder || opts.requireText || '';
         field.autocomplete = 'off';
@@ -616,7 +616,7 @@
       failed() {
         bar.classList.remove('is-saving');
         button.disabled = false;
-        text.textContent = 'Not saved — check the highlighted fields';
+        text.textContent = t('common.not_saved_fields');
       },
       // Waits for the Livewire request that saving starts.
       expectSave() {

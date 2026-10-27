@@ -86,7 +86,7 @@
         <div class="ssc-games-bar">
             <label class="ssc-games-search">
                 <x-tabler-search class="ssc-games-search-icon" />
-                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="Search {{ count($cards) }} {{ $minecraft ? 'other ' : '' }}games…" aria-label="{{ __('pelican-simplify::maker.game.search_games') }}" autocomplete="off" />
+                <input type="search" x-model.debounce.120ms="query" x-on:input="limit = 24" placeholder="{{ $minecraft ? __('pelican-simplify::maker.game.search_other_games', ['count' => count($cards)]) : __('pelican-simplify::maker.game.search_count_games', ['count' => count($cards)]) }}" aria-label="{{ __('pelican-simplify::maker.game.search_games') }}" autocomplete="off" />
             </label>
             <div class="ssc-games-chips" role="group" aria-label="{{ __('pelican-simplify::maker.game.filter_games') }}">
                 <button type="button" :aria-pressed="filter==='all'" x-on:click="filter='all'; limit=24">{{ __('pelican-simplify::maker.game.all') }}</button>
@@ -106,8 +106,8 @@
                 </button>
             </template>
         </div>
-        <p class="ssc-games-empty" x-show="!shown().length">{{ __('pelican-simplify::maker.game.no_game_matches') }}<span x-text="query"></span>”.@if ($minecraft)<span x-show="/mine|craft|paper|purpur|forge|fabric|quilt|bedrock|modpack|spigot/i.test(query)"> {{ __('pelican-simplify::maker.game.minecraft_is_at_the_top_of') }}</span>@endif</p>
-        <button type="button" class="ssc-games-more" x-show="shown().length > limit" x-on:click="limit += 48" x-text="'Show more (' + (shown().length - limit) + ')'"></button>
+        <p class="ssc-games-empty" x-show="!shown().length"><span x-text="Simplify.fill(@js(__('pelican-simplify::maker.game.no_match')), { query })"></span>@if ($minecraft)<span x-show="/mine|craft|paper|purpur|forge|fabric|quilt|bedrock|modpack|spigot/i.test(query)"> {{ __('pelican-simplify::maker.game.minecraft_is_at_the_top_of') }}</span>@endif</p>
+        <button type="button" class="ssc-games-more" x-show="shown().length > limit" x-on:click="limit += 48" x-text="Simplify.fill(@js(__('pelican-simplify::maker.game.show_more')), { count: shown().length - limit })"></button>
         <p class="ssc-games-note" x-show="selected() && !selected().installed">
             <strong x-text="selected()?.name"></strong> {{ __('pelican-simplify::maker.game.is_not_on_this_panel_yet') }}
         </p>

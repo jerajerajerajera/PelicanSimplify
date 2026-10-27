@@ -13,13 +13,13 @@
     <div class="ps-brand-upload">
         @if($info['logo_url'])
             <img src="{{ $info['logo_url'] }}" alt="{{ __('pelican-simplify::settings.appearance.current_logo') }}">
-            <button type="button" class="ps-btn is-sm is-subtle is-danger" wire:click="removeLogo" wire:confirm="Remove the logo?"><x-tabler-trash class="ps-ico" />{{ __('pelican-simplify::settings.appearance.remove_logo') }}</button>
+            <button type="button" class="ps-btn is-sm is-subtle is-danger" wire:click="removeLogo" wire:confirm="{{ __('pelican-simplify::settings.appearance.remove_logo_confirm') }}"><x-tabler-trash class="ps-ico" />{{ __('pelican-simplify::settings.appearance.remove_logo') }}</button>
         @endif
-        <label class="ps-btn is-sm"><x-tabler-upload class="ps-ico" />{{ $info['logo_url'] ? 'Replace logo' : 'Upload logo' }}
+        <label class="ps-btn is-sm"><x-tabler-upload class="ps-ico" />{{ $info['logo_url'] ? __('pelican-simplify::settings.appearance.replace_logo') : __('pelican-simplify::settings.appearance.upload_logo') }}
             <input type="file" class="ps-visually-hidden" accept="image/png,image/jpeg,image/webp" wire:model="logoUpload" x-on:livewire-upload-finish="$wire.uploadLogo()">
         </label>
         <span class="ps-help" wire:loading wire:target="logoUpload">{{ __('pelican-simplify::settings.appearance.uploading') }}</span>
-        <span class="ps-help">PNG, JPEG or WebP, up to {{ \Simplify\Panel\Services\BrandSettings::LOGO_MAX_KB }} KB. A transparent background looks best.</span>
+        <span class="ps-help">{{ __('pelican-simplify::settings.appearance.logo_help', ['size' => \Simplify\Panel\Services\BrandSettings::LOGO_MAX_KB]) }}</span>
         @error('logoUpload')<span class="ps-error">{{ $message }}</span>@enderror
     </div>
 </div>

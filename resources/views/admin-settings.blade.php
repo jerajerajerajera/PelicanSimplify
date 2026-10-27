@@ -15,7 +15,7 @@
                 <span class="ps-settings-logo">@include('pelican-simplify::simplify-icon')</span>
                 <div class="ps-settings-hero-text">
                     <h1>{{ __('pelican-simplify::settings.page.simplify_settings') }}</h1>
-                    <p>Version {{ \Simplify\Panel\Services\BuildInfo::version() ?? 'unknown' }} · Changes apply to everyone on this panel after saving.</p>
+                    <p>{{ __('pelican-simplify::settings.page.version_line', ['version' => \Simplify\Panel\Services\BuildInfo::version() ?? __('pelican-simplify::settings.page.unknown')]) }}</p>
                 </div>
                 @if(!$this->embedded && !$showDiagnostics)
                     <div class="ps-settings-hero-actions">
@@ -30,7 +30,7 @@
         @if($update && $update['available'])
             <div class="ps-alert is-info ps-update-card" role="status">
                 <x-tabler-sparkles class="ps-ico" aria-hidden="true" />
-                <div><strong>Simplify {{ $update['version'] }} is available</strong><small>You are running {{ $update['current'] }}. Install the update from Pelican’s plugin page; your settings stay in place.</small></div>
+                <div><strong>{{ __('pelican-simplify::settings.page.update_available', ['version' => $update['version']]) }}</strong><small>{{ __('pelican-simplify::settings.page.update_running', ['version' => $update['current']]) }}</small></div>
                 @if($update['url'])<a class="ps-btn is-sm" href="{{ $update['url'] }}" target="_top">{{ __('pelican-simplify::settings.page.open_plugins') }}</a>@endif
             </div>
         @endif
@@ -52,7 +52,7 @@
                             <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                             @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless
                         @endforeach
-                        <span class="ssc-progress-count" x-text="'Step '+step+' of {{ count($this->setupSteps()) }}'"></span>
+                        <span class="ssc-progress-count" x-text="Simplify.fill(@js(__('pelican-simplify::settings.page.step_of')), { step, total: {{ count($this->setupSteps()) }} })"></span>
                     </nav>
                 @endif
                 <form wire:submit="save">

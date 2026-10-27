@@ -488,5 +488,7 @@ return [
         'remove_this_uploaded_banner' => 'Remove this uploaded banner?',
         'servers_using_it_return_to_their' => 'Servers using it return to their automatic background.',
         'remove_banner' => 'Remove banner',
+        'upload_help' => 'JPG, PNG or WebP · up to :limit',
+        'deleted_server' => 'Deleted server',
     ],
 ];

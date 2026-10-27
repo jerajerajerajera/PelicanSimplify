@@ -17,6 +17,9 @@ return [
         'discard_message' => 'Your changes since the last save are lost.',
         'home_screen_title' => 'Add to Home Screen',
         'home_screen_message' => 'Tap the Share button in Safari, then choose "Add to Home Screen". The panel then opens as its own app.',
+        'are_you_sure' => 'Are you sure?',
+        'type_to_confirm' => 'Type “:text” to confirm',
+        'not_saved_fields' => 'Not saved — check the highlighted fields',
     ],
     'motd' => [
         'colors' => [

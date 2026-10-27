@@ -1,14 +1,14 @@
 <div class="ps-notify-item" :class="['is-'+item.tone, item.unread === false ? 'is-read' : '']">
     <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
     <strong x-text="item.title"></strong>
-    <button type="button" class="ps-notify-close" x-show="canArchive(item)" x-on:click.stop="archiveNotification(item)" :aria-label="'Clear '+item.title" data-tip="{{ __('pelican-simplify::notifications.item.clear') }}"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
+    <button type="button" class="ps-notify-close" x-show="canArchive(item)" x-on:click.stop="archiveNotification(item)" :aria-label="Simplify.fill(@js(__('pelican-simplify::notifications.item.clear_name')), { title: item.title })" data-tip="{{ __('pelican-simplify::notifications.item.clear') }}"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
     <small x-text="item.text" x-show="item.text"></small>
     <template x-if="item.notes?.length">
         <div class="ps-notify-notes">
             <span class="ps-label">{{ __('pelican-simplify::notifications.item.whats_new') }}</span>
             <ul><template x-for="(line, index) in noteLines(item, {{ ($archive ?? false) ? 'true' : 'false' }})" :key="index"><li x-text="line"></li></template></ul>
             <span class="ps-notify-notes-more">
-                <button type="button" class="ps-text-button" x-show="{{ ($archive ?? false) ? 'false' : 'item.notes.length > 1' }}" x-on:click="toggleNotes(item)" :aria-expanded="!!openNotes[item.id]" x-text="openNotes[item.id] ? @js(__('pelican-simplify::notifications.item.show_less')) : 'Show all '+item.notes.length"></button>
+                <button type="button" class="ps-text-button" x-show="{{ ($archive ?? false) ? 'false' : 'item.notes.length > 1' }}" x-on:click="toggleNotes(item)" :aria-expanded="!!openNotes[item.id]" x-text="openNotes[item.id] ? @js(__('pelican-simplify::notifications.item.show_less')) : Simplify.fill(@js(__('pelican-simplify::notifications.item.show_all')), { count: item.notes.length })"></button>
                 <a class="ps-text-button" x-show="item.notesUrl" :href="item.notesUrl" target="_blank" rel="noopener">{{ __('pelican-simplify::notifications.item.full_release_notes') }}</a>
             </span>
         </div>

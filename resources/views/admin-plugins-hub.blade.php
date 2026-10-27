@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div class="ps-hub-bar">
-                <label class="ps-people-search ps-hub-search"><x-tabler-search class="ps-ico" /><input type="search" x-model="q" :placeholder="'Search ' + typeLabel(type, 2) + ' or makers'" aria-label="{{ __('pelican-simplify::plugins.hub.search_the_hub') }}"></label>
+                <label class="ps-people-search ps-hub-search"><x-tabler-search class="ps-ico" /><input type="search" x-model="q" :placeholder="Simplify.fill(@js(__('pelican-simplify::plugins.hub.search_types')), { types: typeLabel(type, 2) })" aria-label="{{ __('pelican-simplify::plugins.hub.search_the_hub') }}"></label>
                 <div class="ps-segmented" role="group" aria-label="{{ __('pelican-simplify::plugins.hub.type') }}">
                     <template x-for="t in types" :key="t">
                         <button type="button" :aria-pressed="type === t" @click="setType(t)"><span x-text="typeLabel(t, 2, true)"></span><span class="ps-hub-count" x-text="count(t)"></span></button>
@@ -34,7 +34,7 @@
                     <template x-for="m in makers[type]" :key="m.name">
                         <button type="button" class="ps-hub-maker" :aria-pressed="maker === m.name" @click="maker = maker === m.name ? null : m.name">
                             <span class="ps-hub-avatar" :style="avatar(m.name)" x-text="initial(m.name)" aria-hidden="true"></span>
-                            <span><strong x-text="m.name"></strong><small x-text="m.count + ' ' + typeLabel(type, m.count) + ' · ' + m.downloads.toLocaleString() + ' downloads'"></small></span>
+                            <span><strong x-text="m.name"></strong><small x-text="m.count + ' ' + typeLabel(type, m.count) + ' · ' + Simplify.choice(@js(__('pelican-simplify::plugins.hub.downloads')), m.downloads, { count: m.downloads.toLocaleString() })"></small></span>
                         </button>
                     </template>
                 </div>
@@ -44,7 +44,7 @@
             <div class="ps-alert is-warn" role="note" x-show="type === 'theme' && !(build.node && build.yarn)" x-cloak>
                 <x-tabler-alert-triangle class="ps-ico" aria-hidden="true" />
                 <div>
-                    <strong x-text="(build.node ? '' : @js(__('pelican-simplify::plugins.hub.node_js_22_12'))) + (!build.node && !build.yarn ? ' and ' : '') + (build.yarn ? '' : @js(__('pelican-simplify::plugins.hub.yarn'))) + (build.node || build.yarn ? ' is' : ' are') + ' missing on this panel server'"></strong>
+                    <strong x-text="!build.node && !build.yarn ? @js(__('pelican-simplify::plugins.hub.node_yarn_missing')) : !build.node ? @js(__('pelican-simplify::plugins.hub.node_missing')) : @js(__('pelican-simplify::plugins.hub.yarn_missing'))"></strong>
                     <small>{{ __('pelican-simplify::plugins.hub.pelican_rebuilds_the_panel_style_after') }}</small>
                     <pre class="ps-hub-cmd">curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
 sudo apt install -y nodejs
@@ -57,7 +57,7 @@ sudo corepack enable</pre>
                     <article class="ps-hub-card">
                         <template x-if="item.screenshots.length">
                             <div class="ps-hub-shot">
-                                <button type="button" class="ps-hub-shot-open" @click="show(item)" :aria-label="'Show ' + item.title"><img :src="item.screenshots[slide[item.slug] || 0]" :alt="'Screenshot of ' + item.title" loading="lazy" referrerpolicy="no-referrer"></button>
+                                <button type="button" class="ps-hub-shot-open" @click="show(item)" :aria-label="Simplify.fill(@js(__('pelican-simplify::plugins.hub.show_name')), { name: item.title })"><img :src="item.screenshots[slide[item.slug] || 0]" :alt="Simplify.fill(@js(__('pelican-simplify::plugins.hub.screenshot_of')), { name: item.title })" loading="lazy" referrerpolicy="no-referrer"></button>
                                 <template x-if="item.screenshots.length > 1">
                                     <div>
                                         <button type="button" class="ps-hub-nav is-prev" @click="step(item, -1)" aria-label="{{ __('pelican-simplify::plugins.hub.previous_screenshot') }}"><x-tabler-chevron-left /></button>
@@ -76,9 +76,9 @@ sudo corepack enable</pre>
                             <p x-show="item.summary" x-text="item.summary"></p>
                             <p class="ps-hub-based" x-show="item.based" x-cloak>{{ __('pelican-simplify::plugins.hub.based_on_the_work_of') }} <a :href="item.based?.url" target="_blank" rel="noopener" x-text="item.based?.name"></a></p>
                             <div class="ps-hub-meta">
-                                <span><x-tabler-download class="ps-ico" aria-hidden="true" /><span x-text="item.downloads.toLocaleString() + ' downloads'"></span></span>
+                                <span><x-tabler-download class="ps-ico" aria-hidden="true" /><span x-text="Simplify.choice(@js(__('pelican-simplify::plugins.hub.downloads')), item.downloads, { count: item.downloads.toLocaleString() })"></span></span>
                                 <span x-show="item.license" x-text="item.license"></span>
-                                <span x-show="item.updated" x-text="'Updated ' + date(item.updated)"></span>
+                                <span x-show="item.updated" x-text="Simplify.fill(@js(__('pelican-simplify::plugins.hub.updated')), { date: date(item.updated) })"></span>
                             </div>
                             <div class="ps-hub-actions">
                                 <a class="ps-btn is-sm" :class="item.installed ? '' : 'is-primary'" :href="item.url" target="_blank" rel="noopener"><span x-text="item.installed ? @js(__('pelican-simplify::plugins.hub.view_on_hub')) : @js(__('pelican-simplify::plugins.hub.install_on_hub'))"></span><x-tabler-external-link class="ps-ico" aria-hidden="true" /></a>
@@ -91,7 +91,7 @@ sudo corepack enable</pre>
             <p class="ps-empty" x-show="!list().length" x-cloak>{{ __('pelican-simplify::plugins.hub.nothing_found_for') }}<span x-text="q"></span>”.</p>
 
             <footer class="ps-hub-foot">
-                <span>{{ __('pelican-simplify::plugins.hub.from') }} <a href="https://hub.pelican.dev/plugins" target="_blank" rel="noopener">hub.pelican.dev</a>@if($hub['at']), read {{ \Carbon\Carbon::createFromTimestamp($hub['at'])->diffForHumans() }}@endif. The list is read again once an hour.</span>
+                <span>{{ __('pelican-simplify::plugins.hub.from') }} <a href="https://hub.pelican.dev/plugins" target="_blank" rel="noopener">hub.pelican.dev</a>@if($hub['at']), {{ __('pelican-simplify::plugins.hub.read_time', ['time' => \Carbon\Carbon::createFromTimestamp($hub['at'])->diffForHumans()]) }}@endif. {{ __('pelican-simplify::plugins.hub.read_hourly') }}</span>
                 <button type="button" class="ps-btn is-sm is-subtle" wire:click="refreshHub"><x-tabler-refresh class="ps-ico" />{{ __('pelican-simplify::plugins.hub.read_again') }}</button>
             </footer>
 
@@ -100,9 +100,9 @@ sudo corepack enable</pre>
                 <div class="ps-hub-dialog" role="dialog" aria-modal="true" :aria-label="open?.title">
                     <template x-if="open">
                         <div>
-                            <div class="ps-hub-big"><img :src="open.screenshots[shot]" :alt="'Screenshot of ' + open.title" referrerpolicy="no-referrer"></div>
+                            <div class="ps-hub-big"><img :src="open.screenshots[shot]" :alt="Simplify.fill(@js(__('pelican-simplify::plugins.hub.screenshot_of')), { name: open.title })" referrerpolicy="no-referrer"></div>
                             <div class="ps-hub-thumbs" x-show="open.screenshots.length > 1">
-                                <template x-for="(s, i) in open.screenshots" :key="i"><button type="button" :aria-current="i === shot" @click="shot = i"><img :src="s" :alt="'Screenshot ' + (i + 1)" loading="lazy" referrerpolicy="no-referrer"></button></template>
+                                <template x-for="(s, i) in open.screenshots" :key="i"><button type="button" :aria-current="i === shot" @click="shot = i"><img :src="s" :alt="Simplify.fill(@js(__('pelican-simplify::plugins.hub.screenshot_number')), { number: i + 1 })" loading="lazy" referrerpolicy="no-referrer"></button></template>
                             </div>
                             <div class="ps-hub-dialog-body">
                                 <div class="ps-hub-dialog-head">

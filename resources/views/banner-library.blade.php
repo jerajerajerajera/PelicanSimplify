@@ -5,7 +5,7 @@
         @error('bannerServer')<p class="ps-alert is-danger" role="alert">{{ $message }}</p>@enderror
         <label class="ps-field">{{ __('pelican-simplify::dashboard.banners.banner') }}<input type="file" accept="image/png,image/jpeg,image/webp" wire:model="bannerUpload"></label>
         @error('bannerUpload')<p class="ps-alert is-danger" role="alert">{{ $message }}</p>@enderror
-        <small class="ps-help">JPG, PNG or WebP · up to {{ \Simplify\Panel\Services\UploadLimits::label(\Simplify\Panel\Services\UploadLimits::bannerBytes()) }}</small>
+        <small class="ps-help">{{ __('pelican-simplify::dashboard.banners.upload_help', ['limit' => \Simplify\Panel\Services\UploadLimits::label(\Simplify\Panel\Services\UploadLimits::bannerBytes())]) }}</small>
         <label class="ps-check"><input type="checkbox" role="switch" wire:model="useUploadedBanner"> {{ __('pelican-simplify::dashboard.banners.use_this_banner_on_the_selected') }}</label>
         <button type="button" class="ps-btn is-primary" wire:click="uploadBanner" wire:loading.attr="disabled" wire:target="bannerUpload,uploadBanner"><span wire:loading.remove wire:target="bannerUpload,uploadBanner">{{ __('pelican-simplify::dashboard.banners.upload_banner') }}</span><span wire:loading wire:target="bannerUpload,uploadBanner">{{ __('pelican-simplify::dashboard.banners.uploading') }}</span></button>
     </div>
@@ -20,7 +20,7 @@
         @php($library = $this->bannerLibrary())
         @php($serverNames = \App\Models\Server::query()->whereIn('uuid', array_column($library, 'server_uuid'))->pluck('name', 'uuid')->all())
         @forelse($library as $banner)
-            <article><img src="{{ $banner['url'] }}" alt="{{ $banner['name'] }}" loading="lazy"><div><strong>{{ $banner['name'] }}</strong><small>{{ $serverNames[$banner['server_uuid']] ?? 'Deleted server' }}</small><button type="button" class="ps-btn is-sm is-danger" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::dashboard.banners.remove_this_uploaded_banner')),message:@js(__('pelican-simplify::dashboard.banners.servers_using_it_return_to_their')),confirmLabel:@js(__('pelican-simplify::dashboard.banners.remove_banner')),tone:'danger'}).then(ok => ok && $wire.deleteBanner(@js($banner['id'])))" wire:loading.attr="disabled">{{ __('pelican-simplify::dashboard.banners.remove_upload') }}</button></div></article>
+            <article><img src="{{ $banner['url'] }}" alt="{{ $banner['name'] }}" loading="lazy"><div><strong>{{ $banner['name'] }}</strong><small>{{ $serverNames[$banner['server_uuid']] ?? __('pelican-simplify::dashboard.banners.deleted_server') }}</small><button type="button" class="ps-btn is-sm is-danger" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::dashboard.banners.remove_this_uploaded_banner')),message:@js(__('pelican-simplify::dashboard.banners.servers_using_it_return_to_their')),confirmLabel:@js(__('pelican-simplify::dashboard.banners.remove_banner')),tone:'danger'}).then(ok => ok && $wire.deleteBanner(@js($banner['id'])))" wire:loading.attr="disabled">{{ __('pelican-simplify::dashboard.banners.remove_upload') }}</button></div></article>
         @empty
             <p class="ps-banner-empty">{{ __('pelican-simplify::dashboard.banners.no_uploaded_banners_yet') }}</p>
         @endforelse

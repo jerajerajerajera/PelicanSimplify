@@ -33,5 +33,6 @@ return [
         'put_back_title' => 'Put back the previous :name?',
         'servers' => '{0} No servers|{1} 1 server|[2,*] :count servers',
         'moves' => '{1} 1 server still uses the old startup command or Docker image. Servers keep their own; move them to get the new one at their next start.|[2,*] :count servers still use the old startup command or Docker image. Servers keep their own; move them to get the new one at their next start.',
+        'test_failed' => 'Tested :time: the test server :reason',
     ],
 ];

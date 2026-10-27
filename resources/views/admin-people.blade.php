@@ -32,28 +32,28 @@
                         </div>
                         <div class="ps-person-meta">
                             <span data-tip="{{ __('pelican-simplify::people.page.servers_owned') }}"><x-tabler-server class="ps-ico" />{{ $person['servers'] }}</span>
-                            <span data-tip="{{ $person['mfa'] ? 'Two-factor sign-in on' : 'Two-factor sign-in off' }}" class="{{ $person['mfa'] ? 'is-ok' : 'is-off' }}"><x-tabler-shield-check class="ps-ico" />{{ __('pelican-simplify::people.page.2fa') }}</span>
+                            <span data-tip="{{ $person['mfa'] ? __('pelican-simplify::people.page.mfa_on') : __('pelican-simplify::people.page.mfa_off') }}" class="{{ $person['mfa'] ? 'is-ok' : 'is-off' }}"><x-tabler-shield-check class="ps-ico" />{{ __('pelican-simplify::people.page.2fa') }}</span>
                         </div>
                         <div class="ps-person-actions">
                             <button type="button" class="ps-btn is-sm" wire:click="mountAction('editPerson', { user: {{ $person['id'] }} })"><x-tabler-edit class="ps-ico" />{{ __('pelican-simplify::people.page.edit') }}</button>
                             <button type="button" class="ps-btn is-sm is-icon is-subtle" data-tip="{{ __('pelican-simplify::people.page.send_password_reset_link') }}" aria-label="{{ __('pelican-simplify::people.page.send_password_reset_link') }}" wire:click="mountAction('resetPassword', { user: {{ $person['id'] }} })"><x-tabler-key class="ps-ico" /></button>
-                            <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ $person['self'] ? 'You cannot delete yourself' : ($person['servers'] ? 'Owns servers' : 'Delete') }}" aria-label="Delete {{ $person['username'] }}" @disabled($person['self'] || $person['servers']) wire:click="mountAction('deletePerson', { user: {{ $person['id'] }} })"><x-tabler-trash class="ps-ico" /></button>
+                            <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ $person['self'] ? __('pelican-simplify::people.page.cannot_delete_self') : ($person['servers'] ? __('pelican-simplify::people.page.owns_servers') : __('pelican-simplify::people.page.delete')) }}" aria-label="{{ __('pelican-simplify::people.page.delete_name', ['name' => $person['username']]) }}" @disabled($person['self'] || $person['servers']) wire:click="mountAction('deletePerson', { user: {{ $person['id'] }} })"><x-tabler-trash class="ps-ico" /></button>
                         </div>
                     </article>
                 @empty
-                    <p class="ps-empty">Nobody matches “{{ $search }}”.</p>
+                    <p class="ps-empty">{{ __('pelican-simplify::people.page.nobody_matches', ['search' => $search]) }}</p>
                 @endforelse
             </div>
             @if($people['pages'] > 1)
                 <nav class="ps-people-pages" aria-label="{{ __('pelican-simplify::people.page.pages') }}">
                     <button type="button" class="ps-btn is-sm" @disabled($peoplePage <= 1) wire:click="setPage({{ $peoplePage - 1 }})">{{ __('pelican-simplify::people.page.previous') }}</button>
-                    <span class="ps-help">Page {{ $peoplePage }} of {{ $people['pages'] }}</span>
+                    <span class="ps-help">{{ __('pelican-simplify::people.page.page_of', ['page' => $peoplePage, 'pages' => $people['pages']]) }}</span>
                     <button type="button" class="ps-btn is-sm" @disabled($peoplePage >= $people['pages']) wire:click="setPage({{ $peoplePage + 1 }})">{{ __('pelican-simplify::people.page.next') }}</button>
                 </nav>
             @endif
         @else
             <div class="ps-people-bar">
-                <p class="ps-help ps-people-intro">A role combines Simplify permissions (what members can do on their servers) with optional admin panel access. Everyone without a role gets the Everyone permissions from Simplify settings → Users &amp; access. Assign roles on the People tab.</p>
+                <p class="ps-help ps-people-intro">{{ __('pelican-simplify::people.page.roles_intro') }}</p>
                 <button type="button" class="ps-btn is-primary" wire:click="mountAction('addRole')"><x-tabler-shield-plus class="ps-ico" />{{ __('pelican-simplify::people.page.add_role') }}</button>
             </div>
             <div class="ps-role-grid">
@@ -64,13 +64,13 @@
                             <strong>{{ $role['name'] }}</strong>
                         </header>
                         <p class="ps-help">
-                            {{ $role['members'] }} {{ \Illuminate\Support\Str::plural('member', $role['members']) }}
-                            @if($role['root']) · Full access to everything @else · {{ $role['abilities'] }} Simplify · {{ $role['permissions'] }} admin permissions @endif
+                            {{ trans_choice('pelican-simplify::people.page.members', $role['members']) }}
+                            @if($role['root']) · {{ __('pelican-simplify::people.page.full_access') }} @else · {{ __('pelican-simplify::people.page.role_counts', ['abilities' => $role['abilities'], 'permissions' => $role['permissions']]) }} @endif
                         </p>
                         @unless($role['root'])
                             <footer>
                                 <button type="button" class="ps-btn is-sm" wire:click="mountAction('editRole', { role: {{ $role['id'] }} })"><x-tabler-edit class="ps-ico" />{{ __('pelican-simplify::people.page.edit') }}</button>
-                                <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ __('pelican-simplify::people.page.delete_role') }}" aria-label="Delete role {{ $role['name'] }}" wire:click="mountAction('deleteRole', { role: {{ $role['id'] }} })"><x-tabler-trash class="ps-ico" /></button>
+                                <button type="button" class="ps-btn is-sm is-icon is-subtle is-danger" data-tip="{{ __('pelican-simplify::people.page.delete_role') }}" aria-label="{{ __('pelican-simplify::people.page.delete_role_name', ['name' => $role['name']]) }}" wire:click="mountAction('deleteRole', { role: {{ $role['id'] }} })"><x-tabler-trash class="ps-ico" /></button>
                             </footer>
                         @else
                             <footer><span class="ps-help"><x-tabler-lock class="ps-ico" /> {{ __('pelican-simplify::people.page.managed_by_pelican') }}</span></footer>

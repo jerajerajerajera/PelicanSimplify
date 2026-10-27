@@ -13,5 +13,13 @@ return [
         'go_to_first_setup' => 'Go to first setup',
         'preparing_your_system_checks' => 'Preparing your system checks…',
         'close_system_checks' => 'Close system checks',
+        'first_setup_eyebrow' => 'First setup · System check',
+        'diagnostics' => 'System diagnostics',
+        'panel_ready' => 'Your panel is ready',
+        'needs_attention_some' => 'A few things need attention',
+        'passed' => ':passed of :total checks passed',
+        'ready' => 'Ready',
+        'needs_attention' => 'Needs attention',
+        'warning_optional' => 'Warning · optional',
     ],
 ];

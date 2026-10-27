@@ -19,6 +19,21 @@ final class Translations
         return self::merge(is_array($english) ? $english : [], is_array($local) ? $local : []);
     }
 
+    /**
+     * Option labels kept as English constants in code (for validation), translated by key: $path.'.'.$key in
+     * lang/<locale>/<file>.php, with the constant's own English when a text is missing.
+     */
+    public static function labels(string $path, array $english): array
+    {
+        $out = [];
+        foreach ($english as $key => $text) {
+            $name = self::NAMESPACE.'::'.$path.'.'.$key;
+            $translated = __($name);
+            $out[$key] = is_string($translated) && $translated !== $name ? $translated : $text;
+        }
+        return $out;
+    }
+
     /** Texts for the JavaScript bundles (window.simplifyLang). */
     public static function js(): array
     {

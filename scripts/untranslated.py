@@ -26,7 +26,7 @@ def looks_like_text(s):
     if padded and len(s.split()) == 1 and s.isalpha() and s.islower(): return True
     if len(s) < 3 or not re.search(r'[A-Za-z]{2,}', s): return False
     if '::' in s or s.startswith(('http', '/', '#', '.', '$', '--', 'ps-', 'ssc-', 'fi-', 'is-', 'x-', 'wire:', 'data-', 'aria-', 'tabler-', 'heroicon')): return False
-    if CODEISH.match(s) or re.fullmatch(r'\(.*\)|[\d.]+ ?[KMGT]?B|(cubic-bezier|translate[XY]?|scale)\(.*', s): return False  # identifiers, keys, paths, CSS selectors without spaces
+    if CODEISH.match(s) or re.fullmatch(r'\(.*\)|[\d.]+ ?[KMGT]?B|(cubic-bezier|translate[XY]?|scale|var|hsla?|rgba?)\(.*|[a-z0-9 ,:()-]+(, ?[a-z0-9 :()-]+)+', s) or len(re.findall(r'[A-Za-z]', s)) < len(s) / 3: return False  # identifiers, keys, paths, CSS selectors without spaces
     words = s.split()
     if re.search(r'[{}<>=;$]|=>|\bfunction\b|\breturn\b|\(\)|&&|\|\|', s): return False  # code or markup
     if all(re.fullmatch(r'[a-z0-9:_./-]+', w) for w in words): return False  # class lists, commands
@@ -53,11 +53,15 @@ def scan(path):
         code = re.sub(r'(?<![:"\'])//(?![/\w.-]*\.\w).*$', '', code) if not blade else code
         code = TRANSLATED.sub('', code)
         if re.search(r'(Log::|logger\(|report\(|->info\(|->warn\(|->error\(|->line\(|->comment\(|console\.(log|warn|error))', code): continue
-        for m in (list(SINGLE.finditer(code)) + list(TEXT_ATTR.finditer(code)) if blade else STRING.finditer(code)):
+        for m in (list(SINGLE.finditer(code)) if blade else STRING.finditer(code)):
             s = m.group(1) if m.group(1) is not None else m.group(2)
             if looks_like_text(s): found.append((number, s))
         if blade:
-            stripped = re.sub(r'\{\{.*?\}\}|\{!!.*?!!\}|@\w+(\((?:[^()]|\([^()]*\))*\))?', ' ', code)
+            for m in TEXT_ATTR.finditer(code):
+                s = ' '.join(re.sub(r'\{\{.*?\}\}|&\w+;', ' ', m.group(1)).split())
+                if looks_like_text(s): found.append((number, s))
+        if blade:
+            stripped = re.sub(r'\{\{.*?\}\}|\{!!.*?!!\}|&\w+;|@\w+(\((?:[^()]|\([^()]*\))*\))?', ' ', code)
             for m in TEXT_NODE.finditer(stripped):
                 s = ' '.join(m.group(1).split())
                 if looks_like_text(s) and not re.search(r'[\'"]', s): found.append((number, s))
@@ -76,7 +80,7 @@ def main(args):
         rel, found = scan(f)
         if rel in SKIP and not paths: continue
         for number, s in found:
-            if s in allow: continue
+            if s.strip() in allow: continue
             total += 1
             print(f'{rel}:{number}: {s}')
     print(f'{total} untranslated text(s)', file=sys.stderr)

@@ -17,5 +17,7 @@ return [
         'nothing_archived' => 'Nothing archived.',
         'loading' => 'Loading…',
         'show_more' => 'Show more',
+        'clear_name' => 'Clear :title',
+        'show_all' => 'Show all :count',
     ],
 ];

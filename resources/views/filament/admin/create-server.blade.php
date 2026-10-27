@@ -31,7 +31,7 @@
                 {{-- Phones: the current step; tapping it lists every step to jump to. --}}
                 <button type="button" class="ssc-progress-phone" x-on:click="stepMenu = !stepMenu" :aria-expanded="stepMenu" aria-haspopup="true">
                     <strong x-text="@js($this->wizardStepLabels())[step - 1]"></strong>
-                    <span class="ssc-progress-count" x-text="'Step '+step+' of {{ count($this->wizardStepLabels()) }}'"></span>
+                    <span class="ssc-progress-count" x-text="Simplify.fill(@js(__('pelican-simplify::maker.create.step_of')), { step, total: {{ count($this->wizardStepLabels()) }} })"></span>
                 </button>
                 <div class="ssc-step-menu" x-show="stepMenu" x-cloak x-transition.opacity role="menu">
                     @foreach($this->wizardStepLabels() as $index=>$label)

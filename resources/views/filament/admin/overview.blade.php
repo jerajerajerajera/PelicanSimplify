@@ -16,37 +16,40 @@
     $java = $kind === 'bedrock' ? null : $java;
     $version = $runtime::minecraftVersion($settings);
     $javaServer = !$other && $catalog::javaServer($kind);
+    $t = fn (string $key, array $replace = []) => __('pelican-simplify::maker.review.'.$key, $replace);
+    $backupEvery = $get('change_backup_schedule') ? $get('backup_interval_minutes') : \Simplify\Panel\Services\PerformanceSettings::get('backup_interval_minutes');
+    $backupPoints = $get('change_backup_schedule') ? $get('backup_retention') : \Simplify\Panel\Services\PerformanceSettings::get('backup_retention');
     $rows = [
-        'Server name' => $get('name') ?: '—',
-        'Server color'=>$get('server_color') ?: 'Automatic',
-        'First start'=>$javaServer ? 'Manual · accept the Minecraft EULA on the server page' : 'Manual · server stays stopped',
-        'Server type' => $type,
-        'Minecraft' => $version ?: ($kind === 'modded' ? 'Select a modpack version' : 'Latest'),
-        'Connection' => \App\Models\Allocation::find($get('allocation_id'))?->address ?? 'Automatic',
-        'RAM' => $ram ? $ram . ' GB' : '—',
-        'CPU limit' => (int) $get('cpu') === 0 ? 'Unlimited' : $get('cpu') . '%',
-        'Disk space' => round((int) $get('disk_mb') / 1024, 1) . ' GB',
-        'Java runtime' => trim((string) $get('image')) !== '' ? 'Custom image' : ($java ? 'Java ' . $java . (($get('java_version') ?: 'auto') === 'auto' ? ' · Automatic' : ' · Manual') : 'Not determined'),
-        'Egg' => $egg?->name ?? '—',
-        'Automatic backups' => \Simplify\Panel\Services\FeatureSettings::enabled('automatic_backups') ? (($get('change_backup_schedule')?$get('backup_interval_minutes'):\Simplify\Panel\Services\PerformanceSettings::get('backup_interval_minutes')).' minutes · '.($get('change_backup_schedule')?$get('backup_retention'):\Simplify\Panel\Services\PerformanceSettings::get('backup_retention')).' recovery points') : 'Paused',
-        'Server properties' => $get('properties_enabled') ? $get('max_players') . ' players · ' . ucfirst($get('gamemode')) . ' · ' . ucfirst($get('difficulty')) : 'Installer defaults',
-        'MOTD' => $get('properties_enabled') ? $get('motd') : 'Installer default',
-        'Server icon' => $get('server_icon') ? 'Ready to upload' : 'Installer default',
-        'Start after installation' => $get('start_on_completion') ? 'Yes' : 'No',
+        'name' => $get('name') ?: '—',
+        'color' => $get('server_color') ?: $t('automatic'),
+        'first_start' => $javaServer ? $t('first_start_eula') : $t('first_start_stopped'),
+        'type' => $type,
+        'minecraft' => $version ?: ($kind === 'modded' ? $t('select_modpack_version') : $t('latest')),
+        'connection' => \App\Models\Allocation::find($get('allocation_id'))?->address ?? $t('automatic'),
+        'ram' => $ram ? $ram . ' GB' : '—',
+        'cpu' => (int) $get('cpu') === 0 ? $t('unlimited') : $get('cpu') . '%',
+        'disk' => round((int) $get('disk_mb') / 1024, 1) . ' GB',
+        'java' => trim((string) $get('image')) !== '' ? $t('custom_image') : ($java ? 'Java ' . $java . ' · ' . ((($get('java_version') ?: 'auto') === 'auto') ? $t('automatic') : $t('manual')) : $t('not_determined')),
+        'egg' => $egg?->name ?? '—',
+        'backups' => \Simplify\Panel\Services\FeatureSettings::enabled('automatic_backups') ? $t('backups_value', ['minutes' => $backupEvery, 'points' => $backupPoints]) : $t('paused'),
+        'properties' => $get('properties_enabled') ? $t('properties_value', ['players' => $get('max_players'), 'gamemode' => __('pelican-simplify::maker.review.gamemodes.'.$get('gamemode')), 'difficulty' => __('pelican-simplify::maker.review.difficulties.'.$get('difficulty'))]) : $t('installer_defaults'),
+        'motd' => $get('properties_enabled') ? $get('motd') : $t('installer_default'),
+        'icon' => $get('server_icon') ? $t('ready_to_upload') : $t('installer_default'),
+        'start' => $get('start_on_completion') ? $t('yes') : $t('no'),
     ];
     if (\Simplify\Panel\Services\Subdomains::active()) {
-        $rows['Subdomain'] = ($sub = strtolower(trim((string) $get('requested_subdomain')))) !== '' ? $sub . '.' . \Simplify\Panel\Services\Subdomains::settings()['domain'] : 'None';
+        $rows['subdomain'] = ($sub = strtolower(trim((string) $get('requested_subdomain')))) !== '' ? $sub . '.' . \Simplify\Panel\Services\Subdomains::settings()['domain'] : $t('none');
     }
     if ($other) {
-        $rows['Game'] = $egg?->name ?? '—';
-        foreach (['Minecraft', 'Java runtime', 'Server type', 'Server properties', 'MOTD', 'Server icon'] as $key) { unset($rows[$key]); }
+        $rows['game'] = $egg?->name ?? '—';
+        foreach (['minecraft', 'java', 'type', 'properties', 'motd', 'icon'] as $key) { unset($rows[$key]); }
     }
     if (!$other && !$javaServer) {
-        foreach (['Server properties', 'MOTD', 'Server icon', ...($kind === 'bedrock' ? ['Java runtime'] : [])] as $key) { unset($rows[$key]); }
+        foreach (['properties', 'motd', 'icon', ...($kind === 'bedrock' ? ['java'] : [])] as $key) { unset($rows[$key]); }
     }
     if (!$other && $get('server_type') === 'modded') {
-        $rows['Modpack'] = \Simplify\Panel\Services\ModpackCatalog::pack($get('modpack_project'))['title'] ?? '—';
-        $rows['Modpack version ID'] = $get('modpack_version') ?: '—';
+        $rows['modpack'] = \Simplify\Panel\Services\ModpackCatalog::pack($get('modpack_project'))['title'] ?? '—';
+        $rows['modpack_version'] = $get('modpack_version') ?: '—';
     }
 @endphp
 <section class="ssc-overview">
@@ -56,16 +59,16 @@
     </div>
     <dl class="ssc-summary-grid">
         @foreach ($rows as $label => $value)
-            <div class="ssc-summary-item"><dt>{{ $label }}</dt><dd>{{ $value }}</dd></div>
+            <div class="ssc-summary-item"><dt>{{ __('pelican-simplify::maker.review.rows.'.$label) }}</dt><dd>{{ $value }}</dd></div>
         @endforeach
-        <div class="ssc-summary-item ssc-summary-wide"><dt>{{ __('pelican-simplify::maker.review.docker_image') }}</dt><dd><code>{{ $image ?: 'Choose Java in Edit settings' }}</code></dd></div>
+        <div class="ssc-summary-item ssc-summary-wide"><dt>{{ __('pelican-simplify::maker.review.docker_image') }}</dt><dd><code>{{ $image ?: $t('choose_java') }}</code></dd></div>
     </dl>
     @if (!$other && $kind !== 'bedrock' && !$java && !$get('image'))
         <p class="ssc-summary-notice">{{ __('pelican-simplify::maker.review.java_could_not_be_determined_choose') }}</p>
     @endif
     <div class="ssc-overview-footer">
         <x-filament::button type="button" color="gray" outlined wire:click="toggleAdvanced">
-            {{ $this->editingAdvanced ? 'Done editing' : 'Edit settings' }}
+            {{ $this->editingAdvanced ? $t('done_editing') : $t('edit_settings') }}
         </x-filament::button>
     </div>
 </section>

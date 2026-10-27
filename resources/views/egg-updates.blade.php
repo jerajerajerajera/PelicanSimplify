@@ -17,7 +17,7 @@
                     @if($egg['testing'])
                         <p class="ps-help">{{ ['waiting' => __('pelican-simplify::eggs.updates.test_waiting'), 'installing' => __('pelican-simplify::eggs.updates.test_installing'), 'starting' => __('pelican-simplify::eggs.updates.test_starting')][$egg['testing']] ?? __('pelican-simplify::eggs.updates.testing') }}</p>
                     @elseif($egg['result'] && !$egg['result']['ok'])
-                        <p class="ps-plugin-error">Tested {{ \Carbon\Carbon::createFromTimestamp($egg['result']['at'])->diffForHumans() }}: the test server {{ $egg['result']['reason'] }}</p>
+                        <p class="ps-plugin-error">{{ __('pelican-simplify::eggs.updates.test_failed', ['time' => \Carbon\Carbon::createFromTimestamp($egg['result']['at'])->diffForHumans(), 'reason' => $egg['result']['reason']]) }}</p>
                     @endif
                 </div>
                 <div class="ps-plugin-actions">
