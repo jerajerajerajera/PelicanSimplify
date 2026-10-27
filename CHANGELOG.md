@@ -1,5 +1,27 @@
 # Changes
 
+## 0.6.0-snapshot.1 (snapshot channel)
+Simplify Server Maker: one creator for Minecraft and every other game.
+- The dashboard has one Create server tile. The first step shows Minecraft with Vanilla, Plugins, Mods, Modpack and Bedrock, and a search over all other games below it.
+- New Minecraft types: Paper or Purpur for plugins, Fabric, Forge, NeoForge or Quilt for mods, the official Bedrock server, and Velocity or BungeeCord as a proxy.
+- The steps follow the chosen game; other games get a Game settings step.
+- The Minecraft EULA is no longer asked in the creator; it appears in the new server's setup view after installation.
+- Settings has default resources for Mods, Bedrock and Proxy too.
+
+## 0.5.3-snapshot.16 (snapshot channel)
+Plugin search can include CurseForge.
+- A root administrator adds a free CurseForge API key under Simplify settings → Plugin sites, and can let people add their own key on the Plugins page.
+- CurseForge results are merged into the same cards; files that cannot be downloaded by other apps show a Website button.
+
+## 0.5.3-snapshot.15 (snapshot channel)
+Plugins sit on one page, and a plugin that fails to start is switched off.
+- Search is on the left and installed plugins are on the right, with a button to the plugins folder.
+- A plugin that fails to load at the next start is switched off automatically, with the reason and a ? to ask the AI why.
+
+## 0.5.3-snapshot.14 (snapshot channel)
+The "updated" notification after a plugin update shows what is new.
+- After an update through Simplify's plugin manager, the notification that a plugin was updated shows the What's new of the new version.
+
 ## 0.5.3-snapshot.13 (snapshot channel)
 Plugins can be found on Modrinth, Hangar and SpigotMC, and What's new in update notifications is shorter.
 - The Plugins section has Installed and Add plugin. Add plugin searches Modrinth, Hangar and SpigotMC at once and shows where a plugin comes from and which version installs.

@@ -376,9 +376,9 @@ const { start } = require('./browser-harness');
         await phone.click('.ps-tab-create > .ps-tab');
         await phone.waitForSelector('.ps-tab-create-menu .ps-menu-item:visible');
         assert.equal(await phone.locator('.ps-tab-create-menu .ps-menu-item:visible').count(), 2);
-        await phone.click('.ps-tab-create-menu .ps-menu-item >> text=Minecraft server');
+        await phone.click('.ps-tab-create-menu .ps-menu-item >> text="Server"');
         await phone.waitForSelector('.ps-modal');
-        assert.equal(await data(phone, (d) => d.createGame), 'minecraft');
+        assert.equal(await data(phone, (d) => d.createGame), 'server', 'one Server Maker for every game');
       }
       await phone.close();
     }

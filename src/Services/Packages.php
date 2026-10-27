@@ -17,7 +17,7 @@ final class Packages
         $mods=preg_match('/neoforge|forge|fabric|quilt|modrinth|curseforge|ftb|technic|tekkit|hexxit|blightfall|b-team/',$egg)===1;
         if ($flavour==='vanilla') return '';
         if ($flavour==='plus') return $plugins?'plugins':'';
-        if ($flavour==='modded') return $mods?'mods':'';
+        if ($flavour==='modded'||$flavour==='loader') return $mods?'mods':'';
         return $plugins?'plugins':($mods?'mods':'');
     }
     public static function context(Server $s): array
@@ -65,7 +65,7 @@ final class Packages
     public static function search(Server $s,string $q,string $version): array
     {
         Access::permission($s,SubuserPermission::FileRead);$ctx=self::target($s,$version);
-        $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind']));
+        $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind'],CurseForge::hasKey()));
         abort_if(array_filter($results)===[],503,'The plugin sites did not answer. Try again in a moment.');
         return ['context'=>$ctx,'items'=>PluginSources::merge($results,$q,$ctx['version'],$ctx['kind']),'offline'=>array_keys(array_filter($results,fn($r)=>$r===null))];
     }
@@ -87,10 +87,10 @@ final class Packages
             $on=!str_ends_with(strtolower($name),'.disabled');$t=$byFile[preg_replace('/\.disabled$/i','',$name)]??null;
             [$title,$v]=PluginSources::fromFilename($name);
             $items[]=['file'=>$name,'enabled'=>$on,'title'=>$t['title']??$title,'version'=>$t['version']??$v,'source'=>$t['source']??'','label'=>$t?(PluginSources::LABELS[$t['source']]??'').(!empty($t['via'])?' via '.$t['via']:''):'Added by hand',
-                'key'=>$t['key']??'','icon'=>$t['icon']??'','page'=>$t['page']??'','size'=>(int)($f['size']??0)];
+                'key'=>$t['key']??'','icon'=>$t['icon']??'','auto_off'=>!$on?($t['auto_off']??''):'','watch'=>$on&&!empty($t['watch']),'page'=>$t['page']??'','size'=>(int)($f['size']??0)];
         }
         usort($items,fn($a,$b)=>strcasecmp($a['title'],$b['title']));
-        return ['context'=>$ctx,'items'=>$items];
+        return ['context'=>[...$ctx,'curseforge'=>CurseForge::hasKey(),'curseforge_own'=>CurseForge::allowUserKeys(),'curseforge_mine'=>CurseForge::userHasKey()],'items'=>$items];
     }
     /** Tracked installs, keyed by "source:id". Entries from before 0.5.3 were Modrinth only, keyed by project id. */
     private static function tracked(Server $s): array
@@ -128,9 +128,55 @@ final class Packages
         $tracked[$key]=['key'=>$key,'source'=>$release['source'],'via'=>$release['via']??'','filename'=>$release['filename'],'version'=>$release['version'],'version_id'=>$release['version_id'],'directory'=>$ctx['directory'],
             'title'=>mb_substr((string)($card['title']??($tracked[$key]['title']??PluginSources::fromFilename($release['filename'])[0])),0,80),
             'icon'=>str_starts_with((string)($card['icon']??''),'https://')?$card['icon']:($tracked[$key]['icon']??''),
-            'page'=>str_starts_with((string)($card['page']??''),'https://')?$card['page']:($tracked[$key]['page']??''),'fits'=>$release['fits']];
+            'page'=>str_starts_with((string)($card['page']??''),'https://')?$card['page']:($tracked[$key]['page']??''),'fits'=>$release['fits'],
+            // Watched until the next start: a plugin that fails to load then is switched off (checkHealth).
+            'watch'=>$ctx['kind']==='plugins'?time():0];
         self::saveTracked($s,$tracked);
         return ['version'=>$release['version'],'label'=>$release['label'],'fits'=>$release['fits']];
+    }
+    /** Whether a plugin installed here waits for its first start (cheap: one local file, for the server page). */
+    public static function watching(Server $s): bool
+    {
+        foreach(JsonFile::read('simplify/packages/'.$s->uuid.'.json') as $t) if(is_array($t)&&!empty($t['watch'])) return true;
+        return false;
+    }
+    /**
+     * After a start: plugins installed through Simplify that failed to load are switched off (.jar.disabled) so the next
+     * start is clean, and listed with the log line. Plugins that loaded fine are no longer watched.
+     */
+    public static function checkHealth(Server $s): array
+    {
+        Access::permission($s,SubuserPermission::FileRead);
+        $tracked=self::tracked($s);$watched=array_filter($tracked,fn($t)=>!empty($t['watch']));
+        if(!$watched) return ['disabled'=>[],'watching'=>false];
+        $files=app(DaemonFileRepository::class)->setServer($s);
+        try {
+            $at=0;foreach($files->getDirectory('/logs') as $f) if(($f['name']??'')==='latest.log') $at=(int)strtotime((string)($f['modified']??$f['modified_at']??''));
+            // The log must be from a start after the install; installing needs a stopped server, so the next start writes a new one.
+            if($at<min(array_column($watched,'watch'))) return ['disabled'=>[],'watching'=>true];
+            $log=$files->getContent('/logs/latest.log',4194304);
+        } catch(\Throwable) { return ['disabled'=>[],'watching'=>true]; }
+        $failed=PluginSources::failures($log,$watched);
+        $ready=preg_match('/Done \(\d/',$log)===1;
+        $disabled=[];
+        foreach($watched as $key=>$t){
+            if(isset($failed[$key])){
+                $dir=ltrim((string)($t['directory']??'/plugins'),'/');
+                try { $files->renameFiles('/',[['from'=>$dir.'/'.$t['filename'],'to'=>$dir.'/'.$t['filename'].'.disabled']])->throw(); } catch(\Throwable) { continue; }
+                $tracked[$key]=[...$t,'watch'=>0,'auto_off'=>$failed[$key]['reason'],'auto_off_lines'=>$failed[$key]['lines']];
+                $disabled[]=['title'=>$t['title']??$t['filename'],'version'=>$t['version']??'','reason'=>$failed[$key]['reason'],'file'=>$t['filename'].'.disabled'];
+            } elseif($ready) $tracked[$key]=[...$t,'watch'=>0];
+        }
+        self::saveTracked($s,$tracked);
+        return ['disabled'=>$disabled,'watching'=>(bool)array_filter($tracked,fn($t)=>!empty($t['watch']))];
+    }
+    /** The saved log lines of a plugin Simplify switched off, explained by the AI an admin set up. */
+    public static function explainFailure(Server $s,string $filename): array
+    {
+        Access::permission($s,SubuserPermission::FileRead);
+        $base=preg_replace('/\.disabled$/','',$filename);
+        foreach(self::tracked($s) as $t) if($t['filename']===$base&&!empty($t['auto_off_lines'])) return ErrorExplainer::explainPlugin($s,$t['auto_off_lines']);
+        return ['ok'=>false,'error'=>'There are no saved log lines for this plugin.'];
     }
     /** Moves files to the backup folder instead of deleting them. */
     private static function archive(Server $s,string $directory,array $names): void
@@ -159,5 +205,8 @@ final class Packages
         if($target===$filename)return;
         $dir=ltrim($ctx['directory'],'/');
         app(DaemonFileRepository::class)->setServer($s)->renameFiles('/',[['from'=>$dir.'/'.$filename,'to'=>$dir.'/'.$target]])->throw();
+        $tracked=self::tracked($s);
+        foreach($tracked as $key=>$t) if($t['filename']===$base) $tracked[$key]=[...$t,'auto_off'=>'','auto_off_lines'=>[],'watch'=>$on?time():0];
+        self::saveTracked($s,$tracked);
     }
 }

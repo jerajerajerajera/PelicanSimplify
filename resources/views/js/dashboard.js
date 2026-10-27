@@ -129,7 +129,7 @@
       loading: false,
       closingCreator: false,
       modalRequest: 0,
-      createGame: 'minecraft',
+      createGame: 'server',
       settingsSection: 'settings',
       settingsChanged: false,
       // Server page
@@ -194,7 +194,10 @@
       packageVersion: '',
       packageResults: [],
       packageDetails: {},
-      packageTab: 'installed',
+      filesPath: '',
+      nextFilesPath: '',
+      pluginCheck: null,
+      pluginFailures: [],
       packageSite: 'all',
       packageSearched: false,
       packageSearching: false,
@@ -559,6 +562,15 @@
             title: pending.error ? 'Changes need attention' : 'Changes are waiting for a restart',
             text: pending.error || (pending.restart_at ? 'A restart is scheduled to apply your changes.' : 'Restart the server to apply your saved changes.'),
             action: this.showWidget('restart') && !pending.restart_requested ? { label: 'Restart now', url: '#', run: () => this.restartChanges(0) } : null,
+          });
+        }
+        for (const p of this.pluginFailures || []) {
+          items.push({
+            id: 'plugin-off-' + p.file,
+            tone: 'warn',
+            title: p.title + ' did not load and was switched off',
+            text: 'The server starts cleanly again without it. ' + p.reason,
+            action: this.canExplain() ? { label: 'Ask the AI assistant why', url: '#', run: () => this.explainPlugin(p.file) } : { label: 'Open plugins', url: '#', run: () => this.open('plugins') },
           });
         }
         const health = this.boot.host_health;
@@ -1694,30 +1706,37 @@
         }
       },
       createFrameUrl() {
-        const url = this.frameUrl(this.createGame === 'minecraft' ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
+        const url = this.frameUrl(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
         if (!url) return '';
         const target = new URL(url);
-        if (this.createGame !== 'native') target.searchParams.set('game', this.createGame);
+        // The Server Maker shows Minecraft and the other games together; a game in the link opens straight on it.
+        if (['minecraft', 'other'].includes(this.createGame)) target.searchParams.set('game', this.createGame);
         return target.href;
       },
       /** Simplify's own creators (Minecraft, other games) fill the popup edge to edge; Pelican's form is a native page. */
       createFrameKind() {
-        return this.createGame === 'minecraft' || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
+        return ['server', 'minecraft'].includes(this.createGame) || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
       },
       canCreateGame(game) {
+        // 'server' is the Server Maker (Minecraft and/or other games, whichever add-ons are on).
+        if (game === 'server') return !!this.boot.can_create && (this.canCreateGame('minecraft') || (this.canCreateGame('other') && !!this.boot.game_create_url));
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
+      },
+      /** Pelican's own form for other games: administrators, when the game add-on is off but Minecraft is on. */
+      pelicanFormForOthers() {
+        return !this.boot.game_create_url && !this.canCreateGame('native') && this.canCreateGame('other');
       },
       /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
       createChoices() {
         return [
-          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
-          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'server', label: 'Server', icon: 'plus' },
+          { key: 'other', label: 'Other server (Pelican form)', icon: 'gamepad' },
           { key: 'native', label: 'New server', icon: 'host' },
-        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'server' ? this.canCreateGame('server') : this.pelicanFormForOthers()));
       },
-      openCreate(game = 'minecraft') {
-        if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
+      openCreate(game = 'server') {
+        if (!['server', 'minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
         this.openPopup('create');
       },
@@ -1739,7 +1758,7 @@
         try {
           const current = new URL(frame.contentWindow.location.href, location.origin);
           const list = new URL(this.boot.list_url, location.origin);
-          const creator = new URL(this.createGame === 'minecraft' ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
+          const creator = new URL(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
           if (current.origin === location.origin) {
             completed = current.pathname === list.pathname && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(current.searchParams.get('server') || '');
             if (completed) createdUrl = current.href;
@@ -2044,7 +2063,7 @@
         if (this.modal === 'alias') return 'Change server alias';
         if (this.modal === 'background') return 'Server background';
         if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
-        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
+        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Server Maker';
         if (this.modal === 'account') return 'Profile';
         if (this.modal === 'notifications') return 'Notifications';
         if (this.modal === 'inbox') return 'Notifications';
@@ -2123,6 +2142,10 @@
         return { settings: '#e0a050', players: '#6ea8fe', plugins: '#b48cf2', mods: '#b48cf2', files: '#5cc8c0', backups: '#7ad08a', schedules: '#f5b84a', software: '#c084fc', connection: '#60a5fa', performance: '#f2707a', web: '#38bdf8', activity: '#9a9aa6', advanced: '#9a9aa6' }[key] || 'var(--ps-accent)';
       },
       async open(key) {
+        if (key === 'files') {
+          this.filesPath = this.nextFilesPath;
+          this.nextFilesPath = '';
+        }
         if (this.busy || !this.showWidget(key)) return;
         const request = ++this.modalRequest;
         if (this.server && !this.phone && !this.docked() && this.widgets.some((widget) => widget.key === key)) await this.layoutTransition(() => { this.modal = key; });
@@ -2143,8 +2166,7 @@
             this.installed = await load(() => wire.installedPackages());
             if (this.installed.context?.kind !== key) throw new Error('This server does not support ' + key + '.');
             this.packageVersion = this.installed.context?.version || '';
-            this.packageTab = (this.installed.items || []).length ? 'installed' : 'add';
-            if (this.packageTab === 'add') this.openPackageSearch();
+            this.openPackageSearch();
           }
           if (['advanced', 'software', 'connection'].includes(key) && (key !== 'software' || this.server?.minecraft)) {
             this.advanced = await load(() => (key === 'connection' ? wire.connectionData() : wire.advancedData()));
@@ -2256,8 +2278,10 @@
               if (this.logs.length > 1200) this.logs.splice(0, this.logs.length - 1200);
               this.renderLogs();
               if (event === 'console output' && /agree to the EULA/i.test(line)) this.promptEula();
+              if (event === 'console output' && /Done \(\d/.test(line)) this.checkPluginHealth();
             }
             if (event === 'status') {
+              if (args[0] === 'offline' && ['starting', 'running'].includes(this.status)) this.checkPluginHealth();
               this.status = args[0];
               if (this.status === 'offline') {
                 this.networkPrevious = null;
@@ -2332,14 +2356,31 @@
         return (this.boot.explain_sources || []).filter((source) => source !== 'console' || this.canExplain());
       },
       explainLabel(source) {
-        return { console: 'Console', panel: 'Panel log', wings: 'Wings log' }[source] || source;
+        return { console: 'Console', panel: 'Panel log', wings: 'Wings log', plugin: 'Plugin' }[source] || source;
       },
       /** The same name inside a sentence: "the last lines of the Wings log". */
       explainNoun(source) {
-        return { console: 'console', panel: 'panel log', wings: 'Wings log' }[source] || 'log';
+        return { console: 'console', panel: 'panel log', wings: 'Wings log', plugin: 'server log about this plugin' }[source] || 'log';
+      },
+      /** Why a plugin that Simplify switched off did not load, from the log lines saved at that moment. */
+      async explainPlugin(file) {
+        if (this.explain?.loading) return;
+        const request = (this.explainRequest = (this.explainRequest || 0) + 1);
+        this.explain = { source: 'plugin', file, loading: true, error: null, answer: null };
+        let result;
+        try {
+          result = await wire.explainPluginFailure(file);
+        } catch {
+          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+        }
+        if (this.explainRequest !== request || !this.explain) return;
+        this.explain = result?.ok
+          ? { source: 'plugin', file, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
+          : { source: 'plugin', file, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
       },
       /** Sends the last lines of a log (read again by the panel) to the chosen AI and shows the answer. */
       async explainError(source) {
+        if (!source && this.explain?.source === 'plugin') return this.explainPlugin(this.explain.file);
         source = source || this.explain?.source || this.explainSources()[0];
         if (!this.explainSources().includes(source) || this.explain?.loading) return;
         const request = (this.explainRequest = (this.explainRequest || 0) + 1);
@@ -2714,7 +2755,9 @@
       packageSites() {
         const sites = [{ key: 'all', label: 'All sites' }, { key: 'modrinth', label: 'Modrinth' }];
         if (['paper', 'purpur'].includes(this.installed.context?.loader)) sites.push({ key: 'hangar', label: 'Hangar' });
-        return [...sites, { key: 'spigot', label: 'SpigotMC' }];
+        if (this.modal === 'plugins') sites.push({ key: 'spigot', label: 'SpigotMC' });
+        if (this.installed.context?.curseforge) sites.push({ key: 'curseforge', label: 'CurseForge' });
+        return sites;
       },
       packageHeading() {
         const what = this.modal === 'plugins' ? 'plugins' : 'mods';
@@ -2746,7 +2789,6 @@
         return (this.installed.items || []).some((f) => f.key === key);
       },
       openPackageSearch() {
-        this.packageTab = 'add';
         if (!this.packageSearched && !this.packageResults.length && (this.installed.context?.version || this.packageVersion)) this.searchPackages();
       },
       async searchPackages() {
@@ -2757,7 +2799,7 @@
           if (request !== this.packageRequest) return;
           this.packageResults = result.items || [];
           this.packageVersion = result.context?.version || this.packageVersion;
-          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC' })[key] || key);
+          this.packageOffline = (result.offline || []).map((key) => ({ modrinth: 'Modrinth', hangar: 'Hangar', spigot: 'SpigotMC', curseforge: 'CurseForge' })[key] || key);
           this.packageSearched = true;
           this.loadPackageDetails(this.packageResults.map((p) => p.key));
         } catch (e) {
@@ -2790,12 +2832,58 @@
           if (await this.ask({ title: 'Update ' + p.title + ' anyway?', message: this.notice + ' The newest release may not work on your version.', confirmLabel: 'Update anyway' })) result = await this.run(() => wire.installPackage(p.key, this.packageVersion, true, p));
         }
         if (result === SKIPPED) return;
-        this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it.', 'ok');
+        this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it; if it fails to load, Simplify switches it off again.', 'ok');
+        if (this.modal === 'plugins' && this.server) this.server.plugin_watch = true;
         this.installed = await wire.installedPackages();
+      },
+      /** Bigger hosts can let people search CurseForge with their own free API key; an empty key removes it. */
+      async setCurseForgeKey() {
+        const key = await this.ask({
+          title: 'Your CurseForge API key',
+          message: 'Create a free key at console.curseforge.com (sign in, then API keys). It is stored encrypted on this panel and only sent to CurseForge.' + (this.installed.context?.curseforge_mine ? ' Leave the field empty and save to remove your key.' : ''),
+          input: true,
+          inputLabel: 'API key',
+          inputType: 'password',
+          placeholder: '$2a$10$…',
+          confirmLabel: 'Save',
+        });
+        if (key === false || key === null || key === undefined) return;
+        const result = await this.run(() => wire.saveCurseForgeKey(String(key)), String(key).trim() ? 'CurseForge key saved. Search now includes CurseForge.' : 'Your CurseForge key was removed.');
+        if (result === SKIPPED) return;
+        this.installed = result;
+        this.packageDetails = {};
+        this.searchPackages();
+      },
+      /** Opens the file manager in the plugins (or mods) folder. */
+      openPackageFolder() {
+        this.nextFilesPath = (this.installed.context?.directory || '/' + this.modal).replace(/^\/+/, '');
+        this.open('files');
+      },
+      filesStartUrl() {
+        const base = this.server?.files_url;
+        if (!base || !this.filesPath) return base;
+        return base.replace(/\/$/, '') + '/' + this.filesPath.split('/').map(encodeURIComponent).join('/');
+      },
+      /** After a start (or a crash) with a newly installed plugin: plugins that failed to load are switched off. */
+      checkPluginHealth() {
+        if (!this.server?.plugin_watch || this.pluginCheck) return;
+        this.pluginCheck = setTimeout(async () => {
+          this.pluginCheck = null;
+          try {
+            const result = await wire.checkPluginHealth();
+            this.server.plugin_watch = !!result.watching;
+            if (!(result.disabled || []).length) return;
+            this.pluginFailures = result.disabled;
+            for (const p of result.disabled) this.toast(p.title + ' did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.', 'warn');
+            if (this.isPackageModal()) this.installed = await wire.installedPackages();
+          } catch {}
+        }, 2500);
       },
       async togglePackage(f) {
         const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? f.title + ' is off. It stays in the folder.' : f.title + ' is on again.');
-        if (result !== SKIPPED) this.installed = await wire.installedPackages();
+        if (result === SKIPPED) return;
+        if (!f.enabled && f.key && this.server) this.server.plugin_watch = true;
+        this.installed = await wire.installedPackages();
       },
       async removePackage(file) {
         if (!(await this.ask({ title: 'Remove ' + file + '?', message: 'A copy is kept in the server package backup folder.', confirmLabel: 'Remove', tone: 'danger' }))) return;

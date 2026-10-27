@@ -4,6 +4,7 @@ declare(strict_types=1);
 // newest release made for the server's version, or the newest at all marked as not made for it; GitHub release files
 // and download hosts are checked.
 require __DIR__.'/../src/Services/PluginSources.php';
+require __DIR__.'/../src/Services/CurseForge.php';
 use Simplify\Panel\Services\PluginSources as P;
 $check=function(bool $ok,string $what){if(!$ok)throw new \RuntimeException($what);};
 
@@ -59,4 +60,24 @@ $check(!$r['installable']&&!isset($r['github'])&&str_contains($r['reason'],'own 
 $check(P::downloadable('https://cdn.modrinth.com/a.jar','a.jar')&&!P::downloadable('http://cdn.modrinth.com/a.jar','a.jar')&&!P::downloadable('https://evil.test/a.jar','a.jar')
   &&!P::downloadable('https://github.com/a/b/archive/x.jar','x.jar')&&!P::downloadable('https://cdn.modrinth.com/a.jar','../a.jar')&&!P::downloadable('https://cdn.modrinth.com/a.zip','a.zip'),'download hosts and names');
 $check(P::fromFilename('LuckPerms-Bukkit-5.4.141.jar')===['LuckPerms Bukkit','5.4.141']&&P::fromFilename('Chunky.jar.disabled')===['Chunky','']&&P::fromFilename('worldedit-bukkit-7.3.10.jar')===['worldedit bukkit','7.3.10'],'names from files');
-echo "PASS plugin search merges Modrinth, Hangar and SpigotMC into one card per plugin, picks the release for the server's version or marks it not made for it, GitHub release jars, download hosts and file names\n";
+// CurseForge: only with a key; Bukkit plugins (class 5) or mods (class 6) for a loader it knows.
+$check(!isset(P::searchUrls('x','paper','plugins')['curseforge'])&&str_contains(P::searchUrls('x','paper','plugins',true)['curseforge'],'classId=5'),'curseforge plugins only with a key');
+$check(str_contains(P::searchUrls('x','fabric','mods',true)['curseforge'],'modLoaderType=4')&&!isset(P::searchUrls('x','bukkit','mods',true)['curseforge']),'curseforge mods per loader');
+$cards=P::merge(['curseforge'=>['data'=>[['id'=>93,'name'=>'Holo','summary'=>'s','downloadCount'=>5,'logo'=>['thumbnailUrl'=>'https://media.forgecdn.net/a.png'],'authors'=>[['name'=>'me']],'links'=>['websiteUrl'=>'https://www.curseforge.com/minecraft/bukkit-plugins/holo'],'latestFilesIndexes'=>[['gameVersion'=>'1.21']]]]]],'','1.21.4','plugins');
+$check($cards[0]['key']==='curseforge:93'&&$cards[0]['fits']&&$cards[0]['label']==='CurseForge'&&$cards[0]['page']==='https://www.curseforge.com/minecraft/bukkit-plugins/holo','curseforge card');
+$cf=['data'=>[['id'=>3,'fileName'=>'Holo-3.0.jar','displayName'=>'Holo 3.0','releaseType'=>1,'fileDate'=>'2026-09-01','gameVersions'=>['1.22'],'downloadUrl'=>'https://edge.forgecdn.net/files/3/Holo-3.0.jar'],
+  ['id'=>2,'fileName'=>'Holo-2.0.jar','releaseType'=>1,'fileDate'=>'2026-01-01','gameVersions'=>['1.21'],'downloadUrl'=>'https://edge.forgecdn.net/files/2/Holo-2.0.jar'],
+  ['id'=>4,'fileName'=>'Holo-4.0-beta.jar','releaseType'=>2,'fileDate'=>'2026-10-01','gameVersions'=>['1.21'],'downloadUrl'=>'https://edge.forgecdn.net/files/4/Holo-4.0-beta.jar']]];
+$r=P::choose('curseforge','93',$cf,null,'1.21.4','plugins');
+$check($r['installable']&&$r['version']==='2.0'&&$r['fits']&&$r['filename']==='Holo-2.0.jar','curseforge: newest release for the version, before betas: '.json_encode($r));
+$r=P::choose('curseforge','93',['data'=>[['id'=>5,'fileName'=>'X-1.jar','releaseType'=>1,'gameVersions'=>['1.21'],'downloadUrl'=>null]]],null,'1.21.4','plugins');
+$check(!$r['installable']&&str_contains($r['reason'],'CurseForge website'),'no third-party downloads: website only');
+$check(P::parseKey('curseforge:93')===['curseforge','93']&&P::parseKey('curseforge:abc')===null,'curseforge keys');
+// Start-up failures: by file name in "Could not load" or by plugin name in "Error occurred while enabling"; others untouched.
+$log="[10:00:01 INFO]: Loading server plugin Chunky v1.4\n[10:00:02 ERROR]: [ModernPluginLoadingStrategy] Could not load 'plugins/Broken-1.0.jar' in folder 'plugins'\norg.bukkit.plugin.InvalidPluginException: Unsupported API version 1.22\n\tat x.y(Z.java:1)\n[10:00:05 ERROR]: Error occurred while enabling WorldEdit v7.3.10 (Is it up to date?)\njava.lang.NoClassDefFoundError: foo\n[10:00:09 INFO]: Done (8.1s)! For help, type \"help\"";
+$f=P::failures($log,['a'=>['filename'=>'Broken-1.0.jar','title'=>'Broken'],'b'=>['filename'=>'worldedit-bukkit-7.3.10.jar','title'=>'WorldEdit'],'c'=>['filename'=>'Chunky-1.4.jar','title'=>'Chunky']]);
+$check(array_keys($f)===['a','b'],'failed plugins: '.json_encode(array_keys($f)));
+$check(str_starts_with($f['a']['reason'],"[ModernPluginLoadingStrategy] Could not load 'plugins/Broken-1.0.jar'")&&in_array('org.bukkit.plugin.InvalidPluginException: Unsupported API version 1.22',$f['a']['lines'],true),'reason and lines: '.json_encode($f['a']));
+$check($f['b']['reason']==='Error occurred while enabling WorldEdit v7.3.10 (Is it up to date?)','enabling error by name');
+$check(P::failures("[10:00:02 ERROR]: Error occurred while enabling Ab v1",['x'=>['filename'=>'Abc.jar','title'=>'Abc']])===[],'names shorter than 3 letters never match');
+echo "PASS plugin search merges Modrinth, Hangar, SpigotMC and CurseForge into one card per plugin, picks the release for the server's version or marks it not made for it, GitHub release jars, download hosts, file names and plugins that failed to start\n";

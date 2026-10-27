@@ -15,7 +15,8 @@
             </button>
             <div class="ssc-delete-confirm" x-show="deleteConfirm" x-cloak><button type="button" class="ps-btn is-icon" data-tip="Keep draft" aria-label="Keep draft" x-on:click="deleteConfirm=false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button><button type="button" class="ps-btn is-icon is-danger" data-tip="Delete draft" aria-label="Confirm draft deletion" :disabled="saving||uploading||completed" x-on:click="discard(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></button></div></div>
         </div>
-        <nav class="ssc-progress" wire:ignore style="--ssc-steps: {{ count($this->wizardStepLabels()) }}" :style="{'--ssc-step': step}" aria-label="Server creation progress">
+        {{-- Re-rendered when the steps change with the chosen game (Minecraft has a server properties step). --}}
+        <nav class="ssc-progress" wire:key="ssc-progress-{{ md5(implode('|', $this->wizardStepLabels())) }}" style="--ssc-steps: {{ count($this->wizardStepLabels()) }}" :style="{'--ssc-step': step}" aria-label="Server creation progress">
             @foreach($this->wizardStepLabels() as $index=>$label)
                 <button type="button" :class="{'is-current':step==={{ $index+1 }},'is-complete':furthestStep>{{ $index+1 }}}" :disabled="{{ $index+1 }}>furthestStep || switching || uploading" :aria-current="step==={{ $index+1 }}?'step':null" x-on:click="goToStep({{ $index+1 }})"><span>{{ $index+1 }}</span>{{ $label }}</button>
                 @unless($loop->last)<span class="ssc-step-arrow" aria-hidden="true">&gt;</span>@endunless
