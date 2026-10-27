@@ -67,12 +67,12 @@ final class PanelUpdates
     /** @return list<array{key: string, title: string, text: string, action: ?array, seen: int}> */
     public static function collect(): array
     {
-        $items=array_map(fn(array $item):array=>self::withNotes($item,ReleaseNotes::changelog(PluginUpdater::REPOSITORY.self::branch($item['version']).'/update.json',$item['version'],'https://github.com/jerajerajerajera/PelicanSimplify/blob/'.self::branch($item['version']).'/CHANGELOG.md')),self::simplify());
+        $items=array_map(fn(array $item):array=>self::withNotes($item,self::simplifyNotes($item['version'])),self::simplify());
         try{
             foreach(PluginUpdater::available() as $plugin){
                 if($plugin->id==='pelican-simplify'||!($latest=PluginUpdater::latestVersion($plugin)))continue;
                 $items[]=self::withNotes(['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>$plugin->name.' '.$latest.' is available',
-                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],ReleaseNotes::forPlugin($plugin->update_url??null,$plugin->url??null,$latest));
+                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],self::notesFor($plugin,$latest));
             }
         }catch(\Throwable){}
         $versions=self::versionService();
@@ -106,6 +106,19 @@ final class PanelUpdates
     }
 
     /** Adds "What's new" (a few lines and a link to the full notes) when they could be read. */
+    /** What's new of a version of a plugin (Simplify included), or null. @return array{lines: list<string>, url: ?string}|null */
+    public static function notesFor(object $plugin,string $version): ?array
+    {
+        if(($plugin->id??null)==='pelican-simplify')return self::simplifyNotes($version);
+        return ReleaseNotes::forPlugin($plugin->update_url??null,$plugin->url??null,$version);
+    }
+
+    private static function simplifyNotes(string $version): ?array
+    {
+        $branch=self::branch($version);
+        return ReleaseNotes::changelog(PluginUpdater::REPOSITORY.$branch.'/update.json',$version,'https://github.com/jerajerajerajera/PelicanSimplify/blob/'.$branch.'/CHANGELOG.md');
+    }
+
     private static function withNotes(array $item,?array $notes): array
     {
         if(!$notes||!$notes['lines'])return $item;
