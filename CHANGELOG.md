@@ -1,5 +1,26 @@
 # Changes
 
+## 0.5.3-beta.5 (beta channel)
+Notifications show everything with admin pins, announcements have a pin button, and Explain this error checks first (0.5.3-snapshot.6 to .8 below).
+
+## 0.5.3-snapshot.8 (snapshot channel)
+Notifications show everything now, and admins can pin an announcement to everyone's notifications.
+- The bell lists all notifications, also read ones, with Show more for older ones; Show all opens them in a large popup (full screen on phones) with New announcement for administrators.
+- Mark all read marks every notification read, also the ones not loaded yet.
+- Pin to everyone's notifications keeps an announcement at the top of the bell until it ends, even when someone unpins its bar.
+- Announcement times are entered and shown in your own time zone.
+
+## 0.5.3-snapshot.7 (snapshot channel)
+Explain this error now checks first: a healthy log shows "Everything seems in order", with anything noteworthy as options to open.
+- When something is really wrong, the popup shows "Something needs attention" with the explanation already open.
+- Things you may notice, such as a slow panel, are listed under "Noticed something?" and can be opened for an explanation and steps.
+- An empty console or a panel log without warnings gives a calm answer without asking Claude.
+
+## 0.5.3-snapshot.6 (snapshot channel)
+Announcements have a pin button. They are pinned while they are live; unpin one to remove its bar, and pin it again from the bell.
+- The pin button on each announcement is shown pressed while it is pinned; this replaces the small pills from the previous snapshot.
+- The bell lists every live announcement with Pin or Unpin.
+
 ## 0.5.3-beta.4 (beta channel)
 Less scrolling and no double frames in menus, popups and embedded pages (0.5.3-snapshot.5 below).
 

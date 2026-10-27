@@ -42,6 +42,13 @@ if(($argv[1]??'')==='livewire'){
     try{
         Filament::setCurrentPanel(Filament::getPanel('app'));
         $overview=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\App\Pages\Dashboard::class);
+        // Notifications: a real database notification shows in the full list, and "Mark all read" clears every unread one.
+        foreach(range(1,3) as $i)$admin->notifyNow(\Filament\Notifications\Notification::make()->title('Smoke notice '.$i)->toDatabase());
+        $overview->call('notificationPage',1);
+        $feed=\Simplify\Panel\Services\PanelNotifications::page(1);
+        if(!is_array($feed)||!in_array('Smoke notice 3',array_column($feed['items']??[],'title'),true)||($feed['unread']??0)<3)throw new \RuntimeException('the notification list does not show the new notifications');
+        $overview->call('markAllNotificationsRead');
+        if(\Simplify\Panel\Services\PanelNotifications::unreadCount()!==0)throw new \RuntimeException('mark all read left unread notifications');
         foreach([['listing'],['saveOverviewGroups',[['id'=>'g1','name'=>'Smoke','servers'=>[$server->uuid],'sort'=>'manual']],'port'],['panelNotifications'],['hostHealth'],['announcements'],['dismissAnnouncement','own-0000000000000000'],['restoreAnnouncement','own-0000000000000000'],['pushSettings',null],['savePushPreferences',['updates'=>false]]] as $call){
             $name=array_shift($call);$overview->call($name,...$call);
         }
@@ -49,10 +56,11 @@ if(($argv[1]??'')==='livewire'){
         \Simplify\Panel\Services\PanelUpdates::refresh();
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         // Opening the form builds every field; callAction() itself needs PHPUnit, so the save goes through the same service.
-        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->call('mountAction','addAnnouncement');
-        \Simplify\Panel\Services\Announcements::save(['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open','push'=>true],null,(string)$admin->username);
-        $shown=array_column(\Simplify\Panel\Services\Announcements::forUser($admin),'title');
-        if(!in_array('Smoke test',$shown,true))throw new \RuntimeException('the new announcement is not shown on the overview');
+        Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\Admin\Pages\ManageAnnouncements::class)->set('browserTimezone','Europe/Amsterdam')->call('mountAction','addAnnouncement');
+        \Simplify\Panel\Services\Announcements::save(['category'=>'warning','title'=>'Smoke test','text'=>'Hello','audience'=>'everyone','link_type'=>'server','server'=>$server->uuid,'button_label'=>'Open','push'=>true,'pinned'=>true],null,(string)$admin->username);
+        $shown=\Simplify\Panel\Services\Announcements::forUser($admin);
+        if(!in_array('Smoke test',array_column($shown,'title'),true))throw new \RuntimeException('the new announcement is not shown on the overview');
+        if(!array_filter($shown,fn($item)=>$item['title']==='Smoke test'&&$item['pinned']))throw new \RuntimeException('the announcement is not pinned to the notifications');
         // The scheduler's run: refreshes the Panel's updates and sends the new announcement as app notification (nobody subscribed here).
         if(\Illuminate\Support\Facades\Artisan::call('simplify:announcements')!==0)throw new \RuntimeException('simplify:announcements failed');
         if(\Simplify\Panel\Services\Announcements::duePush()!==[])throw new \RuntimeException('the announcement was not marked as sent');
@@ -65,7 +73,7 @@ if(($argv[1]??'')==='livewire'){
         $page->call('explainConsole');
         $explained=\Simplify\Panel\Services\ErrorExplainer::explain($server);
         if(($explained['ok']??true)!==false||!str_contains((string)($explained['error']??''),'Wings'))throw new \RuntimeException('explaining without Wings did not answer with a plain error: '.json_encode($explained));
-        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; Panel update check runs; the announcement form opens and a saved announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
+        result(true,'overview mounts, renders and answers listing, saveOverviewGroups, panelNotifications, hostHealth, announcements and app notification settings; the full notification list shows real notifications and mark all read clears them all; Panel update check runs; the announcement form opens (browser time zone) and a saved, pinned announcement shows and is sent by simplify:announcements; the server page shows Explain and explainConsole answers without Wings');
     }catch(\Throwable $e){result(false,'overview as Livewire component: '.problem($e));}
 }
 

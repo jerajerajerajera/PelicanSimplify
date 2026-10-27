@@ -4,7 +4,7 @@
     @endassets
     @php($rows = $this->announcements())
     @php($panel = $this->panelUpdates())
-    <div class="ps-admin-page ps-announcements">
+    <div class="ps-admin-page ps-announcements" x-data x-init="$wire.browserTimezone = window.Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || ''">
         <div class="ps-people-bar">
             <p class="ps-help ps-people-intro">Announcements show as a bar above the server overview and under the bell. Everyone can hide a bar for themselves; it then stays under the bell until it ends.</p>
             <button type="button" class="ps-btn is-primary" wire:click="mountAction('addAnnouncement')"><x-tabler-speakerphone class="ps-ico" />New announcement</button>
@@ -21,6 +21,7 @@
                             @if($row['starts_at'] !== null) · from {{ $this->date($row['starts_at']) }}@endif
                             @if($row['ends_at'] !== null) · until {{ $this->date($row['ends_at']) }}@else · no end date @endif
                             @if($row['target']) · button “{{ $row['button']['label'] }}” → {{ $row['target'] }}@endif
+                            @if($row['pinned']) · pinned to everyone's notifications @endif
                             @if($row['push']) · {{ $row['pushed_at'] !== null ? 'sent as app notification' : 'app notification when it starts' }}@endif
                             @if($row['created_by'] !== '') · by {{ $row['created_by'] }}@endif
                         </small>
