@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/fixtures/lang.php';
 // Plugin search: results of Modrinth, Hangar and SpigotMC become one list with one card per plugin; "Install" picks the
 // newest release made for the server's version, or the newest at all marked as not made for it; GitHub release files
 // and download hosts are checked.

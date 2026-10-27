@@ -16,6 +16,7 @@ final class InGameAnnouncements
     public const COMMANDS_FILE='simplify/announcements-ingame-commands.json';
     /** Per announcement id: when it was last sent in game and how that went. */
     public const SENT_FILE='simplify/announcements-ingame.json';
+    /** @lang announcements.repeats / announcements.targets: shown through Translations::labels(). */
     public const REPEATS=[0=>'Only once',5=>'Every 5 minutes',10=>'Every 10 minutes',15=>'Every 15 minutes',30=>'Every 30 minutes',60=>'Every hour',180=>'Every 3 hours'];
     public const TARGETS=['all'=>'All servers','pick'=>'Choose'];
     public const PLACEHOLDER='{message}';
@@ -235,10 +236,10 @@ final class InGameAnnouncements
     public static function summary(array $result): array
     {
         $parts=[];
-        $parts[]=$result['sent']===1?'sent to 1 server':'sent to '.$result['sent'].' servers';
-        if($result['offline']??0)$parts[]=$result['offline'].' not running';
-        if($result['unsupported']??0)$parts[]=$result['unsupported'].' without chat command';
-        if($result['failed']??0)$parts[]=$result['failed'].' failed';
+        $parts[]=trans_choice('pelican-simplify::announcements.summary.sent', $result['sent']);
+        if($result['offline']??0)$parts[]=__('pelican-simplify::announcements.summary.offline', ['count'=>$result['offline']]);
+        if($result['unsupported']??0)$parts[]=__('pelican-simplify::announcements.summary.unsupported', ['count'=>$result['unsupported']]);
+        if($result['failed']??0)$parts[]=__('pelican-simplify::announcements.summary.failed', ['count'=>$result['failed']]);
         return $parts;
     }
 

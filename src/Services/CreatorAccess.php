@@ -98,18 +98,18 @@ final class CreatorAccess
     {
         $fail = static fn (string $field, string $message) => throw ValidationException::withMessages(['data.' . $field => $message]);
         if ($usage['count'] >= (int) $limits['max_servers']) {
-            $fail('name', 'Your server limit has been reached.');
+            $fail('name', __('pelican-simplify::maker.form.your_server_limit_has_been_reached'));
         }
         foreach (['memory' => ['max_memory_mb', 'ram_gb'], 'disk' => ['max_disk_mb', 'disk_mb']] as $key => [$limit, $field]) {
             if ((int) $payload[$key] < 1 || (int) $payload[$key] + (int) $usage[$key] > (int) $limits[$limit]) {
-                $fail($field, 'This exceeds your total ' . ($key === 'memory' ? 'RAM' : 'disk') . ' allowance.');
+                $fail($field, ($key === 'memory' ? __('pelican-simplify::maker.form.over_ram') : __('pelican-simplify::maker.form.over_disk')));
             }
         }
         if ((int) $payload['cpu'] < 1 || (int) $payload['cpu'] > (int) $limits['max_cpu']) {
             $fail('cpu', 'CPU must be within your per-server allowance; unlimited CPU is unavailable.');
         }
         if ((int) $payload['backup_limit'] < 0 || (int) $payload['backup_limit'] > (int) $limits['max_backups']) {
-            $fail('backup_limit', 'Too many backup slots for your allowance.');
+            $fail('backup_limit', __('pelican-simplify::maker.form.too_many_backup_slots_for_your'));
         }
     }
 
@@ -120,27 +120,27 @@ final class CreatorAccess
             return;
         }
         if (($state['java_version'] ?? 'auto') !== 'auto') {
-            throw ValidationException::withMessages(['data.java_version' => 'Java is selected automatically for your server.']);
+            throw ValidationException::withMessages(['data.java_version' => __('pelican-simplify::maker.form.java_is_selected_automatically_for_your')]);
         }
         $settings = self::settings();
         $game = $state['game'] ?? 'minecraft';
         if (($game === 'minecraft' && !$settings['minecraft_enabled']) || !in_array($game, ['minecraft', 'other'], true)) {
-            throw ValidationException::withMessages(['data.game' => 'This game is not available for your account.']);
+            throw ValidationException::withMessages(['data.game' => __('pelican-simplify::maker.form.this_game_is_not_available_for')]);
         }
         if ($game === 'other' && !in_array((int) ($state['game_egg_id'] ?? 0), array_map('intval', $settings['other_egg_ids']), true)) {
-            throw ValidationException::withMessages(['data.game_egg_id' => 'Choose an approved game.']);
+            throw ValidationException::withMessages(['data.game_egg_id' => __('pelican-simplify::maker.form.choose_an_approved_game')]);
         }
         foreach (['image', 'startup'] as $field) {
             if (trim((string) ($state[$field] ?? '')) !== '') {
-                throw ValidationException::withMessages(['data.' . $field => 'This override is available to administrators only.']);
+                throw ValidationException::withMessages(['data.' . $field => __('pelican-simplify::maker.form.this_override_is_available_to_administrators')]);
             }
         }
         if (!empty($state['skip_scripts']) || (int) ($state['swap'] ?? 0) !== 0
             || (int) ($state['database_limit'] ?? 0) !== 0 || (int) ($state['allocation_limit'] ?? 0) !== 0) {
-            throw ValidationException::withMessages(['data.name' => 'These advanced limits are managed by an administrator.']);
+            throw ValidationException::withMessages(['data.name' => __('pelican-simplify::maker.form.these_advanced_limits_are_managed_by')]);
         }
         if (!empty($state['environment_overrides'])) {
-            throw ValidationException::withMessages(['data.environment_overrides' => 'Use the game settings provided by the wizard.']);
+            throw ValidationException::withMessages(['data.environment_overrides' => __('pelican-simplify::maker.form.use_the_game_settings_provided_by')]);
         }
     }
 }

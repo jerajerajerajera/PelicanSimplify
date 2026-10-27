@@ -7,6 +7,7 @@ namespace Illuminate\Support\Facades {
 }
 namespace Simplify\Panel\Services {class FeatureSettings {public static function all(){return [];}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/RoleAccess.php';
 require __DIR__.'/../src/Services/CreatorAccess.php';

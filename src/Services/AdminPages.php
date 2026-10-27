@@ -10,6 +10,7 @@ namespace Simplify\Panel\Services;
 final class AdminPages
 {
     /** Basename => [group, icon]; anything else lands in "Other". */
+    /** Group names are ids; the menu shows them translated (dashboard.admin_menu). */
     private const KNOWN = [
         'ServerResource' => ['Game servers', 'host'], 'EggResource' => ['Game servers', 'egg'], 'MountResource' => ['Game servers', 'files'],
         'NodeResource' => ['Infrastructure', 'monitor'], 'DatabaseHostResource' => ['Infrastructure', 'database'], 'BackupHostResource' => ['Infrastructure', 'backups'],
@@ -55,19 +56,19 @@ final class AdminPages
             $plugin = isset(self::KNOWN[$name]) ? null : ExternalPlugins::owner($class);
             if ($plugin && ExternalPlugins::isHidden('admin', $class)) continue;
             [$group, $icon] = self::KNOWN[$name] ?? ($plugin ? ['External', 'plugins'] : ['Other', 'legacy']);
-            if ($name === 'ServerResource' && $class::canCreate()) $label = 'Create server (legacy)';
-            if ($people && $name === 'UserResource') $label = 'People';
+            if ($name === 'ServerResource' && $class::canCreate()) $label = __('pelican-simplify::dashboard.admin_menu.create_server_legacy');
+            if ($people && $name === 'UserResource') $label = __('pelican-simplify::dashboard.admin_menu.people_page');
             // Pelican's settings are tabs inside Simplify settings (Admin tools → Panel → Settings).
             if ($name === 'Settings' && PelicanSettingsTabs::available()) continue;
-            if ($name === 'Settings') $label = 'Pelican settings';
-            if ($name === 'PluginResource') $label = 'Plugin manager';
+            if ($name === 'Settings') $label = __('pelican-simplify::dashboard.admin_menu.pelican_settings');
+            if ($name === 'PluginResource') $label = __('pelican-simplify::dashboard.admin_menu.plugin_manager');
             $groups[$group][] = ['key' => strtolower($name), 'label' => $label, 'url' => $url, 'icon' => $icon, 'plugin' => $plugin['name'] ?? null];
         }
         $menu = [];
         foreach ($groups as $label => $items) {
             if (!$items) continue;
             usort($items, fn (array $a, array $b): int => strnatcasecmp($a['label'], $b['label']));
-            $menu[] = ['label' => $label, 'items' => $items];
+            $menu[] = ['label' => Translations::text('dashboard.admin_menu.'.Translations::key($label), $label), 'items' => $items];
         }
         return $menu;
     }
@@ -79,13 +80,13 @@ final class AdminPages
         $items = [];
         try {
             // One Server Maker for Minecraft and other games.
-            if ((FeatureSettings::enabled('easy_creator') || FeatureSettings::enabled('game_creator')) && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => 'Create server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app'), 'icon' => 'plus'];
+            if ((FeatureSettings::enabled('easy_creator') || FeatureSettings::enabled('game_creator')) && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => __('pelican-simplify::dashboard.admin_menu.create_server'), 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app'), 'icon' => 'plus'];
             $plugins = \App\Filament\Admin\Resources\Plugins\PluginResource::class;
             if (\Simplify\Panel\Filament\Admin\Pages\ManagePeople::canAccess() && FeatureSettings::enabled('legacy_pages')) {
-                $items[] = ['key' => 'legacyusers', 'label' => 'Users (legacy)', 'url' => \App\Filament\Admin\Resources\Users\UserResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'players'];
-                $items[] = ['key' => 'legacyroles', 'label' => 'Roles (legacy)', 'url' => \App\Filament\Admin\Resources\Roles\RoleResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'lock'];
+                $items[] = ['key' => 'legacyusers', 'label' => __('pelican-simplify::dashboard.admin_menu.users_legacy'), 'url' => \App\Filament\Admin\Resources\Users\UserResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'players'];
+                $items[] = ['key' => 'legacyroles', 'label' => __('pelican-simplify::dashboard.admin_menu.roles_legacy'), 'url' => \App\Filament\Admin\Resources\Roles\RoleResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'lock'];
             }
-            if ($plugins::canViewAny() && FeatureSettings::enabled('legacy_pages')) $items[] = ['key' => 'legacyplugins', 'label' => 'Plugin manager (legacy)', 'url' => $plugins::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'plugins'];
+            if ($plugins::canViewAny() && FeatureSettings::enabled('legacy_pages')) $items[] = ['key' => 'legacyplugins', 'label' => __('pelican-simplify::dashboard.admin_menu.plugin_manager_legacy'), 'url' => $plugins::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'plugins'];
         } catch (\Throwable) {
         }
         return $items;

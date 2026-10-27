@@ -61,5 +61,16 @@ return [
         'delete_this_role' => 'Delete this role?',
         'members_keep_their_account_but_lose' => 'Members keep their account but lose this role\'s permissions. This cannot be undone.',
         'delete_role' => 'Delete role',
+        'simplify_permissions' => 'Simplify permissions',
+        'admin_panel_access' => 'Admin panel access',
+    ],
+    'notify' => [
+        'saved_person' => 'Person saved',
+        'deleted_person' => 'Person deleted',
+        'role_added' => 'Role added',
+        'role_saved' => 'Role saved',
+        'role_deleted' => 'Role deleted',
+        'reset_sent' => 'Reset link sent',
+        'reset_failed' => 'Could not send the link',
     ],
 ];

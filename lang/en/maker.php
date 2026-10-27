@@ -257,6 +257,14 @@ return [
         'choose_an_approved_game' => 'Choose an approved game.',
         'enter_a_name_and_valid_resource' => 'Enter a name and valid resource limits.',
         'unknown_egg_variable' => 'Unknown egg variable.',
+        'over_ram' => 'This exceeds your total RAM allowance.',
+        'over_disk' => 'This exceeds your total disk allowance.',
+        'your_server_limit_has_been_reached' => 'Your server limit has been reached.',
+        'too_many_backup_slots_for_your' => 'Too many backup slots for your allowance.',
+        'java_is_selected_automatically_for_your' => 'Java is selected automatically for your server.',
+        'this_override_is_available_to_administrators' => 'This override is available to administrators only.',
+        'these_advanced_limits_are_managed_by' => 'These advanced limits are managed by an administrator.',
+        'use_the_game_settings_provided_by' => 'Use the game settings provided by the wizard.',
     ],
     'minecraft' => [
         'vanilla' => [

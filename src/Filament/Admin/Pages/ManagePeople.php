@@ -113,7 +113,7 @@ final class ManagePeople extends Page
                 $user = User::query()->findOrFail((int) ($arguments['user'] ?? 0));
                 return ['username' => $user->username, 'email' => $user->email, 'roles' => $user->roles()->pluck('id')->all()];
             })
-            ->action(fn (array $data, array $arguments) => $this->guarded(fn () => PeopleManager::updateUser(User::query()->findOrFail((int) $arguments['user']), $data), 'Person saved'));
+            ->action(fn (array $data, array $arguments) => $this->guarded(fn () => PeopleManager::updateUser(User::query()->findOrFail((int) $arguments['user']), $data), __('pelican-simplify::people.notify.saved_person')));
     }
 
     public function resetPasswordAction(): Action
@@ -124,7 +124,7 @@ final class ManagePeople extends Page
             ->action(function (array $arguments): void {
                 $status = PeopleManager::sendPasswordReset(User::query()->findOrFail((int) $arguments['user']));
                 $sent = $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT;
-                Notification::make()->title($sent ? 'Reset link sent' : 'Could not send the link')->body($sent ? null : __($status))->{$sent ? 'success' : 'warning'}()->send();
+                Notification::make()->title($sent ? __('pelican-simplify::people.notify.reset_sent') : __('pelican-simplify::people.notify.reset_failed'))->body($sent ? null : __($status))->{$sent ? 'success' : 'warning'}()->send();
             });
     }
 
@@ -133,7 +133,7 @@ final class ManagePeople extends Page
         return Action::make('deletePerson')->requiresConfirmation()->color('danger')->modalHeading(__('pelican-simplify::people.form.delete_this_person'))
             ->modalDescription(__('pelican-simplify::people.form.their_account_and_sign_in_are'))
             ->modalSubmitActionLabel(__('pelican-simplify::people.form.delete'))
-            ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteUser(User::query()->findOrFail((int) $arguments['user'])), 'Person deleted'));
+            ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteUser(User::query()->findOrFail((int) $arguments['user'])), __('pelican-simplify::people.notify.deleted_person')));
     }
 
     private function roleFields(): array
@@ -142,16 +142,16 @@ final class ManagePeople extends Page
         foreach (PeopleManager::permissionGroups() as $model => $options) {
             $groups[] = CheckboxList::make('permissions_'.$model)->label(ucfirst(trim(preg_replace('/(?<!^)[A-Z]/', ' $0', $model) ?? $model)))->options($options)->columns(3)->bulkToggleable();
         }
-        $limits = array_map(fn (string $key, array $limit) => TextInput::make('simplify.'.$key)->label(str_replace(['Max ', ' mb'], ['Max ', ' (MB)'], ucfirst(str_replace('_', ' ', $key))))->integer()->minValue($limit[1])->maxValue($limit[2])->required(), array_keys(RoleAccess::LIMITS), RoleAccess::LIMITS);
+        $limits = array_map(fn (string $key, array $limit) => TextInput::make('simplify.'.$key)->label(__('pelican-simplify::settings.limits.'.$key))->integer()->minValue($limit[1])->maxValue($limit[2])->required(), array_keys(RoleAccess::LIMITS), RoleAccess::LIMITS);
         return [
             TextInput::make('name')->label(__('pelican-simplify::people.form.role_name'))->required()->maxLength(64),
-            Section::make('Simplify permissions')->description(__('pelican-simplify::people.form.what_members_can_do_on_their'))->schema([
+            Section::make(__('pelican-simplify::people.form.simplify_permissions'))->description(__('pelican-simplify::people.form.what_members_can_do_on_their'))->schema([
                 CheckboxList::make('simplify.abilities')->hiddenLabel()->columns(2)
                     ->options(array_map(fn (array $ability) => $ability[0], \Simplify\Panel\Services\Translations::rows('settings.abilities', RoleAccess::ABILITIES)))
                     ->descriptions(array_map(fn (array $ability) => $ability[1], \Simplify\Panel\Services\Translations::rows('settings.abilities', RoleAccess::ABILITIES))),
                 \Filament\Schemas\Components\Grid::make(3)->schema($limits),
             ]),
-            Section::make('Admin panel access')->description(__('pelican-simplify::people.form.which_parts_of_the_admin_panel'))
+            Section::make(__('pelican-simplify::people.form.admin_panel_access'))->description(__('pelican-simplify::people.form.which_parts_of_the_admin_panel'))
                 ->collapsible()->collapsed()->schema($groups),
         ];
     }
@@ -168,7 +168,7 @@ final class ManagePeople extends Page
         return Action::make('addRole')->label(__('pelican-simplify::people.form.add_role'))->icon('tabler-shield-plus')->modalHeading(__('pelican-simplify::people.form.add_a_role'))->modalSubmitActionLabel(__('pelican-simplify::people.form.add_role'))->slideOver()
             ->schema($this->roleFields())
             ->fillForm(fn (): array => ['simplify' => ['abilities' => [], ...RoleAccess::limitDefaults()]])
-            ->action(fn (array $data) => $this->guarded(fn () => PeopleManager::saveRole(null, ...$this->roleData($data)), 'Role added'));
+            ->action(fn (array $data) => $this->guarded(fn () => PeopleManager::saveRole(null, ...$this->roleData($data)), __('pelican-simplify::people.notify.role_added')));
     }
 
     public function editRoleAction(): Action
@@ -182,7 +182,7 @@ final class ManagePeople extends Page
                 foreach (PeopleManager::permissionGroups() as $model => $options) $data['permissions_'.$model] = array_values(array_intersect(array_keys($options), $owned));
                 return $data;
             })
-            ->action(fn (array $data, array $arguments) => $this->guarded(fn () => PeopleManager::saveRole(Role::query()->findOrFail((int) $arguments['role']), ...$this->roleData($data)), 'Role saved'));
+            ->action(fn (array $data, array $arguments) => $this->guarded(fn () => PeopleManager::saveRole(Role::query()->findOrFail((int) $arguments['role']), ...$this->roleData($data)), __('pelican-simplify::people.notify.role_saved')));
     }
 
     public function deleteRoleAction(): Action
@@ -190,7 +190,7 @@ final class ManagePeople extends Page
         return Action::make('deleteRole')->requiresConfirmation()->color('danger')->modalHeading(__('pelican-simplify::people.form.delete_this_role'))
             ->modalDescription(__('pelican-simplify::people.form.members_keep_their_account_but_lose'))
             ->modalSubmitActionLabel(__('pelican-simplify::people.form.delete_role'))
-            ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteRole(Role::query()->findOrFail((int) $arguments['role'])), 'Role deleted'));
+            ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteRole(Role::query()->findOrFail((int) $arguments['role'])), __('pelican-simplify::people.notify.role_deleted')));
     }
 
     protected function getHeaderActions(): array

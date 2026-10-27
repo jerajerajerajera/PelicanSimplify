@@ -34,6 +34,10 @@ return [
         ],
         'end_name_now' => 'End :name now',
         'delete_name' => 'Delete :name',
+        'ingame_last' => 'In game: :summary at :time',
+        'ingame_soon' => 'In game within a minute',
+        'ingame_next' => 'Next in game at :time',
+        'deleted_server' => 'a deleted server',
     ],
     'bar' => [
         'unpin' => 'Unpin',
@@ -104,6 +108,15 @@ return [
         'in_game_commands_saved' => 'In-game commands saved',
         'no_button' => 'No button',
         'open_a_server' => 'Open a server',
+        'your_title' => 'Your title',
+        'players_see' => 'Players see: :message',
+        'games_without_command' => 'Games without a chat command on their console are skipped. Change or add commands under In-game commands.',
+        'empty_right_away' => 'Empty: right away. Times in :timezone.',
+        'open_a_link' => 'Open a link',
+        'saved' => 'Announcement saved',
+        'added' => 'Announcement added',
+        'commands_help' => 'The chat command "Also send in game" uses for each egg. Empty: Simplify\'s own command, shown in grey. Type - to skip a game. :placeholder is the announcement.',
+        'no_command' => 'No chat command known: skipped',
     ],
     'panel_updates' => [
         'available' => ':name :version is available',
@@ -118,5 +131,11 @@ return [
         'view_update' => 'View update',
         'open_plugins' => 'Open plugins',
         'from' => 'Panel',
+    ],
+    'summary' => [
+        'sent' => 'sent to :count server|sent to :count servers',
+        'offline' => ':count not running',
+        'unsupported' => ':count without chat command',
+        'failed' => ':count failed',
     ],
 ];
