@@ -1,5 +1,11 @@
 # Changes
 
+## 0.6.0-snapshot.15 (snapshot channel)
+Only the add-ons.
+- The first setup step asks How much Simplify? Full Simplify works as before. Only the add-ons keeps Pelican's own dashboard, server pages and look, and adds only the add-ons you switch on.
+- With Only the add-ons, Pelican's menu gets a Simplify group with Server Maker, Announcements and Simplify settings. Create server on Pelican's server list still offers the Server Maker.
+- Simplify settings has the same choice under General. Switching back to Full Simplify restores your earlier settings. Existing panels stay on Full Simplify.
+
 ## 0.6.0-snapshot.14 (snapshot channel)
 Clearer push notifications.
 - The Notifications window explains what is sent as a push notification. Announcements only go out when "Also send as app notification" is on. Pelican's own bell notifications are not pushed.
