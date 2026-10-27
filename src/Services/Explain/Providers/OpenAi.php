@@ -6,9 +6,10 @@ final class OpenAi extends Provider
 {
     public const ENDPOINT = 'https://api.openai.com/v1/responses';
     public static function name(): string { return 'OpenAI'; }
-    public static function label(): string { return 'GPT by OpenAI'; }
+    public static function label(): string { return __('pelican-simplify::explain.providers.openai.label'); }
     public static function models(): array
     {
+        // @english: model names; ErrorExplainer::models() translates the note in brackets (explain.model_notes).
         return [
             'gpt-6.1-sol' => 'GPT-6.1 Sol (good answers, about a cent)',
             'gpt-6-astra' => 'GPT-6 Astra (best answers, a few cents)',
@@ -18,7 +19,7 @@ final class OpenAi extends Provider
     public static function keyPlaceholder(): string { return 'sk-…'; }
     public static function keyHelp(): string
     {
-        return 'Create a key at platform.openai.com → API keys. Every question is billed to that OpenAI account, usually a few cents or less; set a monthly budget there to be safe.';
+        return __('pelican-simplify::explain.providers.openai.key_help');
     }
     public static function request(string $key, string $model, string $system, array $schema, string $question): array
     {

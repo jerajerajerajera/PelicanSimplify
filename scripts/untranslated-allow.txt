@@ -17,3 +17,7 @@ background: hsl(
 Server features
 Access and visibility
 Java 25
+# Sent to other programs, not shown to people.
+Reply with OK.
+Bearer
+open

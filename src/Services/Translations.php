@@ -57,6 +57,12 @@ final class Translations
         return trim((string) preg_replace('/[^a-z0-9]+/', '_', strtolower($english)), '_');
     }
 
+    /** The language Pelican set for this request; English outside a full Laravel app. */
+    public static function locale(): string
+    {
+        try { return (string) app()->getLocale() ?: self::FALLBACK; } catch (\Throwable) { return self::FALLBACK; }
+    }
+
     /** Texts for the JavaScript bundles (window.simplifyLang). */
     public static function js(): array
     {

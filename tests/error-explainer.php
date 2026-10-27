@@ -13,6 +13,7 @@ namespace App\Models {class Server {public function __construct(public string $u
 namespace App\Repositories\Daemon {final class DaemonSystemRepository {public static string $report='';public function setNode($n){return $this;}public function getDiagnostics($l,$e,$g){return new class{public function throw(){return $this;}public function body(){return DaemonSystemRepository::$report;}};}}}
 namespace Simplify\Panel\Services {require __DIR__.'/../src/Services/JsonFile.php';foreach(['Provider','Anthropic','OpenAi','Gemini'] as $class)require __DIR__.'/../src/Services/Explain/Providers/'.$class.'.php';}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 $GLOBALS['user']=null;
 function user(){return $GLOBALS['user'];}
 function encrypt($v){return 'enc:'.strrev($v);}

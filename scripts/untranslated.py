@@ -5,14 +5,15 @@ Usage: python3 scripts/untranslated.py [--all] [paths...]
 Prints file:line and the text. A text that must stay as it is (a product name, a Minecraft command, a log
 line) goes in scripts/untranslated-allow.txt, one per line. tests/run.sh runs this and fails on new texts.
 English labels that double as ids (tab names, option constants) are fine when lang/en has the same text under
-one of ID_PATHS: the code shows them through Translations::text(), labels() or rows().
+one of ID_PATHS: the code shows them through Translations::text(), labels() or rows(). A comment with @english
+skips the statement that follows (up to the next line ending in ";"): texts for an AI model or another program.
 """
 import json, pathlib, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ALLOW_FILE = ROOT / 'scripts' / 'untranslated-allow.txt'
 SOURCES = [('resources/views', '*.blade.php'), ('resources/views/js', '*.js'), ('src', '*.php')]
-SKIP = {'resources/views/js/embed.js'}  # the public website embed stays English for now
+SKIP = {'resources/views/js/embed.js', 'src/Console/Commands/Explain.php'}  # the public website embed and terminal output stay English for now
 
 STRING = re.compile(r"'((?:[^'\\\n]|\\.)*)'|\"((?:[^\"\\\n]|\\.)*)\"")
 SINGLE = re.compile(r"'((?:[^'\\\n]|\\.)*)'()")
@@ -21,7 +22,7 @@ TEXT_NODE = re.compile(r'>([^<>]*)<')
 TRANSLATED = re.compile(r"(?:__|trans|trans_choice|t|tc|sscText|Simplify\.t|Simplify\.tc|@lang)\(\s*'[^']*'")
 ID_PATHS = ['settings.tabs', 'settings.steps', 'settings.step_hints', 'settings.check_groups', 'settings.experiences', 'settings.channels',
             'settings.features', 'settings.abilities', 'settings.performance', 'settings.egg_modes', 'settings.explain_audiences', 'maker.minecraft', 'maker.steps',
-            'checks.requirements', 'checks.assets', 'checks.uploads']
+            'checks.requirements', 'checks.assets', 'checks.uploads', 'explain.emergency', 'explain.model_notes']
 THROWN = re.compile(r'new \\?(RuntimeException|LogicException|InvalidArgumentException|UnexpectedValueException|JsonException)\(')  # internal errors stay English for the log
 CODEISH = re.compile(r'^[\w.:/#@$%*+=<>()\[\]{},;|&!?\\^~`-]*$')
 
@@ -64,10 +65,15 @@ def scan(path):
     rel = path.relative_to(ROOT).as_posix()
     blade = rel.endswith('.blade.php')
     if blade: text = re.sub(r'\{\{--.*?--\}\}', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
-    text = re.sub(r'/\*.*?\*/', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
+    text = re.sub(r'/\*.*?\*/', lambda m: '\n' * m.group(0).count('\n') + ('@english' if '@english' in m.group(0) else ''), text, flags=re.S)
     found = []
     script = False
+    english = False
     for number, line in enumerate(text.split('\n'), 1):
+        if '@english' in line: english = not line.rstrip().endswith(';'); continue
+        if english:
+            english = not line.rstrip().endswith(';')
+            continue
         opens, closes = line.count('<script'), line.count('</script>')
         in_script = script or opens > closes
         script = (script or opens > 0) and not (closes >= opens and closes > 0)
@@ -96,7 +102,7 @@ def scan(path):
 def main(args):
     show_all = '--all' in args
     paths = [a for a in args if not a.startswith('--')]
-    files = [ROOT / p for p in paths] if paths else [f for base, pattern in SOURCES for f in sorted((ROOT / base).rglob(pattern))]
+    files = [f for p in paths for f in ((ROOT / p).rglob('*.php') if (ROOT / p).is_dir() else [ROOT / p])] if paths else [f for base, pattern in SOURCES for f in sorted((ROOT / base).rglob(pattern))]
     allow = set() if show_all else allowed()
     total = 0
     for f in files:

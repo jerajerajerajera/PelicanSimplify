@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Could not reach :host from the panel. Check that the panel server may connect to the internet.',
+        'no_key' => 'Enter an API key first.',
+        'not_set_up' => 'Error explanations are not set up on this panel.',
+        'unknown_log' => 'Unknown log.',
+        'read_panel' => 'Could not read the panel log.',
+        'read_wings' => 'Could not read the Wings log from Wings. Try again when the node is reachable.',
+        'read_console' => 'Could not read the console from Wings. Try again when the node is reachable.',
+        'too_many' => 'You asked a lot of questions in a short time. Try again in :count minute.|You asked a lot of questions in a short time. Try again in :count minutes.',
+        'daily_limit' => 'This panel reached its daily limit of :count explanations. Try again tomorrow.',
+        'no_answer' => ':model could not explain these lines. Try again after the error shows up again.',
+    ],
+    'test' => [
+        'works' => 'The key works with :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Console',
+            'empty' => 'The console is empty, so there is nothing to explain yet.',
+        ],
+        'panel' => [
+            'label' => 'Panel log',
+            'empty' => 'The panel log has no warnings or errors right now.',
+        ],
+        'wings' => [
+            'label' => 'Wings log',
+            'empty' => 'The Wings log of this node is empty.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'There are no saved log lines for this plugin.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Sign in to the panel first, then open this page again.',
+        'owner_only' => 'Only the panel owner (a root administrator) can use this page.',
+        'expired' => 'This address has expired or was replaced by a newer one.',
+        'no_key' => 'No :provider API key is saved on this panel. A root administrator adds one in Simplify settings, under Error explanations.',
+        'no_key_terminal' => 'When the panel does not open, run :command on the panel server. It asks for a key and does not save it.',
+        'choose_node' => 'Choose a node.',
+        'panel_log' => 'Panel log',
+        'wings_log_of' => 'Wings log of :node',
+        'wings_log' => 'Wings log',
+        'no_database' => 'The database could not be reached, so the Wings logs are not available here. The panel log often shows why.',
+        'lead' => 'Use this page when the panel shows an error such as 500 and its normal pages do not open. The AI chosen in Simplify settings reads the log, says whether something is wrong and how to fix it.',
+        'check_panel' => 'Check the panel log',
+        'check_wings' => 'Check Wings log of :node',
+        'wait' => 'Checking the log. This can take up to a minute.',
+        'attention' => 'Something needs attention',
+        'in_order' => 'Everything seems in order',
+        'noticed' => 'Noticed something?',
+        'checked' => ':count line checked by :model. Addresses, e-mail addresses and passwords were removed first.|:count lines checked by :model. Addresses, e-mail addresses and passwords were removed first.',
+        'terminal_hint' => 'When the panel does not open, run :command on the panel server, or :url_command for a temporary address to this page.',
+        'broken' => 'This page could not finish',
+        'title' => 'Explain panel errors',
+    ],
+    'failures' => [
+        'invalid_key' => 'The :name API key is not valid. An administrator can enter a new one in Simplify settings.',
+        'no_credit' => 'The :name account behind this key has no credit left. An administrator can add credit or check billing with :name.',
+        'forbidden' => 'This :name API key may not use the chosen model. An administrator can pick another model in Simplify settings.',
+        'no_model' => 'The chosen :name model is not available for this key. An administrator can pick another model in Simplify settings.',
+        'busy' => ':name is busy for this key right now. Try again in a minute.',
+        'unavailable' => ':name is temporarily unavailable. Try again in a minute.',
+        'other_status' => ':name could not answer this question (error :status). Try again later.',
+        'other' => ':name could not answer this question. Try again later.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => 'Create a key at console.anthropic.com → API keys. Every question is billed to that Anthropic account, usually a few cents or less; set a monthly limit there to be safe.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => 'Create a key at aistudio.google.com → Get API key. Questions are billed to that Google Cloud project, usually less than a cent each; set a budget there to be safe.',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => 'Create a key at platform.openai.com → API keys. Every question is billed to that OpenAI account, usually a few cents or less; set a monthly budget there to be safe.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'best answers, a few cents',
+        'about_a_cent' => 'about a cent',
+        'cheapest' => 'cheapest',
+        'good_answers_under_a_cent' => 'good answers, under a cent',
+        'good_answers_about_a_cent' => 'good answers, about a cent',
+    ],
+];
