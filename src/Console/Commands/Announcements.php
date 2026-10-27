@@ -34,6 +34,7 @@ final class Announcements extends Command
             $message=['title'=>$row['title'],'body'=>$row['text'],'url'=>$item['action']['url']??self::home(),'tag'=>'announcement-'.$row['id']];
             $sent=0;
             foreach($users as $user)if($row['audience']==='everyone'||$user->isAdmin())$sent+=$this->send($user,'announcements',$message);
+            Messages::markPushed($row['id'],$now,$sent);
             $this->info('"'.$row['title'].'" sent to '.$sent.' device(s).');
         }
         foreach(InGameAnnouncements::run($now) as $title=>$result)$this->info('"'.$title.'" in game: '.implode(', ',InGameAnnouncements::summary($result)).'.');

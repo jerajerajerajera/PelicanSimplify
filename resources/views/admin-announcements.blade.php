@@ -25,7 +25,7 @@
                             @if($row['ends_at'] !== null) · until {{ $this->date($row['ends_at']) }}@else · no end date @endif
                             @if($row['target']) · button “{{ $row['button']['label'] }}” → {{ $row['target'] }}@endif
                             @if($row['pinned']) · pinned to everyone's notifications @endif
-                            @if($row['push']) · {{ $row['pushed_at'] !== null ? 'sent as app notification' : 'app notification when it starts' }}@endif
+                            @if($row['push']) · {{ $row['pushed_at'] === null ? 'app notification when it starts' : ($row['pushed_to'] === null ? 'sent as app notification' : 'app notification sent to '.$row['pushed_to'].' '.($row['pushed_to'] === 1 ? 'device' : 'devices')) }}@endif
                             @if($row['created_by'] !== '') · by {{ $row['created_by'] }}@endif
                         </small>
                         @if($row['ingame_status'])

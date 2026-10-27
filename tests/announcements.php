@@ -118,6 +118,9 @@ check(!in_array($edited['id'],array_column(A::duePush($now),'id'),true),'announc
 A::markPushed($pushed['id'],$now+600);
 A::save(['title'=>'Server restart moved','push'=>true],$pushed['id'],'jera',$now+700);
 check(A::duePush($now+800)===[]&&A::find($pushed['id'])['pushed_at']===$now+600,'sent once; editing does not send it again');
+check(A::find($pushed['id'])['pushed_to']===null,'device count unknown until sending finished');
+A::markPushed($pushed['id'],$now+600,0);
+check(A::find($pushed['id'])['pushed_to']===0&&A::duePush($now+900)===[],'a send that reached no device is recorded and not repeated');
 A::delete($pushed['id']);
 
 // Deleting, broken files and limits.

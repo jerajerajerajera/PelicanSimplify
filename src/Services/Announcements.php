@@ -67,7 +67,7 @@ final class Announcements
             'button'=>$link===null?null:['label'=>self::line($input['button_label']??'',self::LABEL_LENGTH)?:'Open',...$link],
             'created_by'=>$old['created_by']??$author,'created_at'=>$old['created_at']??$now,'updated_at'=>$now,
             // Sent as an app notification once, when it starts; editing does not send it again.
-            'push'=>!empty($input['push']),'pushed_at'=>$old['pushed_at']??null,
+            'push'=>!empty($input['push']),'pushed_at'=>$old['pushed_at']??null,'pushed_to'=>$old['pushed_to']??null,
             'pinned'=>!empty($input['pinned']),
             'ingame'=>$ingame,
         ]);
@@ -83,9 +83,10 @@ final class Announcements
         return array_values(array_filter(self::all(),fn(array $r):bool=>$r['push']&&$r['pushed_at']===null&&self::state($r,$now)==='live'));
     }
 
-    public static function markPushed(string $id,?int $now=null): void
+    /** Marks it sent; $devices (how many accepted it) is filled in after sending, so admins can see when it reached nobody. */
+    public static function markPushed(string $id,?int $now=null,?int $devices=null): void
     {
-        self::write(array_map(fn(array $r):array=>$r['id']===$id?[...$r,'pushed_at'=>$now??time()]:$r,self::all()));
+        self::write(array_map(fn(array $r):array=>$r['id']===$id?[...$r,'pushed_at'=>$now??time(),'pushed_to'=>$devices]:$r,self::all()));
     }
 
     public static function delete(string $id): void
@@ -301,7 +302,7 @@ final class Announcements
         return ['id'=>$id,'category'=>isset(self::CATEGORIES[$row['category']??''])?$row['category']:'info','title'=>$title,'text'=>self::text($row['text']??''),
             'starts_at'=>$starts,'ends_at'=>$ends,'audience'=>isset(self::AUDIENCES[$row['audience']??''])?$row['audience']:'everyone','button'=>$button,
             'created_by'=>self::line($row['created_by']??'',64),'created_at'=>is_int($row['created_at']??null)?$row['created_at']:0,'updated_at'=>is_int($row['updated_at']??null)?$row['updated_at']:0,
-            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null,'pinned'=>($row['pinned']??false)===true,
+            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null,'pushed_to'=>is_int($row['pushed_to']??null)?$row['pushed_to']:null,'pinned'=>($row['pinned']??false)===true,
             'ingame'=>InGameAnnouncements::clean($row['ingame']??null)];
     }
 
