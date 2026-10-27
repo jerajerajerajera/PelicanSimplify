@@ -58,7 +58,7 @@ class CreateMinecraftServer extends Page implements HasForms
 
     protected static string|BackedEnum|null $navigationIcon = TablerIcon::Server2;
     protected static ?string $navigationLabel = 'Create server';
-    protected static ?string $title = 'Create server';
+    protected static ?string $title = 'Server Maker';
     protected static ?string $slug = 'simple-server-creator';
     protected static bool $shouldRegisterNavigation = false;
     protected string $view = 'pelican-simplify::filament.admin.create-server';
@@ -79,6 +79,96 @@ class CreateMinecraftServer extends Page implements HasForms
     public int $furthestStep = 1;
     #[\Livewire\Attributes\Locked]
     public string $creationGame = '';
+
+    /** Minecraft's choices on the Game step and its own step: label and one line on what each does. */
+    public const MINECRAFT_CHOICES = [
+        'vanilla' => ['Vanilla', 'Plain Minecraft, no extras.'],
+        'plus' => ['Plugins', 'Paper or Purpur. Players need nothing extra.'],
+        'loader' => ['Mods', 'Fabric, Forge, NeoForge or Quilt. You add the mods.'],
+        'modded' => ['Modpack', 'Ready-made mods from Modrinth, CurseForge, FTB or Technic.'],
+        'bedrock' => ['Bedrock', 'For phones, consoles and Windows 10/11.'],
+        'proxy' => ['Proxy', 'Velocity or BungeeCord in front of several servers.'],
+    ];
+
+    /** The games this person may create here: Minecraft and/or other games, following the add-ons and their access. */
+    public function allowedGames(): array
+    {
+        if ($this->creationGame !== '') return [$this->creationGame];
+        return self::gamesFor();
+    }
+
+    private static function gamesFor(): array
+    {
+        $minecraft = \Simplify\Panel\Services\FeatureSettings::enabled('easy_creator') && (CreatorAccess::admin() || CreatorAccess::settings()['minecraft_enabled']);
+        $games = \Simplify\Panel\Services\FeatureSettings::enabled('game_creator');
+        return array_values(array_filter([$minecraft ? 'minecraft' : null, $games ? 'other' : null]));
+    }
+
+    /** The chosen game: fixed by the link that opened the creator, or picked on the Game step ('' until then). */
+    private function gameNow(?Get $get = null): string
+    {
+        return $this->creationGame ?: (string) ($get ? $get('game') : ($this->data['game'] ?? ''));
+    }
+
+    /** A Minecraft Java server: the only kind with server.properties, a server icon and a Java choice. */
+    private function javaMinecraft(?Get $get = null): bool
+    {
+        return $this->gameNow($get) === 'minecraft' && MinecraftCatalog::javaServer((string) ($get ? $get('server_type') : ($this->data['server_type'] ?? '')));
+    }
+
+    /** Game step: Minecraft with a server type, or another game by its picker key. Resets what belonged to the previous game. */
+    public function pickGame(string $game, ?string $choice = null): void
+    {
+        abort_unless(static::canAccess(), 403);
+        if (!in_array($game, $this->allowedGames(), true)) {
+            throw ValidationException::withMessages(['data.game' => 'This game is not available for your account.']);
+        }
+        if (($this->data['game'] ?? '') !== $game) {
+            $this->data = array_replace($this->data ?? [], [
+                'game' => $game, 'game_egg_id' => null, 'game_key' => null, 'game_variables' => [],
+                'egg_id' => null, 'server_type' => 'vanilla', 'server_software' => null,
+                'properties_enabled' => $game === 'minecraft', 'server_icon' => null,
+                'environment_overrides' => [], 'image' => '', 'startup' => '',
+            ]);
+        }
+        if ($game === 'minecraft') {
+            $this->applyServerType(in_array($choice, MinecraftCatalog::TYPES, true) ? $choice : 'vanilla');
+            return;
+        }
+        if (is_string($choice) && $choice !== '') $this->applyGameKey($choice);
+    }
+
+    /** A new Minecraft server type: its default software, egg and starting resources. */
+    private function applyServerType(string $type): void
+    {
+        $this->data['server_type'] = $type;
+        $this->data['server_software'] = MinecraftCatalog::software($type, $this->data['server_software'] ?? null);
+        $this->data['egg_id'] = MinecraftCatalog::eggForType($type, $this->data['server_software'])?->id;
+        $this->data['modpack_project'] = null;
+        $this->data['featured_modpack'] = null;
+        $this->data['modpack_version'] = null;
+        $this->data['properties_enabled'] = MinecraftCatalog::javaServer($type);
+        $profile = \Simplify\Panel\Services\CreationDefaults::forType($type);
+        $cpu = CreatorAccess::admin() ? $profile['cpu'] : min($profile['cpu'], (int) CreatorAccess::settings()['max_cpu']);
+        $ram = CreatorAccess::admin() ? $profile['ram_gb'] : min($profile['ram_gb'], max(1, (int) floor(CreatorAccess::settings()['max_memory_mb'] / 1024)));
+        $disk = CreatorAccess::admin() ? $profile['disk_mb'] : min($profile['disk_mb'], (int) CreatorAccess::settings()['max_disk_mb']);
+        $this->data['cpu'] = $cpu; $this->data['cpu_choice'] = (string) $cpu;
+        $this->data['ram_gb'] = in_array($ram, [2, 4, 8, 12], true) ? (string) $ram : 'custom';
+        $this->data['ram_custom_gb'] = $ram;
+        $this->data['disk_mb'] = $disk; $this->data['disk_choice'] = (string) $disk;
+    }
+
+    /** Another game from the picker: an installed egg ('egg:12') or an index game, installed when leaving the step. */
+    private function applyGameKey(string $key): void
+    {
+        $this->data['game_key'] = $key;
+        $id = str_starts_with($key, 'egg:') ? (int) substr($key, 4) : null;
+        $this->data['game_egg_id'] = $id;
+        $this->data['egg_id'] = $id;
+        $egg = $id ? OtherGameCatalog::selected($id) : null;
+        $this->data['game_variables'] = $egg ? OtherGameCatalog::defaults($egg) : [];
+        $this->data['steam_art'] = true;
+    }
 
     private function draftPath(): string
     {
@@ -113,7 +203,7 @@ class CreateMinecraftServer extends Page implements HasForms
             };
             $this->draftStep = max(1,min(count($this->wizardStepLabels()),$step));
             $this->furthestStep=max($this->furthestStep,$this->draftStep,min(count($this->wizardStepLabels()),$furthestStep));
-            $json = json_encode(['state' => $clean($state), 'step' => $this->draftStep, 'advanced' => $this->editingAdvanced, 'icon' => $this->draftIcon, 'wizard_version'=>4,'wizard_steps'=>$this->wizardStepLabels(),'furthest_step'=>$this->furthestStep], JSON_THROW_ON_ERROR);
+            $json = json_encode(['state' => $clean($state), 'step' => $this->draftStep, 'advanced' => $this->editingAdvanced, 'icon' => $this->draftIcon, 'wizard_version'=>5,'wizard_steps'=>$this->wizardStepLabels(),'furthest_step'=>$this->furthestStep], JSON_THROW_ON_ERROR);
             if (strlen($json) > 1048576) throw new \RuntimeException('Draft is too large to save.');
             if (!$disk->put($this->draftPath(), \Illuminate\Support\Facades\Crypt::encryptString($json))) throw new \RuntimeException('Could not save draft.');
             return true;
@@ -131,7 +221,7 @@ class CreateMinecraftServer extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->finishDraft();
-        $parameters=$this->creationGame!==''?['game'=>$this->creationGame,'simplify_embed'=>1]:[];
+        $parameters=array_filter(['game'=>$this->creationGame?:null,'simplify_embed'=>1]);
         $this->redirect(static::getUrl($parameters,panel: Filament::getCurrentPanel()->getId()));
     }
 
@@ -213,13 +303,12 @@ class CreateMinecraftServer extends Page implements HasForms
         abort_unless(static::canAccess(), 403);
         $requestedGame=request()->query('game');
         abort_unless($requestedGame===null || in_array($requestedGame,['minecraft','other'],true),422);
-        $minecraftAllowed=\Simplify\Panel\Services\FeatureSettings::enabled('easy_creator');
-        $gamesAllowed=\Simplify\Panel\Services\FeatureSettings::enabled('game_creator');
-        $this->creationGame=$requestedGame??($minecraftAllowed && (CreatorAccess::admin() || CreatorAccess::settings()['minecraft_enabled'])?'minecraft':'other');
-        // Each add-on can be switched off on its own: the other creator then refuses that game.
-        abort_unless($this->creationGame==='minecraft' ? $minecraftAllowed : $gamesAllowed,403);
-        abort_unless($this->creationGame!=='minecraft' || CreatorAccess::admin() || CreatorAccess::settings()['minecraft_enabled'],403);
-        $game=$this->creationGame ?: (CreatorAccess::admin() || CreatorAccess::settings()['minecraft_enabled']?'minecraft':'other');
+        $allowed=self::gamesFor();
+        // Each add-on can be switched off on its own: the creator then refuses that game. Without a game in the
+        // link, one choice opens straight on it and two show Minecraft and the other games side by side.
+        abort_unless($allowed!==[] && ($requestedGame===null || in_array($requestedGame,$allowed,true)),403);
+        $this->creationGame=$requestedGame??(count($allowed)===1?$allowed[0]:'');
+        $game=$this->creationGame;
         $this->draftSession = microtime(true);
         $node = CreatorAccess::nodes()->first();
         $resourceDefaults = $game === 'minecraft' ? \Simplify\Panel\Services\CreationDefaults::forType('vanilla') : ['cpu'=>100,'ram_gb'=>4,'disk_mb'=>10240];
@@ -243,6 +332,7 @@ class CreateMinecraftServer extends Page implements HasForms
             'backup_weekday' => '0',
             'backup_only_online' => false,
             'properties_enabled' => $game==='minecraft',
+            'server_software' => null,
             'max_players' => 20,
             'motd' => 'A Minecraft Server',
             'difficulty' => 'easy',
@@ -270,7 +360,6 @@ class CreateMinecraftServer extends Page implements HasForms
             'change_backup_schedule'=>false,
             'backup_interval_minutes'=>(int)\Simplify\Panel\Services\PerformanceSettings::get('backup_interval_minutes'),
             'backup_retention'=>(int)\Simplify\Panel\Services\PerformanceSettings::get('backup_retention'),
-            'accept_eula' => false,
             'swap' => 0,
             'io' => 500,
             'backup_limit' => CreatorAccess::admin() ? 2 : min(2, (int) CreatorAccess::settings()['max_backups']),
@@ -303,7 +392,8 @@ class CreateMinecraftServer extends Page implements HasForms
                             $restored[$choice] = array_key_exists($value, $this->resourceOptions($resource, $restored['server_type'] ?? 'vanilla')) ? $value : 'custom';
                         }
                     }
-                    $this->form->fill(array_replace($this->data ?? [], $restored, ['server_icon' => null,'game'=>$game]));
+                    $restoredGame=in_array($restored['game']??null,$this->allowedGames(),true)?$restored['game']:$game;
+                    $this->form->fill(array_replace($this->data ?? [], $restored, ['server_icon' => null,'game'=>$this->creationGame?:$restoredGame]));
                 }
             }
         } catch (Throwable $exception) {
@@ -315,8 +405,8 @@ class CreateMinecraftServer extends Page implements HasForms
 
     public function wizardStepLabels(): array
     {
-        // Other games have no Minecraft server properties step.
-        $labels=$this->creationGame==='minecraft'?['Server Type','Version & Content','Server properties']:['Game','Server','Game settings'];
+        // Only Minecraft Java servers have a server properties step.
+        $labels=['Game',$this->gameNow()==='other'?'Game settings':'Minecraft','Server','Resources',...($this->javaMinecraft()?['Server properties']:[])];
         foreach (\Simplify\Panel\Services\Extensions::webAdapter()?->creatorSteps($this) ?? [] as $step) $labels[]=(string)($step->getLabel() ?? 'Website display');
         if (\Simplify\Panel\Services\FeatureSettings::enabled('backups')) $labels[]='Backups';
         return [...$labels,'Review'];
@@ -325,6 +415,8 @@ class CreateMinecraftServer extends Page implements HasForms
     private function restoreWizardStep(int $step,int $version,array $savedLabels=[]): int
     {
         $labels=$this->wizardStepLabels();
+        // Drafts from before the combined creator had other steps: keep the answers, start at the Game step.
+        if ($version<5) return 1;
         if ($savedLabels) {
             for ($index=max(0,$step-1);$index<count($savedLabels);++$index) {
                 $current=array_search($savedLabels[$index],$labels,true);
@@ -332,8 +424,6 @@ class CreateMinecraftServer extends Page implements HasForms
             }
             return count($labels);
         }
-        if ($this->creationGame==='minecraft' && $version<2) $step=max(1,$step-1);
-        if ($version<3 && in_array('Website display',$labels,true) && $step>=($this->creationGame==='minecraft'?4:5)) ++$step;
         return max(1,min(count($labels),$step));
     }
 
@@ -400,7 +490,7 @@ class CreateMinecraftServer extends Page implements HasForms
     /** Whether the server icon comes from the modpack; with $offered, whether the choice is shown at all. */
     private function usesModpackIcon(Get $get, bool $offered = false): bool
     {
-        if (($this->creationGame ?: $get('game')) !== 'minecraft' || $get('server_type') !== 'modded') return false;
+        if ($this->gameNow($get) !== 'minecraft' || $get('server_type') !== 'modded') return false;
         if (!$offered && $get('icon_source') === 'upload') return false;
         return $this->modpackIcon((string) $get('modpack_project')) !== null;
     }
@@ -415,7 +505,7 @@ class CreateMinecraftServer extends Page implements HasForms
     /** Leaving the Game step: an index game is downloaded and installed, then used like any installed egg. */
     public function installSelectedGame(): void
     {
-        if (($this->creationGame ?: ($this->data['game'] ?? '')) !== 'other') return;
+        if ($this->gameNow() !== 'other') return;
         $egg = \Simplify\Panel\Services\GameCatalog::resolve($this->data['game_key'] ?? null);
         if (!$egg) throw ValidationException::withMessages(['data.game_key' => 'Choose a game.']);
         $changed = (int) ($this->data['game_egg_id'] ?? 0) !== (int) $egg->id;
@@ -433,80 +523,91 @@ class CreateMinecraftServer extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Hidden::make('game')->default(fn () => $this->creationGame ?: 'minecraft')->visible(fn () => $this->creationGame!=='')->required()->in(fn () => [$this->creationGame ?: 'minecraft']),
                 Wizard::make([
-                    ...($this->creationGame==='minecraft' ? [] : [Step::make('Game')->afterValidation(fn () => $this->installSelectedGame())->schema([
-                        Radio::make('game')->hiddenLabel()->extraAttributes(['class' => 'ssc-game-options'])->visible(fn () => $this->creationGame==='')
-                            ->view('pelican-simplify::filament.admin.card-radio')
-                            ->options(fn () => $this->creationGame!=='' ? [$this->creationGame=>$this->creationGame==='minecraft'?'Minecraft':'Other game'] : (CreatorAccess::admin() || CreatorAccess::settings()['minecraft_enabled']
-                                ? ['minecraft' => 'Minecraft', 'other' => 'Other game'] : ['other' => 'Other game']))
-                            ->descriptions(['minecraft' => 'Vanilla, plugins or a modpack.', 'other' => 'Search the games available on this panel.'])
-                            ->required()->in(fn () => $this->creationGame!==''?[$this->creationGame]:['minecraft','other'])->live()->columns(2)
-                            ->afterStateUpdated(function ($state, Set $set): void {
-                                $set('game_egg_id', null);
-                                $set('game_key', null);
-                                $set('game_variables', []);
-                                $set('egg_id', $state === 'minecraft' ? MinecraftCatalog::eggForType('vanilla')?->id : null);
-                                $set('server_type', 'vanilla');
-                                $set('properties_enabled', $state === 'minecraft');
-                                $set('server_icon', null);
-                                $set('environment_overrides', []);
-                                $set('image', '');
-                                $set('startup', '');
-                            }),
-                        // Installed games and the Pelican egg index in one searchable grid; an index game is installed on Next.
-                        \Filament\Forms\Components\ViewField::make('game_key')->label('Find a game')
+                    // Minecraft (with its server types) and every other game on one page; the picker calls pickGame().
+                    Step::make('Game')->afterValidation(fn () => $this->installSelectedGame())->schema([
+                        Hidden::make('game')->required()->in(fn () => $this->allowedGames())
+                            ->validationMessages(['required' => 'Choose Minecraft or another game.', 'in' => 'Choose Minecraft or another game.']),
+                        \Filament\Forms\Components\ViewField::make('game_key')->hiddenLabel()
                             ->view('pelican-simplify::filament.admin.game-picker')
-                            ->viewData(fn () => ['cards' => ($this->creationGame ?: ($this->data['game'] ?? '')) === 'other' ? \Simplify\Panel\Services\GameCatalog::cards() : []])
-                            ->live()
-                            ->required(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'other')
-                            ->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'other')
-                            ->validationMessages(['required' => 'Choose a game.'])
-                            ->afterStateUpdated(function ($state, Set $set): void {
-                                $id = is_string($state) && str_starts_with($state, 'egg:') ? (int) substr($state, 4) : null;
-                                $set('game_egg_id', $id);
-                                $set('egg_id', $id);
-                                $egg = $id ? OtherGameCatalog::selected($id) : null;
-                                $set('game_variables', $egg ? OtherGameCatalog::defaults($egg) : []);
-                                $set('steam_art', true);
-                            }),
+                            ->viewData(fn () => [
+                                'cards' => in_array('other', $this->allowedGames(), true) ? \Simplify\Panel\Services\GameCatalog::cards(in_array('minecraft', $this->allowedGames(), true)) : [],
+                                'minecraft' => in_array('minecraft', $this->allowedGames(), true) ? self::MINECRAFT_CHOICES : [],
+                                'game' => $this->gameNow(),
+                                'type' => $this->data['server_type'] ?? null,
+                            ])
+                            ->required(fn (Get $get) => $this->gameNow($get) === 'other')
+                            ->validationMessages(['required' => 'Choose a game.']),
                         Hidden::make('game_egg_id'),
-                    ])]),
-                    Step::make('Type')
-                        ->label(fn () => $this->creationGame === 'other' ? 'Server' : 'Server Type')
+                    ]),
+                    Step::make('Content')
+                        ->label(fn (Get $get) => $this->gameNow($get) === 'other' ? 'Game settings' : 'Minecraft')
                         ->schema([
+                            Section::make('Minecraft')->hiddenLabel()->visible(fn (Get $get) => $this->gameNow($get) === 'minecraft')->schema([
                             Radio::make('server_type')
-                                ->label('Server type')->hiddenLabel()->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft')
+                                ->label('Server type')->hiddenLabel()
                                 ->view('pelican-simplify::filament.admin.card-radio')
-                                ->options([
-                                    'vanilla' => 'Vanilla',
-                                    'plus' => 'Vanilla+',
-                                    'modded' => 'Modded',
-                                ])
-                                ->descriptions([
-                                    'vanilla' => 'Classic Minecraft. No mods or plugins.',
-                                    'plus' => 'Paper server with plugin support.',
-                                    'modded' => 'Install a complete Minecraft modpack.',
-                                ])
+                                ->options(array_map(fn (array $choice) => $choice[0], self::MINECRAFT_CHOICES))
+                                ->descriptions(array_map(fn (array $choice) => $choice[1], self::MINECRAFT_CHOICES))
                                 ->columns(['default' => 1, 'md' => 3])
                                 ->extraAttributes(['class' => 'ssc-card-options ssc-type-options'])
-                                ->required()->live()
+                                ->required()->in(MinecraftCatalog::TYPES)->live()
+                                ->afterStateUpdated(fn ($state) => $this->applyServerType((string) $state)),
+                            Radio::make('server_software')->label(fn (Get $get) => ['plus' => 'Server software', 'loader' => 'Mod loader', 'proxy' => 'Proxy software'][$get('server_type')] ?? 'Software')
+                                ->helperText(fn (Get $get) => match ($get('server_type')) {
+                                    'loader' => 'The program that loads mods. Every mod is made for one loader, so pick the one your mods need. Players use the same loader and mods.',
+                                    'plus' => 'Both run Bukkit and Paper plugins. Purpur adds extra gameplay options.',
+                                    'proxy' => 'Connects several servers behind one address. Velocity is the modern choice.',
+                                    default => null,
+                                })
+                                ->view('pelican-simplify::filament.admin.card-radio')->extraAttributes(['class' => 'ssc-ram-options'])
+                                ->options(fn (Get $get) => MinecraftCatalog::SOFTWARE[$get('server_type')] ?? [])
+                                ->visible(fn (Get $get) => isset(MinecraftCatalog::SOFTWARE[$get('server_type')]))
+                                ->required(fn (Get $get) => isset(MinecraftCatalog::SOFTWARE[$get('server_type')]))
+                                ->live()->afterStateUpdated(fn () => $this->data['egg_id'] = MinecraftCatalog::eggForType((string) ($this->data['server_type'] ?? ''), $this->data['server_software'] ?? null)?->id),
+                            Select::make('minecraft_version')
+                                ->label('Minecraft version')
+                                ->searchable()->required(fn (Get $get) => MinecraftCatalog::usesVersion((string) $get('server_type')))
+                                ->options(fn () => $this->memo('minecraft-versions', fn () => MinecraftCatalog::versions()))
+                                ->visible(fn (Get $get) => MinecraftCatalog::usesVersion((string) $get('server_type')))
+                                ->helperText(fn (Get $get) => $get('server_type') === 'loader' ? 'The newest loader version for this Minecraft version is installed. Mods are added later under Mods on the server page.' : 'This Minecraft version is downloaded during installation.'),
+                            Hidden::make('modpack_search')->dehydrated(false),
+                            Radio::make('modpack_project')
+                                ->label('Find a modpack')
+                                ->view('pelican-simplify::filament.admin.modpack-picker')
+                                ->options(fn (Get $get) => collect(ModpackCatalog::results($get('modpack_search'), $get('modpack_project')))->pluck('title', 'key')->all())
+                                ->live()->required(fn (Get $get) => $get('server_type') === 'modded')
+                                ->visible(fn (Get $get) => $get('server_type') === 'modded')
                                 ->afterStateUpdated(function ($state, Set $set): void {
-                                    $set('egg_id', MinecraftCatalog::eggForType((string) $state)?->id);
-                                    $set('modpack_project', null);
-                                    $set('featured_modpack', null);
                                     $set('modpack_version', null);
-                                    $profile = \Simplify\Panel\Services\CreationDefaults::forType((string)$state);
-                                    $cpu = $profile['cpu'];
-                                    $cpu = CreatorAccess::admin() ? $cpu : min($cpu, (int) CreatorAccess::settings()['max_cpu']);
-                                    $set('cpu', $cpu); $set('cpu_choice', (string) $cpu);
-                                    $disk = $profile['disk_mb'];
-                                    $ram = CreatorAccess::admin() ? $profile['ram_gb'] : min($profile['ram_gb'],max(1,(int)floor(CreatorAccess::settings()['max_memory_mb']/1024)));
-                                    $set('ram_gb',in_array($ram,[2,4,8,12],true)?(string)$ram:'custom');
-                                    $set('ram_custom_gb',$ram);
-                                    $disk = CreatorAccess::admin() ? $disk : min($disk, (int) CreatorAccess::settings()['max_disk_mb']);
-                                    $set('disk_mb', $disk); $set('disk_choice', (string) $disk);
+                                    $set('egg_id', ModpackCatalog::egg($state)?->id);
+                                })
+                                ->helperText('Modrinth, FTB and supported Technic serverpacks in one list. CurseForge appears when an API key is configured.'),
+                            Select::make('modpack_version')
+                                ->label('Modpack version')
+                                ->options(fn (Get $get) => ModpackCatalog::versions($get('modpack_project')))
+                                ->searchable()->required(fn (Get $get) => $get('server_type') === 'modded')
+                                ->visible(fn (Get $get) => $get('server_type') === 'modded')
+                                ->helperText('The pack determines the Minecraft and modloader versions.'),
+                            Section::make('Bedrock')
+                                ->description('The newest Bedrock Dedicated Server is installed. Players on phones, consoles and Windows join with the server address and port. Java players cannot join a Bedrock server.')
+                                ->visible(fn (Get $get) => $get('server_type') === 'bedrock'),
+                            ]),
+                            Section::make('Game settings')->visible(fn (Get $get) => $this->gameNow($get) === 'other')
+                                ->description(fn (Get $get) => OtherGameCatalog::selected($get('game_egg_id'))?->description ?? 'Choose a game first.')
+                                ->schema(function (Get $get): array {
+                                    $egg = OtherGameCatalog::selected($get('game_egg_id'));
+                                    if (!$egg) return [];
+                                    [$main, $advanced] = OtherGameCatalog::fields($egg);
+                                    return [
+                                        \Filament\Schemas\Components\Grid::make(2)->schema($main),
+                                        ...($advanced ? [Section::make('Advanced')->description('Install and Steam options; the defaults work for most servers.')->collapsible()->collapsed()->schema([\Filament\Schemas\Components\Grid::make(2)->schema($advanced)])] : []),
+                                    ];
                                 }),
+                        ])
+                        ->afterValidation(fn () => $this->prepareEgg()),
+                    Step::make('Server')
+                        ->schema([
                             TextInput::make('name')
                                 ->label('Server name')
                                 ->required()->maxLength(255)
@@ -539,10 +640,10 @@ class CreateMinecraftServer extends Page implements HasForms
                             // Steam banner and icon for other games, when the store has a match (looked up once, cached).
                             \Filament\Forms\Components\Toggle::make('steam_art')->label('Use the Steam banner and icon')->default(true)
                                 ->helperText(fn () => ($art = $this->steamArt()) ? 'Found on Steam: '.$art['name'].'. Copied once to this panel; you can change it later in the server settings.' : null)
-                                ->visible(fn () => $this->creationGame === 'other' && $this->steamArt() !== null),
+                                ->visible(fn (Get $get) => $this->gameNow($get) === 'other' && $this->steamArt() !== null),
                             View::make('pelican-simplify::filament.admin.steam-art-preview')
                                 ->viewData(fn () => ['art' => $this->steamArt()])
-                                ->visible(fn (Get $get) => $this->creationGame === 'other' && $get('steam_art') && $this->steamArt() !== null),
+                                ->visible(fn (Get $get) => $this->gameNow($get) === 'other' && $get('steam_art') && $this->steamArt() !== null),
                             TextInput::make('server_alias')->label('Server alias (optional)')
                                 ->maxLength(100)->placeholder('Optional internal reference')
                                 ->helperText('Internal reference only. The dashboard uses Server name.'),
@@ -565,56 +666,9 @@ class CreateMinecraftServer extends Page implements HasForms
                                     ])->all()))
                                 ->helperText('Only free allocations are shown. Create an allocation under Nodes if this is empty.'),
                             Hidden::make('owner_id'),
-                        ])->columns(1)
-                        ->afterValidation(function (): void {
-                            if (($this->data['game'] ?? '') === 'other' || ($this->data['server_type'] ?? '') !== 'modded') {
-                                $this->prepareEgg();
-                            }
-                        }),
-                    Step::make('Content')
-                        ->label(fn () => $this->creationGame === 'other' ? 'Game settings' : 'Version & Content')
-                        ->schema([
-                            Section::make('Minecraft content')->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft')->schema([
-                            Select::make('minecraft_version')
-                                ->label('Minecraft version')
-                                ->searchable()->required(fn (Get $get) => $get('server_type') !== 'modded')
-                                ->options(fn () => $this->memo('minecraft-versions', fn () => MinecraftCatalog::versions()))
-                                ->visible(fn (Get $get) => $get('server_type') !== 'modded')
-                                ->helperText('Your chosen egg downloads this Minecraft version during installation.'),
-                            Hidden::make('modpack_search')->dehydrated(false),
-                            Radio::make('modpack_project')
-                                ->label('Find a modpack')
-                                ->view('pelican-simplify::filament.admin.modpack-picker')
-                                ->options(fn (Get $get) => collect(ModpackCatalog::results($get('modpack_search'), $get('modpack_project')))->pluck('title', 'key')->all())
-                                ->live()->required(fn (Get $get) => $get('server_type') === 'modded')
-                                ->visible(fn (Get $get) => $get('server_type') === 'modded')
-                                ->afterStateUpdated(function ($state, Set $set): void {
-                                    $set('modpack_version', null);
-                                    $set('egg_id', ModpackCatalog::egg($state)?->id);
-                                })
-                                ->helperText('Modrinth, FTB and supported Technic serverpacks in one list. CurseForge appears when an API key is configured.'),
-                            Select::make('modpack_version')
-                                ->label('Modpack version')
-                                ->options(fn (Get $get) => ModpackCatalog::versions($get('modpack_project')))
-                                ->searchable()->required(fn (Get $get) => $get('server_type') === 'modded')
-                                ->visible(fn (Get $get) => $get('server_type') === 'modded')
-                                ->helperText('The pack determines the Minecraft and modloader versions.'),
-                            Section::make('Vanilla+ / Paper')
-                                ->description('SSC will install Paper using your selected Minecraft version. Automatic browsing and installation of individual plugins is not included in this first test version.')
-                                ->visible(fn (Get $get) => $get('server_type') === 'plus'),
-                            ]),
-                            Section::make('Game settings')->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'other')
-                                ->description(fn (Get $get) => OtherGameCatalog::selected($get('game_egg_id'))?->description ?? 'Choose a game first.')
-                                ->schema(function (Get $get): array {
-                                    $egg = OtherGameCatalog::selected($get('game_egg_id'));
-                                    if (!$egg) return [];
-                                    [$main, $advanced] = OtherGameCatalog::fields($egg);
-                                    return [
-                                        \Filament\Schemas\Components\Grid::make(2)->schema($main),
-                                        ...($advanced ? [Section::make('Advanced')->description('Install and Steam options; the defaults work for most servers.')->collapsible()->collapsed()->schema([\Filament\Schemas\Components\Grid::make(2)->schema($advanced)])] : []),
-                                    ];
-                                }),
-                            Section::make('Resources')->description('Starting values follow your server type. Choose a preset or enter your own allocation.')->schema([
+                        ])->columns(1),
+                    Step::make('Resources')->schema([
+                            Section::make('Resources')->description(fn (Get $get) => 'Starting values follow the '.($this->gameNow($get) === 'other' ? 'game' : 'server type').'. Choose a preset or enter your own allocation.')->schema([
                             self::liveForVisibility(Radio::make('ram_gb')
                                 ->view('pelican-simplify::filament.admin.card-radio')
                                 ->label('RAM')
@@ -646,11 +700,10 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->required()->dehydratedWhenHidden(),
                                 "\$get('disk_choice') === 'custom'", fn (Get $get) => $get('disk_choice') === 'custom', true),
                             ]),
-                        ])
-                        ->afterValidation(fn () => $this->prepareEgg()),
-                    Step::make('Server properties')->visible(fn () => $this->creationGame !== 'other')
+                    ]),
+                    Step::make('Server properties')->visible(fn (Get $get) => $this->javaMinecraft($get))
                         ->schema([
-                            Section::make('Server properties')->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft')
+                            Section::make('Server properties')->visible(fn (Get $get) => $this->javaMinecraft($get))
                                 ->description('Set common Minecraft options before creation. Applied after installation; other installer settings are preserved.')
                                 ->schema([
                                     Toggle::make('properties_enabled')->label('Apply these settings')->columnSpanFull(),
@@ -671,7 +724,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->view('pelican-simplify::filament.admin.card-radio')
                                 ->visible(fn (Get $get) => $this->usesModpackIcon($get, true)),
                             FileUpload::make('server_icon')->label(fn (Get $get) => $this->usesModpackIcon($get, true) ? 'Your server icon' : 'Server icon (optional)')
-                                ->visible(fn (Get $get) => ($this->creationGame ?: $get('game')) === 'minecraft' && !$this->usesModpackIcon($get))
+                                ->visible(fn (Get $get) => $this->javaMinecraft($get) && !$this->usesModpackIcon($get))
                                 ->image()->acceptedFileTypes(['image/png'])->maxSize(100)
                                 ->imageResizeMode('cover')->imageResizeTargetWidth('64')->imageResizeTargetHeight('64')
                                 ->imageEditor()->imageEditorAspectRatios(['1:1'])->storeFiles(false)
@@ -690,11 +743,6 @@ class CreateMinecraftServer extends Page implements HasForms
                     Step::make('Review')
                         ->schema([
                             View::make('pelican-simplify::filament.admin.overview')->columnSpanFull(),
-                            Checkbox::make('accept_eula')->label('I accept the Minecraft EULA')->default(false)
-                                ->visible(fn (Get $get) => ($this->creationGame ?: $get('game'))==='minecraft')
-                                ->accepted(fn (Get $get) => ($this->creationGame ?: $get('game'))==='minecraft')
-                                ->helperText(new HtmlString('<a href="https://www.minecraft.net/en-us/eula" target="_blank" rel="noopener noreferrer">Read the Minecraft EULA</a>'))
-                                ->columnSpanFull(),
                             View::make('pelican-simplify::filament.admin.advanced-editor')
                                 ->columnSpanFull()
                                 ->schema([
@@ -703,7 +751,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                         ->options(fn () => $this->memo('eggs', fn () => Egg::query()->orderBy('name')->pluck('name', 'id')->all()))
                                         ->searchable()->required()
                                         ->helperText('Automatically chosen and imported if missing. Existing eggs are kept. Only change if you know what you are doing.'),
-                                    Select::make('java_version')->visible(fn (Get $get) => CreatorAccess::admin() && ($this->creationGame ?: $get('game')) === 'minecraft')->dehydratedWhenHidden()
+                                    Select::make('java_version')->visible(fn (Get $get) => CreatorAccess::admin() && $this->javaMinecraft($get))->dehydratedWhenHidden()
                                         ->label('Java version')
                                         ->options(['auto' => 'Automatic (recommended)', '8' => 'Java 8', '11' => 'Java 11', '16' => 'Java 16', '17' => 'Java 17', '21' => 'Java 21', '25' => 'Java 25'])
                                         ->required()
@@ -779,8 +827,8 @@ class CreateMinecraftServer extends Page implements HasForms
             if ($this->creationGame!=='' && ($state['game']??'minecraft')!==$this->creationGame) {
                 throw ValidationException::withMessages(['data.game'=>'Open the creator for the selected game.']);
             }
-            if (($state['game']??'minecraft')==='minecraft') {
-                validator(['accept_eula'=>$state['accept_eula']??false],['accept_eula'=>'accepted'])->validate();
+            if (!in_array($state['game']??'',$this->allowedGames(),true)) {
+                throw ValidationException::withMessages(['data.game'=>'Choose Minecraft or another game.']);
             }
             if (!CreatorAccess::admin() || CreatorAccess::nodes()->count() === 1) {
                 $state['allocation_id'] = Allocation::query()->where('node_id', $state['node_id'] ?? 0)->whereNull('server_id')->orderBy('id')->value('id');
@@ -829,11 +877,10 @@ class CreateMinecraftServer extends Page implements HasForms
                 // Downloaded after the response, so creating the server is not slowed down by Steam.
                 app()->terminating(fn () => \Simplify\Panel\Services\SteamArt::apply($server, $art));
             }
-            // The accepted EULA is written with the other settings once installation finishes.
-            if (($state['game'] ?? 'minecraft') === 'minecraft' && !in_array(config('queue.default'), ['sync', 'null'], true)) {
-                $prepared = [...$prepared, 'eula' => true];
-                // The modpack's icon, unless the pack ships its own server-icon.png.
-                if ($modpackIcon !== null) $prepared = [...$prepared, 'icon' => $modpackIcon, 'icon_if_missing' => true];
+            // The Minecraft EULA is accepted on the server page when installation finishes (setup view).
+            // The modpack's icon, unless the pack ships its own server-icon.png.
+            if ($modpackIcon !== null && !in_array(config('queue.default'), ['sync', 'null'], true)) {
+                $prepared = [...$prepared, 'icon' => $modpackIcon, 'icon_if_missing' => true];
             }
             $warnings = [];
             if ($prepared) {
@@ -848,7 +895,7 @@ class CreateMinecraftServer extends Page implements HasForms
                 Notification::make()->title('Server created; setup needs attention')->body(implode(' ', $warnings))->warning()->send();
             }
             Notification::make()->title('Server created')
-                ->body(($state['game']??'minecraft')==='minecraft' ? 'Installation has started. Your EULA acceptance and settings will be applied before you start the server. The server remains stopped.' : 'Installation has started. Check the server for progress.')
+                ->body('Installation has started. Follow it on the server page; the server stays stopped until you start it.')
                 ->success()->send();
             $this->redirect(\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') ? \Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(['server'=>$server->uuid],panel:'app') : Console::getUrl(panel: 'server', tenant: $server));
         } catch (ValidationException $exception) {
@@ -871,7 +918,7 @@ class CreateMinecraftServer extends Page implements HasForms
             return $this->buildOtherPayload($state);
         }
         $type = (string) ($state['server_type'] ?? '');
-        if (!in_array($type, ['vanilla', 'plus', 'modded'], true)) {
+        if (!in_array($type, MinecraftCatalog::TYPES, true)) {
             throw ValidationException::withMessages(['data.server_type' => 'Choose a server type.']);
         }
 
@@ -903,7 +950,7 @@ class CreateMinecraftServer extends Page implements HasForms
         // Prevent selecting an incompatible egg accidentally in the normal workflow.
         $projectId = (string) ($state['modpack_project'] ?? '');
         $versionId = (string) ($state['modpack_version'] ?? '');
-        $originalEgg = $type === 'modded' ? ModpackCatalog::egg($projectId) : MinecraftCatalog::eggForType($type);
+        $originalEgg = $type === 'modded' ? ModpackCatalog::egg($projectId) : MinecraftCatalog::eggForType($type, $state['server_software'] ?? null);
         if (!$originalEgg) {
             throw ValidationException::withMessages(['data.egg_id' => 'The required egg is unavailable. Continue Version & Content again to import it automatically.']);
         }
@@ -911,7 +958,7 @@ class CreateMinecraftServer extends Page implements HasForms
             throw ValidationException::withMessages(['data.egg_id' => 'Use the egg selected by SSC.']);
         }
         $minecraftVersion = (string) ($state['minecraft_version'] ?? '');
-        if ($type !== 'modded' && !preg_match('/^\d+\.\d+(?:\.\d+)?$/', $minecraftVersion)) {
+        if (MinecraftCatalog::usesVersion($type) && !preg_match('/^\d+\.\d+(?:\.\d+)?$/', $minecraftVersion)) {
             throw ValidationException::withMessages(['data.minecraft_version' => 'Select a valid Minecraft version.']);
         }
 

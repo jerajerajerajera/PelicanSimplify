@@ -74,8 +74,8 @@ final class AdminPages
         if (!user()?->isAdmin()) return [];
         $items = [];
         try {
-            if (FeatureSettings::enabled('easy_creator') && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => 'Create server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(['game' => 'minecraft'], panel: 'app'), 'icon' => 'plus'];
-            if (FeatureSettings::enabled('game_creator') && Extensions::canCreate()) $items[] = ['key' => 'gamecreator', 'label' => 'Create other server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(['game' => 'other'], panel: 'app'), 'icon' => 'gamepad'];
+            // One Server Maker for Minecraft and other games.
+            if ((FeatureSettings::enabled('easy_creator') || FeatureSettings::enabled('game_creator')) && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => 'Create server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app'), 'icon' => 'plus'];
             $plugins = \App\Filament\Admin\Resources\Plugins\PluginResource::class;
             if (\Simplify\Panel\Filament\Admin\Pages\ManagePeople::canAccess() && FeatureSettings::enabled('legacy_pages')) {
                 $items[] = ['key' => 'legacyusers', 'label' => 'Users (legacy)', 'url' => \App\Filament\Admin\Resources\Users\UserResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'players'];

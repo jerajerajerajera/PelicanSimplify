@@ -7,9 +7,21 @@
     "name": "Blightfall",
     "sha256": "7ee2c9a36fe463249b9f175fafc218ea71073a57079899b96d3fa8ee3535a3e1"
   },
+  "egg-bungeecord.json": {
+    "name": "Bungeecord",
+    "sha256": "13fcb6f711738507b8ca96abaa27903f69c8b8e01c3f27652f746b3f7107a926"
+  },
   "egg-curseforge-generic.json": {
     "name": "CurseForge Generic",
     "sha256": "0bf537677134641686c5fd5306c4a705b0ab813dc82542eb6696530660d8f795"
+  },
+  "egg-fabric.json": {
+    "name": "Fabric",
+    "sha256": "0e06c53cd9877276c9e73540d4bdb072d6301889dba2b1ce51f60fac8bd82994"
+  },
+  "egg-forge.json": {
+    "name": "Forge Minecraft",
+    "sha256": "58a0c50686dd8ca334ac367e25af751eff0074dc5ad52362b3dfe7833a03cf97"
   },
   "egg-ftb-server.json": {
     "name": "FTB Server",
@@ -23,9 +35,21 @@
     "name": "Modrinth Generic",
     "sha256": "e9230b8f31c9beddc0aba00bf753aa349297ff08483e3c9151b0b34e3d61c5a6"
   },
+  "egg-neoforge.json": {
+    "name": "NeoForge",
+    "sha256": "1c13510d9fd6557113fceac58c1fb16228a2014e18d9edc4a38df4cac3af0cc5"
+  },
   "egg-paper.json": {
     "name": "Paper",
     "sha256": "7f6796b4b5fcee550399d8aa42a742edcd5b01e0e026e58b1642415fb84eee57"
+  },
+  "egg-purpur.json": {
+    "name": "Purpur",
+    "sha256": "2ffacd62882c5627e790242316bbdb3e61373a49793bc23b4a1ac992212a5a66"
+  },
+  "egg-quilt.json": {
+    "name": "Quilt",
+    "sha256": "3b4fac03b873541b174acc48800a33c42b6433afe43880ca839fe9437f2fe195"
   },
   "egg-tekkit-classic.json": {
     "name": "Tekkit Classic",
@@ -55,8 +79,16 @@
     "name": "The 1.7.10 Pack",
     "sha256": "facd19992dee2bcc8fde6ca5130da574116228373aacf6c44b324fa302f19329"
   },
+  "egg-vanilla-bedrock.json": {
+    "name": "Vanilla Bedrock",
+    "sha256": "bf780eddefc49541c4ebf2a08ea98e22758991f59390ba6bec9149895e8f84d9"
+  },
   "egg-vanilla-minecraft.json": {
     "name": "Vanilla Minecraft",
     "sha256": "9456d0b0e93112ee92ef071e7738d73b3c76a62fb6103fb37c8a8c8e8372a515"
+  },
+  "egg-velocity.json": {
+    "name": "Velocity",
+    "sha256": "e9fe3acb612d90c8c91aef3426dc986aecc9cc00827c23a5a79a75deeb18f675"
   }
 }

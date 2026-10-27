@@ -10,3 +10,13 @@ Vanilla/Paper/Modrinth definitions pinned to upstream commit c6f2262eb351054d1be
 Vanilla: java/vanilla/pterodactyl-egg-vanilla-minecraft.json
 Paper: java/paper/pterodactyl-egg-paper.json
 Modrinth: java/modrinth/egg-modrinth-generic.json
+
+Added 2026-10-27 for the combined server creator, same upstream commit c6f2262eb351054d1be44d3f6a3a605ae163d682:
+Purpur: java/purpur/egg-pterodactyl-purpur.json
+Fabric: java/fabric/egg-pterodactyl-fabric.json
+Forge: java/forge/pterodactyl-egg-forge-minecraft.json
+NeoForge: java/neoforge/egg-pterodactyl-neo-forge.json
+Quilt: java/quilt/egg-pterodactyl-quilt.json
+Bedrock: bedrock/bedrock/egg-pterodactyl-vanilla-bedrock.json
+Velocity: proxy/java/velocity/egg-pterodactyl-velocity.json
+BungeeCord: proxy/java/bungeecord/pterodactyl-egg-bungeecord.json

@@ -129,7 +129,7 @@
       loading: false,
       closingCreator: false,
       modalRequest: 0,
-      createGame: 'minecraft',
+      createGame: 'server',
       settingsSection: 'settings',
       settingsChanged: false,
       // Server page
@@ -1687,30 +1687,37 @@
         }
       },
       createFrameUrl() {
-        const url = this.frameUrl(this.createGame === 'minecraft' ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
+        const url = this.frameUrl(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.createGame === 'other' && this.boot.game_create_url ? this.boot.game_create_url : this.boot.legacy_create_url);
         if (!url) return '';
         const target = new URL(url);
-        if (this.createGame !== 'native') target.searchParams.set('game', this.createGame);
+        // The Server Maker shows Minecraft and the other games together; a game in the link opens straight on it.
+        if (['minecraft', 'other'].includes(this.createGame)) target.searchParams.set('game', this.createGame);
         return target.href;
       },
       /** Simplify's own creators (Minecraft, other games) fill the popup edge to edge; Pelican's form is a native page. */
       createFrameKind() {
-        return this.createGame === 'minecraft' || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
+        return ['server', 'minecraft'].includes(this.createGame) || (this.createGame === 'other' && this.boot.game_create_url) ? 'create' : 'native';
       },
       canCreateGame(game) {
+        // 'server' is the Server Maker (Minecraft and/or other games, whichever add-ons are on).
+        if (game === 'server') return !!this.boot.can_create && (this.canCreateGame('minecraft') || (this.canCreateGame('other') && !!this.boot.game_create_url));
         // 'native' is the only choice when the easy creator is off (Pelican's own form, administrators).
         return !!this.boot.can_create && (game === 'minecraft' || (game === 'other' && !!this.boot.game_create_url) || !!this.boot.legacy_create_url) && ['minecraft', 'other', 'native'].includes(game) && (this.boot.create_games || ['minecraft', 'other']).includes(game);
+      },
+      /** Pelican's own form for other games: administrators, when the game add-on is off but Minecraft is on. */
+      pelicanFormForOthers() {
+        return !this.boot.game_create_url && !this.canCreateGame('native') && this.canCreateGame('other');
       },
       /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
       createChoices() {
         return [
-          { key: 'minecraft', label: 'Minecraft server', icon: 'creeper' },
-          { key: 'other', label: 'Other server', icon: 'gamepad' },
+          { key: 'server', label: 'Server', icon: 'plus' },
+          { key: 'other', label: 'Other server (Pelican form)', icon: 'gamepad' },
           { key: 'native', label: 'New server', icon: 'host' },
-        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'minecraft' ? this.canCreateGame('minecraft') : !this.canCreateGame('native') && this.canCreateGame('other')));
+        ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'server' ? this.canCreateGame('server') : this.pelicanFormForOthers()));
       },
-      openCreate(game = 'minecraft') {
-        if (!['minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
+      openCreate(game = 'server') {
+        if (!['server', 'minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
         this.openPopup('create');
       },
@@ -1732,7 +1739,7 @@
         try {
           const current = new URL(frame.contentWindow.location.href, location.origin);
           const list = new URL(this.boot.list_url, location.origin);
-          const creator = new URL(this.createGame === 'minecraft' ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
+          const creator = new URL(['server', 'minecraft'].includes(this.createGame) ? this.boot.create_url : this.boot.legacy_create_url, location.origin);
           if (current.origin === location.origin) {
             completed = current.pathname === list.pathname && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(current.searchParams.get('server') || '');
             if (completed) createdUrl = current.href;
@@ -2037,7 +2044,7 @@
         if (this.modal === 'alias') return 'Change server alias';
         if (this.modal === 'background') return 'Server background';
         if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Simplify settings';
-        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
+        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Server Maker';
         if (this.modal === 'account') return 'Profile';
         if (this.modal === 'notifications') return 'Notifications';
         if (this.modal === 'inbox') return 'Notifications';
