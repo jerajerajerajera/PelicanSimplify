@@ -20,5 +20,5 @@ check(C::software('plus',null)==='paper'&&C::software('plus','purpur')==='purpur
 check(C::eggFile('modded')===null&&C::eggFile('unknown')===null,'modpacks pick their egg per provider; unknown types have none');
 check(C::usesVersion('loader')&&!C::usesVersion('bedrock')&&!C::usesVersion('proxy')&&!C::usesVersion('modded'),'only vanilla, plugins and mods take a chosen Minecraft version');
 check(C::javaServer('modded')&&!C::javaServer('bedrock')&&!C::javaServer('proxy'),'Bedrock and proxies have no Java server properties or EULA');
-check(C::isMinecraftEgg('Forge Minecraft')&&C::isMinecraftEgg('Vanilla Bedrock')&&C::isMinecraftEgg('Velocity')&&!C::isMinecraftEgg('Valheim')&&!C::isMinecraftEgg('Rust'),'Minecraft eggs stay out of the other-games list');
+check(C::isMinecraftEgg('Forge Minecraft')&&C::isMinecraftEgg('Vanilla Bedrock')&&C::isMinecraftEgg('Velocity')&&C::isMinecraftEgg('Tekkit Classic')&&!C::isMinecraftEgg('Valheim')&&!C::isMinecraftEgg('Arma Reforger')&&!C::isMinecraftEgg('Rust'),'Minecraft eggs stay out of the other-games list');
 }

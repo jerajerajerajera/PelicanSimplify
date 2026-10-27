@@ -63,7 +63,8 @@ final class MinecraftCatalog
     /** Eggs the Minecraft part of the creator covers, so the other-games list does not offer them twice. */
     public static function isMinecraftEgg(string $name): bool
     {
-        return preg_match('/minecraft|vanilla|paper|purpur|spigot|bukkit|folia|sponge|modrinth|curseforge|ftb|feed the beast|tekkit|hexxit|blightfall|b-team|forge|fabric|quilt|bedrock|pocketmine|nukkit|velocity|bungee|waterfall/i', $name) === 1;
+        // Whole words, so games such as Arma Reforger or Paperboy stay in the list.
+        return preg_match('/\\b(minecraft|vanilla|paper|purpur|spigot|bukkit|folia|sponge\\w*|modrinth|curseforge|ftb|feed the beast|tekkit\\w*|hexxit|blightfall|b-team|forge|neoforge|fabric|quilt|bedrock|pocketmine(-mp)?|nukkit|velocity|bungeecord|waterfall)\\b/i', $name) === 1;
     }
 
     public static function eggForType(string $type, ?string $software = null): ?Egg

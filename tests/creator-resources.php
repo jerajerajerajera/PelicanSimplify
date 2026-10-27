@@ -8,7 +8,7 @@ namespace Filament\Forms\Concerns {trait InteractsWithForms {}}
 namespace Filament\Forms\Contracts {interface HasForms {}}
 namespace Filament\Forms\Components {class Radio extends \Test\Component{}class Hidden extends \Test\Component{}class Select extends \Test\Component{}class TextInput extends \Test\Component{}class Toggle extends \Test\Component{}class Textarea extends \Test\Component{}class ViewField extends \Test\Component{}class FileUpload extends \Test\Component{}class Checkbox extends \Test\Component{}class KeyValue extends \Test\Component{}}
 namespace Filament\Schemas {class Schema extends \Test\Component{}}
-namespace Filament\Schemas\Components {class Wizard extends \Test\Component{}class Section extends \Test\Component{}class View extends \Test\Component{}}
+namespace Filament\Schemas\Components {class Group extends \Test\Component{}class Wizard extends \Test\Component{}class Section extends \Test\Component{}class View extends \Test\Component{}}
 namespace Filament\Schemas\Components\Wizard {class Step extends \Test\Component{}}
 namespace Filament\Schemas\Components\Utilities {class Set {public array $data=[];public function __invoke($key,$value){$this->data[$key]=$value;}}}
 namespace Illuminate\Support {class HtmlString {public function __construct($html){}}}

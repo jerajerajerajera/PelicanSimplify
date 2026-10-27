@@ -543,7 +543,7 @@ class CreateMinecraftServer extends Page implements HasForms
                     Step::make('Content')
                         ->label(fn (Get $get) => $this->gameNow($get) === 'other' ? 'Game settings' : 'Minecraft')
                         ->schema([
-                            Section::make('Minecraft')->hiddenLabel()->visible(fn (Get $get) => $this->gameNow($get) === 'minecraft')->schema([
+                            \Filament\Schemas\Components\Group::make()->visible(fn (Get $get) => $this->gameNow($get) === 'minecraft')->schema([
                             Radio::make('server_type')
                                 ->label('Server type')->hiddenLabel()
                                 ->view('pelican-simplify::filament.admin.card-radio')

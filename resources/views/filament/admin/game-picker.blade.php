@@ -12,7 +12,12 @@
                  x-data="{ busy: false, pick(type) {
                     if (this.busy) return;
                     this.busy = true;
-                    $wire.pickGame('minecraft', type).then(() => setTimeout(() => this.$root.closest('.fi-sc-wizard')?.querySelector('.ssc-next-button')?.click(), 0)).finally(() => this.busy = false);
+                    // Moves on once Livewire has re-rendered and enabled Next again (the section itself may be replaced).
+                    const next = (tries) => {
+                        const button = [...document.querySelectorAll('.fi-sc-wizard .ssc-next-button')].find((b) => b.offsetParent);
+                        if (button && !button.disabled) button.click(); else if (tries > 0) setTimeout(() => next(tries - 1), 100);
+                    };
+                    $wire.pickGame('minecraft', type).then(() => next(30)).finally(() => this.busy = false);
                  } }">
             <div class="ssc-minecraft-head">
                 <span class="ssc-minecraft-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path fill="currentColor" stroke="none" d="M6 7h4v4H6zm8 0h4v4h-4zm-4 4h4v3h3v5h-3v-3h-4v3H7v-5h3z"/></svg></span>
