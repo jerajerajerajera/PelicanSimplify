@@ -4,7 +4,6 @@ namespace Simplify\Panel\Services;
 use App\Models\Server;
 use App\Enums\SubuserPermission;
 use App\Repositories\Daemon\DaemonFileRepository;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 final class Packages
 {
@@ -29,6 +28,7 @@ final class Packages
         $loader=match(true) { str_contains($egg,'neoforge')=>'neoforge',str_contains($egg,'fabric')=>'fabric',str_contains($egg,'quilt')=>'quilt',str_contains($egg,'forge')=>'forge',str_contains($egg,'purpur')=>'purpur',str_contains($egg,'paper')=>'paper',str_contains($egg,'spigot')=>'spigot',str_contains($egg,'bukkit')=>'bukkit',default=>'' };
         $version='';foreach($s->variables as $v) if(in_array($v->env_variable,['MINECRAFT_VERSION','MC_VERSION','SERVER_VERSION'])) $version=(string)($v->server_value??$v->default_value);
         if ($version==='latest') $version='';
+        if ($version==='' && $kind==='plugins') { try { $version=self::runningVersion($s); } catch(\Throwable) {} }
         $env=[];foreach($s->variables as $v)$env[$v->env_variable]=(string)($v->server_value??$v->default_value);
         $provider=str_contains($egg,'ftb')?'ftb':(str_contains($egg,'modrinth')?'modrinth':'');
         if($provider){
@@ -48,67 +48,116 @@ final class Packages
         if (($kind==='plugins')!==in_array($loader,['paper','purpur','spigot','bukkit'],true)) $loader='';
         return ['loader'=>$loader,'version'=>$version,'directory'=>$kind==='plugins'?'/plugins':'/mods','kind'=>$kind];
     }
-    private static function json(string $path,array $query=[]): array
+    /** Paper/Purpur servers set to "latest": the version they really run, from the file Paper writes on start. */
+    private static function runningVersion(Server $s): string
     {
-        return Http::acceptJson()->withHeaders(['User-Agent'=>'PelicanSimplify/0.1.0'])->connectTimeout(3)->timeout(10)->get('https://api.modrinth.com/v2/'.$path,$query)->throw()->json();
+        return (string) Remember::value('simplify.packages.running.'.$s->uuid, 300, function () use ($s): ?string {
+            $history = json_decode(app(DaemonFileRepository::class)->setServer($s)->getContent('/version_history.json', 65536), true);
+            return preg_match('/\(MC: ([0-9][0-9a-zA-Z._-]{0,39})\)/', (string) ($history['currentVersion'] ?? ''), $m) ? $m[1] : null;
+        }, 60);
+    }
+    private static function target(Server $s,string $version): array
+    {
+        $ctx=self::context($s);abort_unless($ctx['loader'],422,'This server software does not support installable mods or plugins.');
+        $version=$ctx['version']?:$version;abort_unless(preg_match('/^[0-9a-zA-Z._-]{1,40}$/',$version),422,'Enter the exact Minecraft version first.');
+        return [...$ctx,'version'=>$version];
     }
     public static function search(Server $s,string $q,string $version): array
     {
-        Access::permission($s,SubuserPermission::FileRead);$ctx=self::context($s);
-        abort_unless($ctx['loader'],422,'This server software does not support installable mods or plugins.');
-        $version=$ctx['version']?:$version;abort_unless(preg_match('/^[0-9a-zA-Z._-]{1,40}$/',$version),422,'Enter the exact Minecraft version first.');
-        $types=$ctx['directory']==='/plugins'?['project_type:plugin','project_type:mod']:['project_type:mod'];
-        $loaders=in_array($ctx['loader'],['paper','purpur'],true)?['paper','spigot','bukkit']:($ctx['loader']==='spigot'?['spigot','bukkit']:[$ctx['loader']]);
-        $result=self::json('search',['query'=>mb_substr($q,0,80),'limit'=>12,'facets'=>json_encode([$types,array_map(fn($l)=>'categories:'.$l,$loaders),['versions:'.$version]])]);
-        return ['context'=>[...$ctx,'version'=>$version],'items'=>array_map(fn($h)=>array_intersect_key($h,array_flip(['project_id','title','description','icon_url','slug'])), $result['hits']??[])];
+        Access::permission($s,SubuserPermission::FileRead);$ctx=self::target($s,$version);
+        $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind']));
+        abort_if(array_filter($results)===[],503,'The plugin sites did not answer. Try again in a moment.');
+        return ['context'=>$ctx,'items'=>PluginSources::merge($results,$q,$ctx['version'],$ctx['kind']),'offline'=>array_keys(array_filter($results,fn($r)=>$r===null))];
+    }
+    /** What "Install" would download for each search result: version, site and whether it is made for this version. */
+    public static function details(Server $s,array $keys,string $version): array
+    {
+        Access::permission($s,SubuserPermission::FileRead);$ctx=self::target($s,$version);
+        return array_map(fn($r)=>array_diff_key($r,array_flip(['url','needs'])),PluginSources::resolveMany($keys,$ctx['version'],$ctx['loader'],$ctx['kind']));
     }
     public static function installed(Server $s): array
     {
         Access::permission($s,SubuserPermission::FileRead);
         $ctx=self::context($s);if(!$ctx['loader'])return[];
         try { $files=app(DaemonFileRepository::class)->setServer($s)->getDirectory($ctx['directory']); } catch(\Throwable) { $files=[]; }
-        $tracked=JsonFile::read('simplify/packages/'.$s->uuid.'.json');
-        return ['context'=>$ctx,'tracked'=>$tracked,'files'=>array_values(array_filter($files,fn($f)=>str_ends_with(strtolower($f['name']??''),'.jar')))];
+        $tracked=self::tracked($s);$byFile=[];foreach($tracked as $t)$byFile[$t['filename']]=$t;
+        $items=[];
+        foreach($files as $f){
+            $name=(string)($f['name']??'');if(!preg_match('/\.jar(\.disabled)?$/i',$name))continue;
+            $on=!str_ends_with(strtolower($name),'.disabled');$t=$byFile[preg_replace('/\.disabled$/i','',$name)]??null;
+            [$title,$v]=PluginSources::fromFilename($name);
+            $items[]=['file'=>$name,'enabled'=>$on,'title'=>$t['title']??$title,'version'=>$t['version']??$v,'source'=>$t['source']??'','label'=>$t?(PluginSources::LABELS[$t['source']]??'').(!empty($t['via'])?' via '.$t['via']:''):'Added by hand',
+                'key'=>$t['key']??'','icon'=>$t['icon']??'','page'=>$t['page']??'','size'=>(int)($f['size']??0)];
+        }
+        usort($items,fn($a,$b)=>strcasecmp($a['title'],$b['title']));
+        return ['context'=>$ctx,'items'=>$items];
     }
-    public static function install(Server $s,string $project,string $version): void
+    /** Tracked installs, keyed by "source:id". Entries from before 0.5.3 were Modrinth only, keyed by project id. */
+    private static function tracked(Server $s): array
+    {
+        $out=[];
+        foreach(JsonFile::read('simplify/packages/'.$s->uuid.'.json') as $id=>$t){
+            if(!is_array($t)||empty($t['filename']))continue;
+            $key=$t['key']??('modrinth:'.($t['project_id']??$id));
+            $out[$key]=['key'=>$key,'source'=>$t['source']??'modrinth',...$t];
+        }
+        return $out;
+    }
+    private static function saveTracked(Server $s,array $tracked): void
+    {
+        Storage::disk('local')->put('simplify/packages/'.$s->uuid.'.json',json_encode($tracked,JSON_THROW_ON_ERROR));
+    }
+    public static function install(Server $s,string $key,string $version,bool $anyway=false,array $card=[]): array
     {
         Access::permission($s,SubuserPermission::FileRead);
         Access::permission($s,SubuserPermission::FileCreate);Access::permission($s,SubuserPermission::FileUpdate);Access::offline($s);
-        abort_unless(preg_match('/^[a-zA-Z0-9_-]{1,128}$/',$project),422);
-        $ctx=self::context($s);abort_unless($ctx['loader'],422);
-        $version=$ctx['version']?:$version;abort_unless(preg_match('/^[0-9a-zA-Z._-]{1,40}$/',$version),422);
-        $loaders=in_array($ctx['loader'],['paper','purpur'],true)?['paper','spigot','bukkit']:($ctx['loader']==='spigot'?['spigot','bukkit']:[$ctx['loader']]);
-        $releases=self::json('project/'.rawurlencode($project).'/version',['loaders'=>json_encode($loaders),'game_versions'=>json_encode([$version])]);
-        $release=null;foreach($releases as $r) if(($r['version_type']??'')==='release' && array_intersect($loaders,$r['loaders']??[]) && in_array($version,$r['game_versions']??[])){$release=$r;break;}
-        abort_unless($release,422,'No compatible stable release was found.');
-        $file=null;foreach($release['files']??[] as $f) if(($f['primary']??false) && str_ends_with(strtolower($f['filename']??''),'.jar')){$file=$f;break;}
-        abort_unless($file && preg_match('/^[a-zA-Z0-9._+ -]+\.jar$/',$file['filename']) && parse_url($file['url'],PHP_URL_SCHEME)==='https' && parse_url($file['url'],PHP_URL_HOST)==='cdn.modrinth.com',422,'Unsupported package download.');
-        $path='simplify/packages/'.$s->uuid.'.json';$tracked=JsonFile::read($path);
+        if(preg_match('/^[a-zA-Z0-9_-]{1,128}$/',$key))$key='modrinth:'.$key;
+        abort_unless(PluginSources::parseKey($key),422,'Unknown plugin.');
+        $ctx=self::target($s,$version);
+        $release=PluginSources::resolve($key,$ctx['version'],$ctx['loader'],$ctx['kind']);
+        abort_unless($release['installable']??false,422,$release['reason']??'This plugin cannot be installed automatically.');
+        abort_unless($release['fits']||$anyway,409,'There is no release for Minecraft '.$ctx['version'].'.');
+        abort_unless(PluginSources::downloadable($release['url'],$release['filename']),422,'Unsupported package download.');
+        $tracked=self::tracked($s);
+        // Modrinth lists dependencies by project; refuse until required ones are installed.
+        foreach($release['needs']??[] as $dep) abort_unless(isset($tracked['modrinth:'.$dep]),422,'Install required dependency '.$dep.' first.');
         $files=app(DaemonFileRepository::class)->setServer($s);
-        // Dependencies are shown in the UI; refuse automatic install until required
-        // dependencies are already tracked or are included by this package.
-        foreach($release['dependencies']??[] as $dep) if(($dep['dependency_type']??'')==='required' && !empty($dep['project_id'])) {
-            abort_unless(isset($tracked[$dep['project_id']]),422,'Install required dependency '.$dep['project_id'].' first.');
-        }
-        if (isset($tracked[$project]) && $tracked[$project]['filename']!==$file['filename']) {
-            Access::permission($s,SubuserPermission::FileDelete);
-            $archive='/.simplify-package-backups';try{$files->createDirectory('.simplify-package-backups','/')->throw();}catch(\Throwable){$files->getDirectory($archive);}
-            $files->renameFiles('/',[['from'=>ltrim($ctx['directory'],'/').'/'.$tracked[$project]['filename'],'to'=>'.simplify-package-backups/'.time().'-'.$tracked[$project]['filename']]])->throw();
-        }
-        $files->pull($file['url'],$ctx['directory'],['filename'=>$file['filename'],'foreground'=>true])->throw();
-        $tracked[$project]=['project_id'=>$project,'filename'=>$file['filename'],'version_id'=>$release['id'],'version'=>$release['version_number'],'directory'=>$ctx['directory']];
-        Storage::disk('local')->put($path,json_encode($tracked,JSON_THROW_ON_ERROR));
+        $old=$tracked[$key]['filename']??null;
+        if ($old!==null && $old!==$release['filename']) self::archive($s,$ctx['directory'],[$old]);
+        $files->pull($release['url'],$ctx['directory'],['filename'=>$release['filename'],'foreground'=>true])->throw();
+        $tracked[$key]=['key'=>$key,'source'=>$release['source'],'via'=>$release['via']??'','filename'=>$release['filename'],'version'=>$release['version'],'version_id'=>$release['version_id'],'directory'=>$ctx['directory'],
+            'title'=>mb_substr((string)($card['title']??($tracked[$key]['title']??PluginSources::fromFilename($release['filename'])[0])),0,80),
+            'icon'=>str_starts_with((string)($card['icon']??''),'https://')?$card['icon']:($tracked[$key]['icon']??''),
+            'page'=>str_starts_with((string)($card['page']??''),'https://')?$card['page']:($tracked[$key]['page']??''),'fits'=>$release['fits']];
+        self::saveTracked($s,$tracked);
+        return ['version'=>$release['version'],'label'=>$release['label'],'fits'=>$release['fits']];
+    }
+    /** Moves files to the backup folder instead of deleting them. */
+    private static function archive(Server $s,string $directory,array $names): void
+    {
+        Access::permission($s,SubuserPermission::FileDelete);
+        $files=app(DaemonFileRepository::class)->setServer($s);
+        try{$files->createDirectory('.simplify-package-backups','/')->throw();}catch(\Throwable){$files->getDirectory('/.simplify-package-backups');}
+        $files->renameFiles('/',array_map(fn($n)=>['from'=>ltrim($directory,'/').'/'.$n,'to'=>'.simplify-package-backups/'.time().'-'.$n],$names))->throw();
     }
     public static function remove(Server $s,string $filename): void
     {
         Access::permission($s,SubuserPermission::FileDelete);Access::permission($s,SubuserPermission::FileUpdate);Access::offline($s);
-        abort_unless(preg_match('/^[a-zA-Z0-9._+ -]+\.jar$/',$filename),422);
+        abort_unless(preg_match('/^[a-zA-Z0-9._+ -]+\.jar(\.disabled)?$/',$filename),422);
         $ctx=self::context($s);abort_unless($ctx['loader'],422);
-        $files=app(DaemonFileRepository::class)->setServer($s);
-        try{$files->createDirectory('.simplify-package-backups','/')->throw();}catch(\Throwable){$files->getDirectory('/.simplify-package-backups');}
-        $files->renameFiles('/',[['from'=>ltrim($ctx['directory'],'/').'/'.$filename,'to'=>'.simplify-package-backups/'.time().'-'.$filename]])->throw();
-        $path='simplify/packages/'.$s->uuid.'.json';$tracked=JsonFile::read($path);
-        foreach($tracked as $id=>$item)if($item['filename']===$filename)unset($tracked[$id]);
-        Storage::disk('local')->put($path,json_encode($tracked,JSON_THROW_ON_ERROR));
+        self::archive($s,$ctx['directory'],[$filename]);
+        $base=preg_replace('/\.disabled$/','',$filename);
+        self::saveTracked($s,array_filter(self::tracked($s),fn($t)=>$t['filename']!==$base));
+    }
+    /** Off = renamed to .jar.disabled, which the server skips on start. */
+    public static function toggle(Server $s,string $filename,bool $on): void
+    {
+        Access::permission($s,SubuserPermission::FileUpdate);Access::offline($s);
+        abort_unless(preg_match('/^[a-zA-Z0-9._+ -]+\.jar(\.disabled)?$/',$filename),422);
+        $ctx=self::context($s);abort_unless($ctx['loader'],422);
+        $base=preg_replace('/\.disabled$/','',$filename);$target=$on?$base:$base.'.disabled';
+        if($target===$filename)return;
+        $dir=ltrim($ctx['directory'],'/');
+        app(DaemonFileRepository::class)->setServer($s)->renameFiles('/',[['from'=>$dir.'/'.$filename,'to'=>$dir.'/'.$target]])->throw();
     }
 }
