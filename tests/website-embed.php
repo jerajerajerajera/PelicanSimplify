@@ -51,5 +51,14 @@ check(E::visible($s),'"Show on the website" is stored with the server');
 $code=E::snippet('https://panel.example.com/');
 check(str_contains($code['script'],'src="https://panel.example.com/simplify/embed.js"')&&str_contains($code['script'],'id="simplify-servers"'),'the script snippet points at this panel');
 check(str_contains($code['iframe'],'src="https://panel.example.com/simplify/embed"'),'the iframe snippet points at this panel');
+
+// One code per page: a single server (also as its own status page), one game, or a hand-picked set such as a server group.
+$one=E::snippet('https://panel.example.com',['server'=>'1a2b3c4d']);
+check(str_contains($one['script'],'data-server="1a2b3c4d"')&&str_contains($one['iframe'],'/simplify/embed?server=1a2b3c4d')&&$one['page']==='https://panel.example.com/simplify/embed?server=1a2b3c4d&page=1','one server: script, iframe and status page');
+$game=E::snippet('https://panel.example.com',['game'=>'Valheim Plus']);
+check(str_contains($game['script'],'data-game="Valheim Plus"')&&str_contains($game['iframe'],'?game=Valheim%20Plus'),'one game is kept with its spaces');
+$set=E::snippet('https://panel.example.com',['servers'=>['aa11','bb22','bad id"']]);
+check(str_contains($set['script'],'data-servers="aa11,bb22"')&&str_contains($set['iframe'],'?servers=aa11%2Cbb22'),'a hand-picked set keeps only valid short IDs');
+check(!str_contains(E::snippet('https://panel.example.com',['game'=>'<script>'])['script'],'<script>"'),'a game name with markup is not put in the code');
 echo "All website embed checks passed.\n";
 }

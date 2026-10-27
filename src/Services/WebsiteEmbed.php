@@ -16,6 +16,8 @@ final class WebsiteEmbed
     public const TTL=60;
     /** At most this many servers are published, so one request never walks a whole host. */
     public const LIMIT=100;
+    public const ID='/^[A-Za-z0-9]{1,16}$/';
+    public const GAME='/^[\\pL\\pN .:+\'()&_-]{1,60}$/u';
     private const DEFAULTS=['style'=>'auto','accent'=>'','corners'=>'round','players'=>true,'modpack'=>true,'join'=>true,'title'=>''];
 
     public static function enabled(): bool { return FeatureSettings::enabled('website_embed'); }
@@ -86,7 +88,7 @@ final class WebsiteEmbed
         $alias=(string)(ServerMetadata::read($s)['server_alias']??'');
         return [
             'id'=>(string)$s->uuid_short,'name'=>mb_substr($alias!==''?$alias:(string)$s->name,0,80),
-            'game'=>$minecraft?'Minecraft':mb_substr((string)($s->egg?->name??'Game'),0,60),'software'=>$minecraft&&!$pack?mb_substr((string)$s->egg?->name,0,60):null,
+            'game'=>self::game($s),'software'=>$minecraft&&!$pack?mb_substr((string)$s->egg?->name,0,60):null,
             'version'=>mb_substr((string)($status['version']??''),0,40),'modpack'=>$pack,'state'=>$state,
             'players'=>isset($status['players'])?(int)$status['players']:null,'max_players'=>isset($status['max_players'])?(int)$status['max_players']:null,
             'motd'=>mb_substr((string)($status['motd']??''),0,200),'address'=>self::address($s),
@@ -123,10 +125,37 @@ final class WebsiteEmbed
         return !str_starts_with($host,'fd7a:115c:a1e0');
     }
     /** The lines to paste into a website; $origin is the panel's address. */
-    public static function snippet(string $origin): array
+    /** The game a server shows under: Minecraft for every Minecraft egg, otherwise the egg's name. */
+    public static function game(Server $s): string
     {
-        $origin=rtrim($origin,'/');
-        return ['script'=>'<div id="simplify-servers"></div>'."\n".'<script src="'.$origin.'/simplify/embed.js" defer></script>',
-            'iframe'=>'<iframe src="'.$origin.'/simplify/embed" title="Game servers" style="width:100%;height:420px;border:0" loading="lazy"></iframe>'];
+        return ManagedSettings::minecraft($s)?'Minecraft':mb_substr((string)($s->egg?->name??'Game'),0,60);
+    }
+    /** The games of the servers on the website, for "only this game" in the code. */
+    public static function games(): array
+    {
+        $games=[];
+        foreach(Server::query()->with('egg')->orderBy('name')->limit(500)->get() as $s)if(self::shown($s))$games[self::game($s)]=true;
+        $games=array_keys($games);sort($games);
+        return $games;
+    }
+    /**
+     * Code for another website. $show limits it to one server (['server'=>short id]), one game (['game'=>name]) or a
+     * hand-picked set (['servers'=>[short ids]]); empty shows every server that is on the website. The page link is the
+     * same list as a page of its own, for example a status page for one server.
+     */
+    public static function snippet(string $origin,array $show=[]): array
+    {
+        $origin=rtrim($origin,'/');$attr='';$query=[];
+        if(is_string($show['server']??null)&&preg_match(self::ID,$show['server'])){$attr=' data-server="'.$show['server'].'"';$query['server']=$show['server'];}
+        elseif(is_string($show['game']??null)&&preg_match(self::GAME,$show['game'])){$attr=' data-game="'.htmlspecialchars($show['game'],ENT_QUOTES).'"';$query['game']=$show['game'];}
+        elseif(is_array($show['servers']??null)){
+            $ids=array_values(array_filter(array_map('strval',$show['servers']),fn($id)=>preg_match(self::ID,$id)===1));
+            if($ids!==[]){$list=implode(',',array_slice($ids,0,self::LIMIT));$attr=' data-servers="'.$list.'"';$query['servers']=$list;}
+        }
+        $qs=$query===[]?'':'?'.http_build_query($query,'','&amp;',PHP_QUERY_RFC3986);
+        $page=$origin.'/simplify/embed?'.http_build_query([...$query,'page'=>1],'','&',PHP_QUERY_RFC3986);
+        return ['script'=>'<div id="simplify-servers"></div>'."\n".'<script src="'.$origin.'/simplify/embed.js"'.$attr.' defer></script>',
+            'iframe'=>'<iframe src="'.$origin.'/simplify/embed'.$qs.'" title="Game servers" style="width:100%;height:'.(isset($query['server'])?'190':'420').'px;border:0" loading="lazy"></iframe>',
+            'page'=>$page];
     }
 }
