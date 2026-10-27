@@ -600,3 +600,20 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ssc-navbar .ssc-progress-phone::after { content: none; }
   .ssc-navbar .ssc-draft-bar { padding: 0 3px; }
 }
+
+/* Minecraft step: server types as compact cards (icon beside the name and its line), software as one row of
+   buttons. Both still grow with their text; nothing is smaller than it needs to be. */
+.ssc-type-options.ssc-cards { gap: 10px; }
+.ssc-type-options .ssc-card-content { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-content: center; align-items: center; justify-content: start; gap: 2px 12px; min-height: 76px; padding: 12px 14px; text-align: left; }
+.ssc-type-options .ssc-card-content > .ssc-outline-icon { grid-column: 1; grid-row: 1 / span 2; width: 40px; height: 40px; padding: 9px; }
+.ssc-type-options .ssc-card-title { grid-column: 2; font-size: 14px; }
+.ssc-type-options .ssc-card-description { grid-column: 2; max-width: none; }
+.ssc-chip-options.ssc-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+.ssc-chip-options .ssc-card { flex: 0 0 auto; }
+.ssc-chip-options .ssc-card-content { flex-direction: row; min-height: 40px; padding: 0 18px; border-radius: var(--ps-radius); }
+.ssc-chip-options .ssc-card-title { font-size: 14px; font-weight: 600; }
+@media (max-width: 600px) {
+  .ssc-type-options.ssc-cards .ssc-card-content { min-height: 68px; padding: 10px 12px; }
+  .ssc-chip-options.ssc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ssc-chip-options.ssc-cards .ssc-card-content { display: flex; justify-content: center; min-height: 40px; padding: 0 12px; }
+}
