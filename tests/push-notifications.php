@@ -65,6 +65,14 @@ $request=Http::$sent[0];
 check(str_starts_with($request['headers']['Authorization'],'vapid t=')&&str_ends_with($request['headers']['Authorization'],'k='.$public)&&$request['headers']['Content-Encoding']==='aes128gcm'&&!str_contains($request['body'],'There'),'VAPID header and an encrypted body');
 check(P::send($jera,'updates',['title'=>'Update'])===0&&count(Http::$sent)===2,'nothing for a kind that is turned off');
 check(P::settings($jera)['devices'][0]['last_sent_at']!==null,'the last notification time is kept');
+// Once per device: a device that received a key is skipped; a failed send is tried again later; re-subscribing keeps it.
+Http::$sent=[];
+check(P::send($jera,'announcements',['title'=>'A'],'announcement-x')===2&&P::send($jera,'announcements',['title'=>'A'],'announcement-x')===0&&count(Http::$sent)===2,'each device gets a once-key only once');
+Http::$status=500;check(P::send($jera,'announcements',['title'=>'B'],'announcement-y')===0,'a failed send is not remembered');Http::$status=201;
+check(P::send($jera,'announcements',['title'=>'B'],'announcement-y')===2,'so the next round delivers it');
+P::subscribe($jera,$phone,'Chrome on Android',$now+20);
+check(P::send($jera,'announcements',['title'=>'A'],'announcement-x')===0,'subscribing the same browser again keeps what it received');
+check(!array_key_exists('received',P::settings($jera)['devices'][0]),'received keys stay on the server');
 Http::$sent=[];
 check(P::test($jera,$laptop['endpoint'])['ok']&&count(Http::$sent)===1&&Http::$sent[0]['url']===$laptop['endpoint'],'the test goes to this device only');
 check(!P::test($sam,$laptop['endpoint'])['ok'],'no test for a device of someone else');

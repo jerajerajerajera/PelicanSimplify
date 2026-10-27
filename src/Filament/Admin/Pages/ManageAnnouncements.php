@@ -143,8 +143,8 @@ final class ManageAnnouncements extends Page
             TextInput::make('button_label')->label('Button text')->placeholder('Open')->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
             Toggle::make('pinned')->label('Pin to everyone\'s notifications')
                 ->helperText('Stays at the top of the bell for everyone who sees it, until it ends. People can still unpin the bar on their own screen.'),
-            Toggle::make('push')->label('Also send as app notification')
-                ->helperText('To everyone who turned on notifications (account menu → Notifications). Sent once, when the announcement starts.'),
+            Toggle::make('push')->label('Also send as app notification')->default(true)
+                ->helperText('To everyone who turned on notifications (account menu → Notifications), once per device. Devices that turn them on within a day of the start still get it.'),
             ...$this->ingameFields(),
         ];
     }
