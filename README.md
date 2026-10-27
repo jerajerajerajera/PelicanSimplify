@@ -13,7 +13,7 @@ Simplify is an all-in-one plugin for [Pelican](https://github.com/pelican/panel)
 
 ## Add-ons
 
-You can switch each add-on on or off by itself, in the first setup or later in Simplify settings. You only use what you need.
+You can use all of Simplify, or pick Only the add-ons in the first setup. Pelican then keeps its own dashboard, server pages and look, and the add-ons you switch on appear in Pelican's menu under Simplify. Each add-on can be switched on or off by itself, and you can change your choice later in Simplify settings.
 
 - Server Maker: create Minecraft servers (Vanilla, plugins, mods, modpacks or Bedrock) and 170+ other games step by step.
 - Plugin manager: install, update and remove Pelican plugins, and browse the Hub. Updates roll back by themselves when something breaks.
@@ -193,6 +193,9 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 - Installs through Pelican's own plugin import *(Pelican)*
 - Setup checks for PHP, Node.js, the database, queue, storage and upload limits, each with fix instructions
 - Plugin manager with safe updates: backup first, checksum check, and automatic rollback if an update fails
+- Egg updates: Simplify checks every egg for a new version and tells root admins. Update one or all, update eggs without servers automatically, or test a new egg on a temporary server first
+- Every egg update keeps the previous version, so you can put it back, and Move servers brings existing servers to the new startup command or image
+- Only the add-ons: keep Pelican's own panel and use just the add-ons you pick
 - Stable, Beta and Snapshot update channels, and optional automatic plugin updates
 
 </details>
@@ -201,7 +204,7 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 
 Simplify is a large change to how your panel looks and works. Please read this first.
 
-- It replaces a lot of the panel. The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode.
+- It replaces a lot of the panel. The server overview, the server pages and server creation become Simplify's. Optionally it also takes over the Users, Roles and Plugins pages, and admins can use host mode. If you only want the add-ons, pick Only the add-ons in the setup and Pelican keeps its own look.
 - Everything can be switched off. Each part has its own switch in Simplify settings, and you can turn off the whole Simplify dashboard. Pelican's original panel always stays available: the Legacy links in Admin tools lead to it, and even if you hide those links the pages keep working.
 - It does not touch your running servers. Servers, eggs, nodes and permissions stay Pelican's own. Simplify is a different way to look at and manage them.
 - Other plugins are partly supported inside Simplify. They keep working in Pelican's original panel. Simplify shows their admin and server pages under "External", and their account pages, widgets and buttons inside its own pages.
