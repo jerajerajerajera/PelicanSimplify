@@ -25,8 +25,23 @@ foreach (glob($lang.'/*', GLOB_ONLYDIR) as $dir) {
         check($problems === [], "$locale/".basename($file).' matches English'.($problems ? ': '.implode('; ', $problems) : ''));
     }
 }
-// English is the source: JS reads each key it uses from there.
-$js = file_get_contents(__DIR__.'/../resources/views/js/core.js');
-preg_match_all("/\\bt\\('([a-z0-9_]+)'/", $js, $used);
+// Every key the code asks for exists in English: t('group.key') in the JavaScript bundles (js.php) and
+// 'pelican-simplify::file.key' in PHP and Blade.
+$get = function (array $texts, string $path) { foreach (explode('.', $path) as $part) { if (!is_array($texts) || !array_key_exists($part, $texts)) return null; $texts = $texts[$part]; } return $texts; };
 $english = require $lang.'/en/js.php';
-foreach (array_unique($used[1]) as $key) check(isset($english[$key]), "core.js text $key exists in English");
+foreach (glob(__DIR__.'/../resources/views/js/*.js') as $file) {
+    preg_match_all("/\\b(?:t|tc|sscText|Simplify\\.t|Simplify\\.tc)\\('([a-z0-9_]+(?:\\.[A-Za-z0-9_]+)+)'/", file_get_contents($file), $used);
+    $missing = array_values(array_filter(array_unique($used[1]), fn ($key) => !is_string($get($english, $key))));
+    check($missing === [], basename($file).' only uses texts that exist in English'.($missing ? ': '.implode(', ', $missing) : ''));
+}
+$sources = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__.'/..', FilesystemIterator::SKIP_DOTS));
+$missing = [];
+foreach ($sources as $file) {
+    if (!str_ends_with($file->getFilename(), '.php') || preg_match('#/(lang|tests|vendor|dist|node_modules)/#', $file->getPathname())) continue;
+    preg_match_all("/pelican-simplify::([a-z0-9_-]+)\\.([A-Za-z0-9_.]+)'/", file_get_contents($file->getPathname()), $used, PREG_SET_ORDER);
+    foreach ($used as [, $group, $key]) {
+        $texts = is_file($lang."/en/$group.php") ? require $lang."/en/$group.php" : [];
+        if (!is_string($get($texts, $key))) $missing[] = "$group.$key in ".basename($file->getPathname());
+    }
+}
+check($missing === [], 'PHP and Blade only use texts that exist in English'.($missing ? ': '.implode(', ', array_unique($missing)) : ''));

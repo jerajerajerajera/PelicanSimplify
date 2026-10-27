@@ -1,5 +1,8 @@
 /* Wizard helpers for the server creator (draft autosave) and the first Simplify setup (step navigation). */
 
+/** Text from lang/<locale>/js.php (core.js); the key itself when core.js is missing. */
+window.sscText = (key, params) => (window.Simplify?.t ? window.Simplify.t(key, params) : key);
+
 /**
  * Calls `onChange` when the Filament wizard may have changed step. Livewire 4 can replace the wizard
  * element on re-render, so this does not hold on to one Alpine instance: it re-checks right after
@@ -20,12 +23,12 @@ window.sscWatchWizardStep = function (root, onChange, fallbackMs) {
 window.sscDraft = function (wire) {
   return {
     deleteConfirm: false, dirty: false, saving: false, editingText: false, switching: false, uploading: false, completed: false,
-    status: 'Draft ready', savedCount: 0, hasSaved: true, refreshCount: 0, revision: 0, savedRevision: 0,
+    status: '', savedCount: 0, hasSaved: true, refreshCount: 0, revision: 0, savedRevision: 0,
     step: 1, furthestStep: 1, stepMenu: false, stopWatching: null, saveTimer: null, pending: null,
     init() {
       this.step = Number(wire.draftStep) || 1;
       this.furthestStep = Math.max(this.step, Number(wire.furthestStep) || 1);
-      this.status = wire.draftRestored ? 'Draft restored' : 'Draft ready';
+      this.status = sscText(wire.draftRestored ? 'draft.restored' : 'draft.ready');
       this.hasSaved = true;
       // The browser's own leave-page warning is the only dialog a page may not restyle.
       this.unload = (event) => {
@@ -77,7 +80,7 @@ window.sscDraft = function (wire) {
         this.changed();
         await this.flush();
       } catch {
-        this.status = 'Could not switch steps — try again';
+        this.status = sscText('draft.switch_failed');
       } finally {
         this.switching = false;
       }
@@ -123,7 +126,7 @@ window.sscDraft = function (wire) {
       if (this.completed) return;
       this.revision++;
       this.dirty = true;
-      this.status = 'Unsaved changes';
+      this.status = sscText('common.unsaved_changes');
     },
     /** Copies deferred (wire:model) field values into Livewire without sending a request on its own. */
     capture() {
@@ -139,7 +142,7 @@ window.sscDraft = function (wire) {
     async flush(force = true) {
       if (this.completed) return;
       if (this.uploading) {
-        this.status = 'Wait for the icon upload to finish';
+        this.status = sscText('draft.wait_upload');
         throw Error('Upload still in progress');
       }
       clearTimeout(this.saveTimer);
@@ -152,18 +155,18 @@ window.sscDraft = function (wire) {
       }
       const revision = this.revision;
       this.saving = true;
-      this.status = 'Saving draft…';
+      this.status = sscText('draft.saving');
       this.pending = (async () => {
         try {
           await wire.saveDraft(this.currentStep(), Math.max(this.furthestStep, this.currentStep()));
           this.savedRevision = revision;
           this.dirty = this.revision !== revision;
-          this.status = this.dirty ? 'Unsaved changes' : 'Draft saved';
+          this.status = sscText(this.dirty ? 'common.unsaved_changes' : 'draft.saved');
           this.hasSaved = true;
           if (!this.dirty) this.savedCount++;
         } catch (error) {
           this.dirty = true;
-          this.status = 'Draft not saved — try again';
+          this.status = sscText('draft.not_saved');
           throw error;
         } finally {
           this.saving = false;
@@ -187,7 +190,7 @@ window.sscDraft = function (wire) {
           this.deleteConfirm = true;
           return;
         }
-        const ok = await window.Simplify.confirm({ title: 'Discard this draft?', message: 'Everything you filled in for this server is removed. This cannot be undone.', confirmLabel: 'Discard draft', tone: 'danger' });
+        const ok = await window.Simplify.confirm({ title: sscText('draft.discard_title'), message: sscText('draft.discard_message'), confirmLabel: sscText('draft.discard'), tone: 'danger' });
         if (!ok) return;
         this.deleteConfirm = true;
       }
@@ -265,8 +268,7 @@ window.simplifyHubBrowser = function (hub) {
     shot: 0,
     count(type) { return items.filter((item) => item.type === type).length; },
     typeLabel(type, n, title = false) {
-      const word = { theme: 'theme', plugin: 'plugin', language: 'language' }[type] + (n === 1 ? '' : 's');
-      return title ? word[0].toUpperCase() + word.slice(1) : word;
+      return window.Simplify?.tc ? window.Simplify.tc('hub.' + type + (title ? '_title' : ''), n) : type;
     },
     setType(type) { this.type = type; this.maker = null; },
     list() {
@@ -289,8 +291,8 @@ window.simplifyHubBrowser = function (hub) {
     close() { this.open = null; },
     makerLine(item) {
       const count = this.makers[item.type]?.find((m) => m.name === item.author)?.count || 1;
-      const parts = [count + ' ' + this.typeLabel(item.type, count) + ' on the Hub'];
-      if (item.based) parts.push('based on the work of ' + item.based.name);
+      const parts = [sscText('hub.on_hub', { items: count + ' ' + this.typeLabel(item.type, count) })];
+      if (item.based) parts.push(sscText('hub.based_on', { name: item.based.name }));
       return parts.join(' · ');
     },
     initial(name) { return (Array.from(String(name).replace(/[^\p{L}\p{N}]/gu, ''))[0] || '?').toUpperCase(); },

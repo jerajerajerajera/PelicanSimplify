@@ -13,11 +13,36 @@
   const media = matchMedia('(prefers-color-scheme: dark)');
   let options = window.simplifyThemeConfig || {};
   let preference = 'system';
-  // Texts from lang/<locale>/js.php in the user's Pelican language (English fills the gaps); :name placeholders.
-  const t = (key, params = {}) => {
-    let text = window.simplifyLang?.[key] ?? key;
+  // Texts from lang/<locale>/js.php in the user's Pelican language (English fills the gaps). Keys use dots
+  // ('common.cancel'), placeholders Laravel's :name, and tc() Laravel's plural forms ('{0} none|{1} one|[2,*] :count').
+  const fill = (text, params) => {
     for (const name of Object.keys(params).sort((a, b) => b.length - a.length)) text = text.split(':' + name).join(String(params[name]));
     return text;
+  };
+  const lookup = (key) => {
+    const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), window.simplifyLang);
+    return typeof found === 'string' ? found : key;
+  };
+  const t = (key, params = {}) => fill(lookup(key), params);
+  const tc = (key, count, params = {}) => {
+    const forms = lookup(key).split('|');
+    let text = null;
+    for (const form of forms) {
+      const exact = form.match(/^\s*\{(\d+)\}\s*/);
+      const range = form.match(/^\s*\[(\d+|\*),\s*(\d+|\*)\]\s*/);
+      if (exact && Number(exact[1]) === count) text = form.slice(exact[0].length);
+      else if (range && (range[1] === '*' || count >= Number(range[1])) && (range[2] === '*' || count <= Number(range[2]))) text = form.slice(range[0].length);
+      if (text !== null) break;
+    }
+    if (text === null) {
+      const plain = forms.map((form) => form.replace(/^\s*(\{\d+\}|\[(\d+|\*),\s*(\d+|\*)\])\s*/, ''));
+      let index = count === 1 ? 0 : 1;
+      if (plain.length > 2) {
+        try { index = { one: 0, two: 1, few: 1 }[new Intl.PluralRules(root.lang || 'en').select(count)] ?? 2; } catch { index = count === 1 ? 0 : 2; }
+      }
+      text = plain[Math.min(index, plain.length - 1)];
+    }
+    return fill(text, { count, ...params });
   };
   try {
     const saved = localStorage.getItem(KEY);
@@ -307,8 +332,8 @@
       else message.remove();
       const cancel = wrap.querySelector('[data-cancel]');
       const confirm = wrap.querySelector('[data-confirm]');
-      cancel.textContent = opts.cancelLabel || t('cancel');
-      confirm.textContent = opts.confirmLabel || t('confirm');
+      cancel.textContent = opts.cancelLabel || t('common.cancel');
+      confirm.textContent = opts.confirmLabel || t('common.confirm');
       confirm.classList.add(opts.tone === 'danger' ? 'is-danger' : 'is-primary');
       let field = null;
       if (opts.input || opts.requireText) {
@@ -358,6 +383,7 @@
   window.Simplify = {
     ui: true,
     t,
+    tc,
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),
@@ -470,7 +496,7 @@
         field.innerHTML = '<svg aria-hidden="true"><use href="#ps-search"/></svg>';
         const input = pdoc.createElement('input');
         input.type = 'search';
-        input.placeholder = search.placeholder || t('search');
+        input.placeholder = search.placeholder || t('common.search');
         input.setAttribute('aria-label', input.placeholder);
         input.value = search.value;
         input.addEventListener('input', () => {
@@ -494,7 +520,7 @@
         else bar.append(btn);
       }
       if (filters) {
-        const btn = button(filters, label(filters) || t('filter'), false);
+        const btn = button(filters, label(filters) || t('common.filter'), false);
         btn.querySelectorAll('.fi-icon-btn-badge-ctn').forEach((el) => el.remove());
         btn.addEventListener('click', () => openFilters(filters));
         bar.append(btn);
@@ -545,12 +571,12 @@
     });
   };
   document.addEventListener('livewire:init', hookLivewire);
-  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = t('save_changes'), onSave, onDiscard = null, discardMessage = t('discard_message') }) => {
+  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = t('common.save_changes'), onSave, onDiscard = null, discardMessage = t('common.discard_message') }) => {
     hookLivewire();
     const bar = document.createElement('div');
     bar.className = 'ps-savebar' + (fixed ? ' is-fixed' : '');
     bar.setAttribute('role', 'region');
-    bar.setAttribute('aria-label', t('save_changes'));
+    bar.setAttribute('aria-label', t('common.save_changes'));
     bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">Unsaved changes</span></span>'
       + (onDiscard ? '<button type="button" class="ps-savebar-discard">Discard</button>' : '')
       + '<button type="button" class="ps-savebar-save"><svg class="ps-savebar-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg><span class="ps-savebar-label"></span></button>';
@@ -567,7 +593,7 @@
         bar.classList.toggle('is-dirty', on);
         button.disabled = !on;
         button.removeAttribute('aria-disabled');
-        text.textContent = t('unsaved_changes');
+        text.textContent = t('common.unsaved_changes');
       },
       saving() {
         bar.classList.add('is-saving');
@@ -580,7 +606,7 @@
         // Nothing left to save: the check is a status, not a button.
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
-        text.textContent = t('all_changes_saved');
+        text.textContent = t('common.all_changes_saved');
         clearTimeout(timer);
         timer = setTimeout(() => bar.classList.remove('is-saved'), 1600);
       },
@@ -600,7 +626,7 @@
       onSave(api);
     });
     bar.querySelector('.ps-savebar-discard')?.addEventListener('click', () => {
-      dialog({ title: t('discard_title'), message: discardMessage, confirmLabel: t('discard'), tone: 'danger' }).then((ok) => ok && onDiscard(api));
+      dialog({ title: t('common.discard_title'), message: discardMessage, confirmLabel: t('common.discard'), tone: 'danger' }).then((ok) => ok && onDiscard(api));
     });
     // Changed means: the values differ from the last saved state. Switching tabs, focusing or clicking
     // around never counts, and putting a value back hides the bar again.
@@ -714,7 +740,7 @@
         window.dispatchEvent(new CustomEvent('simplify:installable'));
         return choice?.outcome === 'accepted';
       }
-      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: t('home_screen_title'), message: t('home_screen_message'), confirmLabel: t('ok'), cancelLabel: t('close') });
+      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: t('common.home_screen_title'), message: t('common.home_screen_message'), confirmLabel: t('common.ok'), cancelLabel: t('common.close') });
       return false;
     },
   };
