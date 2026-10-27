@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3-snapshot.3 (snapshot channel)
+Explain this error: with your own Anthropic API key, an Explain button in the console tells you in plain words what went wrong and what to try.
+- Off until a root administrator enters an API key under Simplify settings → Error explanations; each administrator pays for their own questions.
+- Works for everyone who can see the console, or for administrators only. IP addresses, e-mail addresses, passwords and tokens are removed from the log lines before they are sent.
+
 ## 0.5.3-snapshot.2 (snapshot channel)
 Announcements stay pinned while they are live, and Customize server page remembers how you like the console.
 - Announcements now also show above server pages.
