@@ -416,6 +416,13 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item:hover { background: var(--ps-raised); }
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
 .ps-notify-item > * { min-width: 0; overflow-wrap: anywhere; }
+/* ✕ top right: clears one notification to Archived. */
+.ps-notify-item { position: relative; }
+.ps-notify-item > strong { padding-right: 22px; }
+.ps-notify-close { position: absolute; top: 8px; right: 6px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); cursor: pointer; opacity: .7; }
+.ps-notify-close svg { width: 12px; height: 12px; }
+@media (pointer: coarse) { .ps-notify-close { top: 4px; right: 2px; width: 32px; height: 32px; } }
+.ps-notify-close:is(:hover, :focus-visible) { background: var(--ps-raised); color: var(--ps-ink); opacity: 1; }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
 .ps-plugin-widgets { flex: none; margin-bottom: 12px; overflow: hidden; border-radius: var(--ps-radius-lg); }
