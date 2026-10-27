@@ -1136,6 +1136,43 @@
         const known = this.hostSections().flatMap((section) => section.pages).find((item) => new URL(item.url, location.origin).pathname === admin);
         this.openAdminPage(known || { key: 'link', label: action.label || 'Admin', url: admin });
       },
+      /** Mark as unread on one read notification: back in the list (also out of Archived) and counted again. */
+      async markNotificationUnread(item) {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive, panelUnread: this.panelUnread };
+        if (item.pelican) {
+          const back = { ...item, unread: true, archived: false };
+          const listed = this.feed.items.some((n) => n.key === item.key);
+          this.feed = { ...this.feed, items: listed ? this.feed.items.map((n) => (n.key === item.key ? back : n)) : [back, ...this.feed.items] };
+          this.archive = { ...this.archive, items: this.archive.items.filter((n) => n.key !== item.key) };
+          this.panelUnread += 1;
+        } else {
+          this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, unread: true, archived: false } : a));
+        }
+        if (typeof wire.markNotificationUnread !== 'function') return;
+        try {
+          const items = await wire.markNotificationUnread(item.key, !!item.pelican);
+          if (Array.isArray(items)) this.announcements = items;
+          // A notification from Archived returns in its place by date.
+          if (item.pelican && item.archived && this.feed.loaded) this.loadNotificationPage(true);
+        } catch {
+          Object.assign(this, before);
+          this.toast('The notification could not be marked as unread.', 'warn');
+        }
+      },
+      /** Mark read on one notification: Pelican's by id, announcements by key. */
+      async markNotificationRead(item) {
+        if (item.pelican) return this.markPanelNoticesRead([item.key]);
+        const before = this.announcements;
+        this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, unread: false } : a));
+        if (typeof wire.markAnnouncementRead !== 'function') return;
+        try {
+          const items = await wire.markAnnouncementRead(item.key);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          this.announcements = before;
+          this.toast('The announcement could not be marked as read.', 'warn');
+        }
+      },
       async markPanelNoticesRead(keys) {
         const ids = keys.filter(Boolean);
         if (!ids.length) return;

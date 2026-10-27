@@ -77,6 +77,15 @@ final class PanelNotifications
         $user->unreadNotifications()->whereIn('id', $ids)->update(['read_at' => now()]);
     }
 
+    /** Mark as unread: these notifications of this account are unread again. */
+    public static function markUnread(array $ids): void
+    {
+        $ids = array_values(array_filter($ids, fn ($id): bool => is_string($id) && preg_match('/^[0-9a-f-]{36}$/i', $id) === 1));
+        $user = user();
+        if ($ids === [] || !$user || !method_exists($user, 'notifications')) return;
+        $user->notifications()->whereIn('id', $ids)->update(['read_at' => null]);
+    }
+
     private static function present(object $notification): ?array
     {
         $data = $notification->data ?? null;
