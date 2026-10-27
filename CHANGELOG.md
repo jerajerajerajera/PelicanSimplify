@@ -1,5 +1,10 @@
 # Changes
 
+## 0.6.0-snapshot.10 (snapshot channel)
+Two fixes.
+- The hover and selected row in the settings menu fill the whole menu width again.
+- The Host health tile is one compact row. It no longer jumps to full width after a refresh, and the short CPU and RAM line only shows on phones.
+
 ## 0.6.0-snapshot.9 (snapshot channel)
 Host mode is flatter, and pinned announcements show there too.
 - In host mode, Settings and the Server Maker sit flat in the workspace without a card.
