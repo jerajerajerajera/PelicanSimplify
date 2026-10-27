@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.3-snapshot.5 (snapshot channel)
+Less scrolling and no double frames in menus, popups and embedded pages.
+- Simplify settings scrolls in one place instead of two.
+- On phones, setting descriptions in embedded pages wrap instead of running off the screen, and menus inside the phone menu scroll as one list.
+- Top-bar menus use the height of the screen before they scroll.
+- Create other server no longer shows an extra frame around the creator.
+- Toggle buttons on Pelican pages only colour the chosen option.
+
 ## 0.5.3-snapshot.4 (snapshot channel)
 Explain this error can now also read the panel log and the Wings log for root administrators.
 - The Explain popup lets root administrators choose between the console, the panel log and the Wings log of the server's node.
