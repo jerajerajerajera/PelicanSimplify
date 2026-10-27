@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'No se pudo contactar con :host desde el panel. Comprueba que el servidor del panel puede conectarse a internet.',
+        'no_key' => 'Introduce primero una clave API.',
+        'not_set_up' => 'Las explicaciones de errores no están configuradas en este panel.',
+        'unknown_log' => 'Registro desconocido.',
+        'read_panel' => 'No se pudo leer el registro del panel.',
+        'read_wings' => 'No se pudo leer el registro de Wings. Inténtalo de nuevo cuando el node esté accesible.',
+        'read_console' => 'No se pudo leer la consola desde Wings. Inténtalo de nuevo cuando el node esté accesible.',
+        'too_many' => 'Has hecho muchas preguntas en poco tiempo. Inténtalo de nuevo en :count minuto.|Has hecho muchas preguntas en poco tiempo. Inténtalo de nuevo en :count minutos.',
+        'daily_limit' => 'Este panel ha alcanzado su límite diario de :count explicaciones. Inténtalo de nuevo mañana.',
+        'no_answer' => ':model no pudo explicar estas líneas. Inténtalo de nuevo cuando el error vuelva a aparecer.',
+    ],
+    'test' => [
+        'works' => 'La clave funciona con :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Consola',
+            'empty' => 'La consola está vacía, así que aún no hay nada que explicar.',
+        ],
+        'panel' => [
+            'label' => 'Registro del panel',
+            'empty' => 'El registro del panel no tiene avisos ni errores ahora mismo.',
+        ],
+        'wings' => [
+            'label' => 'Registro de Wings',
+            'empty' => 'El registro de Wings de este node está vacío.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'No hay líneas de registro guardadas para este plugin.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Inicia sesión en el panel primero y vuelve a abrir esta página.',
+        'owner_only' => 'Solo el propietario del panel (un root admin) puede usar esta página.',
+        'expired' => 'Esta dirección ha caducado o se ha sustituido por una más nueva.',
+        'no_key' => 'No hay ninguna clave API de :provider guardada en este panel. Un root admin la añade en Ajustes de Simplify, en Explicaciones de errores.',
+        'no_key_terminal' => 'Si el panel no abre, ejecuta :command en el servidor del panel. Pide una clave y no la guarda.',
+        'choose_node' => 'Elige un node.',
+        'panel_log' => 'Registro del panel',
+        'wings_log_of' => 'Registro de Wings de :node',
+        'wings_log' => 'Registro de Wings',
+        'no_database' => 'No se pudo contactar con la base de datos, así que los registros de Wings no están disponibles aquí. El registro del panel suele mostrar por qué.',
+        'lead' => 'Usa esta página cuando el panel muestre un error como 500 y sus páginas normales no abran. La IA elegida en Ajustes de Simplify lee el registro y te dice si algo va mal y cómo arreglarlo.',
+        'check_panel' => 'Revisar el registro del panel',
+        'check_wings' => 'Revisar el registro de Wings de :node',
+        'wait' => 'Revisando el registro. Puede tardar hasta un minuto.',
+        'attention' => 'Algo necesita atención',
+        'in_order' => 'Todo parece en orden',
+        'noticed' => '¿Has notado algo?',
+        'checked' => ':count línea revisada por :model. Antes se quitaron direcciones, correos y contraseñas.|:count líneas revisadas por :model. Antes se quitaron direcciones, correos y contraseñas.',
+        'terminal_hint' => 'Si el panel no abre, ejecuta :command en el servidor del panel, o :url_command para una dirección temporal a esta página.',
+        'broken' => 'Esta página no pudo terminar',
+        'title' => 'Explicar errores del panel',
+    ],
+    'failures' => [
+        'invalid_key' => 'La clave API de :name no es válida. Un administrador puede introducir una nueva en Ajustes de Simplify.',
+        'no_credit' => 'La cuenta de :name de esta clave no tiene saldo. Un administrador puede añadir saldo o revisar la facturación con :name.',
+        'forbidden' => 'Esta clave API de :name no puede usar el modelo elegido. Un administrador puede elegir otro modelo en Ajustes de Simplify.',
+        'no_model' => 'El modelo de :name elegido no está disponible para esta clave. Un administrador puede elegir otro modelo en Ajustes de Simplify.',
+        'busy' => ':name está ocupado para esta clave ahora mismo. Inténtalo de nuevo en un minuto.',
+        'unavailable' => ':name no está disponible temporalmente. Inténtalo de nuevo en un minuto.',
+        'other_status' => ':name no pudo responder a esta pregunta (error :status). Inténtalo más tarde.',
+        'other' => ':name no pudo responder a esta pregunta. Inténtalo más tarde.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude de Anthropic',
+            'key_help' => 'Crea una clave en console.anthropic.com → API keys. Cada pregunta se cobra a esa cuenta de Anthropic, normalmente unos céntimos o menos; pon allí un límite mensual por seguridad.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini de Google',
+            'key_help' => 'Crea una clave en aistudio.google.com → Get API key. Las preguntas se cobran a ese proyecto de Google Cloud, normalmente menos de un céntimo cada una; pon allí un presupuesto por seguridad.',
+        ],
+        'openai' => [
+            'label' => 'GPT de OpenAI',
+            'key_help' => 'Crea una clave en platform.openai.com → API keys. Cada pregunta se cobra a esa cuenta de OpenAI, normalmente unos céntimos o menos; pon allí un presupuesto mensual por seguridad.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'mejores respuestas, unos céntimos',
+        'about_a_cent' => 'alrededor de un céntimo',
+        'cheapest' => 'el más barato',
+        'good_answers_under_a_cent' => 'buenas respuestas, menos de un céntimo',
+        'good_answers_about_a_cent' => 'buenas respuestas, alrededor de un céntimo',
+    ],
+];
