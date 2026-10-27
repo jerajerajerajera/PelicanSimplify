@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3-snapshot.10 (snapshot channel)
+Error explanations can use Claude, GPT or Gemini.
+- Under Simplify settings → Error explanations, a root administrator picks the AI and enters its own API key; each AI keeps its own key.
+- The emergency page and `php artisan simplify:explain` use the chosen AI.
+
 ## 0.5.3-snapshot.9 (snapshot channel)
 Explain this error still works when the panel itself shows an error page, and update notifications say what is new.
 - Root administrators can open a plain emergency page at /simplify/explain that does not need the rest of the panel.
