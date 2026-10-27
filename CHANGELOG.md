@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.3-snapshot.12 (snapshot channel)
+Announcements can also be sent in game.
+- Pick all servers, server groups or single servers, and optionally repeat the message while the announcement shows.
+- Simplify uses each game's own chat command (say for Minecraft) and only sends to running servers; root administrators can change the command per egg under Announcements → In-game commands.
+- The announcements list shows the result of the last send.
+
 ## 0.5.3-snapshot.11 (snapshot channel)
 New servers show how far their installation is, and Clear read tidies your notifications.
 - New servers show an installation view with steps and the installation log; the normal page returns with "Your server is ready" and a Start button.
