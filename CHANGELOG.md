@@ -1,5 +1,16 @@
 # Changes
 
+## 0.6.0-beta.1 (beta channel)
+Simplify Server Maker: one creator for Minecraft and every other game (0.6.0-snapshot.1 below). The next stable release is 0.6.0.
+
+## 0.6.0-snapshot.1 (snapshot channel)
+Simplify Server Maker: one creator for Minecraft and every other game.
+- The dashboard has one Create server tile. The first step shows Minecraft with Vanilla, Plugins, Mods, Modpack and Bedrock, and a search over all other games below it.
+- New Minecraft types: Paper or Purpur for plugins, Fabric, Forge, NeoForge or Quilt for mods, the official Bedrock server, and Velocity or BungeeCord as a proxy.
+- The steps follow the chosen game; other games get a Game settings step.
+- The Minecraft EULA is no longer asked in the creator; it appears in the new server's setup view after installation.
+- Settings has default resources for Mods, Bedrock and Proxy too.
+
 ## 0.5.3-beta.13 (beta channel)
 Plugin search can include CurseForge (0.5.3-snapshot.16 below).
 

@@ -10,7 +10,10 @@ final class CreationDefaults
     {
         return ['vanilla'=>['cpu'=>100,'ram_gb'=>4,'disk_mb'=>10240],
             'plus'=>['cpu'=>150,'ram_gb'=>4,'disk_mb'=>10240],
-            'modded'=>['cpu'=>200,'ram_gb'=>4,'disk_mb'=>20480]];
+            'loader'=>['cpu'=>200,'ram_gb'=>4,'disk_mb'=>20480],
+            'modded'=>['cpu'=>200,'ram_gb'=>4,'disk_mb'=>20480],
+            'bedrock'=>['cpu'=>100,'ram_gb'=>2,'disk_mb'=>10240],
+            'proxy'=>['cpu'=>100,'ram_gb'=>2,'disk_mb'=>5120]];
     }
     public static function all(): array
     {
@@ -34,6 +37,7 @@ final class CreationDefaults
     {
         abort_unless(user()?->isRootAdmin(), 403);
         $rules = [];
+        $input = array_replace_recursive(self::all(), $input);
         foreach (array_keys(self::defaults()) as $type) {
             $rules[$type.'.cpu'] = 'required|integer|min:1|max:1600';
             $rules[$type.'.ram_gb'] = 'required|integer|min:1|max:128';

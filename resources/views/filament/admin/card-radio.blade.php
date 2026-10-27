@@ -23,6 +23,8 @@
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => $value === 'minecraft' ? 'vanilla' : 'game'])
                     @elseif ($name === 'server_type')
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => $value])
+                    @elseif ($name === 'server_software')
+                        {{-- Software choices are short names; no icon. --}}
                     @elseif ($name === 'backup_frequency')
                         @include('pelican-simplify::filament.admin.outline-icon', ['icon' => 'clock'])
                     @elseif (in_array($name, ['cpu_choice','disk_choice']))
