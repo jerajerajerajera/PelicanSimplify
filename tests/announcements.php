@@ -6,6 +6,7 @@ namespace Boy132\Announcements\Models {final class Announcement {public static a
 namespace {
 function report($e){}
 require_once __DIR__.'/../src/Services/JsonFile.php';
+require __DIR__.'/../src/Services/InGameAnnouncements.php';
 require __DIR__.'/../src/Services/Announcements.php';
 use Simplify\Panel\Services\Announcements as A;
 use Simplify\Panel\Services\PanelUpdates;

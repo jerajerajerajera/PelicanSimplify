@@ -421,6 +421,8 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 .ps-announcement-main strong { font-size: 14px; }
 .ps-announcement-main p { margin: 0; color: var(--ps-ink); font-size: 13px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
 .ps-announcement-main small { color: var(--ps-muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.ps-announcement-main .ps-announcement-ingame { display: flex; align-items: center; gap: 5px; }
+.ps-announcement-ingame .ps-ico { flex: none; width: 14px; height: 14px; }
 .ps-announcement .ps-badge.is-muted { color: var(--ps-muted); }
 .ps-announcement .ps-person-actions { justify-content: flex-end; min-width: 156px; }
 .ps-announcement-section { display: grid; gap: 8px; }

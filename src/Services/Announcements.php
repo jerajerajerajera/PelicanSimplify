@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Storage;
  * bars above the server overview and server pages and in the bell. Also shows the announcements of the Hub plugin "Announcements"
  * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). Live ones are pinned there;
  * each account can unpin one and pin it again from the bell. An admin can also pin one to everyone's notifications:
- * it then stays at the top of the bell until it ends, whatever the account does with its bar.
+ * it then stays at the top of the bell until it ends, whatever the account does with its bar. "Also send in game" posts it
+ * in the chat of game servers as well (InGameAnnouncements).
  */
 final class Announcements
 {
@@ -44,7 +45,7 @@ final class Announcements
     }
 
     /** Adds ($id null) or replaces an announcement; returns the saved row. Throws \InvalidArgumentException with a message for the form. */
-    public static function save(array $input,?string $id=null,string $author='',?int $now=null): array
+    public static function save(array $input,?string $id=null,string $author='',?int $now=null,?int $editor=null): array
     {
         $now??=time();
         $rows=self::all();
@@ -57,6 +58,7 @@ final class Announcements
         if($starts!==null&&$ends!==null&&$ends<=$starts)throw new \InvalidArgumentException('"Show until" must be after "Show from".');
         $link=self::buttonTarget($input);
         if(($input['link_type']??'none')!=='none'&&$link===null)throw new \InvalidArgumentException(($input['link_type']??'')==='url'?'Use a link that starts with https:// or with / for a page of this panel.':'Pick a server for the button.');
+        $ingame=InGameAnnouncements::fromInput($input,$old,$editor);
         $row=self::clean([
             'id'=>$old['id']??bin2hex(random_bytes(8)),
             'category'=>$input['category']??'info','title'=>$title,'text'=>$input['text']??'',
@@ -66,6 +68,7 @@ final class Announcements
             // Sent as an app notification once, when it starts; editing does not send it again.
             'push'=>!empty($input['push']),'pushed_at'=>$old['pushed_at']??null,
             'pinned'=>!empty($input['pinned']),
+            'ingame'=>$ingame,
         ]);
         $rows=array_values(array_filter($rows,fn(array $r):bool=>$r['id']!==$row['id']));
         array_unshift($rows,$row);
@@ -213,7 +216,8 @@ final class Announcements
         return ['id'=>$id,'category'=>isset(self::CATEGORIES[$row['category']??''])?$row['category']:'info','title'=>$title,'text'=>self::text($row['text']??''),
             'starts_at'=>$starts,'ends_at'=>$ends,'audience'=>isset(self::AUDIENCES[$row['audience']??''])?$row['audience']:'everyone','button'=>$button,
             'created_by'=>self::line($row['created_by']??'',64),'created_at'=>is_int($row['created_at']??null)?$row['created_at']:0,'updated_at'=>is_int($row['updated_at']??null)?$row['updated_at']:0,
-            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null,'pinned'=>($row['pinned']??false)===true];
+            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null,'pinned'=>($row['pinned']??false)===true,
+            'ingame'=>InGameAnnouncements::clean($row['ingame']??null)];
     }
 
     /** "5 minutes ago", "yesterday", … */
