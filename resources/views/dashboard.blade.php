@@ -218,8 +218,8 @@
                                         </div>
                                     </div>
                                     <div class="ps-customize-row" x-show="boot.features.host_health">
-                                        <div><strong>Host health</strong><small>A button in the top bar, a bar above your servers, or a bar at the bottom of the screen</small></div>
-                                        <div class="ps-segmented" role="group" aria-label="Host health">
+                                        <div><strong>Host health</strong><small>Where the health summary shows</small></div>
+                                        <div class="ps-segmented ps-health-place" role="group" aria-label="Host health">
                                             <template x-for="place in [{key:'top-bar',label:'Top bar'},{key:'above',label:'Above'},{key:'bottom',label:'Bottom'}]" :key="place.key">
                                                 <button type="button" :aria-pressed="overviewPreferences.healthPlace===place.key" x-on:click="setOverviewPreference('healthPlace', place.key); healthPopover=false; healthExpanded=false" x-text="place.label"></button>
                                             </template>

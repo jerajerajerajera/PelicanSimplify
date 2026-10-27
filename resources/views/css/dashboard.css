@@ -350,6 +350,7 @@ body:has(.ps) [data-ps-copyright-line] > * { display: inline; }
 .ps-health-pill.critical { --ps-tone: var(--ps-danger); }
 .ps-health-pill svg { width: 16px; height: 16px; fill: color-mix(in srgb, currentColor 18%, transparent); }
 .ps-health-pill[aria-expanded="true"] { border-color: var(--ps-tone); }
+.ps-health-place button { white-space: nowrap; }
 .ps-host-health { display: grid; grid-template-columns: minmax(200px, 1.2fr) repeat(4, minmax(0, 1fr)); align-items: center; gap: 18px; padding: 10px 16px; cursor: pointer; transition: background-color var(--ps-fast); }
 .ps-host-health:hover { background: color-mix(in srgb, var(--ps-raised) 40%, var(--ps-surface)); }
 .ps-host-health:focus-visible { outline: 2px solid var(--ps-accent); outline-offset: -2px; border-radius: var(--ps-radius-lg); }
