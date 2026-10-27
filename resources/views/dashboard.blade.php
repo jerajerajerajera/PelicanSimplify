@@ -462,7 +462,7 @@
                             {{-- The Server Maker: Minecraft and every other game in one creator. --}}
                             <button type="button" x-show="canCreateGame('server')" x-on:click="openCreate('server')" class="ps-create-card is-server" :style="creationAccent('server')" aria-label="Create server" aria-haspopup="dialog">
                                 <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-host"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><span>Create</span><strong>Server</strong></h3>
+                                <h3><strong>Create server</strong><span>Minecraft or any other game</span></h3>
                             </button>
                             {{-- Game add-on off: administrators still reach other games through Pelican's own form. --}}
                             <button type="button" x-show="pelicanFormForOthers()" x-on:click="openCreate('other')" class="ps-create-card is-other" :style="creationAccent('other')" aria-label="Create other server with Pelican's form" aria-haspopup="dialog">
