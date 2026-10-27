@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.3-snapshot.9 (snapshot channel)
+Explain this error still works when the panel itself shows an error page, and update notifications say what is new.
+- Root administrators can open a plain emergency page at /simplify/explain that does not need the rest of the panel.
+- `php artisan simplify:explain --url` gives a temporary link to that page without logging in, and `php artisan simplify:explain` explains the panel log, the Wings log or a server console right in the terminal.
+- Updates of Pelican, Wings, Simplify and plugins show a few lines from their release notes, with a link to the full notes.
+
 ## 0.5.3-snapshot.8 (snapshot channel)
 Notifications show everything now, and admins can pin an announcement to everyone's notifications.
 - The bell lists all notifications, also read ones, with Show more for older ones; Show all opens them in a large popup (full screen on phones) with New announcement for administrators.
