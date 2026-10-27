@@ -20,6 +20,7 @@ class CreatorAccess {public static bool $isAdmin=true;public static function adm
 class MinecraftCatalog {const TYPES=['vanilla','plus','loader','modded','bedrock','proxy'];const SOFTWARE=['plus'=>['paper'=>'Paper','purpur'=>'Purpur']];public static function eggForType($type,$software=null){return (object)['id'=>1];}public static function software($type,$software){return isset(self::SOFTWARE[$type])?($software?:array_key_first(self::SOFTWARE[$type])):null;}public static function javaServer($type){return !in_array($type,['bedrock','proxy'],true);}public static function usesVersion($type){return in_array($type,['vanilla','plus','loader'],true);}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function view($name){return new class{function render(){return '';}};}
 require __DIR__.'/../src/Filament/Admin/Pages/CreateMinecraftServer.php';
 function check($ok,$message){if(!$ok)throw new \RuntimeException($message);echo "PASS $message\n";}

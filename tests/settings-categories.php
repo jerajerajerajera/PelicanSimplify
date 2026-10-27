@@ -26,6 +26,7 @@ namespace Simplify\Panel\Services {
  class PerformanceSettings {public const FIELDS=['overview_seconds'=>['Overview','Help',30,10,600],'server_seconds'=>['Server','Help',20,5,600],'restart_seconds'=>['Restart','Help',3,2,60],'health_seconds'=>['Health','Help',30,10,600],'backup_interval_minutes'=>['Backups','Help',360,30,10080],'backup_retention'=>['Points','Help',2,1,100]];}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Services/BrandSettings.php';
  require __DIR__.'/../src/Filament/Admin/Pages/SimplifySettings.php';
  function view($name){return new class{function render(){return '<button>Finish setup</button>';}};}

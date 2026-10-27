@@ -54,7 +54,7 @@ final class ManagePlugins extends Page
         // At most one fresh read per five minutes, however often the button is pressed.
         $at = \Simplify\Panel\Services\HubCatalog::catalog()['at'];
         if (is_int($at) && time() - $at < 300) {
-            Notification::make()->title('The list is up to date')->body('It was read from the Hub less than five minutes ago.')->info()->send();
+            Notification::make()->title(__('pelican-simplify::plugins.form.the_list_is_up_to_date'))->body(__('pelican-simplify::plugins.form.it_was_read_from_the_hub'))->info()->send();
             return;
         }
         \Simplify\Panel\Services\HubCatalog::forget();
@@ -100,7 +100,7 @@ final class ManagePlugins extends Page
         \Illuminate\Support\Facades\Cache::put('simplify.plugin-update-queued.'.$id, true, 1200);
         $this->busy = true;
         \Simplify\Panel\Jobs\UpdatePlugin::dispatchAfterResponse($plugin->id, (int) user()->id);
-        Notification::make()->title('Update started')->body($plugin->name.' is updated in the background. You get a notification when it is done; if anything fails, the current version is restored.')->info()->send();
+        Notification::make()->title(__('pelican-simplify::plugins.form.update_started'))->body($plugin->name.' is updated in the background. You get a notification when it is done; if anything fails, the current version is restored.')->info()->send();
     }
 
     public function setEnabled(string $id, bool $enabled): void
@@ -110,7 +110,7 @@ final class ManagePlugins extends Page
         abort_unless($this->canChange($plugin) && in_array($plugin->status->value, $enabled ? ['disabled', 'crashed'] : ['enabled'], true), 403);
         $service = app(\App\Services\Helpers\PluginService::class);
         $enabled ? $service->enablePlugin($plugin) : $service->disablePlugin($plugin);
-        Notification::make()->title($plugin->name.($enabled ? ' enabled' : ' disabled'))->body('Reload the panel to apply the change.')->success()->send();
+        Notification::make()->title($plugin->name.($enabled ? ' enabled' : ' disabled'))->body(__('pelican-simplify::plugins.form.reload_the_panel_to_apply_the'))->success()->send();
     }
 
     /** Install, uninstall and delete run through Pelican's own jobs and service, so nothing needs the legacy page. */
@@ -121,7 +121,7 @@ final class ManagePlugins extends Page
         \Illuminate\Support\Facades\Cache::put('simplify.plugin-queued.'.$id, now()->timestamp, 1800);
         $this->busy = true;
         \Simplify\Panel\Jobs\ChangePlugin::dispatchAfterResponse($plugin->id, 'install', (int) user()->id);
-        Notification::make()->title('Install started')->body($plugin->name.' is installed in the background. You get a notification when it is done.')->info()->send();
+        Notification::make()->title(__('pelican-simplify::plugins.form.install_started'))->body($plugin->name.' is installed in the background. You get a notification when it is done.')->info()->send();
     }
 
     public function uninstallPlugin(string $id): void
@@ -131,7 +131,7 @@ final class ManagePlugins extends Page
         \Illuminate\Support\Facades\Cache::put('simplify.plugin-queued.'.$id, now()->timestamp, 1800);
         $this->busy = true;
         \Simplify\Panel\Jobs\ChangePlugin::dispatchAfterResponse($plugin->id, 'uninstall', (int) user()->id);
-        Notification::make()->title('Uninstall started')->body($plugin->name.' is removed in the background. Its files stay until you delete it.')->info()->send();
+        Notification::make()->title(__('pelican-simplify::plugins.form.uninstall_started'))->body($plugin->name.' is removed in the background. Its files stay until you delete it.')->info()->send();
     }
 
     public function deletePlugin(string $id): void
@@ -151,30 +151,30 @@ final class ManagePlugins extends Page
                 // Importing over an installed plugin is an update: it is installed again in the background.
                 if (is_string($id) && PluginUpdater::afterImport($id, $states, (int) user()->id)) {
                     $this->busy = true;
-                    Notification::make()->title('Plugin imported')->body('It replaces the installed version and is installed again in the background. You get a notification when it is done.')->success()->send();
+                    Notification::make()->title(__('pelican-simplify::plugins.form.plugin_imported'))->body(__('pelican-simplify::plugins.form.it_replaces_the_installed_version_and'))->success()->send();
                     return;
                 }
-                Notification::make()->title('Plugin imported')->body('Install it from the list to start using it.')->success()->send();
+                Notification::make()->title(__('pelican-simplify::plugins.form.plugin_imported'))->body(__('pelican-simplify::plugins.form.install_it_from_the_list_to'))->success()->send();
             } catch (\Throwable $exception) {
                 report($exception);
-                Notification::make()->title('Import failed')->body($exception->getMessage())->danger()->send();
+                Notification::make()->title(__('pelican-simplify::plugins.form.import_failed'))->body($exception->getMessage())->danger()->send();
             }
         };
         return [
-            \Filament\Actions\Action::make('checkUpdates')->label('Check for updates')->tooltip('Check for updates now')->icon('tabler-refresh')
+            \Filament\Actions\Action::make('checkUpdates')->label(__('pelican-simplify::plugins.form.check_for_updates'))->tooltip(__('pelican-simplify::plugins.form.check_for_updates_now'))->icon('tabler-refresh')
                 ->action(function (): void {
                     \Simplify\Panel\Services\UpdateCheck::forget();
                     $count = count(PluginUpdater::available(true));
                     \Simplify\Panel\Services\PanelUpdates::refresh();
                     Notification::make()->title($count ? $count.' update(s) available' : 'Everything is up to date')->success()->send();
                 }),
-            \Filament\Actions\Action::make('importUrl')->label('Import from URL')->tooltip('Import from URL')->icon('tabler-world-download')
+            \Filament\Actions\Action::make('importUrl')->label(__('pelican-simplify::plugins.form.import_from_url'))->tooltip(__('pelican-simplify::plugins.form.import_from_url'))->icon('tabler-world-download')
                 ->authorize(fn () => user()?->can('create', Plugin::class))
-                ->schema([\Filament\Forms\Components\TextInput::make('url')->label('Zip URL')->required()->url()->endsWith('.zip')])
+                ->schema([\Filament\Forms\Components\TextInput::make('url')->label(__('pelican-simplify::plugins.form.zip_url'))->required()->url()->endsWith('.zip')])
                 ->action($import(fn ($service, array $data) => $service->downloadPluginFromUrl($data['url']))),
-            \Filament\Actions\Action::make('importFile')->label('Upload zip')->tooltip('Upload zip')->icon('tabler-file-upload')
+            \Filament\Actions\Action::make('importFile')->label(__('pelican-simplify::plugins.form.upload_zip'))->tooltip(__('pelican-simplify::plugins.form.upload_zip'))->icon('tabler-file-upload')
                 ->authorize(fn () => user()?->can('create', Plugin::class))
-                ->schema([\Filament\Forms\Components\FileUpload::make('file')->label('Plugin zip')->required()
+                ->schema([\Filament\Forms\Components\FileUpload::make('file')->label(__('pelican-simplify::plugins.form.plugin_zip'))->required()
                     ->acceptedFileTypes(['application/zip', 'application/zip-compressed', 'application/x-zip-compressed'])
                     ->preserveFilenames()->previewable(false)->storeFiles(false)])
                 ->action($import(fn ($service, array $data) => $service->downloadPluginFromFile($data['file']))),

@@ -78,11 +78,11 @@ final class ManagePeople extends Page
     private function userFields(): array
     {
         return [
-            TextInput::make('username')->label('Username')->required()->maxLength(255)->regex('/^[A-Za-z0-9_.-]+$/'),
-            TextInput::make('email')->label('Email')->email()->required()->maxLength(255),
-            CheckboxList::make('roles')->label('Roles')->columns(2)
+            TextInput::make('username')->label(__('pelican-simplify::people.form.username'))->required()->maxLength(255)->regex('/^[A-Za-z0-9_.-]+$/'),
+            TextInput::make('email')->label(__('pelican-simplify::people.form.email'))->email()->required()->maxLength(255),
+            CheckboxList::make('roles')->label(__('pelican-simplify::people.form.roles'))->columns(2)
                 ->options(fn () => Role::query()->orderBy('name')->pluck('name', 'id')->all())
-                ->helperText('Root Admin gives full access to everything. Other roles add their admin and Simplify permissions.'),
+                ->helperText(__('pelican-simplify::people.form.root_admin_gives_full_access_to')),
         ];
     }
 
@@ -93,22 +93,22 @@ final class ManagePeople extends Page
             $run();
             Notification::make()->title($done)->success()->send();
         } catch (ValidationException $exception) {
-            Notification::make()->title('Not saved')->body(collect($exception->errors())->flatten()->first())->danger()->send();
+            Notification::make()->title(__('pelican-simplify::people.form.not_saved'))->body(collect($exception->errors())->flatten()->first())->danger()->send();
             throw $exception;
         }
     }
 
     public function addPersonAction(): Action
     {
-        return Action::make('addPerson')->label('Add person')->icon('tabler-user-plus')->modalHeading('Add a person')
-            ->modalDescription('They get an email with a link to choose their own password. You never see or set it.')
-            ->schema($this->userFields())->modalSubmitActionLabel('Add and send invite')
+        return Action::make('addPerson')->label(__('pelican-simplify::people.form.add_person'))->icon('tabler-user-plus')->modalHeading(__('pelican-simplify::people.form.add_a_person'))
+            ->modalDescription(__('pelican-simplify::people.form.they_get_an_email_with_a'))
+            ->schema($this->userFields())->modalSubmitActionLabel(__('pelican-simplify::people.form.add_and_send_invite'))
             ->action(fn (array $data) => $this->guarded(fn () => PeopleManager::createUser($data), 'Person added; invite sent'));
     }
 
     public function editPersonAction(): Action
     {
-        return Action::make('editPerson')->modalHeading('Edit person')->modalSubmitActionLabel('Save')->schema($this->userFields())
+        return Action::make('editPerson')->modalHeading(__('pelican-simplify::people.form.edit_person'))->modalSubmitActionLabel(__('pelican-simplify::people.form.save'))->schema($this->userFields())
             ->fillForm(function (array $arguments): array {
                 $user = User::query()->findOrFail((int) ($arguments['user'] ?? 0));
                 return ['username' => $user->username, 'email' => $user->email, 'roles' => $user->roles()->pluck('id')->all()];
@@ -118,9 +118,9 @@ final class ManagePeople extends Page
 
     public function resetPasswordAction(): Action
     {
-        return Action::make('resetPassword')->requiresConfirmation()->modalHeading('Send a password reset link?')
-            ->modalDescription('They get an email with a link to choose a new password. Their current password keeps working until they do.')
-            ->modalSubmitActionLabel('Send link')
+        return Action::make('resetPassword')->requiresConfirmation()->modalHeading(__('pelican-simplify::people.form.send_a_password_reset_link'))
+            ->modalDescription(__('pelican-simplify::people.form.they_get_an_email_with_a_2'))
+            ->modalSubmitActionLabel(__('pelican-simplify::people.form.send_link'))
             ->action(function (array $arguments): void {
                 $status = PeopleManager::sendPasswordReset(User::query()->findOrFail((int) $arguments['user']));
                 $sent = $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT;
@@ -130,9 +130,9 @@ final class ManagePeople extends Page
 
     public function deletePersonAction(): Action
     {
-        return Action::make('deletePerson')->requiresConfirmation()->color('danger')->modalHeading('Delete this person?')
-            ->modalDescription('Their account and sign-in are removed. Servers must be moved or deleted first. This cannot be undone.')
-            ->modalSubmitActionLabel('Delete')
+        return Action::make('deletePerson')->requiresConfirmation()->color('danger')->modalHeading(__('pelican-simplify::people.form.delete_this_person'))
+            ->modalDescription(__('pelican-simplify::people.form.their_account_and_sign_in_are'))
+            ->modalSubmitActionLabel(__('pelican-simplify::people.form.delete'))
             ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteUser(User::query()->findOrFail((int) $arguments['user'])), 'Person deleted'));
     }
 
@@ -144,14 +144,14 @@ final class ManagePeople extends Page
         }
         $limits = array_map(fn (string $key, array $limit) => TextInput::make('simplify.'.$key)->label(str_replace(['Max ', ' mb'], ['Max ', ' (MB)'], ucfirst(str_replace('_', ' ', $key))))->integer()->minValue($limit[1])->maxValue($limit[2])->required(), array_keys(RoleAccess::LIMITS), RoleAccess::LIMITS);
         return [
-            TextInput::make('name')->label('Role name')->required()->maxLength(64),
-            Section::make('Simplify permissions')->description('What members can do on their servers in Simplify, on top of Everyone. Limits replace Everyone\'s limits.')->schema([
+            TextInput::make('name')->label(__('pelican-simplify::people.form.role_name'))->required()->maxLength(64),
+            Section::make('Simplify permissions')->description(__('pelican-simplify::people.form.what_members_can_do_on_their'))->schema([
                 CheckboxList::make('simplify.abilities')->hiddenLabel()->columns(2)
                     ->options(array_map(fn (array $ability) => $ability[0], RoleAccess::ABILITIES))
                     ->descriptions(array_map(fn (array $ability) => $ability[1], RoleAccess::ABILITIES)),
                 \Filament\Schemas\Components\Grid::make(3)->schema($limits),
             ]),
-            Section::make('Admin panel access')->description('Which parts of the admin panel members can open and change. Leave everything off for a role that only adds Simplify permissions.')
+            Section::make('Admin panel access')->description(__('pelican-simplify::people.form.which_parts_of_the_admin_panel'))
                 ->collapsible()->collapsed()->schema($groups),
         ];
     }
@@ -165,7 +165,7 @@ final class ManagePeople extends Page
 
     public function addRoleAction(): Action
     {
-        return Action::make('addRole')->label('Add role')->icon('tabler-shield-plus')->modalHeading('Add a role')->modalSubmitActionLabel('Add role')->slideOver()
+        return Action::make('addRole')->label(__('pelican-simplify::people.form.add_role'))->icon('tabler-shield-plus')->modalHeading(__('pelican-simplify::people.form.add_a_role'))->modalSubmitActionLabel(__('pelican-simplify::people.form.add_role'))->slideOver()
             ->schema($this->roleFields())
             ->fillForm(fn (): array => ['simplify' => ['abilities' => [], ...RoleAccess::limitDefaults()]])
             ->action(fn (array $data) => $this->guarded(fn () => PeopleManager::saveRole(null, ...$this->roleData($data)), 'Role added'));
@@ -173,7 +173,7 @@ final class ManagePeople extends Page
 
     public function editRoleAction(): Action
     {
-        return Action::make('editRole')->modalHeading('Edit role')->modalSubmitActionLabel('Save role')->slideOver()->schema($this->roleFields())
+        return Action::make('editRole')->modalHeading(__('pelican-simplify::people.form.edit_role'))->modalSubmitActionLabel(__('pelican-simplify::people.form.save_role'))->slideOver()->schema($this->roleFields())
             ->fillForm(function (array $arguments): array {
                 $role = Role::query()->findOrFail((int) ($arguments['role'] ?? 0));
                 abort_if($role->isRootAdmin(), 403);
@@ -187,9 +187,9 @@ final class ManagePeople extends Page
 
     public function deleteRoleAction(): Action
     {
-        return Action::make('deleteRole')->requiresConfirmation()->color('danger')->modalHeading('Delete this role?')
-            ->modalDescription('Members keep their account but lose this role\'s permissions. This cannot be undone.')
-            ->modalSubmitActionLabel('Delete role')
+        return Action::make('deleteRole')->requiresConfirmation()->color('danger')->modalHeading(__('pelican-simplify::people.form.delete_this_role'))
+            ->modalDescription(__('pelican-simplify::people.form.members_keep_their_account_but_lose'))
+            ->modalSubmitActionLabel(__('pelican-simplify::people.form.delete_role'))
             ->action(fn (array $arguments) => $this->guarded(fn () => PeopleManager::deleteRole(Role::query()->findOrFail((int) $arguments['role'])), 'Role deleted'));
     }
 

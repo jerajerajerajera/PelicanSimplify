@@ -7,6 +7,7 @@ namespace Filament\Forms\Contracts { interface HasForms {} }
 namespace Filament\Notifications { class Notification { public static array $titles=[]; public static function make(){return new self;} public function title($title){self::$titles[]=$title;return $this;} public function body($value){return $this;} public function danger(){return $this;} public function send(){} } }
 namespace Simplify\Panel\Services { class FeatureSettings { public static function enabled($key){return false;} } }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  require __DIR__.'/../src/Services/BuildInfo.php';
  require __DIR__.'/../src/Services/UploadLimits.php';
  require __DIR__.'/../src/Services/DependencyCheck.php';

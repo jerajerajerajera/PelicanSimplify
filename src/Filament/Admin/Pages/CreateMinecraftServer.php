@@ -298,7 +298,7 @@ class CreateMinecraftServer extends Page implements HasForms
         if ($this->hasFreePort($nodeId)) return;
         $node = $this->noFreePortNotice($nodeId)['node'];
         $message = 'There is no free port on '.$node.'. '.(user()?->isRootAdmin() ? 'Add a port under Nodes → '.$node.' → Allocations, then click Next again.' : 'Ask an admin to add a port to '.$node.'.');
-        Notification::make()->title('No free port')->body($message)->danger()->send();
+        Notification::make()->title(__('pelican-simplify::maker.form.no_free_port'))->body($message)->danger()->send();
         // On one node the port field is hidden; the notice and the notification carry the message there.
         throw ValidationException::withMessages(['data.allocation_id' => $message]);
     }
@@ -426,7 +426,7 @@ class CreateMinecraftServer extends Page implements HasForms
             }
         } catch (Throwable $exception) {
             report($exception);
-            Notification::make()->title('Draft could not be restored')->warning()->send();
+            Notification::make()->title(__('pelican-simplify::maker.form.draft_could_not_be_restored'))->warning()->send();
         }
         if (empty($this->data['server_color'])) $this->data['server_color']=\Simplify\Panel\Services\ServerAppearance::defaultColor();
     }
@@ -573,7 +573,7 @@ class CreateMinecraftServer extends Page implements HasForms
                         ->schema([
                             \Filament\Schemas\Components\Group::make()->visible(fn (Get $get) => $this->gameNow($get) === 'minecraft')->schema([
                             Radio::make('server_type')
-                                ->label('Server type')->hiddenLabel()
+                                ->label(__('pelican-simplify::maker.form.server_type'))->hiddenLabel()
                                 ->view('pelican-simplify::filament.admin.card-radio')
                                 ->options(array_map(fn (array $choice) => $choice[0], self::MINECRAFT_CHOICES))
                                 ->descriptions(array_map(fn (array $choice) => $choice[1], self::MINECRAFT_CHOICES))
@@ -594,14 +594,14 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->required(fn (Get $get) => isset(MinecraftCatalog::SOFTWARE[$get('server_type')]))
                                 ->live()->afterStateUpdated(fn () => $this->data['egg_id'] = MinecraftCatalog::eggForType((string) ($this->data['server_type'] ?? ''), $this->data['server_software'] ?? null)?->id),
                             Select::make('minecraft_version')
-                                ->label('Minecraft version')
+                                ->label(__('pelican-simplify::maker.form.minecraft_version'))
                                 ->searchable()->required(fn (Get $get) => MinecraftCatalog::usesVersion((string) $get('server_type')))
                                 ->options(fn () => $this->memo('minecraft-versions', fn () => MinecraftCatalog::versions()))
                                 ->visible(fn (Get $get) => MinecraftCatalog::usesVersion((string) $get('server_type')))
                                 ->helperText(fn (Get $get) => $get('server_type') === 'loader' ? 'The newest loader version for this Minecraft version is installed. Mods are added later under Mods on the server page.' : 'This Minecraft version is downloaded during installation.'),
                             Hidden::make('modpack_search')->dehydrated(false),
                             Radio::make('modpack_project')
-                                ->label('Find a modpack')
+                                ->label(__('pelican-simplify::maker.form.find_a_modpack'))
                                 ->view('pelican-simplify::filament.admin.modpack-picker')
                                 ->options(fn (Get $get) => collect(ModpackCatalog::results($get('modpack_search'), $get('modpack_project')))->pluck('title', 'key')->all())
                                 ->live()->required(fn (Get $get) => $get('server_type') === 'modded')
@@ -610,15 +610,15 @@ class CreateMinecraftServer extends Page implements HasForms
                                     $set('modpack_version', null);
                                     $set('egg_id', ModpackCatalog::egg($state)?->id);
                                 })
-                                ->helperText('Modrinth, FTB and supported Technic serverpacks in one list. CurseForge appears when an API key is configured.'),
+                                ->helperText(__('pelican-simplify::maker.form.modrinth_ftb_and_supported_technic_serverpacks')),
                             Select::make('modpack_version')
-                                ->label('Modpack version')
+                                ->label(__('pelican-simplify::maker.form.modpack_version'))
                                 ->options(fn (Get $get) => ModpackCatalog::versions($get('modpack_project')))
                                 ->searchable()->required(fn (Get $get) => $get('server_type') === 'modded')
                                 ->visible(fn (Get $get) => $get('server_type') === 'modded')
-                                ->helperText('The pack determines the Minecraft and modloader versions.'),
+                                ->helperText(__('pelican-simplify::maker.form.the_pack_determines_the_minecraft_and')),
                             Section::make('Bedrock')
-                                ->description('The newest Bedrock Dedicated Server is installed. Players on phones, consoles and Windows join with the server address and port. Java players cannot join a Bedrock server.')
+                                ->description(__('pelican-simplify::maker.form.the_newest_bedrock_dedicated_server_is'))
                                 ->visible(fn (Get $get) => $get('server_type') === 'bedrock'),
                             ]),
                             Section::make('Game settings')->visible(fn (Get $get) => $this->gameNow($get) === 'other')
@@ -629,7 +629,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                     [$main, $advanced] = OtherGameCatalog::fields($egg);
                                     return [
                                         \Filament\Schemas\Components\Grid::make(2)->schema($main),
-                                        ...($advanced ? [Section::make('Advanced')->description('Install and Steam options; the defaults work for most servers.')->collapsible()->collapsed()->schema([\Filament\Schemas\Components\Grid::make(2)->schema($advanced)])] : []),
+                                        ...($advanced ? [Section::make('Advanced')->description(__('pelican-simplify::maker.form.install_and_steam_options_the_defaults'))->collapsible()->collapsed()->schema([\Filament\Schemas\Components\Grid::make(2)->schema($advanced)])] : []),
                                     ];
                                 }),
                         ])
@@ -637,15 +637,15 @@ class CreateMinecraftServer extends Page implements HasForms
                     Step::make('Server')
                         ->schema([
                             TextInput::make('name')
-                                ->label('Server name')
+                                ->label(__('pelican-simplify::maker.form.server_name'))
                                 ->required()->maxLength(255)
                                 ->live(onBlur: true, condition: fn () => \Simplify\Panel\Services\Subdomains::active())
                                 ->afterStateUpdated(fn ($state, $old, Set $set, Get $get) => $this->suggestSubdomain((string) $state, (string) $old, $set, $get))
                                 ->placeholder(fn()=>$this->nameExample)
-                                ->helperText('This name is used by the server and dashboard.')
+                                ->helperText(__('pelican-simplify::maker.form.this_name_is_used_by_the'))
                                 ->suffixAction(
                                     Action::make('random_name')
-                                        ->tooltip('Generate a random server name')
+                                        ->tooltip(__('pelican-simplify::maker.form.generate_a_random_server_name'))
                                         ->extraAttributes(['x-on:click' => 'refreshCount++'])
                                         ->icon('tabler-dice-5')
                                         ->action(function (Set $set, Get $get): void {
@@ -654,7 +654,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                             $this->suggestSubdomain($name, $old, $set, $get);
                                         })
                                 ),
-                            TextInput::make('requested_subdomain')->label('Subdomain (optional)')
+                            TextInput::make('requested_subdomain')->label(__('pelican-simplify::maker.form.subdomain_optional'))
                                 ->visible(fn () => \Simplify\Panel\Services\Subdomains::active())
                                 ->suffix(fn () => '.'.\Simplify\Panel\Services\Subdomains::settings()['domain'])
                                 ->maxLength(63)->placeholder(fn () => strtolower(preg_replace('/[^a-z0-9-]+/i', '', (string) $this->nameExample)) ?: 'oak')
@@ -662,28 +662,28 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->rules([fn (): \Closure => function (string $attribute, $value, \Closure $fail): void {
                                     if ($error = \Simplify\Panel\Services\Subdomains::check(strtolower(trim((string) $value)))) $fail($error);
                                 }])
-                                ->helperText('Players join with this address. It follows the server name until you change it; leave empty to use the port address.'),
+                                ->helperText(__('pelican-simplify::maker.form.players_join_with_this_address_it')),
                             View::make('pelican-simplify::filament.admin.server-colors'),
                             Hidden::make('server_color')->nullable()->rule('regex:/^#[0-9a-fA-F]{6}$/'),
                             // Steam banner and icon for other games, when the store has a match (looked up once, cached).
-                            \Filament\Forms\Components\Toggle::make('steam_art')->label('Use the Steam banner and icon')->default(true)
+                            \Filament\Forms\Components\Toggle::make('steam_art')->label(__('pelican-simplify::maker.form.use_the_steam_banner_and_icon'))->default(true)
                                 ->helperText(fn () => ($art = $this->steamArt()) ? 'Found on Steam: '.$art['name'].'. Copied once to this panel; you can change it later in the server settings.' : null)
                                 ->visible(fn (Get $get) => $this->gameNow($get) === 'other' && $this->steamArt() !== null),
                             View::make('pelican-simplify::filament.admin.steam-art-preview')
                                 ->viewData(fn () => ['art' => $this->steamArt()])
                                 ->visible(fn (Get $get) => $this->gameNow($get) === 'other' && $get('steam_art') && $this->steamArt() !== null),
-                            TextInput::make('server_alias')->label('Server alias (optional)')
-                                ->maxLength(100)->placeholder('Optional internal reference')
-                                ->helperText('Internal reference only. The dashboard uses Server name.'),
+                            TextInput::make('server_alias')->label(__('pelican-simplify::maker.form.server_alias_optional'))
+                                ->maxLength(100)->placeholder(__('pelican-simplify::maker.form.optional_internal_reference'))
+                                ->helperText(__('pelican-simplify::maker.form.internal_reference_only_the_dashboard_uses')),
                             Select::make('node_id')
-                                ->label('Node')->required()->searchable()->live()->dehydratedWhenHidden()
+                                ->label(__('pelican-simplify::maker.form.node'))->required()->searchable()->live()->dehydratedWhenHidden()
                                 ->options(fn () => $this->memo('node-options', fn () => CreatorAccess::nodes()->pluck('name', 'id')->all()))
                                 ->visible(fn () => $this->multipleNodes())
                                 ->afterStateUpdated(function ($state, Set $set): void {
                                     $set('allocation_id', Node::find($state)?->allocations()->whereNull('server_id')->orderBy('id')->value('id'));
                                 }),
                             Select::make('allocation_id')
-                                ->dehydratedWhenHidden()->label('Port / allocation')->visible(fn () => $this->multipleNodes())
+                                ->dehydratedWhenHidden()->label(__('pelican-simplify::maker.form.port_allocation'))->visible(fn () => $this->multipleNodes())
                                 // A hidden field is still validated (dehydrated); on one node a missing port is reported by assertFreePort().
                                 ->required(fn () => $this->multipleNodes())->searchable()
                                 // Also built when hidden (single node): Select validates the auto-picked allocation against these options.
@@ -693,7 +693,7 @@ class CreateMinecraftServer extends Page implements HasForms
                                     ->get()->mapWithKeys(fn (Allocation $allocation) => [
                                         $allocation->id => $allocation->address ?? ($allocation->ip . ':' . $allocation->port),
                                     ])->all()))
-                                ->helperText('Only free allocations are shown. Create an allocation under Nodes if this is empty.'),
+                                ->helperText(__('pelican-simplify::maker.form.only_free_allocations_are_shown_create')),
                             // Without a free port the server cannot be made; say so here instead of stopping silently on Next.
                             View::make('pelican-simplify::filament.admin.no-free-port')
                                 ->viewData(fn (Get $get) => $this->noFreePortNotice($get('node_id')))
@@ -704,31 +704,31 @@ class CreateMinecraftServer extends Page implements HasForms
                             Section::make('Resources')->description(fn (Get $get) => 'Starting values follow the '.($this->gameNow($get) === 'other' ? 'game' : 'server type').'. Choose a preset or enter your own allocation.')->schema([
                             self::liveForVisibility(Radio::make('ram_gb')
                                 ->view('pelican-simplify::filament.admin.card-radio')
-                                ->label('RAM')
+                                ->label(__('pelican-simplify::maker.form.ram'))
                                 ->options(['2' => '2 GB', '4' => '4 GB', '8' => '8 GB', '12' => '12 GB', 'custom' => 'Custom'])
-                                ->descriptions(['2' => 'Small worlds', '4' => 'Everyday play', '8' => 'More headroom', '12' => 'Larger modpacks', 'custom' => 'Choose your own'])
+                                ->descriptions(['2' => __('pelican-simplify::maker.form.small_worlds'), '4' => __('pelican-simplify::maker.form.everyday_play'), '8' => __('pelican-simplify::maker.form.more_headroom'), '12' => __('pelican-simplify::maker.form.larger_modpacks'), 'custom' => 'Choose your own'])
                                 ->extraAttributes(['class' => 'ssc-ram-options'])
                                 ->required()),
                             self::showWhen(TextInput::make('ram_custom_gb')
-                                ->label('Custom RAM in GB')
+                                ->label(__('pelican-simplify::maker.form.custom_ram_in_gb'))
                                 ->numeric()->minValue(1)->maxValue(fn () => CreatorAccess::admin() ? 128 : max(1, (int) floor(CreatorAccess::settings()['max_memory_mb'] / 1024)))->step(1)
                                 ->required(fn (Get $get) => $get('ram_gb') === 'custom'),
                                 "\$get('ram_gb') === 'custom'", fn (Get $get) => $get('ram_gb') === 'custom'),
                             // Presets fill the custom fields on every request (see syncResourceChoices); no round trip per click.
-                            self::liveForVisibility(Radio::make('cpu_choice')->label('CPU allocation')
+                            self::liveForVisibility(Radio::make('cpu_choice')->label(__('pelican-simplify::maker.form.cpu_allocation'))
                                 ->view('pelican-simplify::filament.admin.card-radio')->extraAttributes(['class'=>'ssc-ram-options'])
                                 ->options(fn (Get $get) => $this->resourceOptions('cpu', $get('server_type')))
                                 ->default(fn (Get $get) => (string) $get('cpu'))->required()),
-                            self::showWhen(TextInput::make('cpu')->label('Custom CPU (%)')->integer()->minValue(CreatorAccess::admin() ? 0 : 1)
+                            self::showWhen(TextInput::make('cpu')->label(__('pelican-simplify::maker.form.custom_cpu'))->integer()->minValue(CreatorAccess::admin() ? 0 : 1)
                                 ->maxValue(fn () => CreatorAccess::admin() ? 1600 : (int) CreatorAccess::settings()['max_cpu'])
                                 ->required()->dehydratedWhenHidden()
                                 ->helperText('100% = one CPU core; administrators may use 0 for unlimited.'),
                                 "\$get('cpu_choice') === 'custom'", fn (Get $get) => $get('cpu_choice') === 'custom', true),
-                            self::liveForVisibility(Radio::make('disk_choice')->label('Disk allocation')
+                            self::liveForVisibility(Radio::make('disk_choice')->label(__('pelican-simplify::maker.form.disk_allocation'))
                                 ->view('pelican-simplify::filament.admin.card-radio')->extraAttributes(['class'=>'ssc-ram-options'])
                                 ->options(fn (Get $get) => $this->resourceOptions('disk_mb', $get('server_type')))
                                 ->default(fn (Get $get) => (string) $get('disk_mb'))->required()),
-                            self::showWhen(TextInput::make('disk_mb')->label('Custom disk (MB)')->integer()->minValue(1024)
+                            self::showWhen(TextInput::make('disk_mb')->label(__('pelican-simplify::maker.form.custom_disk_mb'))->integer()->minValue(1024)
                                 ->maxValue(fn () => CreatorAccess::admin() ? 10485760 : (int) CreatorAccess::settings()['max_disk_mb'])
                                 ->required()->dehydratedWhenHidden(),
                                 "\$get('disk_choice') === 'custom'", fn (Get $get) => $get('disk_choice') === 'custom', true),
@@ -737,22 +737,22 @@ class CreateMinecraftServer extends Page implements HasForms
                     Step::make('Server properties')->visible(fn (Get $get) => $this->javaMinecraft($get))
                         ->schema([
                             Section::make('Server properties')->visible(fn (Get $get) => $this->javaMinecraft($get))
-                                ->description('Set common Minecraft options before creation. Applied after installation; other installer settings are preserved.')
+                                ->description(__('pelican-simplify::maker.form.set_common_minecraft_options_before_creation'))
                                 ->schema([
-                                    Toggle::make('properties_enabled')->label('Apply these settings')->columnSpanFull(),
-                                    TextInput::make('max_players')->label('Maximum players')->integer()->minValue(1)->maxValue(1000)->required(),
-                                    \Filament\Forms\Components\ViewField::make('motd')->label('MOTD')->view('pelican-simplify::filament.admin.motd-field')->required()->rules(['string', 'max:512'])->columnSpanFull(),
-                                    Select::make('difficulty')->options(['peaceful' => 'Peaceful', 'easy' => 'Easy', 'normal' => 'Normal', 'hard' => 'Hard'])->required(),
-                                    Select::make('gamemode')->options(['survival' => 'Survival', 'creative' => 'Creative', 'adventure' => 'Adventure', 'spectator' => 'Spectator'])->required(),
-                                    TextInput::make('view_distance')->label('View distance (chunks)')->integer()->minValue(2)->maxValue(32)->required(),
-                                    TextInput::make('spawn_protection')->label('Spawn protection (blocks)')->integer()->minValue(0)->maxValue(1000)->required(),
-                                    Toggle::make('pvp')->label('PvP'),
-                                    Toggle::make('white_list')->label('Whitelist')->helperText('Players must be added to the whitelist after creation.'),
-                                    Toggle::make('allow_flight')->label('Allow flight'),
+                                    Toggle::make('properties_enabled')->label(__('pelican-simplify::maker.form.apply_these_settings'))->columnSpanFull(),
+                                    TextInput::make('max_players')->label(__('pelican-simplify::maker.form.maximum_players'))->integer()->minValue(1)->maxValue(1000)->required(),
+                                    \Filament\Forms\Components\ViewField::make('motd')->label(__('pelican-simplify::maker.form.motd'))->view('pelican-simplify::filament.admin.motd-field')->required()->rules(['string', 'max:512'])->columnSpanFull(),
+                                    Select::make('difficulty')->options(['peaceful' => __('pelican-simplify::maker.form.peaceful'), 'easy' => __('pelican-simplify::maker.form.easy'), 'normal' => __('pelican-simplify::maker.form.normal'), 'hard' => 'Hard'])->required(),
+                                    Select::make('gamemode')->options(['survival' => __('pelican-simplify::maker.form.survival'), 'creative' => __('pelican-simplify::maker.form.creative'), 'adventure' => __('pelican-simplify::maker.form.adventure'), 'spectator' => 'Spectator'])->required(),
+                                    TextInput::make('view_distance')->label(__('pelican-simplify::maker.form.view_distance_chunks'))->integer()->minValue(2)->maxValue(32)->required(),
+                                    TextInput::make('spawn_protection')->label(__('pelican-simplify::maker.form.spawn_protection_blocks'))->integer()->minValue(0)->maxValue(1000)->required(),
+                                    Toggle::make('pvp')->label(__('pelican-simplify::maker.form.pvp')),
+                                    Toggle::make('white_list')->label(__('pelican-simplify::maker.form.whitelist'))->helperText(__('pelican-simplify::maker.form.players_must_be_added_to_the')),
+                                    Toggle::make('allow_flight')->label(__('pelican-simplify::maker.form.allow_flight')),
                                 ])->columns(2),
-                            Radio::make('icon_source')->label('Server icon')
-                                ->options(['modpack' => 'Modpack icon', 'upload' => 'Upload your own'])
-                                ->descriptions(['modpack' => 'Shown in the multiplayer list.', 'upload' => 'A 64 × 64 PNG of your choice.'])
+                            Radio::make('icon_source')->label(__('pelican-simplify::maker.form.server_icon'))
+                                ->options(['modpack' => __('pelican-simplify::maker.form.modpack_icon'), 'upload' => 'Upload your own'])
+                                ->descriptions(['modpack' => __('pelican-simplify::maker.form.shown_in_the_multiplayer_list'), 'upload' => 'A 64 × 64 PNG of your choice.'])
                                 ->default('modpack')->live()
                                 ->view('pelican-simplify::filament.admin.card-radio')
                                 ->visible(fn (Get $get) => $this->usesModpackIcon($get, true)),
@@ -761,16 +761,16 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->image()->acceptedFileTypes(['image/png'])->maxSize(100)
                                 ->imageResizeMode('cover')->imageResizeTargetWidth('64')->imageResizeTargetHeight('64')
                                 ->imageEditor()->imageEditorAspectRatios(['1:1'])->storeFiles(false)
-                                ->helperText('PNG, 64 × 64 pixels, up to 100 KB. Uploaded as server-icon.png after installation.'),
+                                ->helperText(__('pelican-simplify::maker.form.png_64_64_pixels_up_to')),
                         ]),
                     ... (\Simplify\Panel\Services\Extensions::webAdapter()?->creatorSteps($this) ?? []),
                     Step::make('Backups')->visible(fn()=>\Simplify\Panel\Services\FeatureSettings::enabled('backups'))->schema([
                         View::make('pelican-simplify::filament.admin.backup-defaults')->columnSpanFull(),
-                        self::liveForVisibility(Toggle::make('change_backup_schedule')->label('Change backup schedule')->default(false)
+                        self::liveForVisibility(Toggle::make('change_backup_schedule')->label(__('pelican-simplify::maker.form.change_backup_schedule'))->default(false)
                             ->visible(fn () => user()?->isRootAdmin())),
-                        self::showWhen(TextInput::make('backup_interval_minutes')->label('Interval (minutes)')->integer()->minValue(30)->maxValue(10080)->required(),
+                        self::showWhen(TextInput::make('backup_interval_minutes')->label(__('pelican-simplify::maker.form.interval_minutes'))->integer()->minValue(30)->maxValue(10080)->required(),
                             "\$get('change_backup_schedule')", fn (Get $get) => $get('change_backup_schedule')),
-                        self::showWhen(TextInput::make('backup_retention')->label('Recovery points')->integer()->minValue(1)->maxValue(100)->required(),
+                        self::showWhen(TextInput::make('backup_retention')->label(__('pelican-simplify::maker.form.recovery_points'))->integer()->minValue(1)->maxValue(100)->required(),
                             "\$get('change_backup_schedule')", fn (Get $get) => $get('change_backup_schedule')),
                     ]),
                     Step::make('Review')
@@ -780,34 +780,34 @@ class CreateMinecraftServer extends Page implements HasForms
                                 ->columnSpanFull()
                                 ->schema([
                                     Select::make('egg_id')
-                                        ->dehydratedWhenHidden()->label('Egg')->visible(fn () => CreatorAccess::admin())
+                                        ->dehydratedWhenHidden()->label(__('pelican-simplify::maker.form.egg'))->visible(fn () => CreatorAccess::admin())
                                         ->options(fn () => $this->memo('eggs', fn () => Egg::query()->orderBy('name')->pluck('name', 'id')->all()))
                                         ->searchable()->required()
-                                        ->helperText('Automatically chosen and imported if missing. Existing eggs are kept. Only change if you know what you are doing.'),
+                                        ->helperText(__('pelican-simplify::maker.form.automatically_chosen_and_imported_if_missing')),
                                     Select::make('java_version')->visible(fn (Get $get) => CreatorAccess::admin() && $this->javaMinecraft($get))->dehydratedWhenHidden()
-                                        ->label('Java version')
-                                        ->options(['auto' => 'Automatic (recommended)', '8' => 'Java 8', '11' => 'Java 11', '16' => 'Java 16', '17' => 'Java 17', '21' => 'Java 21', '25' => 'Java 25'])
+                                        ->label(__('pelican-simplify::maker.form.java_version'))
+                                        ->options(['auto' => __('pelican-simplify::maker.form.automatic_recommended'), '8' => __('pelican-simplify::maker.form.java_8'), '11' => __('pelican-simplify::maker.form.java_11'), '16' => __('pelican-simplify::maker.form.java_16'), '17' => __('pelican-simplify::maker.form.java_17'), '21' => __('pelican-simplify::maker.form.java_21'), '25' => 'Java 25'])
                                         ->required()
-                                        ->helperText('Chosen automatically from Minecraft / the selected modpack. Override for packs with special requirements.'),
+                                        ->helperText(__('pelican-simplify::maker.form.chosen_automatically_from_minecraft_the_selected')),
                                     TextInput::make('image')->visible(fn () => CreatorAccess::admin())
-                                        ->label('Docker image override')
-                                        ->placeholder('Empty = automatic Java image')
-                                        ->helperText('Optional. A custom image takes priority over the Java selector.'),
+                                        ->label(__('pelican-simplify::maker.form.docker_image_override'))
+                                        ->placeholder(__('pelican-simplify::maker.form.empty_automatic_java_image'))
+                                        ->helperText(__('pelican-simplify::maker.form.optional_a_custom_image_takes_priority')),
                                     Textarea::make('startup')->visible(fn () => CreatorAccess::admin())
-                                        ->label('Startup command override')
-                                        ->placeholder('Empty = default startup from egg'),
+                                        ->label(__('pelican-simplify::maker.form.startup_command_override'))
+                                        ->placeholder(__('pelican-simplify::maker.form.empty_default_startup_from_egg')),
                                     KeyValue::make('environment_overrides')->visible(fn () => CreatorAccess::admin())
-                                        ->label('Egg variable overrides')
+                                        ->label(__('pelican-simplify::maker.form.egg_variable_overrides'))
                                         ->keyLabel('Environment variable')
                                         ->valueLabel('Value')
-                                        ->helperText('Optional. Names must match the variables configured in your egg first.'),
+                                        ->helperText(__('pelican-simplify::maker.form.optional_names_must_match_the_variables')),
                                     Toggle::make('skip_scripts')->visible(fn () => CreatorAccess::admin())
-                                        ->label('Skip egg installation scripts')->default(false),
+                                        ->label(__('pelican-simplify::maker.form.skip_egg_installation_scripts'))->default(false),
                                 ])->columns(2),
                         ]),
                 ])
-                    ->nextAction(fn (Action $action) => $action->label('Next')->color('gray')->extraAttributes(['class'=>'ssc-next-button']))
-                    ->previousAction(fn (Action $action) => $action->label('Back')->color('gray')->extraAttributes(['class'=>'ssc-back-button']))
+                    ->nextAction(fn (Action $action) => $action->label(__('pelican-simplify::maker.form.next'))->color('gray')->extraAttributes(['class'=>'ssc-next-button']))
+                    ->previousAction(fn (Action $action) => $action->label(__('pelican-simplify::maker.form.back'))->color('gray')->extraAttributes(['class'=>'ssc-back-button']))
                     ->startOnStep(fn () => $this->draftStep)
                     ->columnSpanFull()
                     ->submitAction(new HtmlString(view('pelican-simplify::filament.admin.create-action')->render())),
@@ -890,9 +890,9 @@ class CreateMinecraftServer extends Page implements HasForms
                 if (!empty($state['server_color']) && !Storage::disk('local')->put('simplify/appearance/'.$server->uuid.'.json',json_encode(['color'=>strtolower($state['server_color'])],JSON_THROW_ON_ERROR))) throw new \RuntimeException('Could not save server color.');
                 if (\Simplify\Panel\Services\FeatureSettings::enabled('automatic_backups') && ($state['change_backup_schedule']??false)) \Simplify\Panel\Services\AutomaticBackups::save($server,['enabled'=>true,'interval_minutes'=>$state['backup_interval_minutes'],'retention'=>$state['backup_retention']]);
             } catch (Throwable $exception) {
-                report($exception);Notification::make()->title('Server created; appearance or backup options could not be saved')->warning()->send();
+                report($exception);Notification::make()->title(__('pelican-simplify::maker.form.server_created_appearance_or_backup_options'))->warning()->send();
             }
-            try { $this->finishDraft(); } catch (Throwable $exception) { $this->draftCompleted = true; report($exception); $this->dispatch('ssc-draft-completed'); Notification::make()->title('Server created; draft cleanup failed')->body('Do not submit the saved draft again. Discard it before creating another server.')->warning()->send(); }
+            try { $this->finishDraft(); } catch (Throwable $exception) { $this->draftCompleted = true; report($exception); $this->dispatch('ssc-draft-completed'); Notification::make()->title(__('pelican-simplify::maker.form.server_created_draft_cleanup_failed'))->body(__('pelican-simplify::maker.form.do_not_submit_the_saved_draft'))->warning()->send(); }
             try {
                 \Simplify\Panel\Services\ServerMetadata::save($server,[
                     'server_alias'=>trim((string)($state['server_alias']??'')),
@@ -900,11 +900,11 @@ class CreateMinecraftServer extends Page implements HasForms
                 ]);
                 \Simplify\Panel\Services\Extensions::webAdapter()?->saveCreated($server,$state);
             } catch(Throwable $exception) {
-                report($exception);Notification::make()->title('Server created; metadata could not be saved')->body('Do not submit the server again.')->warning()->send();
+                report($exception);Notification::make()->title(__('pelican-simplify::maker.form.server_created_metadata_could_not_be'))->body(__('pelican-simplify::maker.form.do_not_submit_the_server_again'))->warning()->send();
             }
             if ($subdomain !== '') {
                 try { \Simplify\Panel\Services\Subdomains::request($server, $subdomain); }
-                catch (Throwable $exception) { report($exception);Notification::make()->title('Server created; the subdomain could not be saved')->body('Choose it again in the server\'s Network section.')->warning()->send(); }
+                catch (Throwable $exception) { report($exception);Notification::make()->title(__('pelican-simplify::maker.form.server_created_the_subdomain_could_not'))->body(__('pelican-simplify::maker.form.choose_it_again_in_the_servers'))->warning()->send(); }
             }
             if (($state['game'] ?? '') === 'other' && !empty($state['steam_art']) && ($art = $this->steamArt())) {
                 // Downloaded after the response, so creating the server is not slowed down by Steam.
@@ -925,10 +925,10 @@ class CreateMinecraftServer extends Page implements HasForms
                 }
             }
             if ($warnings) {
-                Notification::make()->title('Server created; setup needs attention')->body(implode(' ', $warnings))->warning()->send();
+                Notification::make()->title(__('pelican-simplify::maker.form.server_created_setup_needs_attention'))->body(implode(' ', $warnings))->warning()->send();
             }
-            Notification::make()->title('Server created')
-                ->body('Installation has started. Follow it on the server page; the server stays stopped until you start it.')
+            Notification::make()->title(__('pelican-simplify::maker.form.server_created'))
+                ->body(__('pelican-simplify::maker.form.installation_has_started_follow_it_on'))
                 ->success()->send();
             $this->redirect(\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') ? \Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(['server'=>$server->uuid],panel:'app') : Console::getUrl(panel: 'server', tenant: $server));
         } catch (ValidationException $exception) {
@@ -936,7 +936,7 @@ class CreateMinecraftServer extends Page implements HasForms
             throw $exception;
         } catch (Throwable $exception) {
             report($exception);
-            Notification::make()->title('Could not create server')
+            Notification::make()->title(__('pelican-simplify::maker.form.could_not_create_server'))
                 ->body($exception->getMessage())->danger()->send();
         }
     }

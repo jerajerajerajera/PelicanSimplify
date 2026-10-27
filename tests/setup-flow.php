@@ -15,6 +15,7 @@ namespace Simplify\Panel\Services {
  class PerformanceSettings {public static function all(){return [];}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  function request(){return new class{function boolean($key){return false;}function query($key){return $GLOBALS['requestedSection']??null;}};}
  require __DIR__.'/../src/Filament/Admin/Pages/SimplifySettings.php';
  function user(){return new class {function isRootAdmin(){return true;}};}

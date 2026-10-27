@@ -107,16 +107,16 @@ final class ManageAnnouncements extends Page
     {
         $pick = fn ($get): bool => $get('ingame_targets') === 'pick';
         return [
-            Toggle::make('ingame')->label('Also send in game')->live()
-                ->helperText('Posts it in the chat of the game servers you pick, with each game\'s own command (say for Minecraft). Only servers that are running get it.'),
+            Toggle::make('ingame')->label(__('pelican-simplify::announcements.form.also_send_in_game'))->live()
+                ->helperText(__('pelican-simplify::announcements.form.posts_it_in_the_chat_of')),
             Section::make()->compact()->visible(fn ($get): bool => (bool) $get('ingame'))->schema([
                 Hidden::make('ingame_groups_of'),
-                ToggleButtons::make('ingame_targets')->label('Servers')->options(InGameAnnouncements::TARGETS)->inline()->default('all')->live(),
-                Select::make('ingame_groups')->label('Server groups')->multiple()->options(fn ($get): array => $this->groupOptions($get('ingame_groups_of')))->visible($pick)
-                    ->helperText('Your groups from Server groups. Servers you add to a group later get it too.'),
-                Select::make('ingame_servers')->label('Servers')->multiple()->searchable()->options(fn (): array => $this->serverOptions())->visible($pick),
-                Select::make('ingame_repeat')->label('Repeat')->options(InGameAnnouncements::REPEATS)->default(0)->selectablePlaceholder(false)
-                    ->helperText('Repeats while the announcement shows. The first one goes out at "Show from", or within a minute when it starts right away.'),
+                ToggleButtons::make('ingame_targets')->label(__('pelican-simplify::announcements.form.servers'))->options(InGameAnnouncements::TARGETS)->inline()->default('all')->live(),
+                Select::make('ingame_groups')->label(__('pelican-simplify::announcements.form.server_groups'))->multiple()->options(fn ($get): array => $this->groupOptions($get('ingame_groups_of')))->visible($pick)
+                    ->helperText(__('pelican-simplify::announcements.form.your_groups_from_server_groups_servers')),
+                Select::make('ingame_servers')->label(__('pelican-simplify::announcements.form.servers'))->multiple()->searchable()->options(fn (): array => $this->serverOptions())->visible($pick),
+                Select::make('ingame_repeat')->label(__('pelican-simplify::announcements.form.repeat'))->options(InGameAnnouncements::REPEATS)->default(0)->selectablePlaceholder(false)
+                    ->helperText(__('pelican-simplify::announcements.form.repeats_while_the_announcement_shows_the')),
                 Text::make(fn ($get): string => $this->ingamePreview($get)),
                 Text::make('Games without a chat command on their console are skipped. Change or add commands under In-game commands.'),
             ]),
@@ -126,25 +126,25 @@ final class ManageAnnouncements extends Page
     private function fields(): array
     {
         return [
-            ToggleButtons::make('category')->label('Category')->options(Announcements::CATEGORIES)->inline()->required()->default('info')
+            ToggleButtons::make('category')->label(__('pelican-simplify::announcements.form.category'))->options(Announcements::CATEGORIES)->inline()->required()->default('info')
                 ->colors(['info' => 'info', 'warning' => 'warning', 'success' => 'success'])
                 ->icons(['info' => 'tabler-info-circle', 'warning' => 'tabler-alert-triangle', 'success' => 'tabler-circle-check']),
-            TextInput::make('title')->label('Title')->required()->maxLength(Announcements::TITLE_LENGTH)->live(onBlur: true),
-            Textarea::make('text')->label('Message')->rows(3)->maxLength(Announcements::TEXT_LENGTH)->live(onBlur: true),
+            TextInput::make('title')->label(__('pelican-simplify::announcements.form.title'))->required()->maxLength(Announcements::TITLE_LENGTH)->live(onBlur: true),
+            Textarea::make('text')->label(__('pelican-simplify::announcements.form.message'))->rows(3)->maxLength(Announcements::TEXT_LENGTH)->live(onBlur: true),
             Grid::make(2)->schema([
                 // Entered and shown in the admin's own time zone; everyone else sees the times in theirs.
-                DateTimePicker::make('starts_at')->label('Show from')->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText(fn (): string => 'Empty: right away. Times in '.$this->displayTimezone().'.'),
-                DateTimePicker::make('ends_at')->label('Show until')->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText('Empty: until you delete it.'),
+                DateTimePicker::make('starts_at')->label(__('pelican-simplify::announcements.form.show_from'))->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText(fn (): string => 'Empty: right away. Times in '.$this->displayTimezone().'.'),
+                DateTimePicker::make('ends_at')->label(__('pelican-simplify::announcements.form.show_until'))->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText(__('pelican-simplify::announcements.form.empty_until_you_delete_it')),
             ]),
-            ToggleButtons::make('audience')->label('Who sees it')->options(Announcements::AUDIENCES)->inline()->required()->default('everyone'),
-            Select::make('link_type')->label('Button')->options(['none' => 'No button', 'server' => 'Open a server', 'url' => 'Open a link'])->default('none')->selectablePlaceholder(false)->live(),
-            Select::make('server')->label('Server')->options(fn () => $this->serverOptions())->searchable()->visible(fn ($get) => $get('link_type') === 'server')->required(fn ($get) => $get('link_type') === 'server'),
-            TextInput::make('url')->label('Link')->placeholder('https://… or /path on this panel')->maxLength(2048)->visible(fn ($get) => $get('link_type') === 'url')->required(fn ($get) => $get('link_type') === 'url'),
-            TextInput::make('button_label')->label('Button text')->placeholder('Open')->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
-            Toggle::make('pinned')->label('Pin to everyone\'s notifications')
-                ->helperText('Stays at the top of the bell for everyone who sees it, until it ends. People can still unpin the bar on their own screen.'),
-            Toggle::make('push')->label('Also send as app notification')->default(true)
-                ->helperText('To everyone who turned on notifications (account menu → Notifications), once per device. Devices that turn them on within a day of the start still get it.'),
+            ToggleButtons::make('audience')->label(__('pelican-simplify::announcements.form.who_sees_it'))->options(Announcements::AUDIENCES)->inline()->required()->default('everyone'),
+            Select::make('link_type')->label(__('pelican-simplify::announcements.form.button'))->options(['none' => __('pelican-simplify::announcements.form.no_button'), 'server' => __('pelican-simplify::announcements.form.open_a_server'), 'url' => 'Open a link'])->default('none')->selectablePlaceholder(false)->live(),
+            Select::make('server')->label(__('pelican-simplify::announcements.form.server'))->options(fn () => $this->serverOptions())->searchable()->visible(fn ($get) => $get('link_type') === 'server')->required(fn ($get) => $get('link_type') === 'server'),
+            TextInput::make('url')->label(__('pelican-simplify::announcements.form.link'))->placeholder('https://… or /path on this panel')->maxLength(2048)->visible(fn ($get) => $get('link_type') === 'url')->required(fn ($get) => $get('link_type') === 'url'),
+            TextInput::make('button_label')->label(__('pelican-simplify::announcements.form.button_text'))->placeholder(__('pelican-simplify::announcements.form.open'))->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
+            Toggle::make('pinned')->label(__('pelican-simplify::announcements.form.pin_to_everyones_notifications'))
+                ->helperText(__('pelican-simplify::announcements.form.stays_at_the_top_of_the')),
+            Toggle::make('push')->label(__('pelican-simplify::announcements.form.also_send_as_app_notification'))->default(true)
+                ->helperText(__('pelican-simplify::announcements.form.to_everyone_who_turned_on_notifications')),
             ...$this->ingameFields(),
         ];
     }
@@ -158,7 +158,7 @@ final class ManageAnnouncements extends Page
             // Goes out in game again when it was just switched on or its start moved.
             if ($old !== null && (!$old['ingame']['enabled'] || $old['starts_at'] !== $row['starts_at'])) InGameAnnouncements::forget($row['id']);
         } catch (\InvalidArgumentException $exception) {
-            Notification::make()->title('Not saved')->body($exception->getMessage())->danger()->send();
+            Notification::make()->title(__('pelican-simplify::announcements.form.not_saved'))->body($exception->getMessage())->danger()->send();
             throw new \Filament\Support\Exceptions\Halt();
         }
         Notification::make()->title($id ? 'Announcement saved' : 'Announcement added')->success()->send();
@@ -166,15 +166,15 @@ final class ManageAnnouncements extends Page
 
     public function addAnnouncementAction(): Action
     {
-        return Action::make('addAnnouncement')->label('New announcement')->icon('tabler-speakerphone')->modalHeading('New announcement')
-            ->modalDescription('Shown as a bar above the server overview and under the bell, to everyone or to admins only.')
-            ->schema($this->fields())->modalSubmitActionLabel('Publish')
+        return Action::make('addAnnouncement')->label(__('pelican-simplify::announcements.form.new_announcement'))->icon('tabler-speakerphone')->modalHeading(__('pelican-simplify::announcements.form.new_announcement'))
+            ->modalDescription(__('pelican-simplify::announcements.form.shown_as_a_bar_above_the'))
+            ->schema($this->fields())->modalSubmitActionLabel(__('pelican-simplify::announcements.form.publish'))
             ->action(fn (array $data) => $this->saveFrom($data, null));
     }
 
     public function editAnnouncementAction(): Action
     {
-        return Action::make('editAnnouncement')->modalHeading('Edit announcement')->modalSubmitActionLabel('Save')->schema($this->fields())
+        return Action::make('editAnnouncement')->modalHeading(__('pelican-simplify::announcements.form.edit_announcement'))->modalSubmitActionLabel(__('pelican-simplify::announcements.form.save'))->schema($this->fields())
             ->fillForm(function (array $arguments): array {
                 $row = Announcements::find((string) ($arguments['id'] ?? '')) ?? abort(404);
                 $button = $row['button'] ?? [];
@@ -187,34 +187,34 @@ final class ManageAnnouncements extends Page
 
     public function endAnnouncementAction(): Action
     {
-        return Action::make('endAnnouncement')->requiresConfirmation()->modalHeading('End this announcement now?')
-            ->modalDescription('It disappears for everyone but stays in this list, so you can show it again later by editing "Show until".')
-            ->modalSubmitActionLabel('End now')
+        return Action::make('endAnnouncement')->requiresConfirmation()->modalHeading(__('pelican-simplify::announcements.form.end_this_announcement_now'))
+            ->modalDescription(__('pelican-simplify::announcements.form.it_disappears_for_everyone_but_stays'))
+            ->modalSubmitActionLabel(__('pelican-simplify::announcements.form.end_now'))
             ->action(function (array $arguments): void {
                 $row = Announcements::find((string) ($arguments['id'] ?? '')) ?? abort(404);
                 $button = $row['button'] ?? [];
                 Announcements::save([...$row, 'ends_at' => time(), 'starts_at' => $row['starts_at'] !== null && $row['starts_at'] < time() ? $row['starts_at'] : null,
                     'link_type' => isset($button['server']) ? 'server' : (isset($button['url']) ? 'url' : 'none'), 'server' => $button['server'] ?? null, 'url' => $button['url'] ?? null, 'button_label' => $button['label'] ?? null], $row['id'], (string) user()?->username);
-                Notification::make()->title('Announcement ended')->success()->send();
+                Notification::make()->title(__('pelican-simplify::announcements.form.announcement_ended'))->success()->send();
             });
     }
 
     public function deleteAnnouncementAction(): Action
     {
-        return Action::make('deleteAnnouncement')->requiresConfirmation()->color('danger')->modalHeading('Delete this announcement?')
-            ->modalDescription('It disappears for everyone. This cannot be undone.')->modalSubmitActionLabel('Delete')
+        return Action::make('deleteAnnouncement')->requiresConfirmation()->color('danger')->modalHeading(__('pelican-simplify::announcements.form.delete_this_announcement'))
+            ->modalDescription(__('pelican-simplify::announcements.form.it_disappears_for_everyone_this_cannot'))->modalSubmitActionLabel(__('pelican-simplify::announcements.form.delete'))
             ->action(function (array $arguments): void {
                 Announcements::delete((string) ($arguments['id'] ?? ''));
                 InGameAnnouncements::forget((string) ($arguments['id'] ?? ''));
-                Notification::make()->title('Announcement deleted')->success()->send();
+                Notification::make()->title(__('pelican-simplify::announcements.form.announcement_deleted'))->success()->send();
             });
     }
 
     public function ingameCommandsAction(): Action
     {
-        return Action::make('ingameCommands')->label('In-game commands')->icon('tabler-message-chatbot')->modalHeading('In-game commands')
+        return Action::make('ingameCommands')->label(__('pelican-simplify::announcements.form.in_game_commands'))->icon('tabler-message-chatbot')->modalHeading(__('pelican-simplify::announcements.form.in_game_commands'))
             ->modalDescription('The chat command "Also send in game" uses for each egg. Empty: Simplify\'s own command, shown in grey. Type - to skip a game. '.InGameAnnouncements::PLACEHOLDER.' is the announcement.')
-            ->modalSubmitActionLabel('Save')
+            ->modalSubmitActionLabel(__('pelican-simplify::announcements.form.save'))
             ->schema(fn (): array => array_map(fn ($egg) => TextInput::make('egg_'.$egg->id)->label($egg->name)->maxLength(InGameAnnouncements::COMMAND_LENGTH)
                 ->placeholder(InGameAnnouncements::defaultCommand((string) $egg->name) ?? 'No chat command known: skipped'), $this->eggs()))
             ->fillForm(function (): array {
@@ -229,10 +229,10 @@ final class ManageAnnouncements extends Page
                 try {
                     InGameAnnouncements::saveCommands($commands);
                 } catch (\InvalidArgumentException $exception) {
-                    Notification::make()->title('Not saved')->body($exception->getMessage())->danger()->send();
+                    Notification::make()->title(__('pelican-simplify::announcements.form.not_saved'))->body($exception->getMessage())->danger()->send();
                     throw new \Filament\Support\Exceptions\Halt();
                 }
-                Notification::make()->title('In-game commands saved')->success()->send();
+                Notification::make()->title(__('pelican-simplify::announcements.form.in_game_commands_saved'))->success()->send();
             });
     }
 
