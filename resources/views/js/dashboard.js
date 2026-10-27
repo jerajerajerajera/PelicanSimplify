@@ -532,7 +532,7 @@
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
           items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
         }
-        // Announcements (also the Panel's update announcements); collapsed ones stay here until they end.
+        // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
           items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
         }
@@ -540,17 +540,13 @@
         for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
         return items;
       },
-      /** The bell's count: everything except announcements this account already collapsed. */
+      /** The bell's count: everything except announcements this account unpinned. */
       unreadNotifications() {
         return this.notifications().filter((item) => !item.dismissed).length;
       },
-      /** Announcement bars above the overview and server pages: live and not collapsed by this account. */
+      /** Announcement bars above the overview and server pages: live and pinned (not unpinned by this account). */
       announcementBars() {
         return this.announcements.filter((item) => !item.dismissed);
-      },
-      /** Collapsed announcements stay pinned as one-line pins while they are live. */
-      announcementPins() {
-        return this.announcements.filter((item) => item.dismissed);
       },
       announcementMeta(item) {
         const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
@@ -565,25 +561,25 @@
           return false;
         }
       },
-      /** Collapses an announcement bar to a pin for this account (kept with the account, so every device follows). */
+      /** Unpins an announcement for this account (kept with the account, so every device follows); it stays under the bell. */
       dismissAnnouncement(key) {
-        return this.pinAnnouncement(key, true);
-      },
-      /** Opens a pinned announcement again. */
-      restoreAnnouncement(key) {
         return this.pinAnnouncement(key, false);
       },
-      async pinAnnouncement(key, collapsed) {
+      /** Pins an unpinned announcement above the overview and server pages again. */
+      restoreAnnouncement(key) {
+        return this.pinAnnouncement(key, true);
+      },
+      async pinAnnouncement(key, pinned) {
         const before = this.announcements;
-        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: collapsed } : item));
-        const call = collapsed ? wire.dismissAnnouncement : wire.restoreAnnouncement;
+        this.announcements = before.map((item) => (item.key === key ? { ...item, dismissed: !pinned } : item));
+        const call = pinned ? wire.restoreAnnouncement : wire.dismissAnnouncement;
         if (typeof call !== 'function') return;
         try {
           const items = await call.call(wire, key);
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           this.announcements = before;
-          this.toast(collapsed ? 'The announcement could not be collapsed.' : 'The announcement could not be opened.', 'warn');
+          this.toast(pinned ? 'The announcement could not be pinned.' : 'The announcement could not be unpinned.', 'warn');
         }
       },
       /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */

@@ -113,10 +113,10 @@ final class Dashboard extends Page
     /** Announcements for this account (bars above the overview and server pages, and the bell). */
     #[Renderless]
     public function announcements(): array { return \Simplify\Panel\Services\Announcements::forUser(user()); }
-    /** Collapses an announcement bar to a one-line pin for this account. */
+    /** Unpins an announcement for this account; it stays under the bell. */
     #[Renderless]
     public function dismissAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::dismiss(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
-    /** Opens a collapsed announcement again for this account. */
+    /** Pins an unpinned announcement again for this account. */
     #[Renderless]
     public function restoreAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::restore(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
     /** App notifications: the panel's public key, this account's devices and choices. */

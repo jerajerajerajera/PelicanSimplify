@@ -126,12 +126,12 @@
                                         <strong x-text="item.title"></strong>
                                         <small x-text="item.text" x-show="item.text"></small>
                                         <small class="ps-notify-time" x-show="item.time" x-text="item.time"></small>
-                                        <span class="ps-notify-actions" x-show="item.action || item.pelican || (item.announcement && !item.dismissed)">
+                                        <span class="ps-notify-actions" x-show="item.action || item.pelican || item.announcement">
                                             <template x-if="item.action">
                                                 <a class="ps-btn is-sm" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
                                             </template>
                                             <button type="button" class="ps-btn is-sm is-subtle" x-show="item.pelican" x-on:click="markPanelNoticesRead([item.key])">Mark read</button>
-                                            <button type="button" class="ps-btn is-sm is-subtle" x-show="item.announcement && !item.dismissed" x-on:click="dismissAnnouncement(item.key)">Collapse</button>
+                                            <button type="button" class="ps-btn is-sm is-subtle ps-notify-pin" x-show="item.announcement" :aria-pressed="item.announcement && !item.dismissed ? 'true' : 'false'" :aria-label="(item.dismissed ? 'Pin ' : 'Unpin ')+item.title" x-on:click="item.dismissed ? restoreAnnouncement(item.key) : dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-pin"/></svg><span x-text="item.dismissed ? 'Pin' : 'Unpin'"></span></button>
                                         </span>
                                     </div>
                                 </template>
