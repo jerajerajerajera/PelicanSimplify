@@ -550,6 +550,38 @@ const { start } = require('./browser-harness');
     await strip.close();
     console.log('PASS phone on its side: page scroll, console and workspace fit, turning back, swipe hints, two-line names');
 
+    // 17. A new server that is installing: only the steps and the installation log; then the ready banner with Start.
+    for (const [viewport, theme] of [[{ width: 1440, height: 900 }, 'light'], [{ width: 360, height: 740 }, 'dark']]) {
+      const inst = await open('/?mode=server&theme=' + theme, viewport);
+      await data(inst, (d) => { Object.assign(d.server, { setup_state: 'installing', install_since: Math.floor(Date.now() / 1000) - 75, install_fresh: true, owner: true }); d.installLines = 3; d.status = 'offline'; });
+      await inst.waitForSelector('.ps-install', { state: 'visible' });
+      for (const hidden of ['.ps-server-info', '.ps-server-stats', '.ps-widget-grid', '.ps-command', '.ps-quick-commands']) assert.equal(await inst.locator(hidden).first().isVisible(), false, hidden + ' hidden while installing');
+      assert.ok(await inst.locator('.ps-console-output').isVisible(), 'installation log visible');
+      assert.deepEqual(await inst.$$eval('.ps-install-step', (steps) => steps.map((step) => step.className.match(/is-(\w+)/)[1])), ['done', 'done', 'active', 'todo']);
+      assert.ok(await inst.locator('.ps-install-kill').isVisible(), 'Kill for the first installation');
+      assert.match(await inst.textContent('.ps-install-time strong'), /^1:1\d$/);
+      const overflow = await inst.evaluate(() => [...document.querySelectorAll('.ps-install, .ps-install *')].filter((el) => el.offsetParent && el.getBoundingClientRect().right > document.querySelector('.ps-install').getBoundingClientRect().right + 1).map((el) => el.className));
+      assert.deepEqual(overflow, [], 'nothing sticks out of the installation card');
+      // A reinstall cannot be killed (it would delete the server's files).
+      await data(inst, (d) => { d.server.install_fresh = false; });
+      await inst.waitForSelector('.ps-install-kill', { state: 'hidden' });
+      // Failed: Try again, Change resources, Explain when available.
+      await data(inst, (d) => { d.server.setup_state = 'install_failed'; d.server.install_killed = true; d.server.can_resources = true; d.server.permissions['settings.reinstall'] = true; });
+      await inst.waitForSelector('.ps-install.is-install_failed');
+      assert.equal((await inst.textContent('.ps-install-title h2')).trim(), 'Installation stopped');
+      await inst.waitForSelector('.ps-install-resources', { state: 'visible' });
+      await inst.waitForSelector('.ps-install-actions .is-primary', { state: 'visible' });
+      // Ready: the normal page with one clear next step; the EULA is asked in the same banner.
+      await data(inst, (d) => { d.server.setup_state = null; d.installReady = true; d.eulaNeeded = true; });
+      await inst.waitForSelector('.ps-ready', { state: 'visible' });
+      await inst.waitForSelector('.ps-server-info', { state: 'visible' });
+      assert.equal((await inst.textContent('.ps-ready-start')).trim(), 'Accept and start');
+      const readyOverflow = await inst.evaluate(() => { const box = document.querySelector('.ps-ready').getBoundingClientRect(); return [...document.querySelectorAll('.ps-ready *')].filter((el) => el.offsetParent && el.getBoundingClientRect().right > box.right + 1).length; });
+      assert.equal(readyOverflow, 0, 'ready banner fits');
+      await inst.close();
+    }
+    console.log('PASS installation view: steps and log only, Kill only for a first installation, stopped and failed states, ready banner with the EULA step, fits on phones');
+
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

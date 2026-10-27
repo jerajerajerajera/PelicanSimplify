@@ -80,7 +80,8 @@ final class Dashboard extends Page
             'icon'=>ServerArtwork::icon($s,$meta),'background'=>ServerArtwork::background($s,$artworkMeta),'backup_options'=>AutomaticBackups::settings($s),'root_admin'=>user()->isRootAdmin(),
             'files_url'=>\App\Filament\Server\Resources\Files\FileResource::getUrl('index',panel:'server',tenant:$s),
             'backups_url'=>\App\Filament\Server\Resources\Backups\BackupResource::getUrl('index',panel:'server',tenant:$s),
-            'admin_server_url'=>$admin?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('edit',['record'=>$s],panel:'admin'):null];
+            'admin_server_url'=>$admin?\App\Filament\Admin\Resources\Servers\ServerResource::getUrl('edit',['record'=>$s],panel:'admin'):null,
+            ...\Simplify\Panel\Services\InstallProgress::info($s)];
         return$base;
     }
     /** Resolve registered pages instead of depending on version-specific URL paths. */
@@ -156,7 +157,8 @@ final class Dashboard extends Page
         \Simplify\Panel\Services\WingsServers::warm($servers); // One Wings request per node feeds retrieveStatus() and the usage below.
         foreach($servers as $s){
             $linked=user()->isAdmin()||(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned;$m=Extensions::web()?Extensions::webAdapter()->metadata($s):[];
-            $status=$s->retrieveStatus()->value;$mc=$status==='offline'?['players'=>0]:MinecraftStatus::get($s);
+            // A server that is still installing (or failed to) shows that instead of Wings' "offline".
+            $status=match($s->status?->value){'installing'=>'installing','install_failed','reinstall_failed'=>'install failed',default=>$s->retrieveStatus()->value};$mc=in_array($status,['offline','installing','install failed'],true)?['players'=>0]:MinecraftStatus::get($s);
             $metadata=\Simplify\Panel\Services\ServerMetadata::read($s);$minecraft=ManagedSettings::minecraft($s);$serverIcon=ServerArtwork::serverIcon($s);
             $list[]=['background_id'=>ServerArtwork::selection($s),'alias'=>$metadata['server_alias']??'','color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'name'=>$s->name,'software'=>$s->egg?->name,'game'=>$minecraft?'minecraft':'other','game_label'=>$minecraft?'Minecraft':($s->egg?->name ?: 'Other game'),'status'=>$status,'linked'=>$linked,'mine'=>(int)$s->owner_id===(int)user()->id||(bool)$s->simplify_assigned,
                 'node_id'=>(int)$s->node_id,'created'=>$s->created_at?->getTimestamp(),'port'=>$s->allocation?->port!==null?(int)$s->allocation->port:null,'node_name'=>(string)($s->node?->name??''),'permissions'=>array_combine(['control.start','control.stop','control.restart'],array_map(fn($permission)=>$linked&&user()->can($permission,$s),[P::ControlStart,P::ControlStop,P::ControlRestart])),
@@ -202,7 +204,52 @@ final class Dashboard extends Page
         if($action==='stop' && PendingChanges::read($s)){PendingChanges::requestStop($s);return;}
         if($action==='restart' && PendingChanges::read($s)){PendingChanges::requestRestart($s,0);return;}
         abort_if($s->isInConflictState(),409,'Wait until the current installation or recovery is complete.');
+        // The creator's settings (such as the accepted EULA) are written before the first start, not up to 30 s later by the queue.
+        if($action==='start'){try{\Simplify\Panel\Jobs\ApplyServerProperties::runNow($s);}catch(\Throwable $e){report($e);}}
         app(DaemonServerRepository::class)->setServer($s)->power($action)->throw();
+    }
+    /** Stops the first installation of a new server; the page stays on the installation view. */
+    #[Renderless]
+    public function killInstallation(): array
+    {
+        $s=$this->server();Access::owner($s);Access::permission($s,P::ControlStop);
+        \Simplify\Panel\Services\InstallProgress::kill($s);
+        return ['setup_state'=>$s->status?->value,...\Simplify\Panel\Services\InstallProgress::info($s,false)];
+    }
+    /** Runs a failed or stopped installation again. */
+    #[Renderless]
+    public function reinstallServer(): array
+    {
+        $s=$this->server();Access::permission($s,P::SettingsReinstall);
+        \Simplify\Panel\Services\InstallProgress::retry($s);$s->refresh();
+        return ['setup_state'=>$s->status?->value,...\Simplify\Panel\Services\InstallProgress::info($s,false)];
+    }
+    /** Deletes a server that is installing or failed to install (the normal delete waits for a finished installation). */
+    #[Renderless]
+    public function deleteSetupServer(string $confirmation): void
+    {
+        $s=$this->server();Access::owner($s);abort_unless(hash_equals($s->name,$confirmation),422,'Enter the exact server name.');
+        abort_unless(in_array($s->status?->value,['installing',...\Simplify\Panel\Services\InstallProgress::FAILED],true),409,'Use Delete server in the server settings.');
+        app(\App\Services\Servers\ServerDeletionService::class)->handle($s);
+        $this->serverUuid=null;
+        $this->redirect(self::getUrl(panel:'app'));
+    }
+    /** Called once the installation finished on the page: applies the creator's settings and tells whether the Minecraft EULA still needs accepting. */
+    #[Renderless]
+    public function finishInstall(): array
+    {
+        $s=$this->server();
+        if(user()->can(P::ControlStart,$s)){try{\Simplify\Panel\Jobs\ApplyServerProperties::runNow($s);}catch(\Throwable $e){report($e);}}
+        return ['eula'=>$this->eulaAccepted($s)];
+    }
+    /** True or false for a Minecraft server whose eula.txt could be read, null otherwise. */
+    private function eulaAccepted(Server $s): ?bool
+    {
+        if(!ManagedSettings::minecraft($s)||!user()->can(P::FileReadContent,$s))return null;
+        try{$text=app(DaemonFileRepository::class)->setServer($s)->getContent('/eula.txt',65536);}
+        catch(\Illuminate\Contracts\Filesystem\FileNotFoundException){return false;}
+        catch(\Throwable){return null;}
+        return (bool)preg_match('/^\s*eula\s*=\s*true\s*$/mi',$text);
     }
     /** Accept the Minecraft EULA for a server that stopped on the EULA prompt, then start it. */
     #[Renderless]
@@ -240,6 +287,8 @@ final class Dashboard extends Page
         $s=$this->server();Access::owner($s);abort_unless(ManagedResources::canEdit($s),403);
         $state=array_intersect_key($state,array_flip(['memory_gb','cpu','disk_mb']));
         abort_unless(isset($state['memory_gb'],$state['cpu'],$state['disk_mb']),422,'Provide all three resource limits.');
+        // After a failed or stopped installation nothing runs yet, so the limits apply at once (the next installation uses them).
+        if(in_array($s->status?->value,\Simplify\Panel\Services\InstallProgress::FAILED,true)){ManagedResources::save($s,$state);return['pending'=>false,'applied'=>true];}
         return PendingChanges::stage($s,$state,null,true);
     }
     #[Renderless]
@@ -286,7 +335,8 @@ final class Dashboard extends Page
             $p=PendingChanges::read($s);
         }
         $data=MinecraftStatus::get($s);
-        return['setup_state'=>$s->fresh()?->status?->value,'color'=>ServerAppearance::color($s),'name'=>$s->name,'server_icon'=>ServerArtwork::serverIcon($s),'reported_version'=>$data['version']??'','players'=>$data['players']??null,'max_players'=>$data['max_players']??null,'player_names'=>$data['names']??[],
+        $s=$s->fresh()??$s;
+        return['setup_state'=>$s->status?->value,'memory'=>$s->memory,'disk'=>$s->disk,'cpu'=>$s->cpu,...\Simplify\Panel\Services\InstallProgress::info($s,false),'color'=>ServerAppearance::color($s),'name'=>$s->name,'server_icon'=>ServerArtwork::serverIcon($s),'reported_version'=>$data['version']??'','players'=>$data['players']??null,'max_players'=>$data['max_players']??null,'player_names'=>$data['names']??[],
             'pending'=>$p?['pending'=>true,'file_only'=>!empty($p['file_only']),'file_changes'=>!empty($p['file_changes']),'restart_at'=>$p['restart_at'],'restart_requested'=>$p['restart_requested'],'error'=>$p['error']??null]:null];
     }
     #[Renderless]

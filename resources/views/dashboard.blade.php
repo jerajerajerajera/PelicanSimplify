@@ -676,7 +676,7 @@
         </section>
 
         {{-- Server dashboard ----------------------------------------------------------------------- --}}
-        <section x-show="server" class="ps-server-dashboard">
+        <section x-show="server" class="ps-server-dashboard" :class="{'is-installing': installView()}">
             {{-- Status bar: slides in once the server card scrolls out of view, so status and power stay in reach. --}}
             <div class="ps-statusbar" :class="{'is-visible': statusBarVisible && !!server}" :inert="!statusBarVisible" role="region" aria-label="Server status">
                 <span class="ps-statusbar-name" x-text="server?.alias || server?.name"></span>
@@ -702,6 +702,20 @@
                     <button type="button" x-on:click="open('restart')" :disabled="busy || !showWidget('restart')" class="ps-btn is-sm is-icon" data-tip="Schedule restart" aria-label="Schedule restart"><svg aria-hidden="true"><use href="#ps-clock"/></svg></button>
                     <button type="button" x-on:click="discard()" :disabled="busy" class="ps-btn is-sm is-icon is-subtle" :aria-label="server?.pending?.file_only ? 'Dismiss restart reminder' : 'Discard changes'" :data-tip="server?.pending?.file_only ? 'Dismiss reminder (saved files stay changed)' : 'Discard changes'"><svg aria-hidden="true"><use href="#ps-undo"/></svg></button>
                 </div>
+            </div>
+
+            {{-- Shown once after an installation finished on this page: one clear next step. --}}
+            {{-- The same banner asks for the Minecraft EULA when it is still needed, so Pelican's own popup never shows. --}}
+            <div class="ps-ready" :class="{'is-eula': eulaNeeded && !installReady}" x-show="(installReady || eulaNeeded) && !installView() && !['running','starting'].includes(status)" x-cloak x-transition.opacity role="status">
+                <span class="ps-ready-mark" aria-hidden="true"><svg><use :href="installReady ? '#ps-check' : '#ps-file'"/></svg></span>
+                <div>
+                    <strong x-text="installReady ? 'Your server is ready' : 'Accept the Minecraft EULA'"></strong>
+                    <small x-show="!eulaNeeded" x-text="server?.minecraft ? 'You can now start your server. The first start takes a little longer while the world is created.' : 'You can now start your server.'"></small>
+                    <small x-show="eulaNeeded">Minecraft needs this once before the server can run. <a href="https://www.minecraft.net/eula" target="_blank" rel="noopener noreferrer">Read the Minecraft EULA</a></small>
+                </div>
+                <button type="button" class="ps-btn ps-ready-resources" x-show="installReady && server?.can_resources && showWidget('performance')" x-on:click="open('performance')" :disabled="busy"><svg aria-hidden="true"><use href="#ps-cpu"/></svg><span>Change resources</span></button>
+                <button type="button" class="ps-btn is-primary ps-ready-start" x-show="server?.permissions['control.start']" x-on:click="readyStart()" :disabled="busy"><svg aria-hidden="true"><use href="#ps-play"/></svg><span x-text="eulaNeeded ? 'Accept and start' : 'Start server'"></span></button>
+                <button type="button" class="ps-btn is-icon is-subtle" x-on:click="installReady=false; eulaNeeded=false" aria-label="Dismiss" data-tip="Dismiss"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
             </div>
 
             <article class="ps-server-info" aria-label="Server information" x-init="watchServerInfo($el)">
@@ -795,15 +809,48 @@
                 </div>
             </template>
 
-            {{-- A new or reinstalled server: nothing to click until Pelican has finished installing it. --}}
-            <div class="ps-setup-state" x-show="serverSetup()" x-cloak role="status" aria-live="polite" :class="'is-'+serverSetup()">
-                <span class="ps-setup-spinner" x-show="serverSetup()==='installing'" aria-hidden="true"></span>
-                <svg x-show="serverSetup()!=='installing'" aria-hidden="true"><use href="#ps-alert"/></svg>
-                <div>
-                    <strong x-text="serverSetup()==='installing' ? 'Setting up your server…' : serverSetup()==='restoring_backup' ? 'Restoring a backup…' : 'The installation did not finish'"></strong>
-                    <small x-text="serverSetup()==='installing' ? 'Pelican is downloading and installing the game files. This can take a few minutes, longer for big Steam games. Everything opens as soon as it is ready; the console shows the progress.' : serverSetup()==='restoring_backup' ? 'The workspaces open again when the restore is done.' : 'Check the console for the error. An administrator can reinstall the server from its settings.'"></small>
+            {{-- A new or reinstalled server: only the steps and the installation log until Pelican has finished. --}}
+            <section class="ps-install" x-show="installView()" x-cloak role="status" aria-live="polite" :class="'is-'+serverSetup()" aria-label="Installation progress">
+                <div class="ps-install-head">
+                    <span class="ps-install-icon" aria-hidden="true">
+                        <img x-show="server?.software_icon" :src="safeImage(server?.software_icon)" alt="" x-on:error="$el.style.visibility='hidden'">
+                        <svg x-show="!server?.software_icon" aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg>
+                    </span>
+                    <div class="ps-install-title">
+                        <h2 x-text="installTitle()"></h2>
+                        <p x-text="installText()"></p>
+                    </div>
+                    <span class="ps-install-time" x-show="!installFailed() && installElapsed()"><strong x-text="installElapsed()"></strong><small x-show="installTypical()" x-text="installTypical()"></small></span>
+                    <div class="ps-install-actions" x-on:click.outside="installMenu=false" x-on:keydown.escape.stop="installMenu=false">
+                        <button type="button" class="ps-btn" x-show="serverSetup()==='installing'" :class="{'is-on': installNotify}" :aria-pressed="installNotify" x-on:click="toggleInstallNotify()"><svg aria-hidden="true"><use :href="installNotify ? '#ps-check' : '#ps-bell'"/></svg><span x-show="!installNotify">Notify me<span class="ps-install-long"> when ready</span></span><span x-show="installNotify">You get a notification</span></button>
+                        <button type="button" class="ps-btn is-danger ps-install-kill" x-show="canKillInstall()" x-on:click="killInstall()" :disabled="busy"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>Kill</span></button>
+                        <button type="button" class="ps-btn" x-show="installFailed() && !installKilled() && canExplain()" x-on:click="explainError('console')" :disabled="!!explain?.loading"><svg aria-hidden="true"><use href="#ps-question"/></svg><span>Explain<span class="ps-install-long"> this error</span></span></button>
+                        <button type="button" class="ps-btn ps-install-resources" x-show="installFailed() && server?.can_resources && showWidget('performance')" x-on:click="open('performance')" :disabled="busy"><svg aria-hidden="true"><use href="#ps-cpu"/></svg><span>Change resources</span></button>
+                        <button type="button" class="ps-btn is-primary" x-show="installFailed() && server?.permissions['settings.reinstall']" x-on:click="reinstall()" :disabled="busy"><svg aria-hidden="true"><use href="#ps-restart"/></svg><span>Try again</span></button>
+                        <button type="button" class="ps-btn is-icon" x-show="serverSetup()!=='restoring_backup'" aria-label="More options" aria-controls="ps-install-menu" :aria-expanded="installMenu" x-on:click="installMenu=!installMenu"><svg aria-hidden="true"><use href="#ps-dots"/></svg></button>
+                        <div id="ps-install-menu" class="ps-dropdown is-end ps-install-menu" x-show="installMenu" x-cloak x-transition.opacity role="menu">
+                            <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.files_url" x-on:click="installMenu=false; installFiles()"><svg aria-hidden="true"><use href="#ps-files"/></svg><span>Browse files</span></button>
+                            <button type="button" class="ps-menu-item" role="menuitem" x-show="installFailed() && server?.permissions['startup.read']" x-on:click="installMenu=false; installStartup()"><svg aria-hidden="true"><use href="#ps-settings"/></svg><span>Startup settings</span></button>
+                            <button type="button" class="ps-menu-item" role="menuitem" x-on:click="installMenu=false; copyText(installLogText(), 'Log copied')"><svg aria-hidden="true"><use href="#ps-copy"/></svg><span>Copy the log</span></button>
+                            <hr x-show="server?.owner">
+                            <button type="button" class="ps-menu-item is-danger" role="menuitem" x-show="server?.owner" x-on:click="installMenu=false; cancelInstall()"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span x-text="installFailed() ? 'Delete server' : 'Cancel and delete server'"></span></button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <ol class="ps-install-steps" x-show="serverSetup()!=='restoring_backup'">
+                    <template x-for="(step, index) in installSteps()" :key="step.key">
+                        <li class="ps-install-step" :class="'is-'+step.state" :aria-current="step.state==='active' ? 'step' : null">
+                            <span class="ps-install-mark" aria-hidden="true">
+                                <svg x-show="step.state==='done'"><use href="#ps-check"/></svg>
+                                <svg x-show="step.state==='failed'"><use href="#ps-close"/></svg>
+                                <i x-show="step.state==='active'"></i>
+                                <b x-show="step.state==='todo'" x-text="index+1"></b>
+                            </span>
+                            <span class="ps-install-step-text"><strong x-text="step.label"></strong><small x-text="step.detail"></small></span>
+                        </li>
+                    </template>
+                </ol>
+            </section>
 
             <div class="ps-server-workspace" :class="{'has-dock': docked(), 'is-peek': consolePeek, 'is-focus': consoleFocus && !docked()}" x-init="fitWorkspace($el)" x-effect="docked(); consolePeek; consoleFocus; refitWorkspace()">
                 {{-- A workspace opens in this block; the console then shrinks to a read-only view at the bottom right. --}}
@@ -858,7 +905,7 @@
                     <aside class="ps-console" x-show="server" :class="{'can-explain': canExplain()}">
                         <div class="ps-console-title">
                             <span class="ps-terminal-icon" aria-hidden="true">›_</span>
-                            <strong>Live console</strong>
+                            <strong x-text="installView() ? 'Installation log' : 'Live console'">Live console</strong>
                             <span class="ps-console-dot" :class="{'connected': connected}"></span><span class="ps-live-bars" x-show="connected" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                             <span class="ps-console-state" x-text="connected ? 'Connected to Wings' : 'Connecting to Wings…'"></span>
                             {{-- Buttons other plugins add to Pelican's console (such as Upload logs from Mclogs Uploader). --}}
@@ -1136,7 +1183,7 @@
                                 <label class="ps-field" x-show="resourceChoice(group) === 'custom'"><span x-text="group.custom + (resourceMin(group) === 0 ? ' · 0 = unlimited' : '')"></span><input type="number" step="any" :min="resourceMin(group)" :max="group.max" x-model.number="settings[group.key]"></label>
                             </div>
                         </template>
-                        <p class="ps-help">Save changes, then apply them with a restart.</p>
+                        <p class="ps-help" x-text="installFailed() ? 'The new limits are used when you try the installation again.' : 'Save changes, then apply them with a restart.'"></p>
                     </section>
                     <p class="ps-help" x-show="!server?.can_resources">Ask an administrator to change these limits.</p>
                 </div>
