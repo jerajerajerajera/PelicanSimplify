@@ -1,6 +1,7 @@
 <?php
 namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}}}
-namespace Simplify\Panel\Services {final class PanelUpdates {public static array $items=[];public static function announcements(?int $now=null): array {return self::$items;}}}
+namespace Simplify\Panel\Services {final class PanelUpdates {public static array $items=[];public static function announcements(?int $now=null): array {return self::$items;}}
+final class PanelNotifications {public static array $read=[];public static function markRead(array $ids): void {array_push(self::$read,...$ids);}}}
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(array $parameters=[],?string $panel=null): string {return '/simplify?server='.$parameters['server'];}}}
 namespace Boy132\Announcements\Models {final class Announcement {public static array $rows=[];public static function query(){return new class{public function get(){return Announcement::$rows;}};}}}
 namespace {
@@ -86,6 +87,15 @@ check(!$after[array_search('Later news',array_column($after,'title'))]['archived
 check(A::archivedAt($person)===$now+140&&A::archivedAt($admin)===0&&!array_filter(A::forUser($admin,$now+140),fn($i)=>$i['archived']),'archiving is per account');
 A::markAllRead($person,$now+150);
 check(A::archivedAt($person)===$now+140&&count(A::readState($person)['archived'])===3&&A::readAt($person)===$now+150,'mark all read and clear read keep each other\'s state');
+// ✕ on one: an unread announcement moves to Archived and counts as read; a Pelican notification by id, marked read.
+$later=A::forUser($person,$now+160)[array_search('Later news',array_column(A::forUser($person,$now+160),'title'))];
+A::archiveOne($person,$later['key']);
+$later=A::forUser($person,$now+160)[array_search('Later news',array_column(A::forUser($person,$now+160),'title'))];
+check($later['archived']&&!$later['unread'],'one announcement is cleared to Archived, read');
+$id='9d1c2e3f-0000-4000-8000-000000000001';
+A::archiveOne($person,$id,true);A::archiveOne($person,'../x',true);
+check(A::readState($person)['archived_ids']===[$id]&&\Simplify\Panel\Services\PanelNotifications::$read===[$id],'one Pelican notification is archived by id and marked read');
+check(A::hasArchive($person)&&!A::hasArchive($admin),'the archive is offered per account');
 A::delete($pin['id']);
 foreach(A::all() as $row)if($row['title']==='Later news')A::delete($row['id']);
 

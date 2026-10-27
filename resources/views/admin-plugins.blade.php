@@ -1,9 +1,17 @@
 <x-filament-panels::page>
     @assets
     <link rel="stylesheet" href="{{ \Simplify\Panel\Services\BuildInfo::asset('wizard.css') }}">
+    <script src="{{ \Simplify\Panel\Services\BuildInfo::asset('wizard.js') }}"></script>
     @endassets
-    @php($plugins = $this->plugins())
     <div class="ps-admin-page ps-plugins">
+        <nav class="ps-segmented ps-plugins-tabs" role="tablist" aria-label="Plugins">
+            <button type="button" role="tab" aria-pressed="{{ $tab === 'installed' ? 'true' : 'false' }}" wire:click="$set('tab', 'installed')"><x-tabler-puzzle class="ps-ico" />Installed</button>
+            <button type="button" role="tab" aria-pressed="{{ $tab === 'hub' ? 'true' : 'false' }}" wire:click="$set('tab', 'hub')"><x-tabler-world class="ps-ico" />Browse Hub</button>
+        </nav>
+        @if($tab === 'hub')
+            @include('pelican-simplify::admin-plugins-hub')
+        @else
+        @php($plugins = $this->plugins())
         <header class="ps-plugins-head">
             @include('pelican-simplify::partials-conflict-notice')
             <div class="ps-alert is-info ps-plugin-channel" role="note">
@@ -72,5 +80,6 @@
                 <p class="ps-empty">No plugins installed.</p>
             @endforelse
         </div>
+        @endif
     </div>
 </x-filament-panels::page>

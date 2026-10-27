@@ -91,6 +91,7 @@
       powerConfirmation: null,
       healthExpanded: false,
       healthOpenNodes: [],
+      healthRefreshing: false,
       hostMetrics: [
         { key: 'cpu', label: 'CPU', icon: 'cpu' },
         { key: 'memory', label: 'RAM', icon: 'ram' },
@@ -597,7 +598,7 @@
       /** What "Clear read" moved away: archived announcements and the loaded pages of archived Pelican notifications. */
       archivedNotifications() {
         const announcements = this.notifications().filter((item) => item.archived);
-        return [...announcements, ...this.archive.items.map((notice) => ({ action: null, ...notice, unread: false, pelican: true }))];
+        return [...announcements, ...this.archive.items.map((notice) => ({ action: null, ...notice, unread: false, pelican: true, archived: true }))];
       },
       hasArchive() {
         return this.archive.any || this.notifications().some((item) => item.archived);
@@ -626,6 +627,31 @@
         }
       },
       /** Moves every read notification and announcement (not an admin's pinned ones) to Archived, for this account only. */
+      /** ✕ on one notification: Pelican notifications and announcements that are not pinned by an admin. */
+      canArchive(item) {
+        return !item.archived && !item.pinned && (item.pelican || item.announcement);
+      },
+      async archiveNotification(item) {
+        const before = { announcements: this.announcements, feed: this.feed, archive: this.archive, panelNotices: this.panelNotices, panelUnread: this.panelUnread };
+        if (item.pelican) {
+          const unread = item.unread !== false;
+          this.feed = { ...this.feed, items: this.feed.items.filter((n) => n.key !== item.key) };
+          this.panelNotices = this.panelNotices.filter((n) => n.key !== item.key);
+          if (unread) this.panelUnread = Math.max(0, this.panelUnread - 1);
+          this.archive = { ...this.archive, any: true, items: this.archive.loaded ? [{ ...item, unread: false }, ...this.archive.items] : this.archive.items };
+        } else {
+          this.announcements = this.announcements.map((a) => (a.key === item.key ? { ...a, archived: true, unread: false } : a));
+          this.archive = { ...this.archive, any: true };
+        }
+        if (typeof wire.archiveNotification !== 'function') return;
+        try {
+          const items = await wire.archiveNotification(item.key, !!item.pelican);
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          Object.assign(this, before);
+          this.toast('The notification could not be cleared.', 'warn');
+        }
+      },
       async clearReadNotifications() {
         const before = { announcements: this.announcements, feed: this.feed, archive: this.archive };
         const read = this.feed.items.filter((n) => n.unread === false);
@@ -1726,6 +1752,20 @@
         } catch {
         } finally {
           this.overviewRefreshing = false;
+        }
+      },
+      /** The refresh button: fresh numbers now instead of at the next poll (the server allows one fetch every few seconds). */
+      async refreshHostHealth() {
+        if (this.healthRefreshing || !this.boot.features?.host_health) return;
+        this.healthRefreshing = true;
+        try {
+          const health = await wire.refreshHostHealth();
+          if (this.destroyed) return;
+          this.boot.host_health = health;
+          this.healthOpenNodes = this.healthOpenNodes.filter((id) => health.nodes?.some((n) => String(n.id) === String(id)));
+        } catch {
+        } finally {
+          this.healthRefreshing = false;
         }
       },
 

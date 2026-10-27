@@ -1,5 +1,33 @@
 # Changes
 
+## 0.6.0-snapshot.5 (snapshot channel)
+The Server Maker bar looks tidier.
+- Back, the steps, the draft buttons and Next share one style and height, on a phone too.
+
+## 0.6.0-snapshot.4 (snapshot channel)
+Browse the Pelican Hub from the plugin manager.
+- A new Browse Hub tab shows the themes, plugins and languages on the Hub, with the people who made them first. Install on Hub opens the item on the Hub, so every download counts for its maker.
+- The Themes tab says which commands to run when Node.js or Yarn is missing for building a theme.
+
+## 0.6.0-snapshot.3 (snapshot channel)
+Clear a single notification, and Host health waits longer for Wings.
+- Each notification has a small ✕ at the top right that moves just that one to Archived.
+- Host health waits longer for Wings before giving up, shows why a node is not reporting, and has a ↻ button to fetch fresh numbers.
+
+## 0.6.0-snapshot.2 (snapshot channel)
+The Server Maker keeps its buttons in one bar at the bottom, and the README lists every feature.
+- Back, the steps, the draft status and Next sit in one bar that stays at the bottom while you scroll. On a phone, tap the step to jump to another one.
+- The Create server button on the dashboard is bigger and always shows its text.
+- The README has a new Features section with highlights and the full list.
+
+## 0.6.0-snapshot.1 (snapshot channel)
+Simplify Server Maker: one creator for Minecraft and every other game.
+- The dashboard has one Create server tile. The first step shows Minecraft with Vanilla, Plugins, Mods, Modpack and Bedrock, and a search over all other games below it.
+- New Minecraft types: Paper or Purpur for plugins, Fabric, Forge, NeoForge or Quilt for mods, the official Bedrock server, and Velocity or BungeeCord as a proxy.
+- The steps follow the chosen game; other games get a Game settings step.
+- The Minecraft EULA is no longer asked in the creator; it appears in the new server's setup view after installation.
+- Settings has default resources for Mods, Bedrock and Proxy too.
+
 ## 0.5.3-snapshot.16 (snapshot channel)
 Plugin search can include CurseForge.
 - A root administrator adds a free CurseForge API key under Simplify settings → Plugin sites, and can let people add their own key on the Plugins page.
