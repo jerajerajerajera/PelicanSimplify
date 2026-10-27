@@ -68,16 +68,17 @@ check($payload['output_config']['format']['schema']['additionalProperties']===fa
 
 // Reading answers and failures.
 $reply=fn(array $answer,string $stop='end_turn')=>['stop_reason'=>$stop,'content'=>[['type'=>'thinking','thinking'=>''],['type'=>'text','text'=>json_encode($answer)]]];
-check(E::answer($reply(['found'=>true,'problem'=>' Out of memory. ','cause'=>'Heap too small','steps'=>['Give it 6 GB','',' Remove a mod ','3','4','5','6']]))===['found'=>true,'problem'=>'Out of memory.','cause'=>'Heap too small','steps'=>['Give it 6 GB','Remove a mod','3','4','5']],'answer trimmed, at most five steps');
-check(E::answer($reply(['problem'=>'x'],'refusal'))===null&&E::answer(['content'=>[['type'=>'text','text'=>'not json']]])===null,'refusals and broken answers give null');
+check(E::answer($reply(['found'=>true,'summary'=>' Out of memory. ','issues'=>[['title'=>' Heap ','cause'=>'Heap too small','steps'=>['Give it 6 GB','',' Remove a mod ','3','4','5','6']],['title'=>'','cause'=>'x','steps'=>[]],['title'=>'b','cause'=>'','steps'=>[]],['title'=>'c','cause'=>'','steps'=>[]],['title'=>'d','cause'=>'','steps'=>[]],['title'=>'e','cause'=>'','steps'=>[]]]]))===['found'=>true,'summary'=>'Out of memory.','issues'=>[['title'=>'Heap','cause'=>'Heap too small','steps'=>['Give it 6 GB','Remove a mod','3','4','5']],['title'=>'b','cause'=>'','steps'=>[]],['title'=>'c','cause'=>'','steps'=>[]]]],'answer trimmed: at most four issues (untitled ones dropped), five steps each');
+check(E::answer($reply(['found'=>false,'summary'=>'Everything runs.','issues'=>[]]))===['found'=>false,'summary'=>'Everything runs.','issues'=>[]],'a normal log is not a problem');
+check(E::answer($reply(['summary'=>'x'],'refusal'))===null&&E::answer(['content'=>[['type'=>'text','text'=>'not json']]])===null,'refusals and broken answers give null');
 check(str_contains(E::failure(401,[]),'not valid')&&str_contains(E::failure(400,['error'=>['type'=>'invalid_request_error','message'=>'Your credit balance is too low']]),'no credit')&&str_contains(E::failure(529,[]),'temporarily')&&str_contains(E::failure(429,[]),'busy'),'plain failure messages');
 
 // Explaining a console: read from Wings, sent once, cached, rate limited.
 \App\Repositories\Daemon\DaemonServerRepository::$lines=['[INFO] Starting','[ERROR] Mod foo requires bar 2.0','connect from 198.51.100.4'];
 $GLOBALS['user']=$person(false,false,9);
-Http::$reply=[200,$reply(['found'=>true,'problem'=>'A mod is missing a dependency.','cause'=>'foo needs bar 2.0','steps'=>['Install bar 2.0']])];
+Http::$reply=[200,$reply(['found'=>true,'summary'=>'A mod is missing a dependency.','issues'=>[['title'=>'Missing dependency','cause'=>'foo needs bar 2.0','steps'=>['Install bar 2.0']]]])];
 $result=E::explain($server);
-check($result['ok']&&$result['problem']==='A mod is missing a dependency.'&&$result['lines']===3&&$result['model']==='Claude Opus 5.5','explained');
+check($result['ok']&&$result['summary']==='A mod is missing a dependency.'&&$result['issues'][0]['title']==='Missing dependency'&&$result['lines']===3&&$result['model']==='Claude Opus 5.5','explained');
 $sent=Http::$sent[0];
 check($sent['url']==='https://api.anthropic.com/v1/messages'&&$sent['headers']['x-api-key']==='sk-ant-secret-1234'&&$sent['headers']['anthropic-version']==='2023-06-01'&&$sent['headers']['anthropic-beta']==='server-side-fallback-2026-07-01','decrypted key only in the request header');
 check(!str_contains($sent['body']['messages'][0]['content'],'198.51.100.4')&&str_contains($sent['body']['messages'][0]['content'],'Forge Minecraft'),'sanitized lines and the game');
@@ -90,10 +91,10 @@ Http::$reply=[401,['type'=>'error','error'=>['type'=>'authentication_error','mes
 $failed=E::explain($server);
 check(!$failed['ok']&&str_contains($failed['error'],'not valid')&&!str_contains(json_encode($failed),'sk-ant'),'failure without the key');
 \App\Repositories\Daemon\DaemonServerRepository::$lines=[];
-check(str_contains(E::explain($server)['error'],'empty'),'empty console');
+$empty=E::explain($server);check($empty['ok']&&!$empty['found']&&str_contains($empty['summary'],'empty')&&$empty['model']===null,'empty console: a calm answer, no question to Claude');
 $installing=new \App\Models\Server('abc',(object)['value'=>'install_failed']);
-Http::$reply=[200,$reply(['found'=>true,'problem'=>'Disk full.','cause'=>'','steps'=>[]])];
-check(E::explain($installing)['problem']==='Disk full.'&&str_contains(end(Http::$sent)['body']['messages'][0]['content'],'install failed: disk full'),'failed installs use the install log');
+Http::$reply=[200,$reply(['found'=>true,'summary'=>'Disk full.','issues'=>[]])];
+check(E::explain($installing)['summary']==='Disk full.'&&str_contains(end(Http::$sent)['body']['messages'][0]['content'],'install failed: disk full'),'failed installs use the install log');
 
 // Removing the key turns it off; a key that no longer decrypts (new APP_KEY) counts as missing.
 $GLOBALS['user']=$person(true,true);
@@ -117,9 +118,9 @@ $GLOBALS['logs']=sys_get_temp_dir().'/simplify-'.getmypid().'-laravel-';
 E::$panelLogs=$GLOBALS['logs'].'*.log';$old=$GLOBALS['logs'].'2026-10-26.log';$new=$GLOBALS['logs'].'2026-10-27.log';
 $put=function($path,$text){$h=fopen($path,'w');fprintf($h,'%s',$text);fclose($h);};$put($old,'old');$put($new,str_repeat("x\n",200000).$log);
 check(str_ends_with(E::panelLogText(),'production.DEBUG: noise')&&strlen(E::panelLogText())===262144,'newest file, last 256 KB');
-Http::$reply=[200,$reply(['found'=>true,'problem'=>'The database is locked.','cause'=>'','steps'=>[]])];Http::$sent=[];
+Http::$reply=[200,$reply(['found'=>true,'summary'=>'The database is locked.','issues'=>[]])];Http::$sent=[];
 $panel=E::explain(null,'panel');$question=Http::$sent[0]['body']['messages'][0]['content'];
-check($panel['ok']&&$panel['source']==='panel'&&str_contains($question,'Pelican panel log')&&str_contains($question,'database is locked')&&!str_contains($question,'10.0.0.5')&&!str_contains($question,'noise'),'panel log explained, sanitized');
+check($panel['ok']&&$panel['source']==='panel'&&str_contains($question,'Pelican panel log')&&str_contains($question,'database is locked')&&!str_contains($question,'10.0.0.5')&&!str_contains($question,'noise')&&str_contains($question,'Current time on the panel: '),'panel log explained, sanitized, with the current time');
 DaemonSystemRepository::$report="Wings version 1.0.0\nDocker: 27\n\n------------ Latest Wings Logs ------------\nINFO booting\nERROR failed to pull image ghcr.io/pelican-eggs/yolks:java_21\n";
 check(E::wingsLog(DaemonSystemRepository::$report)===['INFO booting','ERROR failed to pull image ghcr.io/pelican-eggs/yolks:java_21'],'only the log part of the diagnostics');
 $wings=E::explain($server,'wings');
@@ -127,7 +128,7 @@ check($wings['ok']&&str_contains(end(Http::$sent)['body']['messages'][0]['conten
 $GLOBALS['user']=$person(false,true);
 check(str_contains(E::explain(null,'panel')['error'],'not set up')&&str_contains(E::explain($server,'wings')['error'],'not set up'),'other admins cannot send the logs');
 $GLOBALS['user']=$person(true,true);$put($new,"[2026-10-27 08:00:00] production.INFO: quiet");
-check(E::explain(null,'panel')['error']==='The panel log has no warnings or errors right now.','quiet panel log');
+check(E::explain(null,'panel')['summary']==='The panel log has no warnings or errors right now.','quiet panel log');
 $put($old,'');$put($new,'');
 echo "PASS error explainer: encrypted key, audience, privacy filter, request shape, answers, failures, Wings and install logs, panel and Wings logs for root admins, cache and rate limits\n";
 }
