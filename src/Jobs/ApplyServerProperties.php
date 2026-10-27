@@ -27,6 +27,22 @@ final class ApplyServerProperties implements ShouldQueue
 
     public function __construct(public string $uuid, public array $settings, public bool $start) {}
 
+    /** Remembers the settings, so a first start can apply them at once instead of waiting for the queue. */
+    public static function queue(string $uuid, array $settings): void
+    {
+        Storage::disk('local')->put('ssc/server-settings/' . $uuid . '.json', json_encode(['status' => 'queued', 'settings' => $settings], JSON_THROW_ON_ERROR));
+        self::dispatch($uuid, $settings, false)->delay(now()->addSeconds(10));
+    }
+
+    /** Applies settings that are still waiting in the queue (such as the accepted EULA) right now; true when it did. */
+    public static function runNow(Server $server): bool
+    {
+        $saved = \Simplify\Panel\Services\JsonFile::read('ssc/server-settings/' . $server->uuid . '.json');
+        if (($saved['status'] ?? '') !== 'queued' || !is_array($saved['settings'] ?? null) || !$server->installed_at || $server->status !== null) return false;
+        (new self($server->uuid, $saved['settings'], false))->handle(app(DaemonFileRepository::class), app(DaemonServerRepository::class));
+        return true;
+    }
+
     public function handle(DaemonFileRepository $files, DaemonServerRepository $daemon): void
     {
         $server = Server::where('uuid', $this->uuid)->first();
