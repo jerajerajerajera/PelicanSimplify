@@ -476,15 +476,17 @@ const { start } = require('./browser-harness');
     // Workspaces opened one after another (closed with ✕ in between) all dock next to the console; the Explain layer stays a popup.
     for (const label of ['Game settings', 'Player management', 'Backups', 'Files']) {
       await desk.click(`.ps-widget[aria-label^="${label}"]`);
-      await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock'));
-      const docked = await desk.evaluate(() => ({ explain: document.querySelector('.ps-explain-layer').parentElement.classList.contains('ps'), visible: document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0 }));
-      assert.deepEqual(docked, { explain: true, visible: true }, label + ' docks after closing the previous workspace');
+      // Docked: the workspace layer sits in the dock with a visible shell (after the layout transition).
+      await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock') && document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0, null, { timeout: 5000 }).catch(() => {});
+      const docked = await desk.evaluate(() => ({ workspace: document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock'), explain: document.querySelector('.ps-explain-layer').parentElement.classList.contains('ps'), visible: document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0 }));
+      assert.deepEqual(docked, { workspace: true, explain: true, visible: true }, label + ' docks after closing the previous workspace');
       await desk.click('.ps-dock .ps-close');
       await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
     }
     // Escape closes a workspace popup.
     await data(desk, (d) => { d.modal = 'alias'; });
     await desk.waitForSelector('.ps-modal-layer[data-open="true"] .ps-modal', { state: 'visible' });
+    await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').contains(document.activeElement)); // focus trapped in the popup
     await desk.keyboard.press('Escape');
     await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
     await desk.close();
