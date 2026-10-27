@@ -2,6 +2,8 @@
 // bundles and simple embedded Filament pages. Used by theme-browser.js; also runnable on its own:
 //   node tests/browser-harness.js 8902   → open http://127.0.0.1:8902/?mode=server&theme=dark
 const fs = require('fs'), http = require('http'), path = require('path');
+// Blade views are read as English (lang/en), like the panel shows them by default.
+const { lang } = require('./lang-en.js');
 const repo = path.resolve(__dirname, '..');
 const views = path.join(repo, 'resources/views');
 const tools = path.join(repo, 'node_modules');
@@ -73,7 +75,7 @@ ${opts.head || ''}</head><body class="fi-body"><div class="fi-layout"><div class
 
 function sharedAssets(themeConfig) {
   const v = '?v=h';
-  return `<link id="simplify-core-css" rel="stylesheet" href="/assets/core.css${v}"><script>window.simplifyThemeConfig=${JSON.stringify(themeConfig)};</script><script src="/assets/core.js${v}"></script>`;
+  return `<link id="simplify-core-css" rel="stylesheet" href="/assets/core.css${v}"><script>window.simplifyThemeConfig=${JSON.stringify(themeConfig)};window.simplifyLang=${JSON.stringify(lang)};</script><script src="/assets/core.js${v}"></script>`;
 }
 const themeConfig = (extra = {}) => ({ global_theme: true, legacy_theme: true, console_dark: true, accent_color: '', individual_colors: true, legacy_page: false, ...extra });
 

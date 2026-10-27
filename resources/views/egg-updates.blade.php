@@ -1,51 +1,51 @@
 @php($eggs = $this->eggUpdates())
 <section class="ps-egg-updates">
     <header class="ps-egg-updates-head">
-        <h3>Available updates</h3>
-        <small class="ps-help">{{ $eggs['checked'] ? 'Checked '.\Carbon\Carbon::createFromTimestamp($eggs['checked'])->diffForHumans() : 'Not checked yet' }}</small>
-        <button type="button" class="ps-btn is-sm" wire:click="checkEggUpdates" wire:loading.attr="disabled" wire:target="checkEggUpdates"><x-tabler-refresh class="ps-ico" /><span wire:loading.remove wire:target="checkEggUpdates">Check now</span><span wire:loading wire:target="checkEggUpdates">Checking…</span></button>
+        <h3>{{ __('pelican-simplify::eggs.updates.available_updates') }}</h3>
+        <small class="ps-help">{{ $eggs['checked'] ? __('pelican-simplify::eggs.updates.checked', ['time' => \Carbon\Carbon::createFromTimestamp($eggs['checked'])->diffForHumans()]) : __('pelican-simplify::eggs.updates.not_checked') }}</small>
+        <button type="button" class="ps-btn is-sm" wire:click="checkEggUpdates" wire:loading.attr="disabled" wire:target="checkEggUpdates"><x-tabler-refresh class="ps-ico" /><span wire:loading.remove wire:target="checkEggUpdates">{{ __('pelican-simplify::eggs.updates.check_now') }}</span><span wire:loading wire:target="checkEggUpdates">{{ __('pelican-simplify::eggs.updates.checking') }}</span></button>
         @if(count($eggs['available']) > 1)
-            <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:'Update all {{ count($eggs['available']) }} eggs?',message:'Running servers keep running. Each egg keeps its previous version, so it can be put back.',confirmLabel:'Update all'}).then(ok => ok && $wire.updateEggs(null))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />Update all</button>
+            <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::eggs.updates.update_all_title', ['count' => count($eggs['available'])])),message:@js(__('pelican-simplify::eggs.updates.running_servers_keep_running_each_egg')),confirmLabel:@js(__('pelican-simplify::eggs.updates.update_all'))}).then(ok => ok && $wire.updateEggs(null))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />{{ __('pelican-simplify::eggs.updates.update_all') }}</button>
         @endif
     </header>
     <div class="ps-plugin-list" @if(array_filter(array_column($eggs['available'], 'testing'))) wire:poll.10s @endif>
         @forelse($eggs['available'] as $egg)
             <article class="ps-plugin" wire:key="egg-update-{{ $egg['id'] }}">
                 <div class="ps-plugin-main">
-                    <div class="ps-plugin-title"><strong>{{ $egg['name'] }}</strong>@if($egg['held'])<span class="ps-badge"><span>Put back</span></span>@endif</div>
-                    <small>{{ $egg['servers'] === 0 ? 'No servers' : ($egg['servers'] === 1 ? '1 server' : $egg['servers'].' servers') }} · found {{ \Carbon\Carbon::createFromTimestamp($egg['found'])->diffForHumans() }}</small>
+                    <div class="ps-plugin-title"><strong>{{ $egg['name'] }}</strong>@if($egg['held'])<span class="ps-badge"><span>{{ __('pelican-simplify::eggs.updates.put_back') }}</span></span>@endif</div>
+                    <small>{{ trans_choice('pelican-simplify::eggs.updates.servers', $egg['servers']) }} · {{ __('pelican-simplify::eggs.updates.found', ['time' => \Carbon\Carbon::createFromTimestamp($egg['found'])->diffForHumans()]) }}</small>
                     @if($egg['testing'])
-                        <p class="ps-help">{{ ['waiting' => 'Waiting for another test to finish.', 'installing' => 'Installing on a test server…', 'starting' => 'Starting the test server…'][$egg['testing']] ?? 'Testing…' }}</p>
+                        <p class="ps-help">{{ ['waiting' => __('pelican-simplify::eggs.updates.test_waiting'), 'installing' => __('pelican-simplify::eggs.updates.test_installing'), 'starting' => __('pelican-simplify::eggs.updates.test_starting')][$egg['testing']] ?? __('pelican-simplify::eggs.updates.testing') }}</p>
                     @elseif($egg['result'] && !$egg['result']['ok'])
                         <p class="ps-plugin-error">Tested {{ \Carbon\Carbon::createFromTimestamp($egg['result']['at'])->diffForHumans() }}: the test server {{ $egg['result']['reason'] }}</p>
                     @endif
                 </div>
                 <div class="ps-plugin-actions">
                     @unless($egg['testing'])
-                    <button type="button" class="ps-btn is-sm" x-on:click="Simplify.confirm({title:@js('Test '.$egg['name'].' first?'),message:'Simplify makes a test server with the new version on a free test port. When it installs and starts, the egg is updated; the test server is removed either way. This takes a few minutes.',confirmLabel:'Test and update'}).then(ok => ok && $wire.testEgg({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-flask class="ps-ico" />Test first</button>
-                    <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js('Update '.$egg['name'].'?'),message:@js(($egg['servers'] > 0 ? 'Its servers keep running and get the new egg at their next start or reinstall. ' : '').'The previous version is kept, so it can be put back.'),confirmLabel:'Update'}).then(ok => ok && $wire.updateEggs({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />Update</button>
+                    <button type="button" class="ps-btn is-sm" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::eggs.updates.test_title', ['name' => $egg['name']])),message:@js(__('pelican-simplify::eggs.updates.simplify_makes_a_test_server_with')),confirmLabel:@js(__('pelican-simplify::eggs.updates.test_and_update'))}).then(ok => ok && $wire.testEgg({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-flask class="ps-ico" />{{ __('pelican-simplify::eggs.updates.test_first') }}</button>
+                    <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::eggs.updates.update_title', ['name' => $egg['name']])),message:@js(($egg['servers'] > 0 ? __('pelican-simplify::eggs.updates.update_servers_keep').' ' : '').__('pelican-simplify::eggs.updates.previous_kept')),confirmLabel:@js(__('pelican-simplify::eggs.updates.update'))}).then(ok => ok && $wire.updateEggs({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-download class="ps-ico" />{{ __('pelican-simplify::eggs.updates.update') }}</button>
                     @endunless
                 </div>
             </article>
         @empty
-            <p class="ps-help">All eggs with an update address are up to date.</p>
+            <p class="ps-help">{{ __('pelican-simplify::eggs.updates.all_eggs_with_an_update_address') }}</p>
         @endforelse
     </div>
     @if($eggs['updated'] !== [])
-        <h3>Updated by Simplify</h3>
+        <h3>{{ __('pelican-simplify::eggs.updates.updated_by_simplify') }}</h3>
         <div class="ps-plugin-list">
             @foreach($eggs['updated'] as $egg)
                 <article class="ps-plugin" wire:key="egg-updated-{{ $egg['id'] }}">
                     <div class="ps-plugin-main">
                         <div class="ps-plugin-title"><strong>{{ $egg['name'] }}</strong></div>
-                        <small>Updated {{ \Carbon\Carbon::createFromTimestamp($egg['at'])->diffForHumans() }} · {{ $egg['servers'] === 0 ? 'No servers' : ($egg['servers'] === 1 ? '1 server' : $egg['servers'].' servers') }}</small>
-                        @if($egg['moves'] > 0)<p class="ps-help">{{ $egg['moves'] === 1 ? '1 server still uses' : $egg['moves'].' servers still use' }} the old startup command or Docker image. Servers keep their own; move them to get the new one at their next start.</p>@endif
+                        <small>{{ __('pelican-simplify::eggs.updates.updated_time', ['time' => \Carbon\Carbon::createFromTimestamp($egg['at'])->diffForHumans()]) }} · {{ trans_choice('pelican-simplify::eggs.updates.servers', $egg['servers']) }}</small>
+                        @if($egg['moves'] > 0)<p class="ps-help">{{ trans_choice('pelican-simplify::eggs.updates.moves', $egg['moves']) }}</p>@endif
                     </div>
                     <div class="ps-plugin-actions">
                         @if($egg['moves'] > 0)
-                            <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js('Move servers to the new '.$egg['name'].'?'),message:'They get the new startup command or Docker image at their next start. Servers with a command or image of their own are left alone.',confirmLabel:'Move servers'}).then(ok => ok && $wire.moveEggServers({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-arrows-exchange class="ps-ico" />Move servers</button>
+                            <button type="button" class="ps-btn is-sm is-primary" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::eggs.updates.move_title', ['name' => $egg['name']])),message:@js(__('pelican-simplify::eggs.updates.they_get_the_new_startup_command')),confirmLabel:@js(__('pelican-simplify::eggs.updates.move_servers'))}).then(ok => ok && $wire.moveEggServers({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-arrows-exchange class="ps-ico" />{{ __('pelican-simplify::eggs.updates.move_servers') }}</button>
                         @endif
-                        <button type="button" class="ps-btn is-sm" x-on:click="Simplify.confirm({title:@js('Put back the previous '.$egg['name'].'?'),message:'The egg returns to the version it had before this update. Automatic updates leave it alone until you update it again.',confirmLabel:'Put back'}).then(ok => ok && $wire.restoreEgg({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-arrow-back-up class="ps-ico" />Put back</button>
+                        <button type="button" class="ps-btn is-sm" x-on:click="Simplify.confirm({title:@js(__('pelican-simplify::eggs.updates.put_back_title', ['name' => $egg['name']])),message:@js(__('pelican-simplify::eggs.updates.the_egg_returns_to_the_version')),confirmLabel:@js(__('pelican-simplify::eggs.updates.put_back'))}).then(ok => ok && $wire.restoreEgg({{ $egg['id'] }}))" wire:loading.attr="disabled"><x-tabler-arrow-back-up class="ps-ico" />{{ __('pelican-simplify::eggs.updates.put_back') }}</button>
                     </div>
                 </article>
             @endforeach

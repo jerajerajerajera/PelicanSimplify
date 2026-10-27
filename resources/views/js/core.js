@@ -384,6 +384,7 @@
     ui: true,
     t,
     tc,
+    fill: (text, params = {}) => fill(String(text), params),
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),

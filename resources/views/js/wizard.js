@@ -28,7 +28,7 @@ window.sscDraft = function (wire) {
     init() {
       this.step = Number(wire.draftStep) || 1;
       this.furthestStep = Math.max(this.step, Number(wire.furthestStep) || 1);
-      this.status = sscText(wire.draftRestored ? 'draft.restored' : 'draft.ready');
+      this.status = window.sscText(wire.draftRestored ? 'draft.restored' : 'draft.ready');
       this.hasSaved = true;
       // The browser's own leave-page warning is the only dialog a page may not restyle.
       this.unload = (event) => {
@@ -80,7 +80,7 @@ window.sscDraft = function (wire) {
         this.changed();
         await this.flush();
       } catch {
-        this.status = sscText('draft.switch_failed');
+        this.status = window.sscText('draft.switch_failed');
       } finally {
         this.switching = false;
       }
@@ -126,7 +126,7 @@ window.sscDraft = function (wire) {
       if (this.completed) return;
       this.revision++;
       this.dirty = true;
-      this.status = sscText('common.unsaved_changes');
+      this.status = window.sscText('common.unsaved_changes');
     },
     /** Copies deferred (wire:model) field values into Livewire without sending a request on its own. */
     capture() {
@@ -142,7 +142,7 @@ window.sscDraft = function (wire) {
     async flush(force = true) {
       if (this.completed) return;
       if (this.uploading) {
-        this.status = sscText('draft.wait_upload');
+        this.status = window.sscText('draft.wait_upload');
         throw Error('Upload still in progress');
       }
       clearTimeout(this.saveTimer);
@@ -155,18 +155,18 @@ window.sscDraft = function (wire) {
       }
       const revision = this.revision;
       this.saving = true;
-      this.status = sscText('draft.saving');
+      this.status = window.sscText('draft.saving');
       this.pending = (async () => {
         try {
           await wire.saveDraft(this.currentStep(), Math.max(this.furthestStep, this.currentStep()));
           this.savedRevision = revision;
           this.dirty = this.revision !== revision;
-          this.status = sscText(this.dirty ? 'common.unsaved_changes' : 'draft.saved');
+          this.status = window.sscText(this.dirty ? 'common.unsaved_changes' : 'draft.saved');
           this.hasSaved = true;
           if (!this.dirty) this.savedCount++;
         } catch (error) {
           this.dirty = true;
-          this.status = sscText('draft.not_saved');
+          this.status = window.sscText('draft.not_saved');
           throw error;
         } finally {
           this.saving = false;
@@ -190,7 +190,7 @@ window.sscDraft = function (wire) {
           this.deleteConfirm = true;
           return;
         }
-        const ok = await window.Simplify.confirm({ title: sscText('draft.discard_title'), message: sscText('draft.discard_message'), confirmLabel: sscText('draft.discard'), tone: 'danger' });
+        const ok = await window.Simplify.confirm({ title: window.sscText('draft.discard_title'), message: window.sscText('draft.discard_message'), confirmLabel: window.sscText('draft.discard'), tone: 'danger' });
         if (!ok) return;
         this.deleteConfirm = true;
       }
@@ -291,8 +291,8 @@ window.simplifyHubBrowser = function (hub) {
     close() { this.open = null; },
     makerLine(item) {
       const count = this.makers[item.type]?.find((m) => m.name === item.author)?.count || 1;
-      const parts = [sscText('hub.on_hub', { items: count + ' ' + this.typeLabel(item.type, count) })];
-      if (item.based) parts.push(sscText('hub.based_on', { name: item.based.name }));
+      const parts = [window.sscText('hub.on_hub', { items: count + ' ' + this.typeLabel(item.type, count) })];
+      if (item.based) parts.push(window.sscText('hub.based_on', { name: item.based.name }));
       return parts.join(' · ');
     },
     initial(name) { return (Array.from(String(name).replace(/[^\p{L}\p{N}]/gu, ''))[0] || '?').toUpperCase(); },

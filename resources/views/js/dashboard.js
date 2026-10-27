@@ -2396,7 +2396,7 @@
         if (creating) {
           this.closingCreator = true;
           try {
-            const save = this.$root?.querySelector('iframe[title="Create server"]')?.contentWindow?.sscSaveDraft;
+            const save = this.$root?.querySelector('iframe[data-ps-create]')?.contentWindow?.sscSaveDraft;
             if (save) await save();
             else if (!(await this.ask({ title: t('dashboard.leave_the_creator'), message: t('dashboard.unsaved_changes_may_be_lost'), confirmLabel: t('dashboard.leave') }))) return;
           } catch {
