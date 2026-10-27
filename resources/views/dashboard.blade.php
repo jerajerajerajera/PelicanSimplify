@@ -169,12 +169,15 @@
                             {{-- Server pages: the same personal preferences, stored with the overview ones. --}}
                             <template x-if="server">
                                 <div class="ps-customize">
-                                    <span class="ps-customize-head is-first">Layout</span>
+                                    <button type="button" class="ps-customize-head is-toggle is-first" :aria-expanded="customizeOpen('server.layout')" aria-controls="ps-customize-server-layout" x-on:click="toggleCustomize('server.layout')"><span>Layout</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-layout" x-show="customizeOpen('server.layout')">
                                     <button type="button" class="ps-customize-switch" role="switch" :aria-checked="overviewPreferences.serverFullWidth" x-on:click="setOverviewPreference('serverFullWidth', !overviewPreferences.serverFullWidth)">
                                         <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for server pages</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.serverFullWidth}" aria-hidden="true"></span>
                                     </button>
-                                    <span class="ps-customize-head" x-show="!phone">Console</span>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="!phone" :aria-expanded="customizeOpen('server.console')" aria-controls="ps-customize-server-console" x-on:click="toggleCustomize('server.console')"><span>Console</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-console" x-show="customizeOpen('server.console')">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="!phone" :aria-checked="consoleFocus" x-on:click="setConsoleFocus(!consoleFocus)">
                                         <span><strong>Bigger console</strong><small>Open server pages with the large console, without the menu next to it</small></span>
                                         <span class="ps-switch" :class="{'is-on': consoleFocus}" aria-hidden="true"></span>
@@ -183,16 +186,20 @@
                                         <span><strong>Log in the mini console</strong><small>While a section like Files is open, show the last log lines above the command field</small></span>
                                         <span class="ps-switch" :class="{'is-on': consolePeek}" aria-hidden="true"></span>
                                     </button>
-                                    <span class="ps-customize-head" x-show="halloweenSeason() && boot.appearance?.seasonal !== false">More</span>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-expanded="customizeOpen('server.more')" aria-controls="ps-customize-server-more" x-on:click="toggleCustomize('server.more')"><span>More</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-server-more" x-show="customizeOpen('server.more')">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
                                         <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
                                     </button>
+                                    </div>
                                 </div>
                             </template>
                             <template x-if="!server">
                                 <div class="ps-customize">
-                                    <span class="ps-customize-head is-first">Layout</span>
+                                    <button type="button" class="ps-customize-head is-toggle is-first" :aria-expanded="customizeOpen('overview.layout')" aria-controls="ps-customize-overview-layout" x-on:click="toggleCustomize('overview.layout')"><span>Layout</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-layout" x-show="customizeOpen('overview.layout')">
                                     <div class="ps-customize-row">
                                         <div><strong>Layout</strong><small>Cards, small cards or rows</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Layout">
@@ -221,7 +228,9 @@
                                         <span><strong>Full screen width</strong><small>Use the whole width of the screen instead of a centred column for the overview</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.fullWidth}" aria-hidden="true"></span>
                                     </button>
-                                    <span class="ps-customize-head">Cards</span>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" :aria-expanded="customizeOpen('overview.cards')" aria-controls="ps-customize-overview-cards" x-on:click="toggleCustomize('overview.cards')"><span>Cards</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-cards" x-show="customizeOpen('overview.cards')">
                                     <div class="ps-customize-row">
                                         <div><strong>Card icon</strong><small>The big picture at the top of each card</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Card icon">
@@ -251,7 +260,9 @@
                                             </template>
                                         </div>
                                     </div>
-                                    <span class="ps-customize-head">Grouping</span>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" :aria-expanded="customizeOpen('overview.grouping')" aria-controls="ps-customize-overview-grouping" x-on:click="toggleCustomize('overview.grouping')"><span>Grouping</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-grouping" x-show="customizeOpen('overview.grouping')">
                                     <div class="ps-customize-row">
                                         <div><strong>Group by node</strong><small>Auto groups servers per node once you have more than one; Always also shows a single node</small></div>
                                         <div class="ps-segmented" role="group" aria-label="Group by node">
@@ -264,7 +275,9 @@
                                         <span><strong>Server groups button</strong><small>A button in the top bar to make your own groups and choose the order of your servers</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.showGroupsButton}" aria-hidden="true"></span>
                                     </button>
-                                    <span class="ps-customize-head" x-show="(halloweenSeason() && boot.appearance?.seasonal !== false) || boot.settings_url">More</span>
+                                    </div>
+                                    <button type="button" class="ps-customize-head is-toggle" x-show="(halloweenSeason() && boot.appearance?.seasonal !== false) || boot.settings_url" :aria-expanded="customizeOpen('overview.more')" aria-controls="ps-customize-overview-more" x-on:click="toggleCustomize('overview.more')"><span>More</span><svg class="ps-customize-chevron" aria-hidden="true"><use href="#ps-chevron"/></svg></button>
+                                    <div class="ps-customize-section" id="ps-customize-overview-more" x-show="customizeOpen('overview.more')">
                                     <button type="button" class="ps-customize-switch" role="switch" x-show="halloweenSeason() && boot.appearance?.seasonal !== false" :aria-checked="overviewPreferences.halloween" x-on:click="setOverviewPreference('halloween', !overviewPreferences.halloween)">
                                         <span><strong>Halloween theme</strong><small>A few small Halloween touches until 2 November</small></span>
                                         <span class="ps-switch" :class="{'is-on': overviewPreferences.halloween}" aria-hidden="true"></span>
@@ -273,6 +286,7 @@
                                     <div class="ps-customize-row" x-show="boot.settings_url">
                                         <div><strong>Server colors</strong><small>One color for every server, or a color per server, for everyone on the panel. A color per group is under Server groups.</small></div>
                                         <button type="button" class="ps-btn is-sm" x-on:click="appearanceMenu=false; openPanelSettings('appearance')">Open settings</button>
+                                    </div>
                                     </div>
                                 </div>
                             </template>
