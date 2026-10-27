@@ -31,6 +31,15 @@
             <nav class="ps-top-actions" aria-label="Panel navigation" :class="{'nav-open': navMenu}"
                  x-on:click.outside="navMenu=false; accountMenu=false"
                  x-on:keydown.escape.stop="navMenu=false; accountMenu=false">
+                {{-- Overview with health in the top bar: the health button (opens the details below it) and the create buttons. --}}
+                <div class="ps-top-overview" x-show="!server && !hostMode && healthPlace()==='top-bar'" x-cloak>
+                    <button type="button" class="ps-btn ps-health-pill" :class="boot.host_health?.state || 'unavailable'" x-on:click="healthPopover=!healthPopover; healthExpanded=false; healthOpenNodes=[]" :aria-expanded="healthPopover" aria-controls="ps-health-panel" :aria-label="'Host health: '+(boot.host_health?.label || 'Unavailable')">
+                        <svg aria-hidden="true"><use href="#ps-heart"/></svg><span x-text="boot.host_health?.label || 'Unavailable'"></span>
+                    </button>
+                    <template x-for="choice in createButtons()" :key="choice.key">
+                        <button type="button" class="ps-btn ps-create-button" :class="{'is-primary': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><svg aria-hidden="true"><use :href="'#ps-'+choice.icon"/></svg><span x-text="choice.label"></span></button>
+                    </template>
+                </div>
                 <button type="button" class="ps-btn is-icon is-subtle ps-mobile-menu" aria-label="Panel navigation" aria-controls="ps-navigation-items" :aria-expanded="navMenu"
                         x-on:click="navMenu=!navMenu; accountMenu=false; appearanceMenu=false; groupsMenu=false; notifyMenu=false">
                     <svg aria-hidden="true"><use href="#ps-menu"/></svg>
@@ -205,6 +214,14 @@
                                         <div class="ps-segmented" role="group" aria-label="Layout">
                                             <template x-for="view in [{key:'grid',label:'Cards',icon:'grid'},{key:'compact',label:'Compact',icon:'grid-small'},{key:'list',label:'List',icon:'list'}]" :key="view.key">
                                                 <button type="button" :aria-pressed="overviewView===view.key" x-on:click="setOverviewView(view.key)"><svg aria-hidden="true"><use :href="'#ps-'+view.icon"/></svg><span x-text="view.label"></span></button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="ps-customize-row" x-show="boot.features.host_health">
+                                        <div><strong>Host health</strong><small>Where the health summary shows</small></div>
+                                        <div class="ps-segmented ps-health-place" role="group" aria-label="Host health">
+                                            <template x-for="place in [{key:'top-bar',label:'Top bar'},{key:'above',label:'Above'},{key:'bottom',label:'Bottom'}]" :key="place.key">
+                                                <button type="button" :aria-pressed="overviewPreferences.healthPlace===place.key" x-on:click="setOverviewPreference('healthPlace', place.key); healthPopover=false; healthExpanded=false" x-text="place.label"></button>
                                             </template>
                                         </div>
                                     </div>
@@ -504,40 +521,31 @@
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
                     @include('pelican-simplify::announcement-bars')
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
-                        <div class="ps-create-tiles" x-show="boot.can_create">
-                            {{-- The Server Maker: Minecraft and every other game in one creator. --}}
-                            <button type="button" x-show="canCreateGame('server')" x-on:click="openCreate('server')" class="ps-create-card is-server" :style="creationAccent('server')" aria-label="Create server" aria-haspopup="dialog">
-                                <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-host"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><strong>Create server</strong><span>Minecraft or any other game</span></h3>
-                            </button>
-                            {{-- Game add-on off: administrators still reach other games through Pelican's own form. --}}
-                            <button type="button" x-show="pelicanFormForOthers()" x-on:click="openCreate('other')" class="ps-create-card is-other" :style="creationAccent('other')" aria-label="Create other server with Pelican's form" aria-haspopup="dialog">
-                                <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-gamepad"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><span>Create</span><strong>Other</strong><span>server</span></h3>
-                            </button>
-                            {{-- Easy creator off: one tile for Pelican's native creation (administrators). --}}
-                            <button type="button" x-show="canCreateGame('native')" x-on:click="openCreate('native')" class="ps-create-card is-native" :style="creationAccent('native')" aria-label="Create server with Pelican's creator" aria-haspopup="dialog">
-                                <span class="ps-create-plus"><svg aria-hidden="true"><use href="#ps-host"/></svg><span class="ps-create-add"><svg aria-hidden="true"><use href="#ps-plus"/></svg></span></span>
-                                <h3><span>Create</span><strong>New</strong><span>server</span></h3>
-                            </button>
+                        <div class="ps-overview-filters">
+                            <div class="ps-game-filters" role="group" aria-label="Filter servers by game">
+                                <button type="button" class="ps-chip" :aria-pressed="gameFilter==='all'" x-on:click="setGameFilter('all')">All</button>
+                                <template x-for="game in gameOptions()" :key="game.key">
+                                    <button type="button" class="ps-chip" :aria-pressed="gameFilter===game.key" x-on:click="setGameFilter(game.key)" x-text="game.label"></button>
+                                </template>
+                            </div>
+                            <div class="ps-node-filters" x-show="nodeOptions().length > 1" role="group" aria-label="Filter servers by node">
+                                <input type="search" class="ps-input ps-node-search" x-show="nodeOptions().length > 3" x-model.debounce.200ms="nodeSearch" placeholder="Search nodes" aria-label="Search nodes">
+                                <button type="button" class="ps-chip" :aria-pressed="nodeFilter==='all'" x-on:click="nodeFilter='all'"><svg aria-hidden="true"><use href="#ps-host"/></svg>All nodes</button>
+                                <template x-for="node in nodeOptions().filter((n) => !nodeSearch || n.name.toLowerCase().includes(nodeSearch.toLowerCase()))" :key="node.id">
+                                    <button type="button" class="ps-chip" :aria-pressed="nodeFilter===node.id" x-on:click="nodeFilter=node.id" x-text="node.name"></button>
+                                </template>
+                            </div>
+                            {{-- Administrators see everyone's servers; like Pelican's own list they can narrow it to their own (owner or subuser) or other people's. --}}
+                            <div class="ps-owner-filters" x-show="ownerFilterShown()" role="group" aria-label="Filter servers by owner">
+                                <template x-for="scope in [{ key: 'all', label: 'All servers' }, { key: 'mine', label: 'My servers' }, { key: 'others', label: 'Others' }]" :key="scope.key">
+                                    <button type="button" class="ps-chip" :aria-pressed="overviewPreferences.serverScope===scope.key" x-on:click="setOverviewPreference('serverScope', scope.key)"><svg x-show="scope.key==='all'" aria-hidden="true"><use href="#ps-account"/></svg><span x-text="scope.label"></span></button>
+                                </template>
+                            </div>
                         </div>
-                        <div class="ps-game-filters" role="group" aria-label="Filter servers by game">
-                            <button type="button" class="ps-chip" :aria-pressed="gameFilter==='all'" x-on:click="setGameFilter('all')">All</button>
-                            <template x-for="game in gameOptions()" :key="game.key">
-                                <button type="button" class="ps-chip" :aria-pressed="gameFilter===game.key" x-on:click="setGameFilter(game.key)" x-text="game.label"></button>
-                            </template>
-                        </div>
-                        <div class="ps-node-filters" x-show="nodeOptions().length > 1" role="group" aria-label="Filter servers by node">
-                            <input type="search" class="ps-input ps-node-search" x-show="nodeOptions().length > 3" x-model.debounce.200ms="nodeSearch" placeholder="Search nodes" aria-label="Search nodes">
-                            <button type="button" class="ps-chip" :aria-pressed="nodeFilter==='all'" x-on:click="nodeFilter='all'"><svg aria-hidden="true"><use href="#ps-host"/></svg>All nodes</button>
-                            <template x-for="node in nodeOptions().filter((n) => !nodeSearch || n.name.toLowerCase().includes(nodeSearch.toLowerCase()))" :key="node.id">
-                                <button type="button" class="ps-chip" :aria-pressed="nodeFilter===node.id" x-on:click="nodeFilter=node.id" x-text="node.name"></button>
-                            </template>
-                        </div>
-                        {{-- Administrators see everyone's servers; like Pelican's own list they can narrow it to their own (owner or subuser) or other people's. --}}
-                        <div class="ps-owner-filters" x-show="ownerFilterShown()" role="group" aria-label="Filter servers by owner">
-                            <template x-for="scope in [{ key: 'all', label: 'All servers' }, { key: 'mine', label: 'My servers' }, { key: 'others', label: 'Others' }]" :key="scope.key">
-                                <button type="button" class="ps-chip" :aria-pressed="overviewPreferences.serverScope===scope.key" x-on:click="setOverviewPreference('serverScope', scope.key)"><svg x-show="scope.key==='all'" aria-hidden="true"><use href="#ps-account"/></svg><span x-text="scope.label"></span></button>
+                        {{-- Create buttons at the end of the filter row, unless they sit in the top bar with host health. --}}
+                        <div class="ps-create-buttons" x-show="healthPlace()!=='top-bar' && createButtons().length">
+                            <template x-for="choice in createButtons()" :key="choice.key">
+                                <button type="button" class="ps-btn ps-create-button" :class="{'is-primary': choice.primary}" x-on:click="openCreate(choice.key)" :aria-label="choice.label" aria-haspopup="dialog"><svg aria-hidden="true"><use :href="'#ps-'+choice.icon"/></svg><span x-text="choice.label"></span></button>
                             </template>
                         </div>
                     </div>
@@ -639,8 +647,8 @@
                 </div>
             </div>
 
-            {{-- Host health dock. --}}
-            <section class="ps-health-panel" :style="accentStyle('overview')" x-on:click.outside="healthExpanded=false; healthOpenNodes=[]" x-show="boot.features.host_health" :class="{'expanded': healthExpanded}">
+            {{-- Host health: a bar at the bottom (as before), a bar above the servers, or details under the top-bar button. --}}
+            <section id="ps-health-panel" class="ps-health-panel" :style="accentStyle('overview')" x-on:click.outside="if (!$event.target.closest('.ps-health-pill')) { healthExpanded=false; healthOpenNodes=[]; healthPopover=false }" x-on:keydown.escape="if (healthPopover) { healthPopover=false; $root.querySelector('.ps-health-pill')?.focus() }" x-show="healthPlace() && (healthPlace()!=='top-bar' || healthPopover)" :class="{'expanded': healthExpanded, 'is-popover': healthPlace()==='top-bar', 'is-above': healthPlace()==='above'}">
                 <article class="ps-host-health" role="button" tabindex="0" aria-label="View health by node" :aria-expanded="healthExpanded" aria-controls="ps-health-details"
                          x-on:click="openHostHealth()" x-on:keydown.enter.prevent="openHostHealth()" x-on:keydown.space.prevent="openHostHealth()">
                     <div class="ps-host-state">

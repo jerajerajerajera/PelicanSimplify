@@ -272,6 +272,32 @@ const { start } = require('./browser-harness');
     await fit.close();
     console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover, normal interface size, two-line names');
 
+    // 8b. Host health: a button in the top bar by default (details drop down, Create server next to it),
+    // or a bar above the servers or at the bottom with Create server at the end of the filter row.
+    const healthPage = await open('/?mode=overview&theme=dark');
+    const where = () => healthPage.evaluate(() => {
+      const shown = (el) => !!el && el.offsetParent !== null;
+      const panel = document.querySelector('.ps-health-panel'), toolbar = document.querySelector('.ps-overview-toolbar');
+      return {
+        pill: shown(document.querySelector('.ps-health-pill')), topCreate: shown(document.querySelector('.ps-top-overview .ps-create-button.is-primary')),
+        rowCreate: shown(document.querySelector('.ps-create-buttons .ps-create-button.is-primary')), panel: shown(panel),
+        panelAbove: shown(panel) && panel.getBoundingClientRect().bottom <= toolbar.getBoundingClientRect().top,
+      };
+    });
+    assert.deepEqual(await where(), { pill: true, topCreate: true, rowCreate: false, panel: false, panelAbove: false }, 'top bar by default');
+    await healthPage.click('.ps-health-pill');
+    await healthPage.waitForSelector('.ps-health-panel.is-popover', { state: 'visible' });
+    await healthPage.click('.ps-server-grid', { position: { x: 5, y: 5 } });
+    await healthPage.waitForSelector('.ps-health-panel', { state: 'hidden' });
+    await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'above'));
+    assert.deepEqual(await where(), { pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: true }, 'bar above the servers');
+    await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'bottom'));
+    assert.deepEqual(await where(), { pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: false }, 'bar at the bottom');
+    const docked = await healthPage.evaluate(() => Math.round(innerHeight - document.querySelector('.ps-health-panel').getBoundingClientRect().bottom));
+    assert.ok(docked < 80, 'the bottom bar stays at the bottom of the screen: ' + docked);
+    await healthPage.close();
+    console.log('PASS host health in the top bar, above the servers or at the bottom, with Create server beside it');
+
     // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
     const network = await open('/?mode=server&theme=light');
     await network.evaluate(() => { window.__wire.connectionData = async () => ({ subdomains: true, requested_subdomain: 'oak', subdomain: { name: 'oak', status: 'active', message: '', domain: 'example.com' }, address: 'oak.example.com' }); });
