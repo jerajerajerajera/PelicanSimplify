@@ -1,5 +1,17 @@
 # Changes
 
+## 0.6.0-snapshot.8 (snapshot channel)
+Host mode is calmer, notifications can be marked unread, and three fixes for settings.
+- Host mode has one menu with two tabs. Admin shows every section as a tree with its pages underneath. Servers shows one row per server, grouped by node.
+- The page sits directly next to the menu, without a frame around it. Its pages are no longer repeated as tabs above it.
+- Health is a small strip at the bottom of the menu and opens the Health page.
+- On a phone, one button above the page opens the menu.
+- Read notifications and announcements have a Mark as unread button. Marking one unread takes it out of Archived.
+- Archived announcements no longer show the pin button.
+- The settings popup has two scroll areas, one for the menu and one for the settings. Backup, OAuth and Misc are no longer hidden behind the content.
+- Admin tools → Panel opens Settings in host mode instead of an empty page.
+- People and Roles have one switch in host mode instead of two.
+
 ## 0.6.0-snapshot.7 (snapshot channel)
 All settings in one place.
 - Admin tools → Panel has one Settings entry. The separate settings button in the top bar is gone.
