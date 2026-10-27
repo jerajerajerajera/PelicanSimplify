@@ -3,10 +3,11 @@ namespace Simplify\Panel\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Simplify\Panel\Services\Announcements as Messages;
+use Simplify\Panel\Services\InGameAnnouncements;
 use Simplify\Panel\Services\PanelUpdates;
 use Simplify\Panel\Services\PushNotifications;
 /**
- * Scheduled every minute: sends announcements that start now as app notifications, and every ten minutes looks for
+ * Scheduled every minute: sends announcements that start now as app notifications and in game (again when they repeat), and every ten minutes looks for
  * new versions of Simplify, other plugins, Wings and Pelican (the Panel's announcements) and notifies root admins once per version.
  */
 final class Announcements extends Command
@@ -32,6 +33,7 @@ final class Announcements extends Command
             foreach($users as $user)if($row['audience']==='everyone'||$user->isAdmin())$sent+=$this->send($user,'announcements',$message);
             $this->info('"'.$row['title'].'" sent to '.$sent.' device(s).');
         }
+        foreach(InGameAnnouncements::run($now) as $title=>$result)$this->info('"'.$title.'" in game: '.implode(', ',InGameAnnouncements::summary($result)).'.');
         foreach(PanelUpdates::announcements($now) as $item){
             if(!Cache::add('simplify.push-sent.'.$item['key'],true,now()->addDays(90)))continue;
             foreach($users as $user)if($user->isRootAdmin())$this->send($user,'updates',['title'=>$item['title'],'body'=>$item['text'],'url'=>self::home(),'tag'=>$item['key']]);
