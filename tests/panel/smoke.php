@@ -43,10 +43,12 @@ if(($argv[1]??'')==='livewire'){
         Filament::setCurrentPanel(Filament::getPanel('app'));
         $overview=Livewire::actingAs($admin)->test(\Simplify\Panel\Filament\App\Pages\Dashboard::class);
         // Notifications: a real database notification shows in the full list, and "Mark all read" clears every unread one.
-        foreach(range(1,3) as $i)$admin->notifyNow(\Filament\Notifications\Notification::make()->title('Smoke notice '.$i)->toDatabase());
+        foreach(range(1,3) as $i)$admin->notifyNow(\Filament\Notifications\Notification::make()->title('Smoke notice '.$i)->viewData($i===3?['simplify_notes'=>['Smoke news'],'simplify_notes_url'=>'https://github.com/x/y']:[])->toDatabase());
         $overview->call('notificationPage',1);
         $feed=\Simplify\Panel\Services\PanelNotifications::page(1);
         if(!is_array($feed)||!in_array('Smoke notice 3',array_column($feed['items']??[],'title'),true)||($feed['unread']??0)<3)throw new \RuntimeException('the notification list does not show the new notifications');
+        $notice=current(array_filter($feed['items'],fn($i)=>$i['title']==='Smoke notice 3'));
+        if(($notice['notes']??null)!==['Smoke news']||($notice['notesUrl']??null)!=='https://github.com/x/y')throw new \RuntimeException('What\'s new of a "Plugin updated" notification is missing');
         $overview->call('markAllNotificationsRead');
         if(\Simplify\Panel\Services\PanelNotifications::unreadCount()!==0)throw new \RuntimeException('mark all read left unread notifications');
         // Clear read: the read ones move to Archived (a second list), the current list keeps none of them.
