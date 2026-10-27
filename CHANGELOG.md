@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.0-snapshot.19 (snapshot channel)
+A fix for the scheduler warning.
+- The Plugins page only warns that the scheduler stopped when it really did. Right after a plugin update it no longer shows a false warning for a few minutes.
+
 ## 0.6.0-snapshot.18 (snapshot channel)
 Documentation.
 - The README covers Only the add-ons and egg updates.
