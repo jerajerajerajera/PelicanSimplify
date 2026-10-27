@@ -1,5 +1,14 @@
 # Changes
 
+## 0.5.3-snapshot.13 (snapshot channel)
+Plugins can be found on Modrinth, Hangar and SpigotMC, and What's new in update notifications is shorter.
+- The Plugins section has Installed and Add plugin. Add plugin searches Modrinth, Hangar and SpigotMC at once and shows where a plugin comes from and which version installs.
+- Without a release for your Minecraft version, a plugin can still be installed after a warning. Installed plugins can be switched off, updated or removed.
+- Paper and Purpur servers set to latest read their running version by themselves.
+- The bell shows one What's new line per update with Show all; the full notification list shows every line.
+- Checksum lines from release notes are left out, and long notes wrap inside the notification.
+- Simplify checks for updates right after it is updated, so existing notices get What's new without waiting.
+
 ## 0.5.3-snapshot.12 (snapshot channel)
 Announcements can also be sent in game.
 - Pick all servers, server groups or single servers, and optionally repeat the message while the announcement shows.
