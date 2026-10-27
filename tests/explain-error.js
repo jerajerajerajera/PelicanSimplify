@@ -26,7 +26,9 @@ vm.createContext(context);vm.runInContext(fs.readFileSync(__dirname+'/../resourc
  // A normal log: a calm answer without issues.
  reply={ok:true,found:false,summary:'Everything runs.',lines:0,model:null};await d.explainError();assert.equal(d.explain.answer.found,false);assert.deepEqual([...d.explain.answer.issues],[]);
  const blade=fs.readFileSync(__dirname+'/../resources/views/dashboard.blade.php','utf8');
- assert.ok(/ps-console-explain" x-show="canExplain\(\)"/.test(blade)&&/ps-admin-explain/.test(blade)&&/ps-explain-sources/.test(blade)&&/Everything seems in order/.test(blade)&&/ps-explain-issue/.test(blade)&&/ps-explain-layer/.test(blade),'button in the console and its popup');
+ const js=fs.readFileSync(__dirname+'/../resources/views/js/dashboard.js','utf8');
+ assert.ok(/key: 'tools', label: 'Tools'.*'explain'\]/.test(js)&&/key: 'explain', label: 'Explain panel errors'/.test(js),'Explain panel errors listed under Tools in Admin tools');
+ assert.ok(/ps-console-explain" x-show="canExplain\(\)"/.test(blade)&&/ps-explain-sources/.test(blade)&&/Everything seems in order/.test(blade)&&/ps-explain-issue/.test(blade)&&/ps-explain-layer/.test(blade),'button in the console and its popup');
  assert.ok(blade.indexOf('class="ps-modal-layer" :data-open')<blade.indexOf('ps-explain-layer'),'the workspace layer stays the first .ps-modal-layer (syncDock moves the first one)');
  console.log('PASS explain this error: hidden without key or console permission, panel and Wings logs for root admins, answer, errors, closing while waiting');
 })().catch(e=>{console.error(e);process.exit(1)});

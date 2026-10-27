@@ -198,10 +198,10 @@ class SimplifySettings extends Page implements HasForms
     }
 
     /** Feature toggles of one group (FeatureSettings::definitions()[key][3]) as a titled section. */
-    private static function featureSection(string $title, string $group, ?string $description = null): Section
+    private static function featureSection(string $title, string $group, ?string $description = null, bool $live = false): Section
     {
         $definitions = array_filter(\Simplify\Panel\Services\FeatureSettings::definitions(), fn ($item) => ($item[3] ?? 'Server features') === $group);
-        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key), array_keys($definitions)));
+        $section = Section::make($title)->extraAttributes(['class' => 'ps-setting-list'])->schema(array_map(fn (string $key) => self::featureToggle($key, $live), array_keys($definitions)));
         return $description ? $section->description($description) : $section;
     }
 
@@ -226,13 +226,14 @@ class SimplifySettings extends Page implements HasForms
     /** Which Simplify releases the plugin manager offers; stored as the simplify_beta and simplify_snapshot switches. */
     private const UPDATE_CHANNELS = ['stable' => 'Stable', 'beta' => 'Beta', 'snapshot' => 'Snapshot'];
 
-    private static function featureToggle(string $key): Toggle
+    private static function featureToggle(string $key, bool $live = false): Toggle
     {
         $definition = \Simplify\Panel\Services\FeatureSettings::definitions()[$key] ?? [$key, null];
         $overlap = class_exists(\Simplify\Panel\Services\ExternalPlugins::class) ? \Simplify\Panel\Services\ExternalPlugins::overlapFor($key) : null;
         // The saved choice is kept; it applies again once the overlapping plugin is disabled.
         $help = $overlap ? 'Off while the '.$overlap['name'].' plugin is enabled. '.$overlap['reason'] : $definition[1];
-        return Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
+        $toggle = Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
+        return $live ? $toggle->live() : $toggle;
     }
 
     public function form(Schema $schema): Schema
@@ -357,17 +358,16 @@ class SimplifySettings extends Page implements HasForms
             $icons['Website'] = 'tabler-world';
         }
         if ($this->needsSetup()) {
-            $categories = [...$categories, ...$addons];
             return $schema->statePath('data')->components([
-                \Filament\Schemas\Components\Wizard::make(
-                    array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->schema($content), array_keys($categories), array_values($categories))
-                )->skippable(false)->columnSpanFull()
+                \Filament\Schemas\Components\Wizard::make($this->setupWizardSteps($categories, $addons))->skippable(false)->columnSpanFull()
                     ->nextAction(fn (\Filament\Actions\Action $action) => $action->label('Next')->color('gray')->extraAttributes(['class' => 'ssc-next-button']))
                     ->previousAction(fn (\Filament\Actions\Action $action) => $action->label('Back')->color('gray')->extraAttributes(['class' => 'ssc-back-button']))
                     ->submitAction(new \Illuminate\Support\HtmlString(view('pelican-simplify::setup-submit')->render())),
             ]);
         }
-        $categories['Server banners'] = [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')];
+        // Server banners sit with the other appearance settings; the add-ons follow in the order of their switches under General.
+        $banners = ['Server banners' => [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')]];
+        $categories = [...array_slice($categories, 0, 2, true), ...$banners, ...array_slice($categories, 2, null, true)];
         $icons['Server banners'] = 'tabler-photo';
         $addons['Error explanations'] = $this->errorExplainerSections();
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
@@ -432,11 +432,65 @@ class SimplifySettings extends Page implements HasForms
         $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''), (string) data_get($this->data, 'explainer.provider', ''));
         Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
+    /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. */
+    private const ADDON_STEPS = [
+        'Server Maker' => ['tab' => 'Easy Minecraft server creator', 'features' => ['easy_creator', 'game_creator']],
+        'Automatic subdomains' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
+    ];
+
+    /** Labels of the wizard steps for the progress bar, in order; follows the add-on switches as they are flipped. */
     public function setupSteps(): array
     {
-        $steps = array_keys(self::CATEGORIES);
+        $features = (array) ($this->data['features'] ?? []);
+        $steps = ['Features', 'People & access', 'Look'];
+        foreach (self::ADDON_STEPS as $label => $addon) if (array_filter($addon['features'], fn (string $feature) => !empty($features[$feature]))) $steps[] = $label;
         if (\Simplify\Panel\Services\Extensions::webInstalled()) $steps[] = 'Website';
-        return [...$steps, ...array_keys(self::ADDONS)];
+        $steps[] = 'Ready';
+        return $steps;
+    }
+
+    /**
+     * The first setup asks four things: what Simplify does, who may do what, how it looks, and a check before finishing.
+     * Add-ons that need a value (hosting machines, a domain) get a step of their own only while they are on; everything
+     * else keeps its default and has a tab in the settings afterwards.
+     */
+    private function setupWizardSteps(array $categories, array $addons): array
+    {
+        $step = fn (string $label, string $hint, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->description($hint)->schema($content);
+        $steps = [
+            $step('Features', 'Needed', [
+                self::featureSection('What Simplify replaces', 'Interface', 'The Simplify dashboard, console and server pages in place of Pelican\'s own. Each can be turned off again later.'),
+                self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
+            ]),
+            $step('People & access', 'Needed', $categories['Users & access']),
+            $step('Look', 'Optional', $categories['Appearance']),
+        ];
+        foreach (self::ADDON_STEPS as $label => $addon) {
+            if (!isset($addons[$addon['tab']])) continue;
+            $steps[] = $step($label, 'Add-on', $addons[$addon['tab']])->visible(fn (Get $get) => (bool) array_filter($addon['features'], fn (string $feature) => (bool) $get('features.'.$feature)));
+        }
+        if (isset($categories['Website'])) $steps[] = $step('Website', 'Optional', $categories['Website']);
+        $steps[] = $step('Ready', 'Finish', [
+            Section::make('Ready to finish')->description('Check what you chose. Everything not asked here (server workspaces, backups, refresh rates, each add-on\'s details) keeps a sensible default and has its own tab in Simplify settings, under Admin tools → Panel.')->schema([
+                \Filament\Schemas\Components\Text::make(fn (Get $get) => new \Illuminate\Support\HtmlString(self::setupSummary((array) $get('features'), (array) ($get('roles.everyone.abilities') ?? []))))->columnSpanFull(),
+            ]),
+        ]);
+        return $steps;
+    }
+
+    /** Plain summary for the last wizard step: what is on, and what everyone may do. */
+    public static function setupSummary(array $features, array $everyone): string
+    {
+        $definitions = \Simplify\Panel\Services\FeatureSettings::definitions();
+        $names = fn (string $group) => array_values(array_map(fn ($item) => $item[0], array_filter($definitions, fn ($item, $key) => ($item[3] ?? '') === $group && !empty($features[$key]), ARRAY_FILTER_USE_BOTH)));
+        $abilities = \Simplify\Panel\Services\RoleAccess::ABILITIES;
+        $can = array_values(array_map(fn ($key) => $abilities[$key][0] ?? $key, array_filter($everyone, fn ($key) => isset($abilities[$key]))));
+        $rows = [
+            ['Simplify replaces', $names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay']],
+            ['Add-ons on', $names('Add-ons') ?: ['None']],
+            ['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']],
+        ];
+        return '<dl class="ps-setup-summary">'.implode('', array_map(fn ($row) => '<dt>'.e($row[0]).'</dt><dd>'.e(implode(', ', $row[1])).'</dd>', $rows)).'</dl>';
     }
 
     public function save(): void
@@ -453,14 +507,15 @@ class SimplifySettings extends Page implements HasForms
         $firstSetup = $this->needsSetup();
         if ($firstSetup && !$this->setupStarted) return;
         $state=$this->form->getState();
-        AppearanceSettings::save($state['appearance']??[]);
+        if (isset($state['appearance'])) AppearanceSettings::save($state['appearance']);
         if (array_key_exists('external_shown', $state) && class_exists(\Simplify\Panel\Services\ExternalPlugins::class)) \Simplify\Panel\Services\ExternalPlugins::saveShown((array) $state['external_shown']);
         // Creator file: only the self-service location and games are edited here; who may create lives in RoleAccess.
+        // The setup wizard only asks part of the settings: anything not in its state keeps the saved value.
         $data = CreatorAccess::configuration();
         foreach (['node_ids' => Node::class, 'other_egg_ids' => Egg::class] as $key => $model) {
-            $data[$key] = $model::query()->whereIn('id', $state[$key] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (array_key_exists($key, $state)) $data[$key] = $model::query()->whereIn('id', $state[$key] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
-        $data['minecraft_enabled'] = (bool) ($state['minecraft_enabled'] ?? false);
+        if (array_key_exists('minecraft_enabled', $state)) $data['minecraft_enabled'] = (bool) $state['minecraft_enabled'];
         if (!empty($state['clear_legacy_user_grants'])) { $data['user_ids'] = []; $data['user_limits'] = []; }
         $roles = $state['roles'] ?? [];
         $existingRoles = Role::query()->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -471,8 +526,8 @@ class SimplifySettings extends Page implements HasForms
         if ($creates && (!$data['node_ids'] || (!$data['minecraft_enabled'] && !$data['other_egg_ids']))) {
             throw \Illuminate\Validation\ValidationException::withMessages(['data.node_ids' => 'Users may create servers: choose a hosting machine and at least one game under Easy Minecraft server creator.']);
         }
-        \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']??[]);
-        \Simplify\Panel\Services\PerformanceSettings::save($state['performance']??[]);
+        if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
+        if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
@@ -488,7 +543,7 @@ class SimplifySettings extends Page implements HasForms
         if (!Storage::disk('local')->put(CreatorAccess::FILE, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) {
             throw new \RuntimeException('Could not save creator settings.');
         }
-        if(\Simplify\Panel\Services\Extensions::webInstalled())app('simplify.web')->saveOptions($state['web']??[]);
+        if (isset($state['web']) && \Simplify\Panel\Services\Extensions::webInstalled()) app('simplify.web')->saveOptions($state['web']);
         app(CreatorAccess::class)->reset();
         $features = $state['features'] ?? [];
         if (isset($state['update_channel'], self::UPDATE_CHANNELS[$state['update_channel']])) {

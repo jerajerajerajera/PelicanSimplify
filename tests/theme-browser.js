@@ -154,12 +154,20 @@ const { start } = require('./browser-harness');
     // 7b2. Bigger console and the log in the mini console are remembered for the next server page.
     const remember = await open('/?mode=server&theme=dark');
     await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
+    // Sections fold: only Layout starts open; opening Console is remembered on this device.
+    assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), false, 'Console section folded by default');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).click();
     await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).click();
     await remember.locator('.ps-customize-switch', { hasText: 'Log in the mini console' }).click();
     assert.equal(await remember.evaluate(() => document.querySelector('.ps-server-workspace').classList.contains('is-focus')), true, 'bigger console right away');
     await remember.reload();
     await remember.waitForFunction(() => window.Alpine && document.querySelector('.ps') && !document.querySelector('.ps').hasAttribute('x-cloak'));
     assert.deepEqual(await data(remember, (d) => [d.consoleFocus, d.consolePeek]), [true, true], 'remembered after a reload');
+    await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), true, 'opened Console section remembered');
     await remember.locator('.ps-console-grow').click();
     assert.equal(await data(remember, (d) => d.overviewPreferences.serverBiggerConsole), false, 'the console button changes the same preference');
     await data(remember, (d) => { d.setConsolePeek(false); });
@@ -473,7 +481,7 @@ const { start } = require('./browser-harness');
     // 15. Account-level pages from other plugins (such as Legal Pages) open from the account menu.
     for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
       const account = await open('/?mode=overview&theme=light', viewport);
-      const pluginButton = account.locator('#ps-account-actions [aria-label="Plugin pages"]');
+      const pluginButton = account.locator('#ps-account-actions [aria-label="Pages from other plugins"]');
       assert.equal(await pluginButton.count(), 1);
       await data(account, (d) => { d.boot.plugin_pages = [{ key: 'ext-imprint', label: 'Imprint', url: '/frame/native', plugin: 'Legal Pages' }, { key: 'ext-termsofservice', label: 'Terms of Service', url: '/frame/native', plugin: 'Legal Pages' }]; });
       if (viewport.width < 600) await data(account, (d) => { d.navMenu = true; });

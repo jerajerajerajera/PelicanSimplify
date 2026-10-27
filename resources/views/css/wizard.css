@@ -279,6 +279,9 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs .fi-tabs-item.fi-active { background: var(--ps-surface) !important; box-shadow: var(--ps-shadow-sm), inset 0 0 0 1px var(--ps-line); }
 .ps-settings-tabs .fi-tabs-item.fi-active > .fi-icon { background: var(--ps-accent); color: #fff; box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item .fi-badge { display: none; }
+/* The tab list has two groups: the panel's own settings, then the add-ons (their tabs carry a badge). */
+.ps-settings-tabs .fi-tabs-item:first-child { margin-top: 22px; position: relative; }
+.ps-settings-tabs .fi-tabs-item:first-child::before { content: "Panel"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 /* Add-on tabs carry a badge; the first one opens an "Add-ons" group. */
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge) { margin-top: 30px; position: relative; }
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge)::before { content: "Add-ons"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
@@ -450,6 +453,11 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ps-announcement .ps-person-actions { grid-column: 2 / -1; justify-content: flex-start; min-width: 0; }
 }
 
+/* Last setup step: a short summary of the choices made. */
+.ps-setup-summary { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; margin: 0; }
+.ps-setup-summary dt { color: var(--ps-muted); font: 600 12px/1.5 var(--ps-font); }
+.ps-setup-summary dd { margin: 0; color: var(--ps-ink); font: 500 13px/1.5 var(--ps-font); }
+@media (max-width: 600px) { .ps-setup-summary { grid-template-columns: minmax(0, 1fr); gap: 2px; } .ps-setup-summary dd { margin-bottom: 8px; } }
 /* Browse Hub (plugin manager) ------------------------------------------------------------------ */
 .ps-plugins > * { min-width: 0; }
 .ps-plugins-tabs { justify-self: start; }
