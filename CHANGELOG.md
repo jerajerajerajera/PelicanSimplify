@@ -1,5 +1,18 @@
 # Changes
 
+## 0.6.0-beta.12 (beta channel)
+Website embed, Pelican pages in Simplify style, and fixes from the lab round.
+- New add-on Website embed. It shows your servers on any website with one line of code, or as an iframe or a page of its own. It is on by default, but it publishes nothing until a server is switched on under Settings → Website embed or with "Show on the website" in the server menu.
+- Settings → Website embed has the look, what the code shows (every server, one server, one game or one server group), the code to copy and a live preview.
+- The public list only holds name, game, modpack, status, players and a public join address. Private and Tailscale addresses are never published.
+- Pelican pages in Simplify (Eggs, Nodes, Mounts, Servers, Settings, API keys, Webhooks and plugin pages) look like Simplify's own pages. Their title, search and buttons sit in the popup header.
+- Host health details open right under the Healthy button.
+- Create server has its server icon with the round plus back.
+- On the server page, workspaces opened one after another dock again instead of opening as a popup. Escape closes a workspace popup.
+- Host mode and announcement bars fit on a phone on its side.
+- The Server Maker says so when a node has no free port, instead of stopping without a message.
+- The README has a new intro and an Add-ons section.
+
 ## 0.6.0-beta.11 (beta channel)
 A calmer overview.
 - Host health sits in the top bar by default, as a Healthy button that opens the details. Create server sits next to it.

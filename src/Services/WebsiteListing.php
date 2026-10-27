@@ -4,20 +4,24 @@ namespace Simplify\Panel\Services;
 use App\Models\Server;
 /**
  * "Show on website" for the companion website plugin (server-directory): through its simplify.web adapter when it
- * binds one, otherwise through its DirectoryStore. Unavailable while that plugin is not installed and enabled.
+ * binds one, otherwise through its DirectoryStore. Without that plugin, the Website embed add-on keeps the choice itself.
  */
 final class WebsiteListing
 {
     private const STORE='Deckzwabbers\\ServerDirectory\\Services\\DirectoryStore';
 
-    public static function available(): bool { return Extensions::enabled('server-directory')&&(Extensions::web()||class_exists(self::STORE)); }
+    public static function available(): bool { return self::directory()||WebsiteEmbed::enabled(); }
+    private static function directory(): bool { return Extensions::enabled('server-directory')&&(Extensions::web()||class_exists(self::STORE)); }
     public static function visible(Server $server): bool
     {
+        if(!self::directory())return WebsiteEmbed::visible($server);
         $meta=Extensions::web()?Extensions::webAdapter()->metadata($server):(self::STORE)::metadata($server);
         return ($meta['visible']??false)===true;
     }
     public static function setVisible(Server $server,bool $visible): void
     {
+        if(!self::directory()){WebsiteEmbed::setVisible($server,$visible);return;}
+        WebsiteEmbed::refresh();
         if(Extensions::web()){$adapter=Extensions::webAdapter();$adapter->save($server,[...$adapter->metadata($server),'visible'=>$visible]);return;}
         (self::STORE)::save($server,[...(self::STORE)::metadata($server),'visible'=>$visible]);
     }

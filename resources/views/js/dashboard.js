@@ -1869,6 +1869,16 @@
         const labels = { server: 'Create server', other: 'Other server', native: 'New server' };
         return this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? 'Create server' : labels[c.key], primary: index === 0 }));
       },
+      /** Puts the top-bar health details right under the Healthy button, left edges in line, inside the screen. */
+      placeHealthPopover() {
+        const pill = this.$root?.querySelector('.ps-health-pill'), panel = this.$root?.querySelector('.ps-health-panel');
+        if (!pill || !panel || typeof window === 'undefined') return;
+        const scale = this.uiScale || 1, rect = pill.getBoundingClientRect(), screen = window.innerWidth / scale, gap = 8;
+        const width = Math.min(560, screen - 2 * gap);
+        panel.style.setProperty('--ps-pop-width', width + 'px');
+        panel.style.setProperty('--ps-pop-left', Math.max(gap, Math.min(rect.left / scale, screen - width - gap)) + 'px');
+        panel.style.setProperty('--ps-pop-top', rect.bottom / scale + gap + 'px');
+      },
       /** Where host health shows on the overview: a button in the top bar (default), a bar above the servers or at the bottom. */
       healthPlace() {
         return this.boot.features?.host_health ? this.overviewPreferences.healthPlace : null;
@@ -2240,7 +2250,8 @@
       },
       /** Moves the workspace shell into the page block while docked, and back to the root otherwise. */
       syncDock(dock, docked) {
-        const layer = this.$root?.querySelector?.('.ps-modal-layer');
+        // Only the workspace layer moves; the Explain layer next to it stays a popup.
+        const layer = this.$root?.querySelector?.('.ps-modal-layer[data-ps-workspace]');
         if (!layer) return;
         if (docked && layer.parentElement !== dock) dock.appendChild(layer);
         if (!docked && layer.parentElement === dock) this.$root.appendChild(layer);
