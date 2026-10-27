@@ -5,7 +5,7 @@ use Simplify\Panel\Services\EmergencyAccess;
 use Simplify\Panel\Services\ErrorExplainer;
 /**
  * "Explain this error" from the terminal, for when the panel website is down: reads the panel log, a Wings log or a
- * server console and prints Claude's answer. Uses the saved Anthropic key, or asks for one that is used once.
+ * server console and prints the answer of the AI chosen in Simplify settings. Uses its saved key, or asks for one that is used once.
  */
 final class Explain extends Command
 {
@@ -14,7 +14,7 @@ final class Explain extends Command
         {--node= : Node id for --source=wings (needed when there is more than one node)}
         {--lines=100 : At most this many log lines are sent (10 to 100)}
         {--url : Print a temporary address for the emergency page instead (works for 60 minutes, no sign-in needed)}';
-    protected $description='Explain the panel log, a Wings log or a server console with Claude, also when the panel shows an error.';
+    protected $description='Explain the panel log, a Wings log or a server console with the AI chosen in Simplify settings, also when the panel shows an error.';
 
     public function handle(): int
     {
@@ -24,9 +24,10 @@ final class Explain extends Command
             if($source===null)return self::FAILURE;
             $key=ErrorExplainer::savedKey();
             if(!$key){
-                $this->warn('No Anthropic API key is saved in Simplify settings (or it can no longer be read, for example after APP_KEY changed).');
-                $key=$this->input->isInteractive()?trim((string)$this->secret('Paste an Anthropic API key to use once (it is not saved)')):'';
-                if($key===''){$this->error('An Anthropic API key is needed. Add one in Simplify settings, under Error explanations, or run this command in a terminal to paste one.');return self::FAILURE;}
+                $name=ErrorExplainer::providerName();
+                $this->warn('No '.$name.' API key is saved in Simplify settings (or it can no longer be read, for example after APP_KEY changed).');
+                $key=$this->input->isInteractive()?trim((string)$this->secret('Paste an '.$name.' API key to use once (it is not saved)')):'';
+                if($key===''){$this->error('An '.$name.' API key is needed. Add one in Simplify settings, under Error explanations, or run this command in a terminal to paste one.');return self::FAILURE;}
             }
             $label=match($source){'panel'=>'Panel log','wings'=>'Wings log of '.$node->name,default=>'Console of '.$server->name};
             $this->line('Checking the '.lcfirst($label).'. This can take up to a minute.');

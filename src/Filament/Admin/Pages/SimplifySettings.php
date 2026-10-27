@@ -12,6 +12,7 @@ use App\Models\Server;
 use Simplify\Panel\Services\AppearanceSettings;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Simplify\Panel\Services\CreatorAccess;
 use Filament\Pages\Page;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -162,7 +163,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -377,19 +378,22 @@ class SimplifySettings extends Page implements HasForms
         if (method_exists($tabs, 'persistTabInQueryString')) $tabs->persistTabInQueryString('section');
         return $schema->statePath('data')->components([$tabs]);
     }
-    /** "Explain this error" on server pages, paid by the admin's own Anthropic API key. */
+    /** "Explain this error" on server pages, paid by the admin's own API key for Claude, GPT or Gemini. */
     private function errorExplainerSections(): array
     {
         $explainer = \Simplify\Panel\Services\ErrorExplainer::class;
+        $provider = fn (Get $get) => $explainer::provider((string) $get('explainer.provider'));
         return [
-            Section::make('Explain this error')->columns(2)->description('Adds an "Explain" button to the console of every server. It sends the last 100 console lines to Claude by Anthropic and shows in plain words what went wrong and what to try. IP addresses, e-mail addresses, passwords and tokens are removed from the lines first. Without an API key the button does not show.')->schema([
-                TextInput::make('explainer.key')->label('Anthropic API key')->password()->autocomplete(false)->maxLength(300)->columnSpanFull()
-                    ->placeholder(fn () => $explainer::settings()['has_key'] ? 'A key is saved. Leave empty to keep it.' : 'sk-ant-…')
-                    ->helperText('Create a key at console.anthropic.com → API keys. Every question is billed to that Anthropic account, usually a few cents or less; set a monthly limit there to be safe. Simplify stores the key encrypted and never shows it again.'),
-                Select::make('explainer.model')->label('Model')->options($explainer::MODELS)->selectablePlaceholder(false)->required(),
+            Section::make('Explain this error')->columns(2)->description('Adds an "Explain" button to the console of every server. It sends the last 100 console lines to the AI you pick below and shows in plain words whether something is wrong and what to try. IP addresses, e-mail addresses, passwords and tokens are removed from the lines first. Without an API key the button does not show.')->schema([
+                Select::make('explainer.provider')->label('AI')->options($explainer::providers())->selectablePlaceholder(false)->required()->live()
+                    ->afterStateUpdated(function (Set $set, ?string $state) use ($explainer) { $set('explainer.model', array_key_first($explainer::models($state))); $set('explainer.key', ''); $set('explainer.remove_key', false); }),
+                Select::make('explainer.model')->label('Model')->options(fn (Get $get) => $explainer::models((string) $get('explainer.provider')))->selectablePlaceholder(false)->required(),
+                TextInput::make('explainer.key')->label(fn (Get $get) => $provider($get)::name().' API key')->password()->autocomplete(false)->maxLength(300)->columnSpanFull()
+                    ->placeholder(fn (Get $get) => ($explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false) ? 'A key is saved. Leave empty to keep it.' : $provider($get)::keyPlaceholder())
+                    ->helperText(fn (Get $get) => $provider($get)::keyHelp().' Simplify stores the key encrypted and never shows it again.'),
                 Select::make('explainer.audience')->label('Who can use it')->options($explainer::AUDIENCES)->selectablePlaceholder(false)->required()
                     ->helperText('Each person can ask '.$explainer::PER_USER.' questions per 10 minutes, the whole panel '.$explainer::PER_DAY.' per day.'),
-                Toggle::make('explainer.remove_key')->label('Remove the saved key when saving')->helperText('Turns error explanations off.')->visible(fn () => $explainer::settings()['has_key'])->columnSpanFull(),
+                Toggle::make('explainer.remove_key')->label(fn (Get $get) => 'Remove the saved '.$provider($get)::name().' key when saving')->helperText('Turns error explanations off while this AI is chosen.')->visible(fn (Get $get) => $explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false)->columnSpanFull(),
                 \Filament\Schemas\Components\Actions::make([
                     \Filament\Actions\Action::make('testErrorExplainer')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testErrorExplainer()),
                 ])->columnSpanFull(),
@@ -401,7 +405,7 @@ class SimplifySettings extends Page implements HasForms
     public function testErrorExplainer(): void
     {
         abort_unless(static::canAccess(), 403);
-        $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''));
+        $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''), (string) data_get($this->data, 'explainer.provider', ''));
         Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     public function setupSteps(): array

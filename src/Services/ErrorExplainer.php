@@ -6,21 +6,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Simplify\Panel\Services\Explain\Providers\Anthropic;
+use Simplify\Panel\Services\Explain\Providers\Gemini;
+use Simplify\Panel\Services\Explain\Providers\OpenAi;
+use Simplify\Panel\Services\Explain\Providers\Provider;
 /**
- * "Explain this error": the last console lines of a server, explained in plain words by Claude.
- * Optional: it only shows once a root admin saves their own Anthropic API key, and every question is paid
- * by that key. The key is stored encrypted and never leaves the server except to api.anthropic.com.
+ * "Explain this error": the last console lines of a server, explained in plain words by Claude, GPT or Gemini.
+ * Optional: it only shows once a root admin saves their own API key for one of them, and every question is paid
+ * by that key. Keys are stored encrypted and never leave the server except to that service's own API.
  */
 final class ErrorExplainer
 {
     public const FILE = 'simplify/error-explainer.json';
-    public const ENDPOINT = 'https://api.anthropic.com/v1/messages';
-    /** model id => label shown in Simplify settings. */
-    public const MODELS = [
-        'claude-opus-5-5' => 'Claude Opus 5.5 (best answers, a few cents)',
-        'claude-sonnet-5-5' => 'Claude Sonnet 5.5 (about a cent)',
-        'claude-haiku-5-5' => 'Claude Haiku 5.5 (cheapest)',
-    ];
+    /** provider id => class; the first is the default. */
+    public const PROVIDERS = ['anthropic' => Anthropic::class, 'openai' => OpenAi::class, 'gemini' => Gemini::class];
     public const AUDIENCES = ['everyone' => 'Everyone who can see the console', 'admins' => 'Administrators only'];
     /** Lines sent per question: Wings keeps at most 100 for its log endpoint. */
     public const LINES = 100;
@@ -48,29 +47,62 @@ final class ErrorExplainer
         ."Set found to true only for a real problem: a crash, a failed start or install, an error that keeps repeating, or something that clearly stops the server, a feature or a player from working. "
         ."Otherwise set found to false and say that everything seems in order; list what the log does show as issues someone can open when they notice it (for example slow answers from Wings as \"My panel feels slow\"), and say when they are harmless. Answer in English.";
 
-    /** ['model'=>..., 'audience'=>..., 'has_key'=>bool]; the key itself never leaves this class. */
+    /** The provider class for an id; the default for an unknown one. */
+    public static function provider(?string $id): string
+    {
+        return self::PROVIDERS[$id] ?? self::PROVIDERS[array_key_first(self::PROVIDERS)];
+    }
+    /** model id => label for one provider. */
+    public static function models(?string $provider): array
+    {
+        return self::provider($provider)::models();
+    }
+    /** provider id => label for Simplify settings. */
+    public static function providers(): array
+    {
+        return array_map(fn (string $class) => $class::label(), self::PROVIDERS);
+    }
+    /** Encrypted keys per provider; a key saved before there was a choice belongs to Anthropic. */
+    private static function storedKeys(array $data): array
+    {
+        $keys = array_filter((array) ($data['keys'] ?? []), fn ($key) => is_string($key) && $key !== '');
+        if (is_string($data['key'] ?? null) && $data['key'] !== '' && !isset($keys['anthropic'])) $keys['anthropic'] = $data['key'];
+        return array_intersect_key($keys, self::PROVIDERS);
+    }
+    /** ['provider'=>..., 'model'=>..., 'audience'=>..., 'has_key'=>bool, 'saved_keys'=>[provider=>bool]]; the keys themselves never leave this class. */
     public static function settings(): array
     {
         $data = JsonFile::read(self::FILE);
-        return ['model' => isset(self::MODELS[$data['model'] ?? null]) ? $data['model'] : array_key_first(self::MODELS), 'audience' => isset(self::AUDIENCES[$data['audience'] ?? null]) ? $data['audience'] : 'everyone', 'has_key' => is_string($data['key'] ?? null) && $data['key'] !== ''];
+        $provider = isset(self::PROVIDERS[$data['provider'] ?? null]) ? $data['provider'] : array_key_first(self::PROVIDERS);
+        $models = self::models($provider);
+        $keys = self::storedKeys($data);
+        return ['provider' => $provider, 'model' => isset($models[$data['model'] ?? null]) ? $data['model'] : array_key_first($models), 'audience' => isset(self::AUDIENCES[$data['audience'] ?? null]) ? $data['audience'] : 'everyone',
+            'has_key' => isset($keys[$provider]), 'saved_keys' => array_map(fn ($id) => isset($keys[$id]), array_combine(array_keys(self::PROVIDERS), array_keys(self::PROVIDERS)))];
     }
-    /** Saves the choices; an empty $key keeps the saved one, $remove forgets it. */
+    /** Saves the choices; an empty $key keeps the saved one of the chosen provider, $remove forgets it. Other providers' keys stay. */
     public static function save(array $input, bool $remove = false): void
     {
         abort_unless(user()?->isRootAdmin(), 403);
         $current = JsonFile::read(self::FILE);
+        $settings = self::settings();
+        $provider = isset(self::PROVIDERS[$input['provider'] ?? null]) ? $input['provider'] : $settings['provider'];
+        $models = self::models($provider);
+        $keys = self::storedKeys($current);
         $key = trim((string) ($input['key'] ?? ''));
+        if ($remove) unset($keys[$provider]);
+        elseif ($key !== '') $keys[$provider] = encrypt($key);
         $next = [
-            'model' => isset(self::MODELS[$input['model'] ?? null]) ? $input['model'] : self::settings()['model'],
-            'audience' => isset(self::AUDIENCES[$input['audience'] ?? null]) ? $input['audience'] : self::settings()['audience'],
-            'key' => $remove ? null : ($key !== '' ? encrypt($key) : ($current['key'] ?? null)),
+            'provider' => $provider,
+            'model' => isset($models[$input['model'] ?? null]) ? $input['model'] : ($provider === $settings['provider'] ? $settings['model'] : array_key_first($models)),
+            'audience' => isset(self::AUDIENCES[$input['audience'] ?? null]) ? $input['audience'] : $settings['audience'],
+            'keys' => $keys,
         ];
         if (!Storage::disk('local')->put(self::FILE, json_encode($next, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) throw new \RuntimeException('Could not save the error explanation settings.');
     }
-    private static function key(): ?string
+    private static function key(?string $provider = null): ?string
     {
-        $stored = JsonFile::read(self::FILE)['key'] ?? null;
-        if (!is_string($stored) || $stored === '') return null;
+        $stored = self::storedKeys(JsonFile::read(self::FILE))[$provider ?? self::settings()['provider']] ?? null;
+        if ($stored === null) return null;
         try { return (string) decrypt($stored); } catch (\Throwable) { return null; } // APP_KEY changed: ask for the key again.
     }
     /** Whether the signed-in user sees the button at all. */
@@ -99,75 +131,67 @@ final class ErrorExplainer
         return array_slice($clean, -self::LINES);
     }
 
-    /** The Messages API request for these lines. */
-    public static function payload(array $lines, string $model, string $context = ''): array
+    /** The question for these lines, the same for every provider. */
+    public static function question(array $lines, string $context = ''): string
     {
-        $payload = [
-            'model' => $model,
-            'max_tokens' => 8000,
-            'system' => self::SYSTEM,
-            'output_config' => ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => self::SCHEMA]],
-            'messages' => [['role' => 'user', 'content' => ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nIs everything working, or is something wrong here?"]],
-        ];
-        // Opus and Sonnet may decline a request that looks like a security topic; Anthropic then retries it on a fitting model.
-        if ($model !== 'claude-haiku-5-5') $payload['fallbacks'] = 'default';
-        return $payload;
+        return ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nIs everything working, or is something wrong here?";
     }
-    /** Reads the answer from an API response body; null when there is no usable answer. */
-    public static function answer(array $body): ?array
+    /** The request to a provider for these lines: ['url', 'headers', 'body']. */
+    public static function request(string $provider, string $key, string $model, array $lines, string $context = ''): array
     {
-        if (($body['stop_reason'] ?? null) === 'refusal') return null;
-        foreach ((array) ($body['content'] ?? []) as $block) {
-            if (($block['type'] ?? null) !== 'text') continue;
-            $data = json_decode((string) ($block['text'] ?? ''), true);
-            if (!is_array($data) || !is_string($data['summary'] ?? null)) continue;
-            $issues = [];
-            foreach (array_slice((array) ($data['issues'] ?? []), 0, 4) as $issue) {
-                if (!is_array($issue) || trim((string) ($issue['title'] ?? '')) === '') continue;
-                $issues[] = ['title' => trim((string) $issue['title']), 'cause' => trim((string) ($issue['cause'] ?? '')),
-                    'steps' => array_values(array_slice(array_filter(array_map(fn ($s) => trim((string) $s), (array) ($issue['steps'] ?? [])), fn ($s) => $s !== ''), 0, 5))];
-            }
-            return ['found' => ($data['found'] ?? true) !== false, 'summary' => trim($data['summary']), 'issues' => $issues];
+        return self::provider($provider)::request($key, $model, self::SYSTEM, self::SCHEMA, self::question($lines, $context));
+    }
+    /** Reads the answer from a provider's response body; null when there is no usable answer. */
+    public static function answer(array $body, ?string $provider = null): ?array
+    {
+        $text = self::provider($provider)::text($body);
+        $data = $text === null ? null : json_decode($text, true);
+        if (!is_array($data) || !is_string($data['summary'] ?? null)) return null;
+        $issues = [];
+        foreach (array_slice((array) ($data['issues'] ?? []), 0, 4) as $issue) {
+            if (!is_array($issue) || trim((string) ($issue['title'] ?? '')) === '') continue;
+            $issues[] = ['title' => trim((string) $issue['title']), 'cause' => trim((string) ($issue['cause'] ?? '')),
+                'steps' => array_values(array_slice(array_filter(array_map(fn ($s) => trim((string) $s), (array) ($issue['steps'] ?? [])), fn ($s) => $s !== ''), 0, 5))];
         }
-        return null;
+        return ['found' => ($data['found'] ?? true) !== false, 'summary' => trim($data['summary']), 'issues' => $issues];
     }
     /** A short, plain message for a failed API call, never including the key. */
-    public static function failure(int $status, array $body): string
+    public static function failure(int $status, array $body, ?string $provider = null): string
     {
-        $type = (string) ($body['error']['type'] ?? '');
-        return match (true) {
-            $status === 401 || $type === 'authentication_error' => 'The Anthropic API key is not valid. An administrator can enter a new one in Simplify settings.',
-            $status === 403 || $type === 'permission_error' => 'This Anthropic API key may not use the chosen model. An administrator can pick another model in Simplify settings.',
-            $status === 402 || str_contains(strtolower((string) ($body['error']['message'] ?? '')), 'credit') => 'The Anthropic account behind this key has no credit left. An administrator can add credit at console.anthropic.com.',
-            $status === 429 || $type === 'rate_limit_error' => 'Anthropic is busy for this key right now. Try again in a minute.',
-            $status === 529 || $type === 'overloaded_error' || $status >= 500 => 'Anthropic is temporarily unavailable. Try again in a minute.',
-            default => 'Anthropic could not answer this question'.($status ? ' (error '.$status.')' : '').'. Try again later.',
-        };
+        return self::provider($provider)::failure($status, $body);
+    }
+    /** The model's name without its price note, for "Checked by …". */
+    public static function modelName(?string $provider, string $model): string
+    {
+        return explode(' (', self::models($provider)[$model] ?? $model)[0];
     }
 
-    private static function call(string $key, array $payload): array
+    /** Sends a provider request (only to that provider's own API host) and returns the decoded body or a plain error. */
+    private static function call(string $provider, array $request): array
     {
+        /** @var class-string<Provider> $class */
+        $class = self::provider($provider);
         try {
-            $headers = ['x-api-key' => $key, 'anthropic-version' => '2023-06-01'];
-            if (isset($payload['fallbacks'])) $headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
-            $response = Http::withHeaders($headers)
-                ->acceptJson()->asJson()->connectTimeout(5)->timeout(90)->post(self::ENDPOINT, $payload);
+            $response = Http::withHeaders($request['headers'])
+                ->acceptJson()->asJson()->connectTimeout(5)->timeout(90)->post($request['url'], $request['body']);
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => 'Could not reach api.anthropic.com from the panel. Check that the panel server may connect to the internet.'];
+            return ['ok' => false, 'error' => 'Could not reach '.parse_url($request['url'], PHP_URL_HOST).' from the panel. Check that the panel server may connect to the internet.'];
         }
         $body = (array) ($response->json() ?? []);
-        if (!$response->successful()) return ['ok' => false, 'error' => self::failure($response->status(), $body)];
+        if (!$response->successful()) return ['ok' => false, 'error' => $class::failure($response->status(), $body)];
         return ['ok' => true, 'body' => $body];
     }
-    /** Settings "Test" button: a tiny request that proves the key and model work. */
-    public static function test(?string $key = null, ?string $model = null): array
+    /** Settings "Test" button: a tiny request that proves the key and model work (the typed key, or the saved one). */
+    public static function test(?string $key = null, ?string $model = null, ?string $provider = null): array
     {
         abort_unless(user()?->isRootAdmin(), 403);
-        $key = trim((string) $key) ?: self::key();
+        $provider = isset(self::PROVIDERS[$provider]) ? $provider : self::settings()['provider'];
+        $key = trim((string) $key) ?: self::key($provider);
         if (!$key) return ['ok' => false, 'message' => 'Enter an API key first.'];
-        $model = isset(self::MODELS[$model]) ? $model : self::settings()['model'];
-        $result = self::call($key, ['model' => $model, 'max_tokens' => 64, 'output_config' => ['effort' => 'low'], 'messages' => [['role' => 'user', 'content' => 'Reply with OK.']]]);
-        return $result['ok'] ? ['ok' => true, 'message' => 'The key works with '.explode(' (', self::MODELS[$model])[0].'.'] : ['ok' => false, 'message' => preg_replace('/ An administrator .*$/', '', $result['error'])];
+        $models = self::models($provider);
+        $model = isset($models[$model]) ? $model : (self::settings()['provider'] === $provider ? self::settings()['model'] : array_key_first($models));
+        $result = self::call($provider, self::provider($provider)::testRequest($key, $model));
+        return $result['ok'] ? ['ok' => true, 'message' => 'The key works with '.self::modelName($provider, $model).'.'] : ['ok' => false, 'message' => preg_replace('/ An administrator .*$/', '', $result['error'])];
     }
 
     /** Where the lines come from: label for the popup, how the question introduces them, text when there are none. */
@@ -228,7 +252,7 @@ final class ErrorExplainer
         }
         return array_slice(array_values(array_filter($lines, fn ($line) => trim($line, " \t=-") !== '')), -self::LINES);
     }
-    /** Where the question comes from, so Claude knows whether the panel itself is up. */
+    /** Where the question comes from, so the model knows whether the panel itself is up. */
     public const ASKED_FROM = [
         'panel' => 'The panel itself is up: an administrator is using it to ask this.',
         'emergency' => "Asked from Simplify's emergency page, which works without the normal panel pages: the panel may be partly broken, for example showing error 500.",
@@ -242,7 +266,12 @@ final class ErrorExplainer
             'wings' => self::wingsLog((string) app(\App\Repositories\Daemon\DaemonSystemRepository::class)->setNode($node ?? $s->node)->getDiagnostics(self::LINES, false, true)->throw()->body()),
         };
     }
-    /** The saved key for the emergency page and the terminal, which check access themselves. */
+    /** The company behind the chosen AI, such as "OpenAI", for texts about its key. */
+    public static function providerName(): string
+    {
+        return self::provider(self::settings()['provider'])::name();
+    }
+    /** The saved key of the chosen AI for the emergency page and the terminal, which check access themselves. */
     public static function savedKey(): ?string
     {
         return self::key();
@@ -272,7 +301,7 @@ final class ErrorExplainer
         catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
         if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => self::SOURCES[$source][2], 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
         $settings = self::settings();
-        $cacheKey = 'simplify.explain.'.sha1($settings['model'].$source.implode("\n", $lines));
+        $cacheKey = 'simplify.explain.'.sha1($settings['provider'].$settings['model'].$source.implode("\n", $lines));
         if (is_array($cached = self::guarded(fn () => Cache::get($cacheKey)))) return ['ok' => true, ...$cached];
         if ($personal && self::guarded(fn () => RateLimiter::tooManyAttempts($personal, self::PER_USER), false)) return ['ok' => false, 'error' => 'You asked a lot of questions in a short time. Try again in '.max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)).' minute(s).'];
         if (self::guarded(fn () => RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY), false)) return ['ok' => false, 'error' => 'This panel reached its daily limit of '.self::PER_DAY.' explanations. Try again tomorrow.'];
@@ -281,13 +310,14 @@ final class ErrorExplainer
             RateLimiter::hit('simplify.explain.panel', 86400);
         });
         $context = self::SOURCES[$source][1] ?? ($s?->egg?->name ? 'Game or software: '.$s->egg->name : '');
-        // The time lets Claude see that a warning from hours ago is not a problem now.
+        // The time lets the model see that a warning from hours ago is not a problem now.
         $context = trim($context.($asked !== '' ? ' '.$asked : '')."\nCurrent time on the panel: ".date('Y-m-d H:i:s T'));
-        $result = self::call($key, self::payload($lines, $settings['model'], $context));
+        $provider = $settings['provider'];
+        $result = self::call($provider, self::request($provider, $key, $settings['model'], $lines, $context));
         if (!$result['ok']) return $result;
-        $answer = self::answer($result['body']);
-        if (!$answer) return ['ok' => false, 'error' => 'Claude could not explain these lines. Try again after the error shows up again.'];
-        $answer += ['lines' => count($lines), 'model' => explode(' (', self::MODELS[$settings['model']])[0], 'source' => $source];
+        $answer = self::answer($result['body'], $provider);
+        if (!$answer) return ['ok' => false, 'error' => self::modelName($provider, $settings['model']).' could not explain these lines. Try again after the error shows up again.'];
+        $answer += ['lines' => count($lines), 'model' => self::modelName($provider, $settings['model']), 'source' => $source];
         self::guarded(fn () => Cache::put($cacheKey, $answer, now()->addMinutes(10)));
         return ['ok' => true, ...$answer];
     }

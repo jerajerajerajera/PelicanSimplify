@@ -175,7 +175,7 @@ final class Dashboard extends Page
             ->handle($s->node,user()->id.$s->uuid)->toString();
         return['token'=>$token,'url'=>str_replace(['https://','http://'],['wss://','ws://'],$s->node->getConnectionAddress()).'/api/servers/'.$s->uuid.'/ws'];
     }
-    /** "Explain this error" with the admin's own Anthropic key: the console for people who may watch it; the panel and Wings logs for root admins. */
+    /** "Explain this error" with the admin's own AI key: the console for people who may watch it; the panel and Wings logs for root admins. */
     #[Renderless]
     public function explainConsole(string $source='console'): array
     {
