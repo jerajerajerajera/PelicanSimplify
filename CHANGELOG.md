@@ -1,5 +1,13 @@
 # Changes
 
+## 0.6.0-snapshot.16 (snapshot channel)
+Egg updates.
+- Simplify checks every egg for a new version every six hours. Root admins get a notification that opens the new Egg updates tab in Simplify settings.
+- The Egg updates tab has three choices: Ask first, Update eggs without servers automatically, or Off. The list has Update, Update all and Check now.
+- Every update keeps the previous version first. Put back restores it, and an egg that was put back is not updated automatically.
+- Move servers moves servers that still use the previous startup command or Docker image to the new one. It takes effect at their next start. Servers with their own command or image stay as they are.
+- Links in notifications can open a settings tab directly. The Open settings link to Appearance works again.
+
 ## 0.6.0-snapshot.15 (snapshot channel)
 Only the add-ons.
 - The first setup step asks How much Simplify? Full Simplify works as before. Only the add-ons keeps Pelican's own dashboard, server pages and look, and adds only the add-ons you switch on.
