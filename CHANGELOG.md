@@ -1,5 +1,10 @@
 # Changes
 
+## 0.6.0-beta.3 (beta channel)
+Clear a single notification, and Host health waits longer for Wings.
+- Each notification has a small ✕ at the top right that moves just that one to Archived.
+- Host health waits longer for Wings before giving up, shows why a node is not reporting, and has a ↻ button to fetch fresh numbers.
+
 ## 0.6.0-beta.2 (beta channel)
 The Server Maker keeps its buttons in one bar at the bottom, and the README lists every feature.
 - Back, the steps, the draft status and Next sit in one bar that stays at the bottom while you scroll. On a phone, tap the step to jump to another one.

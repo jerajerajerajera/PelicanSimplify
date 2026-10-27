@@ -25,6 +25,7 @@ final class Announcements
     public const TEXT_LENGTH=1000;
     public const LABEL_LENGTH=40;
     private const DISMISSED_LIMIT=300;
+    private const PELICAN_ID='/^[0-9a-f-]{36}$/i';
 
     /** Saved announcements, newest first. */
     public static function all(): array
@@ -120,9 +121,9 @@ final class Announcements
             $item['dismissed']=isset($hidden[$item['key']]);
             $item['pinned']=($item['pinned']??false)===true;
             // Unread until "Mark all read" or until this account unpins its bar.
-            $item['unread']=!$item['dismissed']&&$item['at']>$state['read_at'];
-            // "Clear read" moves read ones to Archived; an admin's pinned ones always stay on top.
+            // "Clear read" (or ✕ on one) moves it to Archived, read; an admin's pinned ones always stay on top.
             $item['archived']=!$item['pinned']&&isset($archived[$item['key']]);
+            $item['unread']=!$item['dismissed']&&!$item['archived']&&$item['at']>$state['read_at'];
         }
         unset($item);
         usort($items,fn(array $a,array $b):int=>$b['at']<=>$a['at']);
@@ -160,17 +161,42 @@ final class Announcements
         self::saveReadState($user,['archived_at'=>$now??time(),'archived'=>array_slice($keys,-self::DISMISSED_LIMIT)]);
     }
 
+    /**
+     * ✕ on one notification: an announcement (by key) or a Pelican notification (by id) moves to Archived, read.
+     * Pinned announcements stay; their bar has its own pin.
+     */
+    public static function archiveOne(object $user,string $key,bool $pelican=false): void
+    {
+        $state=self::readState($user);
+        if($pelican){
+            if(!preg_match(self::PELICAN_ID,$key))return;
+            PanelNotifications::markRead([$key]);
+            self::saveReadState($user,['archived_ids'=>array_slice(array_values(array_unique([...$state['archived_ids'],$key])),-self::DISMISSED_LIMIT)]);
+            return;
+        }
+        if(!self::validKey($key))return;
+        self::saveReadState($user,['archived'=>array_slice(array_values(array_unique([...$state['archived'],$key])),-self::DISMISSED_LIMIT)]);
+    }
+
+    /** Whether this account has anything under Archived. */
+    public static function hasArchive(object $user): bool
+    {
+        $state=self::readState($user);
+        return $state['archived_at']>0||$state['archived_ids']!==[]||$state['archived']!==[];
+    }
+
     public static function readAt(object $user): int { return self::readState($user)['read_at']; }
 
     /** Until when read Pelican notifications are archived (0: never cleared). */
     public static function archivedAt(object $user): int { return self::readState($user)['archived_at']; }
 
-    /** @return array{read_at: int, archived_at: int, archived: list<string>} */
+    /** @return array{read_at: int, archived_at: int, archived: list<string>, archived_ids: list<string>} */
     public static function readState(object $user): array
     {
         $data=JsonFile::read(self::READ_DIR.(int)$user->id.'.json');
         return ['read_at'=>is_int($data['read_at']??null)?$data['read_at']:0,'archived_at'=>is_int($data['archived_at']??null)?$data['archived_at']:0,
-            'archived'=>array_values(array_filter(is_array($data['archived']??null)?$data['archived']:[],fn($key):bool=>is_string($key)&&self::validKey($key)))];
+            'archived'=>array_values(array_filter(is_array($data['archived']??null)?$data['archived']:[],fn($key):bool=>is_string($key)&&self::validKey($key))),
+            'archived_ids'=>array_values(array_filter(is_array($data['archived_ids']??null)?$data['archived_ids']:[],fn($id):bool=>is_string($id)&&preg_match(self::PELICAN_ID,$id)===1))];
     }
 
     private static function saveReadState(object $user,array $changes): void
