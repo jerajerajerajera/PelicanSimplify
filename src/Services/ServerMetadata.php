@@ -17,7 +17,7 @@ final class ServerMetadata
     public static function save(Server $server,array $data): void
     {
         Cache::lock('simplify.metadata.'.$server->uuid,10)->block(3,function()use($server,$data):void{
-            $next=array_replace(self::read($server),array_intersect_key($data,array_flip(['server_alias','game','modpack','server_flavour'])));
+            $next=array_replace(self::read($server),array_intersect_key($data,array_flip(['server_alias','game','modpack','server_flavour','show_on_website'])));
             if(!Storage::disk('local')->put('simplify/server-metadata/'.$server->uuid.'.json',json_encode($next,JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save server metadata.');
         });
     }

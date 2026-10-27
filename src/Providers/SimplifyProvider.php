@@ -43,6 +43,10 @@ final class SimplifyProvider extends ServiceProvider
         \Illuminate\Support\Facades\Route::get('/simplify/manifest.webmanifest',[\Simplify\Panel\Http\Controllers\WebAppController::class,'manifest'])->name('simplify.manifest');
         \Illuminate\Support\Facades\Route::get('/simplify/app-icon/{size}.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'icon'])->whereNumber('size')->name('simplify.app-icon');
         \Illuminate\Support\Facades\Route::get('/simplify-worker.js',[\Simplify\Panel\Http\Controllers\WebAppController::class,'worker'])->name('simplify.worker');
+        // Website embed add-on: public, read-only and without a session, so any website can show the server list.
+        \Illuminate\Support\Facades\Route::get('/simplify/embed/servers.json',[\Simplify\Panel\Http\Controllers\EmbedController::class,'servers'])->middleware('throttle:120,1')->name('simplify.embed.servers');
+        \Illuminate\Support\Facades\Route::get('/simplify/embed.js',[\Simplify\Panel\Http\Controllers\EmbedController::class,'script'])->name('simplify.embed.script');
+        \Illuminate\Support\Facades\Route::get('/simplify/embed',[\Simplify\Panel\Http\Controllers\EmbedController::class,'frame'])->middleware('throttle:120,1')->name('simplify.embed');
         // Keep account creation and server linking administrator-only, including
         // direct requests to native pages/APIs outside this dashboard.
         \App\Models\Server::created(function($server):void{
