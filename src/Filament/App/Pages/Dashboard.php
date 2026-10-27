@@ -35,6 +35,8 @@ final class Dashboard extends Page
     public function boot(): void { app()->setLocale('en'); }
     public function mount(): void
     {
+        // "Only the add-ons": Pelican's own server list and console stay the pages everyone uses.
+        if(\Simplify\Panel\Services\FeatureSettings::addonsOnly()){$this->redirect(\Simplify\Panel\Services\LegacyNavigation::nativeUrl(request()->query('server')));return;}
         $uuid=request()->query('server');
         if(is_string($uuid) && $uuid!==''){Access::server($uuid);$this->serverUuid=$uuid;}
     }

@@ -25,11 +25,18 @@ final class ManageAnnouncements extends Page
     protected static ?string $slug = 'simplify-announcements';
     protected string $view = 'pelican-simplify::admin-announcements';
     protected static bool $shouldRegisterNavigation = false;
+    protected static string|\BackedEnum|null $navigationIcon = 'tabler-speakerphone';
 
     /** The browser's time zone (set by the view), so "Show from" and "Show until" are the admin's own clock time. */
     public string $browserTimezone = '';
 
     public static function canAccess(): bool { return (bool) user()?->isRootAdmin(); }
+
+    /** "Only the add-ons": listed in Pelican's own menu under Simplify. */
+    public static function shouldRegisterNavigation(): bool { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() && static::canAccess(); }
+    public static function getNavigationGroup(): ?string { return 'Simplify'; }
+    public static function getNavigationLabel(): string { return 'Announcements'; }
+    public static function getNavigationSort(): ?int { return 2; }
 
     /** ?tz= is the browser's time zone (from "New announcement" in the dashboard's notifications, which opens with ?action=addAnnouncement). */
     public function mount(): void

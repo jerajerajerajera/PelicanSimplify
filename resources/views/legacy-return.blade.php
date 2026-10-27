@@ -1,4 +1,6 @@
-@if(\Simplify\Panel\Services\LegacyNavigation::topbarVisible())
+@php $addonsOnly = \Simplify\Panel\Services\FeatureSettings::addonsOnly(); @endphp
+@if(\Simplify\Panel\Services\LegacyNavigation::topbarVisible() || ($addonsOnly && user()))
+    {{-- Pelican's server list: "Create server" asks which creator to use, also with only the add-ons. --}}
     @if(request()->routeIs(\Simplify\Panel\Services\LegacyNavigation::serverListRoute()))
         @php
             $nativeCreate = \App\Filament\Admin\Resources\Servers\ServerResource::canCreate();
@@ -14,9 +16,11 @@
             </x-filament::dropdown>
         @endif
     @endif
+    @unless($addonsOnly)
     <a href="{{ \Simplify\Panel\Services\LegacyNavigation::url() }}" class="ps-btn ps-legacy-return" aria-label="Go to Simplify Panel">
         <x-tabler-layout-dashboard class="ps-ico" aria-hidden="true" />
         <span>Go to Simplify Panel</span>
         <x-tabler-sparkles class="ps-ico ps-simplify-sparkles" aria-hidden="true" />
     </a>
+    @endunless
 @endif
