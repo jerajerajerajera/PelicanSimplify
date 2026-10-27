@@ -1,5 +1,11 @@
 # Changes
 
+## 0.6.0-snapshot.13 (snapshot channel)
+Small fixes.
+- The Create server button shows a plain server icon. The round plus sits on the bottom-right corner of the button.
+- A workspace popup always takes focus when it opens, so Escape always closes it.
+- The README covers Website embed, the Health button and Pelican pages in Simplify style.
+
 ## 0.6.0-snapshot.12 (snapshot channel)
 Website embed, Pelican pages in Simplify style, and fixes from the lab round.
 - New add-on Website embed. It shows your servers on any website with one line of code, or as an iframe or a page of its own. It is on by default, but it publishes nothing until a server is switched on under Settings → Website embed or with "Show on the website" in the server menu.
