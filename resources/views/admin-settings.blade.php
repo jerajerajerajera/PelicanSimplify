@@ -17,7 +17,7 @@
                 @if(!$this->embedded && !$showDiagnostics)
                     <div class="ps-settings-hero-actions">
                         <button type="button" class="ps-btn is-sm" wire:click="toggleDiagnostics" wire:loading.attr="disabled"><x-tabler-shield-check class="ps-ico" />System checks</button>
-                        <button type="button" class="ps-btn is-sm" wire:loading.attr="disabled" x-on:click="Simplify.confirm({title:'Run the setup wizard again?', message:'You walk through the system checks and every settings page again, starting from your current settings. Nothing changes until you finish the wizard.', confirmLabel:'Start setup'}).then((ok) => ok && $wire.startSetupAgain())"><x-tabler-wand class="ps-ico" />Setup wizard</button>
+                        <button type="button" class="ps-btn is-sm" wire:loading.attr="disabled" x-on:click="Simplify.confirm({title:'Run the setup wizard again?', message:'You walk through the system checks and the setup questions again, starting from your current settings. Nothing changes until you finish the wizard.', confirmLabel:'Start setup'}).then((ok) => ok && $wire.startSetupAgain())"><x-tabler-wand class="ps-ico" />Setup wizard</button>
                     </div>
                 @endif
             </header>

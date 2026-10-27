@@ -507,14 +507,15 @@ class SimplifySettings extends Page implements HasForms
         $firstSetup = $this->needsSetup();
         if ($firstSetup && !$this->setupStarted) return;
         $state=$this->form->getState();
-        AppearanceSettings::save($state['appearance']??[]);
+        if (isset($state['appearance'])) AppearanceSettings::save($state['appearance']);
         if (array_key_exists('external_shown', $state) && class_exists(\Simplify\Panel\Services\ExternalPlugins::class)) \Simplify\Panel\Services\ExternalPlugins::saveShown((array) $state['external_shown']);
         // Creator file: only the self-service location and games are edited here; who may create lives in RoleAccess.
+        // The setup wizard only asks part of the settings: anything not in its state keeps the saved value.
         $data = CreatorAccess::configuration();
         foreach (['node_ids' => Node::class, 'other_egg_ids' => Egg::class] as $key => $model) {
-            $data[$key] = $model::query()->whereIn('id', $state[$key] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (array_key_exists($key, $state)) $data[$key] = $model::query()->whereIn('id', $state[$key] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
-        $data['minecraft_enabled'] = (bool) ($state['minecraft_enabled'] ?? false);
+        if (array_key_exists('minecraft_enabled', $state)) $data['minecraft_enabled'] = (bool) $state['minecraft_enabled'];
         if (!empty($state['clear_legacy_user_grants'])) { $data['user_ids'] = []; $data['user_limits'] = []; }
         $roles = $state['roles'] ?? [];
         $existingRoles = Role::query()->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -525,8 +526,8 @@ class SimplifySettings extends Page implements HasForms
         if ($creates && (!$data['node_ids'] || (!$data['minecraft_enabled'] && !$data['other_egg_ids']))) {
             throw \Illuminate\Validation\ValidationException::withMessages(['data.node_ids' => 'Users may create servers: choose a hosting machine and at least one game under Easy Minecraft server creator.']);
         }
-        \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']??[]);
-        \Simplify\Panel\Services\PerformanceSettings::save($state['performance']??[]);
+        if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
+        if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
@@ -542,7 +543,7 @@ class SimplifySettings extends Page implements HasForms
         if (!Storage::disk('local')->put(CreatorAccess::FILE, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) {
             throw new \RuntimeException('Could not save creator settings.');
         }
-        if(\Simplify\Panel\Services\Extensions::webInstalled())app('simplify.web')->saveOptions($state['web']??[]);
+        if (isset($state['web']) && \Simplify\Panel\Services\Extensions::webInstalled()) app('simplify.web')->saveOptions($state['web']);
         app(CreatorAccess::class)->reset();
         $features = $state['features'] ?? [];
         if (isset($state['update_channel'], self::UPDATE_CHANNELS[$state['update_channel']])) {
