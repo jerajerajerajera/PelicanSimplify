@@ -5,9 +5,9 @@
     <template x-if="item.notes?.length">
         <div class="ps-notify-notes">
             <span class="ps-label">What's new</span>
-            <ul><template x-for="(line, index) in noteLines(item)" :key="index"><li x-text="line"></li></template></ul>
+            <ul><template x-for="(line, index) in noteLines(item, {{ ($archive ?? false) ? 'true' : 'false' }})" :key="index"><li x-text="line"></li></template></ul>
             <span class="ps-notify-notes-more">
-                <button type="button" class="ps-text-button" x-show="item.notes.length > 3" x-on:click="toggleNotes(item)" :aria-expanded="!!openNotes[item.id]" x-text="openNotes[item.id] ? 'Show less' : 'Show all '+item.notes.length"></button>
+                <button type="button" class="ps-text-button" x-show="{{ ($archive ?? false) ? 'false' : 'item.notes.length > 1' }}" x-on:click="toggleNotes(item)" :aria-expanded="!!openNotes[item.id]" x-text="openNotes[item.id] ? 'Show less' : 'Show all '+item.notes.length"></button>
                 <a class="ps-text-button" x-show="item.notesUrl" :href="item.notesUrl" target="_blank" rel="noopener">Full release notes</a>
             </span>
         </div>

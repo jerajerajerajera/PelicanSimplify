@@ -17,9 +17,13 @@ final class PanelUpdates
     public static function announcements(?int $now=null): array
     {
         $now??=time();
-        $list=Cache::get(self::CACHE);
-        // Before the first scheduled check (or without Pelican's cron) Simplify's own update still shows.
-        if(!is_array($list))$list=self::seen(self::simplify());
+        $list=Cache::get(self::key());
+        // Before the first check with this Simplify version (just installed, or without Pelican's cron) Simplify's own
+        // update still shows, and the check runs once after this response, so the next page has the full list.
+        if(!is_array($list)){
+            $list=self::seen(self::simplify());
+            self::refreshAfterResponse();
+        }
         // Gone as soon as that Simplify version runs, also when Pelican's own updater installed it.
         $running=(string)BuildInfo::version();
         $list=array_filter($list,fn(array $item):bool=>!isset($item['version'])||$running===''||version_compare($running,$item['version'],'<'));
@@ -27,13 +31,28 @@ final class PanelUpdates
     }
 
     /** Drops the list after an update; the next scheduled check fills it again. */
-    public static function forget(): void { Cache::forget(self::CACHE); }
+    public static function forget(): void { Cache::forget(self::key()); }
+
+    /** Whether this Simplify version has checked yet (an update of Simplify starts with an empty list). */
+    public static function checked(): bool { return is_array(Cache::get(self::key())); }
+
+    /** The list is kept per Simplify version, so a new version never shows a list made by an older one (without What's new). */
+    private static function key(): string
+    {
+        try{return self::CACHE.'.'.(string)BuildInfo::version();}catch(\Throwable){return self::CACHE;}
+    }
+
+    private static function refreshAfterResponse(): void
+    {
+        if(!Cache::add(self::CACHE.'.pending',true,now()->addMinutes(10)))return;
+        try{app()->terminating(function():void{try{self::refresh();}catch(\Throwable $e){report($e);}});}catch(\Throwable){}
+    }
 
     /** Checks again and keeps the result until a little after the next scheduled check. */
     public static function refresh(): array
     {
         $list=self::collect();
-        Cache::put(self::CACHE,$list,now()->addMinutes(30));
+        Cache::put(self::key(),$list,now()->addMinutes(30));
         return $list;
     }
 
@@ -53,7 +72,7 @@ final class PanelUpdates
             foreach(PluginUpdater::available() as $plugin){
                 if($plugin->id==='pelican-simplify'||!($latest=PluginUpdater::latestVersion($plugin)))continue;
                 $items[]=self::withNotes(['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>$plugin->name.' '.$latest.' is available',
-                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],is_string($plugin->update_url??null)?ReleaseNotes::changelog($plugin->update_url,$latest):null);
+                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],ReleaseNotes::forPlugin($plugin->update_url??null,$plugin->url??null,$latest));
             }
         }catch(\Throwable){}
         $versions=self::versionService();

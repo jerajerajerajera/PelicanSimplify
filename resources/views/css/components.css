@@ -415,6 +415,7 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item { --ps-tone: var(--ps-muted); display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-align: left; }
 .ps-notify-item:hover { background: var(--ps-raised); }
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
+.ps-notify-item > * { min-width: 0; overflow-wrap: anywhere; }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
 .ps-plugin-widgets { flex: none; margin-bottom: 12px; overflow: hidden; border-radius: var(--ps-radius-lg); }
@@ -523,8 +524,8 @@ html.ps-standalone { -webkit-tap-highlight-color: transparent; }
 .ps-notify-more { justify-content: center; width: 100%; margin-top: 6px; }
 .ps-inbox-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ps-inbox-bar > .ps-help { margin: 0 auto 0 0; }
-/* What's new of an update: a few lines, all of them on request, and the full notes on GitHub. */
-.ps-notify-notes { grid-column: 2; display: grid; gap: 2px; margin-top: 4px; padding: 6px 10px; border-left: 2px solid var(--ps-line); }
+/* What's new of an update: one line in the bell, all of them on request, and the full notes on GitHub. */
+.ps-notify-notes { grid-column: 2; min-width: 0; overflow-wrap: anywhere; display: grid; gap: 2px; margin-top: 4px; padding: 6px 10px; border-left: 2px solid var(--ps-line); }
 .ps-notify-notes > .ps-label { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
 .ps-notify-notes ul { display: grid; gap: 2px; margin: 0; padding-left: 16px; list-style: disc; color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
 .ps-notify-notes-more { display: flex; flex-wrap: wrap; gap: 12px; }
