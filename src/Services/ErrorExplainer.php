@@ -199,6 +199,7 @@ final class ErrorExplainer
         'console' => ['Console', null, 'The console is empty, so there is nothing to explain yet.'],
         'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last.', 'The panel log has no warnings or errors right now.'],
         'wings' => ['Wings log', 'Wings daemon log of the node this server runs on', 'The Wings log of this node is empty.'],
+        'plugin' => ['Plugin', 'Minecraft server log lines about a plugin that failed when the server started. Simplify switched that plugin off (renamed it to .jar.disabled) so the server starts cleanly; explain why it failed and how to fix it, for example a newer version or a missing dependency.', 'There are no saved log lines for this plugin.'],
     ];
     /** The panel log and the Wings log can hold anyone's details, so only root admins may send them. */
     public static function logsFor($user): bool
@@ -262,6 +263,7 @@ final class ErrorExplainer
     {
         return match ($source) {
             'console' => self::consoleLines($s),
+            'plugin' => [], // Only with the lines Simplify saved when it switched the plugin off (explainPlugin).
             'panel' => self::panelEntries(self::panelLogText()),
             'wings' => self::wingsLog((string) app(\App\Repositories\Daemon\DaemonSystemRepository::class)->setNode($node ?? $s->node)->getDiagnostics(self::LINES, false, true)->throw()->body()),
         };
@@ -289,15 +291,22 @@ final class ErrorExplainer
         if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
         return self::ask($key, $source, $s, null, 'simplify.explain.user.'.$user->id, $source === 'console' ? '' : self::ASKED_FROM['panel']);
     }
+    /** Explains the saved log lines of a plugin Simplify switched off, for people who may read this server's console. */
+    public static function explainPlugin(Server $s, array $lines): array
+    {
+        $user = user();
+        if (!in_array('console', self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
+        return self::ask($key, 'plugin', $s, null, 'simplify.explain.user.'.$user->id, '', self::LINES, array_values(array_filter($lines, 'is_string')));
+    }
     /**
      * The question itself, without access checks: explain() for the panel pages, the emergency page and
      * simplify:explain call it after checking who asks. $personal is the rate limit of one person (none in the terminal),
      * $limit the most lines sent and $asked one of ASKED_FROM.
      */
-    public static function ask(string $key, string $source, ?Server $s = null, $node = null, ?string $personal = null, string $asked = '', int $limit = self::LINES): array
+    public static function ask(string $key, string $source, ?Server $s = null, $node = null, ?string $personal = null, string $asked = '', int $limit = self::LINES, ?array $given = null): array
     {
         if (!isset(self::SOURCES[$source])) return ['ok' => false, 'error' => 'Unknown log.'];
-        try { $lines = array_slice(self::sanitize(self::lines($s, $source, $node)), -max(1, min(self::LINES, $limit))); }
+        try { $lines = array_slice(self::sanitize($given ?? self::lines($s, $source, $node)), -max(1, min(self::LINES, $limit))); }
         catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
         if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => self::SOURCES[$source][2], 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
         $settings = self::settings();
