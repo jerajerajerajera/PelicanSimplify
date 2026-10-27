@@ -381,7 +381,7 @@ class SimplifySettings extends Page implements HasForms
         $this->pelicanTabs = count($pelican);
         foreach ($pelican as $tab) {
             $tabList[] = \Filament\Schemas\Components\Tabs\Tab::make($tab['label'])->key('pelican-'.$tab['key'])->id('pelican-'.$tab['key'])->icon($tab['icon'])
-                ->schema([\Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.pelican-settings-frame')->viewData(['url' => $tab['url'], 'label' => $tab['label']])]);
+                ->schema([\Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.pelican-settings-frame')->viewData(['url' => $tab['url'], 'label' => $tab['label'], 'key' => 'pelican-'.$tab['key']])]);
         }
         $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs($tabList);
         if (method_exists($tabs, 'vertical')) $tabs->vertical();

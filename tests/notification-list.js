@@ -15,6 +15,8 @@ const wire={
   clearReadNotifications:async()=>{calls.push('clear');if(fail)throw new Error('down');return announcements().map((a)=>a.unread||a.pinned?a:{...a,archived:true});},
   markAllNotificationsRead:async()=>{calls.push('all');if(fail)throw new Error('down');return announcements().map((a)=>({...a,unread:false}));},
   archiveNotification:async(key,pelican)=>{calls.push('archive-one '+key+(pelican?' pelican':''));if(fail)throw new Error('down');return announcements().map((a)=>a.key===key?{...a,archived:true,unread:false}:a);},
+  markNotificationUnread:async(key,pelican)=>{calls.push('unread '+key+(pelican?' pelican':''));if(fail)throw new Error('down');return announcements().map((a)=>a.key===key?{...a,unread:true,archived:false}:a);},
+  markAnnouncementRead:async(key)=>{calls.push('read-one '+key);return announcements().map((a)=>a.key===key?{...a,unread:false}:a);},
   markPanelNotificationsRead:async(ids)=>{calls.push('read '+ids.length);return [];},
   announcements:async()=>announcements(),panelNotifications:async()=>[],
 };
@@ -76,6 +78,20 @@ const page=(extra={})=>{const d=context.window.pelicanSimplify(wire,{server:null
   const news=x.otherNotifications().find((i)=>i.title==='New modpack');
   await x.archiveNotification(news);
   assert.ok(x.archivedNotifications().some((i)=>i.title==='New modpack'&&!x.canArchive(i)),'an announcement too; no ✕ in Archived');
+  // Mark as unread: a read notification counts again; one from Archived comes back to the list; announcements too.
+  const m=page();await m.toggleNotifications();
+  const read=m.otherNotifications().find((i)=>i.title==='Backup 3 finished');
+  assert.equal(read.unread,false);
+  await m.markNotificationUnread(read);
+  assert.ok(m.otherNotifications().find((i)=>i.title==='Backup 3 finished').unread&&m.panelUnread===8,'a read notification is unread again and counted');
+  await m.openAllNotifications();await m.toggleArchive();
+  const old=m.archivedNotifications().find((i)=>i.title==='Backup 8 finished');
+  await m.markNotificationUnread(old);
+  assert.ok(!m.archivedNotifications().some((i)=>i.title==='Backup 8 finished')&&calls.includes('unread '+old.key+' pelican'),'it leaves Archived');
+  const ann=m.otherNotifications().find((i)=>i.title==='New modpack');
+  await m.markNotificationRead(ann);assert.equal(m.otherNotifications().find((i)=>i.title==='New modpack').unread,false,'mark read on an announcement');
+  await m.markNotificationUnread(m.otherNotifications().find((i)=>i.title==='New modpack'));
+  assert.equal(m.otherNotifications().find((i)=>i.title==='New modpack').unread,true,'and unread again');
   // Failures put things back.
   fail=true;const e=page();await e.markAllNotificationsRead();
   assert.equal(e.unreadNotifications(),8,'a failed mark all read keeps the count');assert.equal(toasts.at(-1)[1],'warn');

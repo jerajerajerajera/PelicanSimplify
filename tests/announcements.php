@@ -1,7 +1,7 @@
 <?php
 namespace Illuminate\Support\Facades {class Storage {public static array $records=[];public static function disk($name){return new self;}public function exists($path){return isset(self::$records[$path]);}public function get($path){return self::$records[$path]??null;}public function put($path,$value){self::$records[$path]=$value;return true;}}}
 namespace Simplify\Panel\Services {final class PanelUpdates {public static array $items=[];public static function announcements(?int $now=null): array {return self::$items;}}
-final class PanelNotifications {public static array $read=[];public static function markRead(array $ids): void {array_push(self::$read,...$ids);}}}
+final class PanelNotifications {public static array $read=[];public static array $unread=[];public static function markRead(array $ids): void {array_push(self::$read,...$ids);}public static function markUnread(array $ids): void {array_push(self::$unread,...$ids);}}}
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(array $parameters=[],?string $panel=null): string {return '/simplify?server='.$parameters['server'];}}}
 namespace Boy132\Announcements\Models {final class Announcement {public static array $rows=[];public static function query(){return new class{public function get(){return Announcement::$rows;}};}}}
 namespace {
@@ -96,6 +96,18 @@ $id='9d1c2e3f-0000-4000-8000-000000000001';
 A::archiveOne($person,$id,true);A::archiveOne($person,'../x',true);
 check(A::readState($person)['archived_ids']===[$id]&&\Simplify\Panel\Services\PanelNotifications::$read===[$id],'one Pelican notification is archived by id and marked read');
 check(A::hasArchive($person)&&!A::hasArchive($admin),'the archive is offered per account');
+// Mark as unread: back out of Archived and unread; Mark read on one; Mark all read clears both.
+$find=fn($title,$at)=>A::forUser($person,$at)[array_search($title,array_column(A::forUser($person,$at),'title'))];
+A::markOne($person,$later['key'],true);
+check(!$find('Later news',$now+160)['archived']&&$find('Later news',$now+160)['unread'],'mark as unread brings an archived announcement back, unread');
+A::markOne($person,$later['key'],false);
+check(!$find('Later news',$now+160)['unread'],'mark read on one');
+$modpack=$find('New modpack',$now+160);A::markOne($person,$modpack['key'],true);
+check($find('New modpack',$now+160)['unread'],'an unpinned (read) one can be unread again');
+A::markAllRead($person,$now+170);
+check(!$find('New modpack',$now+170)['unread']&&A::readState($person)['unread_keys']===[],'mark all read reads it again');
+A::markPelicanUnread($person,$id);
+check(A::readState($person)['archived_ids']===[]&&\Simplify\Panel\Services\PanelNotifications::$unread===[$id],'a Pelican notification is unread again and leaves Archived');
 A::delete($pin['id']);
 foreach(A::all() as $row)if($row['title']==='Later news')A::delete($row['id']);
 

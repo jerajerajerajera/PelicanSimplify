@@ -114,6 +114,12 @@ final class Dashboard extends Page
     /** All notifications, read ones too, one page at a time (the bell's "Show more" and the full list); $archived: the ones Clear read archived. */
     #[Renderless]
     public function notificationPage(int $page=1,bool $archived=false): array { $state=\Simplify\Panel\Services\Announcements::readState(user()); return \Simplify\Panel\Services\PanelNotifications::page($page,20,$state['archived_at'],$archived,$state['archived_ids']); }
+    /** Mark as unread on one notification (Pelican's by id, announcements by key); it leaves Archived too. */
+    #[Renderless]
+    public function markNotificationUnread(string $key,bool $pelican=false): array { $pelican?\Simplify\Panel\Services\Announcements::markPelicanUnread(user(),$key):\Simplify\Panel\Services\Announcements::markOne(user(),$key,true); return \Simplify\Panel\Services\Announcements::forUser(user()); }
+    /** Mark read on one announcement. */
+    #[Renderless]
+    public function markAnnouncementRead(string $key): array { \Simplify\Panel\Services\Announcements::markOne(user(),$key,false); return \Simplify\Panel\Services\Announcements::forUser(user()); }
     /** ✕ on one notification: it moves to Archived (pinned announcements stay). */
     #[Renderless]
     public function archiveNotification(string $key,bool $pelican=false): array { \Simplify\Panel\Services\Announcements::archiveOne(user(),$key,$pelican); return \Simplify\Panel\Services\Announcements::forUser(user()); }

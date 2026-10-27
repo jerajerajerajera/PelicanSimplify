@@ -14,11 +14,13 @@
         </div>
     </template>
     <small class="ps-notify-time" x-show="item.time" x-text="item.time"></small>
-    <span class="ps-notify-actions" x-show="item.action || (item.pelican && item.unread) || item.announcement">
+    <span class="ps-notify-actions" x-show="item.action || item.pelican || item.announcement">
         <template x-if="item.action">
             <a class="ps-btn is-sm" :href="item.action.url" :target="externalLink(item.action.url) ? '_blank' : null" rel="noopener" x-on:click="followNotice($event, item)" x-text="item.action.label"></a>
         </template>
-        <button type="button" class="ps-btn is-sm is-subtle" x-show="item.pelican && item.unread" x-on:click="markPanelNoticesRead([item.key])">Mark read</button>
-        <button type="button" class="ps-btn is-sm is-subtle ps-notify-pin" x-show="item.announcement" :aria-pressed="item.announcement && !item.dismissed ? 'true' : 'false'" :aria-label="(item.dismissed ? 'Pin ' : 'Unpin ')+item.title" x-on:click="item.dismissed ? restoreAnnouncement(item.key) : dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-pin"/></svg><span x-text="item.dismissed ? 'Pin' : 'Unpin'"></span></button>
+        <button type="button" class="ps-btn is-sm is-subtle" x-show="(item.pelican || item.announcement) && item.unread" x-on:click="markNotificationRead(item)">Mark read</button>
+        <button type="button" class="ps-btn is-sm is-subtle" x-show="(item.pelican || item.announcement) && item.unread === false" x-on:click="markNotificationUnread(item)">Mark as unread</button>
+        {{-- Archived is cleared away: its bar pin does nothing visible there, so it shows again once the announcement is back. --}}
+        <button type="button" class="ps-btn is-sm is-subtle ps-notify-pin" x-show="item.announcement && !item.archived" :aria-pressed="item.announcement && !item.dismissed ? 'true' : 'false'" :aria-label="(item.dismissed ? 'Pin ' : 'Unpin ')+item.title" x-on:click="item.dismissed ? restoreAnnouncement(item.key) : dismissAnnouncement(item.key)"><svg aria-hidden="true"><use href="#ps-pin"/></svg><span x-text="item.dismissed ? 'Pin' : 'Unpin'"></span></button>
     </span>
 </div>

@@ -495,7 +495,7 @@
                     </div>
                     <div class="ps-host-frame" x-show="!hostServer">
                         <template x-if="hostPage">
-                            <iframe data-ps-frame="native" data-ps-flat :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
+                            <iframe data-ps-frame="native" data-ps-host="1" :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
                         </template>
                     </div>
                 </div>
