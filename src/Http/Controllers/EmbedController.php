@@ -37,7 +37,7 @@ final class EmbedController
             if (is_string($value) && preg_match('/^[#A-Za-z0-9_-]{1,40}$/', $value)) $attributes .= ' data-'.$key.'="'.e($value).'"';
         }
         $html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            .'<title>'.e((string) config('app.name', 'Pelican')).' servers</title><style>html,body{margin:0;background:transparent}</style></head>'
+            .'<title>'.e((string) config('app.name', 'Pelican')).' servers</title><style>html,body{margin:0;background:transparent}body{padding:2px}</style></head>'
             .'<body><div id="simplify-servers"></div><script src="'.e(url('/simplify/embed.js')).'"'.$attributes.' defer></script></body></html>';
         return response($html, 200, ['Content-Type' => 'text/html; charset=utf-8', 'Cache-Control' => 'public, max-age=300',
             'Content-Security-Policy' => 'frame-ancestors *', 'X-Content-Type-Options' => 'nosniff']);

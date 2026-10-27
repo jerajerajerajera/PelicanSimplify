@@ -17,7 +17,7 @@
     :host{display:block}
     .list{--bg:#fff;--card:#fff;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--soft:#f4f4f5;--ok:#16a34a;--warn:#ca8a04;
       font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
-      display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px;align-items:start}
     .list.dark{--card:#18181b;--ink:#f4f4f5;--muted:#a1a1aa;--line:#2e2e33;--soft:#232327;--ok:#4ade80;--warn:#facc15}
     @media (prefers-color-scheme:dark){.list.auto{--card:#18181b;--ink:#f4f4f5;--muted:#a1a1aa;--line:#2e2e33;--soft:#232327;--ok:#4ade80;--warn:#facc15}}
     .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;align-content:start;min-width:0}
@@ -35,7 +35,7 @@
     .pack span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
     .pack small{color:var(--muted);font-size:12px}
     .join{display:flex;gap:6px;align-items:center;background:var(--soft);border-radius:calc(var(--r) - 4px);padding:4px 4px 4px 10px;min-width:0}
-    .join code{flex:1;min-width:0;font:12.5px ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .join code{flex:1;min-width:0;font:12.5px ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
     .join button{border:0;border-radius:calc(var(--r) - 6px);background:var(--accent);color:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer}
     .join button:focus-visible,a.pack:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     .empty{color:var(--muted);font-size:13px}`;
