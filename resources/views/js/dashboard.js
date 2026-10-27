@@ -90,6 +90,7 @@
       powerConfirmation: null,
       healthExpanded: false,
       healthOpenNodes: [],
+      healthRefreshing: false,
       hostMetrics: [
         { key: 'cpu', label: 'CPU', icon: 'cpu' },
         { key: 'memory', label: 'RAM', icon: 'ram' },
@@ -1690,6 +1691,20 @@
         } catch {
         } finally {
           this.overviewRefreshing = false;
+        }
+      },
+      /** The refresh button: fresh numbers now instead of at the next poll (the server allows one fetch every few seconds). */
+      async refreshHostHealth() {
+        if (this.healthRefreshing || !this.boot.features?.host_health) return;
+        this.healthRefreshing = true;
+        try {
+          const health = await wire.refreshHostHealth();
+          if (this.destroyed) return;
+          this.boot.host_health = health;
+          this.healthOpenNodes = this.healthOpenNodes.filter((id) => health.nodes?.some((n) => String(n.id) === String(id)));
+        } catch {
+        } finally {
+          this.healthRefreshing = false;
         }
       },
 
