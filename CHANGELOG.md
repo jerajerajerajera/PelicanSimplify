@@ -1,5 +1,10 @@
 # Changes
 
+## 0.6.0-snapshot.14 (snapshot channel)
+Clearer push notifications.
+- The Notifications window explains what is sent as a push notification. Announcements only go out when "Also send as app notification" is on. Pelican's own bell notifications are not pushed.
+- The Notifications window warns when Pelican's scheduler has not run for five minutes. Without it only the test notification arrives. Root admins see the cron line to add.
+
 ## 0.6.0-snapshot.13 (snapshot channel)
 Small fixes.
 - The Create server button shows a plain server icon. The round plus sits on the bottom-right corner of the button.
