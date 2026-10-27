@@ -40,6 +40,9 @@
       notifyMenu: false,
       noticeHistory: [],
       panelNotices: [],
+      // Every Pelican notification (read ones too), loaded a page at a time when the bell or the full list opens.
+      panelUnread: 0,
+      feed: { items: [], page: 0, more: false, loading: false, loaded: false },
       announcements: [],
       // App notifications on this device (Web Push): endpoint of this browser's subscription, the account's devices and choices.
       push: { checked: false, endpoint: null, settings: null, busy: false, error: '', optInHidden: false },
@@ -501,6 +504,7 @@
         this.noticeHistory = window.Simplify?.history?.() || [];
         this.panelNotices = Array.isArray(this.boot.panel_notifications) ? this.boot.panel_notifications : [];
         this.announcements = Array.isArray(this.boot.announcements) ? this.boot.announcements : [];
+        this.panelUnread = Number.isFinite(Number(this.boot.panel_unread)) ? Number(this.boot.panel_unread) : this.panelNotices.length;
         this.checkPush();
         this.seenNoticeKeys = new Set(this.panelNotices.map((n) => n.key));
         // New Pelican notifications drop down from the top; one small query, skipped while the tab is hidden.
@@ -534,25 +538,96 @@
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
-        for (const notice of this.panelNotices) items.push({ action: null, ...notice, pelican: true });
+        // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.
+        for (const notice of this.feed.loaded ? this.feed.items : this.panelNotices) items.push({ action: null, unread: true, ...notice, pelican: true });
         return items;
       },
-      /** The bell's count: everything except announcements this account unpinned. */
+      /** Announcements an admin pinned to everyone's notifications: always on top, apart from the rest. */
+      pinnedNotifications() {
+        return this.notifications().filter((item) => item.pinned);
+      },
+      otherNotifications() {
+        return this.notifications().filter((item) => !item.pinned);
+      },
+      /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
       unreadNotifications() {
-        return this.notifications().filter((item) => !item.dismissed).length;
+        return this.notifications().filter((item) => !item.pelican && (item.announcement ? item.unread : true)).length + this.panelUnread;
+      },
+      /** Loads the first (reset) or next page of Pelican's notifications, read ones included. */
+      async loadNotificationPage(reset = false) {
+        if (typeof wire.notificationPage !== 'function' || (this.feed.loading && !reset)) return;
+        const page = reset ? 1 : this.feed.page + 1;
+        this.feed.loading = true;
+        try {
+          const result = await wire.notificationPage(page);
+          if (!Array.isArray(result?.items)) return;
+          const known = new Set(reset ? [] : this.feed.items.map((n) => n.key));
+          this.feed = { items: reset ? result.items : [...this.feed.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loading: false, loaded: true };
+          this.panelUnread = Number(result.unread) || 0;
+        } catch {
+          if (!reset) this.toast('Older notifications could not be loaded.', 'warn');
+        } finally {
+          this.feed.loading = false;
+        }
+      },
+      /** Every notification in a popup (a full-screen sheet on phones), with "Show more" for older ones. */
+      openAllNotifications() {
+        this.openPopup('inbox');
+        this.refreshAnnouncements();
+        this.loadNotificationPage(true);
+      },
+      /** Root admins: the announcement form, straight from the notifications; closing it comes back to the list. */
+      announcementsPage() {
+        return this.adminPages().flatMap((group) => group.items).find((item) => item.key === 'manageannouncements') || null;
+      },
+      newAnnouncement() {
+        const page = this.announcementsPage();
+        if (!page) return;
+        const url = new URL(page.url, location.origin);
+        url.searchParams.set('action', 'addAnnouncement');
+        try {
+          url.searchParams.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+        } catch {}
+        this.openAdminPage({ ...page, url: url.pathname + url.search, returnTo: this.modal === 'inbox' ? 'inbox' : null });
+      },
+      /** Marks everything read on the server: all Pelican notifications and announcements, not only the loaded ones. */
+      async markAllNotificationsRead() {
+        const before = { announcements: this.announcements, feed: this.feed, panelNotices: this.panelNotices, panelUnread: this.panelUnread };
+        this.announcements = this.announcements.map((item) => ({ ...item, unread: false }));
+        this.feed = { ...this.feed, items: this.feed.items.map((n) => ({ ...n, unread: false })) };
+        this.panelNotices = [];
+        this.panelUnread = 0;
+        if (typeof wire.markAllNotificationsRead !== 'function') return;
+        try {
+          const items = await wire.markAllNotificationsRead();
+          if (Array.isArray(items)) this.announcements = items;
+        } catch {
+          Object.assign(this, before);
+          this.toast('Notifications could not be marked as read.', 'warn');
+        }
       },
       /** Announcement bars above the overview and server pages: live and pinned (not unpinned by this account). */
       announcementBars() {
         return this.announcements.filter((item) => !item.dismissed);
       },
       announcementMeta(item) {
-        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', item.until || ''].filter(Boolean);
+        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', this.announcementUntil(item)].filter(Boolean);
         // The category only as context for other details; the colour already says it.
         const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
         return (details.length && category ? [category, ...details] : details).join(' · ');
+      },
+      /** "until Sun 26 Oct 03:00" in this browser's time zone (the panel's own time zone can differ). */
+      announcementUntil(item) {
+        if (!Number.isFinite(item.ends_at) || typeof Intl === 'undefined') return item.until || '';
+        try {
+          const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(item.ends_at * 1000)).map((p) => [p.type, p.value]));
+          return 'until ' + parts.weekday + ' ' + parts.day + ' ' + parts.month + ' ' + parts.hour + ':' + parts.minute;
+        } catch {
+          return item.until || '';
+        }
       },
       externalLink(url) {
         try {
@@ -846,7 +921,9 @@
         this.groupsMenu = false;
         this.accountMenu = false;
         if (this.notifyMenu) this.refreshAnnouncements();
-        if (!this.notifyMenu || typeof wire.panelNotifications !== 'function') return;
+        if (!this.notifyMenu) return;
+        if (typeof wire.notificationPage === 'function') return this.loadNotificationPage(true);
+        if (typeof wire.panelNotifications !== 'function') return;
         try {
           const items = await wire.panelNotifications();
           if (Array.isArray(items)) this.panelNotices = items;
@@ -861,6 +938,10 @@
           this.panelNotices = items;
           const fresh = items.filter((n) => !this.seenNoticeKeys.has(n.key));
           fresh.forEach((n) => this.seenNoticeKeys.add(n.key));
+          if (fresh.length) {
+            this.panelUnread += fresh.length;
+            if (this.feed.loaded) this.feed = { ...this.feed, items: [...fresh.map((n) => ({ ...n, unread: true })), ...this.feed.items.filter((n) => !fresh.some((f) => f.key === n.key))] };
+          }
           // A finished plugin update needs a fresh page load; it happens once the notice has been shown.
           if (fresh.some((n) => /^Plugin (updated|installed|uninstalled)$/.test(n.title || ''))) this.reloadAfterNotice = true;
           this.incomingQueue.push(...fresh.reverse());
@@ -914,7 +995,10 @@
       async markPanelNoticesRead(keys) {
         const ids = keys.filter(Boolean);
         if (!ids.length) return;
+        const wasUnread = new Set([...this.panelNotices, ...this.feed.items].filter((n) => ids.includes(n.key) && n.unread !== false).map((n) => n.key));
         this.panelNotices = this.panelNotices.filter((n) => !ids.includes(n.key));
+        this.feed = { ...this.feed, items: this.feed.items.map((n) => (ids.includes(n.key) ? { ...n, unread: false } : n)) };
+        this.panelUnread = Math.max(0, this.panelUnread - wasUnread.size);
         try {
           const items = await wire.markPanelNotificationsRead(ids);
           if (Array.isArray(items)) this.panelNotices = items;
@@ -1876,6 +1960,7 @@
         if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Create Minecraft server';
         if (this.modal === 'account') return 'Profile';
         if (this.modal === 'notifications') return 'Notifications';
+        if (this.modal === 'inbox') return 'Notifications';
         if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
         if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
@@ -2023,6 +2108,7 @@
         this.fileEditorDirty = false;
         this.sftpOpen = false;
         const creating = this.modal === 'create', changedSettings = this.modal === 'panel-settings' && this.settingsChanged;
+        const backToInbox = this.modal === 'admin-page' && this.adminPage?.returnTo === 'inbox';
         if (creating) {
           this.closingCreator = true;
           try {
@@ -2042,6 +2128,7 @@
         this.loading = false;
         if (creating) this.refreshOverview();
         if (changedSettings) location.reload();
+        if (backToInbox) this.openAllNotifications();
       },
 
       /* Console --------------------------------------------------------------------------------- */
