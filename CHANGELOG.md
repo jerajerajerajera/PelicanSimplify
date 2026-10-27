@@ -1,5 +1,34 @@
 # Changes
 
+## 0.5.3-snapshot.16 (snapshot channel)
+Plugin search can include CurseForge.
+- A root administrator adds a free CurseForge API key under Simplify settings → Plugin sites, and can let people add their own key on the Plugins page.
+- CurseForge results are merged into the same cards; files that cannot be downloaded by other apps show a Website button.
+
+## 0.5.3-snapshot.15 (snapshot channel)
+Plugins sit on one page, and a plugin that fails to start is switched off.
+- Search is on the left and installed plugins are on the right, with a button to the plugins folder.
+- A plugin that fails to load at the next start is switched off automatically, with the reason and a ? to ask the AI why.
+
+## 0.5.3-snapshot.14 (snapshot channel)
+The "updated" notification after a plugin update shows what is new.
+- After an update through Simplify's plugin manager, the notification that a plugin was updated shows the What's new of the new version.
+
+## 0.5.3-snapshot.13 (snapshot channel)
+Plugins can be found on Modrinth, Hangar and SpigotMC, and What's new in update notifications is shorter.
+- The Plugins section has Installed and Add plugin. Add plugin searches Modrinth, Hangar and SpigotMC at once and shows where a plugin comes from and which version installs.
+- Without a release for your Minecraft version, a plugin can still be installed after a warning. Installed plugins can be switched off, updated or removed.
+- Paper and Purpur servers set to latest read their running version by themselves.
+- The bell shows one What's new line per update with Show all; the full notification list shows every line.
+- Checksum lines from release notes are left out, and long notes wrap inside the notification.
+- Simplify checks for updates right after it is updated, so existing notices get What's new without waiting.
+
+## 0.5.3-snapshot.12 (snapshot channel)
+Announcements can also be sent in game.
+- Pick all servers, server groups or single servers, and optionally repeat the message while the announcement shows.
+- Simplify uses each game's own chat command (say for Minecraft) and only sends to running servers; root administrators can change the command per egg under Announcements → In-game commands.
+- The announcements list shows the result of the last send.
+
 ## 0.5.3-snapshot.11 (snapshot channel)
 New servers show how far their installation is, and Clear read tidies your notifications.
 - New servers show an installation view with steps and the installation log; the normal page returns with "Your server is ready" and a Start button.

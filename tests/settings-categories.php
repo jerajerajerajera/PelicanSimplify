@@ -14,6 +14,7 @@ namespace Filament\Schemas\Components\Tabs {class Tab extends \Test\Component {}
 namespace Illuminate\Support {class HtmlString {public function __construct($value){}}}
 namespace Simplify\Panel\Services {
  class FeatureSettings {public static bool $complete=false;public static function enabled($key){return self::$complete;}public static function definitions(){return ['dashboard'=>['Dashboard','Description',true,'Interface'],'theme'=>['Theme','Description',true,'Appearance']];}}
+ class CurseForge {public static function panelHasKey(){return false;}public static function allowUserKeys(){return false;}}
  class ErrorExplainer {public const AUDIENCES=['everyone'=>'Everyone'];public const PER_USER=6;public const PER_DAY=200;public static function settings(){return ['has_key'=>false,'saved_keys'=>[]];}public static function providers(){return ['anthropic'=>'Claude by Anthropic'];}public static function models($p){return ['claude-opus-5-5'=>'Opus'];}public static function provider($p){return ErrorExplainer::class;}public static function name(){return 'Anthropic';}public static function keyPlaceholder(){return 'sk-ant-';}public static function keyHelp(){return 'help';}}
  class Extensions {public static function webInstalled(){return false;}}
  class CreatorAccess {public static function legacyUserGrants(){return 0;}}
@@ -31,7 +32,7 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
- if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Users & access','Backups & performance','Server banners','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations'])throw new \RuntimeException('settings tabs lost a setup category');
+ if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Users & access','Backups & performance','Server banners','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites'])throw new \RuntimeException('settings tabs lost a setup category');
  $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];
  if(count($profiles)!==6||$profiles[3]->label!=='Modpacks'||$profiles[2]->label!=='Mods'||count($profiles[3]->options['schema'][0])!==3)throw new \RuntimeException('CPU/RAM/disk profiles missing from settings');
  $explain=$tabs[10]->options['schema'][0][0];

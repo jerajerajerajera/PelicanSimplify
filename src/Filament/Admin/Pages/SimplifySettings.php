@@ -163,7 +163,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -184,6 +184,7 @@ class SimplifySettings extends Page implements HasForms
     /** Add-ons set up later from their own tab, not during the first setup. */
     private const LATER_ADDONS = [
         'Error explanations' => 'tabler-help-circle',
+        'Plugin sites' => 'tabler-puzzle',
     ];
 
     /** Pages other plugins add (empty when the service is not available, as in unit tests). */
@@ -369,6 +370,7 @@ class SimplifySettings extends Page implements HasForms
         $categories['Server banners'] = [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')];
         $icons['Server banners'] = 'tabler-photo';
         $addons['Error explanations'] = $this->errorExplainerSections();
+        if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
         $icons = [...$icons, ...self::LATER_ADDONS];
         $categories = [...$categories, ...$addons];
         $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs(
@@ -400,6 +402,28 @@ class SimplifySettings extends Page implements HasForms
             ]),
             Section::make('When the panel itself breaks')->description(fn () => 'If the panel shows an error such as 500, open '.route('simplify.explain').' to check the panel and Wings logs: that plain page works without the normal panel pages. If you cannot sign in, run "php artisan simplify:explain" in the panel folder on the server, or "php artisan simplify:explain --url" for a temporary address to that page.')->schema([]),
         ];
+    }
+    /** Plugin search on server pages: Modrinth, Hangar and SpigotMC need nothing; CurseForge needs a key of this panel. */
+    private function pluginSiteSections(): array
+    {
+        $saved = \Simplify\Panel\Services\CurseForge::panelHasKey();
+        return [
+            Section::make('CurseForge')->description('Plugins and mods are found on Modrinth, Hangar and SpigotMC without any setup. CurseForge only lets apps search with an API key: create a free one at console.curseforge.com (sign in, then API keys) and paste it here. Everyone who may install plugins can then search CurseForge too; the key itself stays on this panel.')->schema([
+                TextInput::make('curseforge.key')->label('CurseForge API key')->password()->autocomplete(false)->maxLength(200)
+                    ->placeholder($saved ? 'A key is saved. Leave empty to keep it.' : 'Paste your CurseForge API key'),
+                Toggle::make('curseforge.user_keys')->label('Let people add their own CurseForge key')->helperText('For bigger hosts: each person can enter their own key on the Plugins page of a server. Their own key is used instead of the one above.'),
+                Toggle::make('curseforge.remove_key')->label('Remove the saved CurseForge key when saving')->helperText('Plugin search then leaves CurseForge out.')->visible($saved),
+                \Filament\Schemas\Components\Actions::make([
+                    \Filament\Actions\Action::make('testCurseForge')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testCurseForge()),
+                ]),
+            ]),
+        ];
+    }
+    public function testCurseForge(): void
+    {
+        abort_unless(static::canAccess(), 403);
+        $result = \Simplify\Panel\Services\CurseForge::test((string) data_get($this->data, 'curseforge.key', ''));
+        Notification::make()->title($result['ok'] ? 'CurseForge key works' : 'CurseForge key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     /** Tries the typed key, or the saved one, with the chosen model (Test key button). */
     public function testErrorExplainer(): void
@@ -454,6 +478,11 @@ class SimplifySettings extends Page implements HasForms
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
             data_set($this->data, 'explainer.key', '');
             data_set($this->data, 'explainer.remove_key', false);
+        }
+        if (!empty($state['curseforge']) && class_exists(\Simplify\Panel\Services\CurseForge::class)) {
+            \Simplify\Panel\Services\CurseForge::save((string) ($state['curseforge']['key'] ?? ''), !empty($state['curseforge']['remove_key']), !empty($state['curseforge']['user_keys']));
+            data_set($this->data, 'curseforge.key', '');
+            data_set($this->data, 'curseforge.remove_key', false);
         }
         \Simplify\Panel\Services\RoleAccess::save($roles);
         if (!Storage::disk('local')->put(CreatorAccess::FILE, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT))) {

@@ -70,7 +70,7 @@ final class Dashboard extends Page
         $base['uploaded_backgrounds']=\Simplify\Panel\Services\ServerBanners::entries($s);
         $base['server']=['external_pages'=>\Simplify\Panel\Services\ExternalPlugins::serverPages($s),'plugin_widgets_url'=>\Simplify\Panel\Filament\Server\Pages\PluginWidgets::hasWidgets()?\Simplify\Panel\Filament\Server\Pages\PluginWidgets::getUrl(panel:'server',tenant:$s):null,'plugin_actions'=>\Simplify\Panel\Services\ExternalPlugins::actions('server',$s),'background_id'=>ServerArtwork::selection($s) ?? ($artworkMeta['background_id'] ?? 'auto'),'color'=>ServerAppearance::color($s),'uuid'=>$s->uuid,'short'=>$s->uuid_short,'name'=>$s->name,'address'=>\Simplify\Panel\Services\Subdomains::address($s) ?? $s->allocation?->display_address ?? $s->allocation?->address,
             'memory'=>$s->memory,'disk'=>$s->disk,'cpu'=>$s->cpu,'software'=>$s->egg?->name,'image'=>user()->can(P::StartupRead,$s)?$s->image:'Restricted','startup'=>user()->can(P::StartupRead,$s)?$s->startup:'Restricted',
-            'alias'=>\Simplify\Panel\Services\ServerMetadata::read($s)['server_alias']??'','sftp'=>\Simplify\Panel\Services\SftpDetails::forServer($s),'package_kind'=>Packages::capability($s),'native_sections'=>$this->nativeSections($s),
+            'alias'=>\Simplify\Panel\Services\ServerMetadata::read($s)['server_alias']??'','sftp'=>\Simplify\Panel\Services\SftpDetails::forServer($s),'package_kind'=>Packages::capability($s),'plugin_watch'=>Packages::capability($s)==='plugins'&&Packages::watching($s),'native_sections'=>$this->nativeSections($s),
             'owner'=>user()->isRootAdmin() || (int)$s->owner_id===(int)user()->id,'minecraft'=>ManagedSettings::minecraft($s),'can_resources'=>ManagedResources::canEdit($s),'resources_admin'=>\Simplify\Panel\Services\CreatorAccess::admin(),'permissions'=>$permissions,
             'properties'=>array_intersect_key($properties,array_flip(['motd','max-players','difficulty','gamemode','pvp','white-list','allow-flight','view-distance','spawn-protection'])),
             'properties_available'=>!ManagedSettings::minecraft($s) || !empty($properties),'pending'=>$pending?['properties'=>user()->can(P::FileReadContent,$s)?($pending['properties']??[]):[],'resources'=>$pending['resources']??[],'pending'=>true,'file_only'=>!empty($pending['file_only']),'file_changes'=>!empty($pending['file_changes']),'restart_at'=>$pending['restart_at'],'restart_requested'=>$pending['restart_requested'],'error'=>$pending['error']??null]:null,
@@ -374,7 +374,17 @@ final class Dashboard extends Page
     #[Renderless]
     public function installedPackages(): array {abort_unless(Access::feature('packages'),404); return Packages::installed($this->server()); }
     #[Renderless]
-    public function installPackage(string $id,string $version): void {abort_unless(Access::feature('packages'),404); Packages::install($this->server(),$id,$version); }
+    public function packageDetails(array $keys,string $version): array {abort_unless(Access::feature('packages'),404); return Packages::details($this->server(),$keys,$version); }
+    #[Renderless]
+    public function installPackage(string $id,string $version,bool $anyway=false,array $card=[]): array {abort_unless(Access::feature('packages'),404); return Packages::install($this->server(),$id,$version,$anyway,$card); }
+    #[Renderless]
+    public function explainPluginFailure(string $filename): array {abort_unless(Access::feature('packages'),404); return Packages::explainFailure($this->server(),$filename); }
+    #[Renderless]
+    public function saveCurseForgeKey(string $key): array {abort_unless(Access::feature('packages'),404); \Simplify\Panel\Services\CurseForge::saveUserKey($key); return Packages::installed($this->server()); }
+    #[Renderless]
+    public function checkPluginHealth(): array {abort_unless(Access::feature('packages'),404); return Packages::checkHealth($this->server()); }
+    #[Renderless]
+    public function togglePackage(string $filename,bool $on): void {abort_unless(Access::feature('packages'),404); Packages::toggle($this->server(),$filename,$on); }
     #[Renderless]
     public function removePackage(string $filename): void {abort_unless(Access::feature('packages'),404); Packages::remove($this->server(),$filename); }
     #[Renderless]
