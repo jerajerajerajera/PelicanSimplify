@@ -70,7 +70,8 @@ const page=(extra={})=>{const d=context.window.pelicanSimplify(wire,{server:null
   // What's new of a Panel update: three lines, all of them on request.
   const u=page({announcements:[{key:'panel-pelican-1.0.1',source:'panel',category:'info',tone:'info',title:'Pelican 1.0.1 is available',text:'You run 1.0.0.',from:'Panel',audience:'admins',time:'now',until:null,action:null,dismissed:false,unread:true,notes:['One','Two','Three','Four'],notes_url:'https://github.com/pelican-dev/panel/releases/tag/v1.0.1'}]});
   const update=u.notifications().find((i)=>i.key==='panel-pelican-1.0.1');
-  assert.deepEqual(u.noteLines(update),['One','Two','Three'],'three lines at first');
+  assert.deepEqual(u.noteLines(update),['One'],'one line at first');
+  assert.equal(u.noteLines(update,true).length,4,'every line in the full list');
   assert.equal(update.notesUrl,'https://github.com/pelican-dev/panel/releases/tag/v1.0.1');
   u.toggleNotes(update);assert.equal(u.noteLines(u.notifications().find((i)=>i.key==='panel-pelican-1.0.1')).length,4,'all lines once opened, also after the list is rebuilt');
   assert.deepEqual(page().notifications().find((i)=>i.announcement).notes,[],'announcements without notes have none');

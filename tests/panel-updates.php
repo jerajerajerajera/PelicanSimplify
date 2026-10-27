@@ -5,7 +5,8 @@ final class BuildInfo {public static ?string $version='0.5.0';public static func
 final class UpdateCheck {public static ?array $status=null;public static function status(): ?array {return self::$status;}}
 final class ReleaseNotes {public static array $asked=[];
     public static function release(string $repository,string $version): ?array {self::$asked[]=$repository.'@'.$version;return $repository==='pelican-dev/panel'?['lines'=>['Faster server list','Fix: backups on S3'],'url'=>'https://github.com/pelican-dev/panel/releases/tag/v'.$version]:null;}
-    public static function changelog(string $url,string $version,?string $page=null): ?array {self::$asked[]=$url.'@'.$version;return str_contains($url,'PelicanSimplify/main/')?['lines'=>['Notifications show everything now.'],'url'=>$page]:null;}}
+    public static function changelog(string $url,string $version,?string $page=null): ?array {self::$asked[]=$url.'@'.$version;return str_contains($url,'PelicanSimplify/main/')?['lines'=>['Notifications show everything now.'],'url'=>$page]:null;}
+    public static function forPlugin($update,$page,string $version): ?array {return is_string($update)?self::changelog($update,$version):null;}}
 final class FeatureSettings {public static function enabled(string $f): bool {return false;}}
 final class PluginUpdater {public const REPOSITORY='https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/';public static array $plugins=[];public static function available(): array {return self::$plugins;}public static function latestVersion($p): ?string {return $p->latest;}public static function panelVersion(): string {return '1.0.0-rc.2';}}
 }
