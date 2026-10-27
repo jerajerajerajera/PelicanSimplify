@@ -1,5 +1,11 @@
 # Changes
 
+## 0.6.0-beta.2 (beta channel)
+The Server Maker keeps its buttons in one bar at the bottom, and the README lists every feature.
+- Back, the steps, the draft status and Next sit in one bar that stays at the bottom while you scroll. On a phone, tap the step to jump to another one.
+- The Create server button on the dashboard is bigger and always shows its text.
+- The README has a new Features section with highlights and the full list.
+
 ## 0.6.0-beta.1 (beta channel)
 Simplify Server Maker: one creator for Minecraft and every other game (0.6.0-snapshot.1 below). The next stable release is 0.6.0.
 
