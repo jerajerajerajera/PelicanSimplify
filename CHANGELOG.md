@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.3-beta.1 to 0.5.3-beta.3 — beta (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
+New in the beta channel, not in stable yet. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
+- beta.1: server pages have a Customize button with their own Full screen width switch, and the Halloween switch while it is in season. Announcements stay pinned while they are live, also show above server pages, and leave a small pin when you collapse them. Customize server page can remember the bigger console and the mini console log (not on phones).
+- beta.2: Explain this error, with your own Anthropic API key. Off until a root administrator enters a key under Simplify settings → Error explanations; for everyone who can see the console or for administrators only. IP addresses, e-mail addresses, passwords and tokens are removed before sending.
+- beta.3: Explain can also read the panel log and the Wings log for root administrators, and the admin menu has "Explain panel errors".
+
 ## 0.5.2 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 Hotfix for 0.5.1, so the release is accepted on the Pelican Hub. Nothing changes in how Simplify works.
 - The announcement button helper has a new name; the Hub refused the old one.

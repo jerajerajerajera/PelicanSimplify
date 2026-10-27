@@ -32,6 +32,17 @@ For a few servers the simple mode is enough. Larger hosts can switch to host mod
 - **A calmer look** with the same icons as the rest of the Pelican panel, and **a faster overview**: one request per node instead of one per server.
 - **Halloween touches** from 25 October to 2 November, easy to turn off.
 
+## Now in beta (0.5.3-beta.3)
+
+The beta channel has a few things that are not in stable yet. You can try them by choosing Beta under Simplify settings → Plugin manager → "Simplify versions".
+
+- Server pages get their own Customize button. It has a Full screen width switch that is separate from the one on the overview, and the Halloween switch while it is in season. It can also remember the bigger console and the log in the mini console (not on phones).
+- Announcements stay pinned while they are live and also show above server pages. When you collapse one, a small pin with its title stays, and you can click it to open the announcement again.
+- Explain this error: with your own Anthropic API key, an Explain button in the console tells you in plain words what went wrong and what to try. It stays off until a root administrator enters a key under Simplify settings → Error explanations. You can allow it for everyone who can see the console or for administrators only. IP addresses, e-mail addresses, passwords and tokens are removed before anything is sent.
+- Root administrators can also let Explain read the panel log and the Wings log, and the admin menu has "Explain panel errors".
+
+See the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) for the details.
+
 ## Before you install
 
 Simplify is a large change to how your panel looks and works. Please read this first.
@@ -53,8 +64,8 @@ Simplify is a large change to how your panel looks and works. Please read this f
 | Channel | Current version | What it has | Changelog |
 |---|---|---|---|
 | **Stable** (default) | 0.5.2 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
-| **Beta** | 0.5.2-beta.1 | The next stable release, tested before it ships; at the moment the same as stable | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.5.2-snapshot.1 | The newest development build; at the moment the same features as stable | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Beta** | 0.5.3-beta.3 | The next stable release, tested before it ships: stable plus a Customize menu for server pages, pinned announcements and Explain this error | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
+| **Snapshot** | 0.5.3-snapshot.4 | The newest development build; at the moment the same features as beta | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
 
