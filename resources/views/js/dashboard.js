@@ -261,7 +261,7 @@
         if (this.destroyed) return;
         this.startServerTimers();
       },
-      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page. */
+      /** Links from notifications: ?open=<workspace> on a server page, ?admin=<path> for an admin page, ?settings=<tab> for Simplify settings. */
       openFromLink() {
         let params;
         try {
@@ -271,7 +271,10 @@
         }
         const admin = params.get('admin');
         const open = params.get('open');
-        if (admin && admin.startsWith('/')) {
+        const settings = params.get('settings');
+        if (settings && /^[a-z-]+$/.test(settings)) {
+          this.openPanelSettings(settings);
+        } else if (admin && admin.startsWith('/')) {
           const known = this.adminPages().flatMap((group) => group.items).find((item) => new URL(item.url, location.origin).pathname === admin);
           this.openAdminPage(known || { key: 'link', label: 'Admin', url: admin });
         } else if (open && this.server && this.widgets.some((widget) => widget.key === open)) {
@@ -280,6 +283,7 @@
         try {
           params.delete('admin');
           params.delete('open');
+          params.delete('settings');
           history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : ''));
         } catch {}
       },
@@ -1936,7 +1940,8 @@
         const url = this.frameUrl(this.boot.settings_url);
         if (!url || this.settingsSection === 'settings') return url;
         const target = new URL(url);
-        target.searchParams.set('section', this.settingsSection);
+        // Filament names a tab by its slug plus where its state lives.
+        target.searchParams.set('section', this.settingsSection.includes('::') ? this.settingsSection : this.settingsSection + '::data::tab');
         return target.href;
       },
       openPanelSettings(section = 'settings') {

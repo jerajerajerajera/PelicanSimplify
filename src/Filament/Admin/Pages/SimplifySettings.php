@@ -171,7 +171,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -378,6 +378,14 @@ class SimplifySettings extends Page implements HasForms
         $banners = ['Server banners' => [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')]];
         $categories = [...array_slice($categories, 0, 2, true), ...$banners, ...array_slice($categories, 2, null, true)];
         $icons['Server banners'] = 'tabler-photo';
+        $categories['Egg updates'] = [
+            Section::make('Egg updates')->description('Simplify checks every egg for a new version every six hours and lets root admins know in the notifications. Running servers keep running and pick up the new egg at their next start.')->schema([
+                Select::make('egg_updates.mode')->label('Updates')->options(\Simplify\Panel\Services\EggUpdates::MODES)->selectablePlaceholder(false)->required()
+                    ->helperText('Eggs that servers use are never updated without you. The previous version is always kept.'),
+            ]),
+            \Filament\Schemas\Components\View::make('pelican-simplify::egg-updates'),
+        ];
+        $icons['Egg updates'] = 'tabler-egg';
         $addons['Error explanations'] = $this->errorExplainerSections();
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
         if (class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $addons['Website embed'] = $this->websiteEmbedSections();
@@ -500,6 +508,49 @@ class SimplifySettings extends Page implements HasForms
             if (\Simplify\Panel\Services\WebsiteListing::visible($server) !== $visible) \Simplify\Panel\Services\WebsiteListing::setVisible($server, $visible);
         }
     }
+    /** Egg updates tab: the listed updates and the eggs Simplify updated before. */
+    public function eggUpdates(): array
+    {
+        return ['available' => \Simplify\Panel\Services\EggUpdates::available(), 'updated' => \Simplify\Panel\Services\EggUpdates::updated(), 'checked' => (int) \Simplify\Panel\Services\EggUpdates::state()['checked_at']];
+    }
+
+    public function checkEggUpdates(): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        \Simplify\Panel\Services\EggUpdates::check();
+        $count = count(\Simplify\Panel\Services\EggUpdates::available());
+        Notification::make()->title($count === 0 ? 'All eggs are up to date' : ($count === 1 ? '1 egg update available' : $count.' egg updates available'))->success()->send();
+    }
+
+    /** One egg, or every listed one with $id null. */
+    public function updateEggs(?int $id = null): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $ids = $id === null ? array_column(\Simplify\Panel\Services\EggUpdates::available(), 'id') : [$id];
+        $failed = [];
+        $done = 0;
+        foreach (Egg::query()->whereIn('id', $ids)->get() as $egg) {
+            $result = \Simplify\Panel\Services\EggUpdates::update($egg);
+            $result['ok'] ? $done++ : $failed[] = $result['message'];
+        }
+        if ($failed !== []) Notification::make()->title($done > 0 ? $done.' updated, '.count($failed).' failed' : 'Update failed')->body(implode(' ', $failed))->danger()->send();
+        else Notification::make()->title($done === 1 ? 'Egg updated' : $done.' eggs updated')->body('Running servers keep running. The previous version is kept and can be put back.')->success()->send();
+    }
+
+    public function restoreEgg(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdates::restore(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->status($result['ok'] ? 'success' : 'danger')->send();
+    }
+
+    public function moveEggServers(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdates::moveServers(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->status($result['ok'] ? 'success' : 'danger')->send();
+    }
+
     public function testCurseForge(): void
     {
         abort_unless(static::canAccess(), 403);
@@ -609,6 +660,7 @@ class SimplifySettings extends Page implements HasForms
         }
         if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
         if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
+        if (!empty($state['egg_updates']) && class_exists(\Simplify\Panel\Services\EggUpdates::class)) \Simplify\Panel\Services\EggUpdates::save($state['egg_updates']);
         if (!empty($state['embed']) && class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $embedState = $state['embed'];
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {

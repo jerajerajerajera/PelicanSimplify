@@ -18,6 +18,7 @@ namespace Simplify\Panel\Services {
  class WebsiteEmbed {public static function enabled(){return false;}}
  class ErrorExplainer {public const AUDIENCES=['everyone'=>'Everyone'];public const PER_USER=6;public const PER_DAY=200;public static function settings(){return ['has_key'=>false,'saved_keys'=>[]];}public static function providers(){return ['anthropic'=>'Claude by Anthropic'];}public static function models($p){return ['claude-opus-5-5'=>'Opus'];}public static function provider($p){return ErrorExplainer::class;}public static function name(){return 'Anthropic';}public static function keyPlaceholder(){return 'sk-ant-';}public static function keyHelp(){return 'help';}}
  class Extensions {public static function webInstalled(){return false;}}
+ class EggUpdates {public const MODES=['ask'=>'Ask first','auto'=>'Auto','off'=>'Off'];}
  class PelicanSettingsTabs {public static function all(){return [['key'=>'general','label'=>'General','icon'=>'tabler-home','url'=>'/admin/settings?simplify_embed=1&tab=general%3A%3Adata%3A%3Atab'],['key'=>'mail','label'=>'Mail','icon'=>'tabler-mail','url'=>'/admin/settings?simplify_embed=1&tab=mail%3A%3Adata%3A%3Atab']];}}
  class CreatorAccess {public static function legacyUserGrants(){return 0;}}
  class RoleAccess {public const ABILITIES=['files'=>['Files','d'],'create'=>['Create','d']];public const LIMITS=['max_servers'=>[2,1,100]];public static function all(){return ['everyone'=>['abilities'=>[]],'roles'=>[]];}}
@@ -41,13 +42,15 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];
- if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Server banners','Users & access','Backups & performance','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites','Website embed','General','Mail'])throw new \RuntimeException('settings tabs lost a setup category');
+ if(array_map(fn($tab)=>$tab->label,$tabs)!==['General','Appearance','Server banners','Users & access','Backups & performance','Egg updates','Easy Minecraft server creator','Easy server creator','People & roles','Plugin manager','Automatic subdomains','Error explanations','Plugin sites','Website embed','General','Mail'])throw new \RuntimeException('settings tabs lost a setup category');
  // Pelican's own settings close the menu: own key and id (no clash with Simplify's General), one frame per tab, counted for the heading.
- $pelican=$tabs[13];if(($pelican->options['key'][0]??null)!=='pelican-general'||($pelican->options['id'][0]??null)!=='pelican-general'||$pelican->options['schema'][0][0]->label!=='pelican-simplify::filament.admin.pelican-settings-frame'||($pelican->options['schema'][0][0]->options['viewData'][0]['label']??null)!=='General'||$page->pelicanTabs!==2||($tabs[13]->options['badge'][0]??null)!==null)throw new \RuntimeException('Pelican settings tabs not framed inside Simplify settings');
- $profiles=$tabs[5]->options['schema'][0][1]->options['schema'][0];
+ $pelican=$tabs[14];if(($pelican->options['key'][0]??null)!=='pelican-general'||($pelican->options['id'][0]??null)!=='pelican-general'||$pelican->options['schema'][0][0]->label!=='pelican-simplify::filament.admin.pelican-settings-frame'||($pelican->options['schema'][0][0]->options['viewData'][0]['label']??null)!=='General'||$page->pelicanTabs!==2||($tabs[14]->options['badge'][0]??null)!==null)throw new \RuntimeException('Pelican settings tabs not framed inside Simplify settings');
+ $profiles=$tabs[6]->options['schema'][0][1]->options['schema'][0];
  if(count($profiles)!==6||$profiles[3]->label!=='Modpacks'||$profiles[2]->label!=='Mods'||count($profiles[3]->options['schema'][0])!==3)throw new \RuntimeException('CPU/RAM/disk profiles missing from settings');
- $explain=$tabs[10]->options['schema'][0][0];
- if(($tabs[10]->options['badge'][0]??null)!=='Add-on'||$explain->label!=='Explain this error'||$explain->options['schema'][0][0]->label!=='explainer.provider'||!isset($explain->options['schema'][0][0]->options['live'])||$explain->options['schema'][0][2]->label!=='explainer.key'||!isset($explain->options['schema'][0][2]->options['password']))throw new \RuntimeException('error explanations tab missing its AI choice or key field');
- if(($tabs[7]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null||$tabs[2]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
+ $explain=$tabs[11]->options['schema'][0][0];
+ if(($tabs[11]->options['badge'][0]??null)!=='Add-on'||$explain->label!=='Explain this error'||$explain->options['schema'][0][0]->label!=='explainer.provider'||!isset($explain->options['schema'][0][0]->options['live'])||$explain->options['schema'][0][2]->label!=='explainer.key'||!isset($explain->options['schema'][0][2]->options['password']))throw new \RuntimeException('error explanations tab missing its AI choice or key field');
+ if(($tabs[8]->options['badge'][0]??null)!=='Add-on'||$tabs[0]->options['badge'][0]!==null||$tabs[2]->options['badge'][0]!==null||$tabs[5]->options['badge'][0]!==null)throw new \RuntimeException('add-on tabs not marked');
+ // Egg updates: the mode select plus the list of updates.
+ $eggs=$tabs[5]->options['schema'][0];if($eggs[0]->options['schema'][0][0]->label!=='egg_updates.mode'||$eggs[1]->label!=='pelican-simplify::egg-updates')throw new \RuntimeException('egg updates tab misses its setting or list');
  echo "PASS separate setup pages, matching numbered navigation, final-step submit, category tabs and editable modpack resource columns\n";
 }
