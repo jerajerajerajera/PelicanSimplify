@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3-snapshot.16 (snapshot channel)
+Plugin search can include CurseForge.
+- A root administrator adds a free CurseForge API key under Simplify settings → Plugin sites, and can let people add their own key on the Plugins page.
+- CurseForge results are merged into the same cards; files that cannot be downloaded by other apps show a Website button.
+
 ## 0.5.3-snapshot.15 (snapshot channel)
 Plugins sit on one page, and a plugin that fails to start is switched off.
 - Search is on the left and installed plugins are on the right, with a button to the plugins folder.
