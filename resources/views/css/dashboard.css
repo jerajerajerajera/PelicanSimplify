@@ -791,6 +791,8 @@ button.ps-package:hover { border-color: var(--ps-accent); }
    Straight on the page, no frame around it: a menu on the left (admin pages as a tree, or the servers per
    node, with health at the bottom) and the open page or server next to it, split by one line. Icons without
    tiles, underlined tabs. Menu and page each scroll on their own. */
+/* The title and the top navigation line up with the host workspace below them. */
+.ps.host-mode .ps-top { max-width: 1680px; }
 .ps-host { position: relative; display: grid; flex: 1 1 0; grid-template-columns: 252px minmax(0, 1fr); width: 100%; max-width: 1680px; min-height: 0; margin: 0 auto; overflow: hidden; }
 .ps-host-menu-toggle, .ps-host-backdrop, .ps-host-menu-close { display: none; }
 .ps-host-side { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--ps-line); }
