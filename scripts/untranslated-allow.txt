@@ -21,3 +21,6 @@ Java 25
 Reply with OK.
 Bearer
 open
+User access
+Game creator
+Plugin updates

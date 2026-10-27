@@ -63,6 +63,19 @@ final class Translations
         try { return (string) app()->getLocale() ?: self::FALLBACK; } catch (\Throwable) { return self::FALLBACK; }
     }
 
+    /** Runs $callback in $user's language (Pelican's language setting), for texts sent to someone else such as notifications. */
+    public static function as(?object $user, callable $callback): mixed
+    {
+        $previous = self::locale();
+        try {
+            $locale = (string) ($user->language ?? '') ?: (string) config('app.locale', self::FALLBACK);
+            app()->setLocale($locale);
+        } catch (\Throwable) {
+            return $callback();
+        }
+        try { return $callback(); } finally { app()->setLocale($previous); }
+    }
+
     /** Texts for the JavaScript bundles (window.simplifyLang). */
     public static function js(): array
     {

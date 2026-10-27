@@ -59,8 +59,10 @@ final class PanelUpdates
     public static function present(array $item,int $now): array
     {
         $at=(int)($item['seen']??$now);
-        return ['key'=>$item['key'],'source'=>'panel','category'=>'info','tone'=>'info','title'=>$item['title'],'text'=>$item['text'],'from'=>'Panel','audience'=>'admins',
-            'at'=>$at,'time'=>Announcements::ago($at,$now),'until'=>null,'action'=>$item['action']??null,
+        $action=$item['action']??null;
+        if(is_array($action))$action['label']=self::say($action['label']);
+        return ['key'=>$item['key'],'source'=>'panel','category'=>'info','tone'=>'info','title'=>self::say($item['title']),'text'=>self::say($item['text']),'from'=>self::say('from'),'audience'=>'admins',
+            'at'=>$at,'time'=>Announcements::ago($at,$now),'until'=>null,'action'=>$action,
             'notes'=>is_array($item['notes']??null)?array_values($item['notes']):[],'notes_url'=>is_string($item['notes_url']??null)?$item['notes_url']:null];
     }
 
@@ -71,8 +73,8 @@ final class PanelUpdates
         try{
             foreach(PluginUpdater::available() as $plugin){
                 if($plugin->id==='pelican-simplify'||!($latest=PluginUpdater::latestVersion($plugin)))continue;
-                $items[]=self::withNotes(['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>$plugin->name.' '.$latest.' is available',
-                    'text'=>'You run '.$plugin->version.'. Update it in the plugin manager.','action'=>self::pluginsLink()],self::notesFor($plugin,$latest));
+                $items[]=self::withNotes(['key'=>'panel-plugin-'.self::slug((string)$plugin->id).'-'.self::slug($latest),'title'=>['available',['name'=>$plugin->name,'version'=>$latest]],
+                    'text'=>['plugin_text',['version'=>$plugin->version]],'action'=>self::pluginsLink()],self::notesFor($plugin,$latest));
             }
         }catch(\Throwable){}
         $versions=self::versionService();
@@ -82,13 +84,13 @@ final class PanelUpdates
             if($wings)foreach(self::nodes() as $node){
                 $current=self::version(fn()=>self::nodeVersion($node));
                 if(!$current||!version_compare($wings,$current,'>'))continue;
-                $name=(string)($node->name??'Node '.$node->id);
-                $items[]=self::withNotes(['key'=>'panel-wings-'.(int)$node->id.'-'.self::slug($wings),'title'=>'Wings '.$wings.' is available for '.$name,
-                    'text'=>$name.' runs Wings '.$current.'. Update Wings on that machine when it suits you.','action'=>['label'=>'How to update','url'=>'https://pelican.dev/docs/wings/update']],$wingsNotes);
+                $name=(string)($node->name??('#'.$node->id));
+                $items[]=self::withNotes(['key'=>'panel-wings-'.(int)$node->id.'-'.self::slug($wings),'title'=>['wings_title',['version'=>$wings,'node'=>$name]],
+                    'text'=>['wings_text',['node'=>$name,'version'=>$current]],'action'=>['label'=>'how_to_update','url'=>'https://pelican.dev/docs/wings/update']],$wingsNotes);
             }
             $panel=self::version(fn()=>$versions->latestPanelVersion());$current=self::version(fn()=>PluginUpdater::panelVersion());
-            if($panel&&$current&&version_compare($panel,$current,'>'))$items[]=self::withNotes(['key'=>'panel-pelican-'.self::slug($panel),'title'=>'Pelican '.$panel.' is available',
-                'text'=>'You run '.$current.'. Read the release notes before you update.','action'=>['label'=>'Release notes','url'=>'https://github.com/pelican-dev/panel/releases']],ReleaseNotes::release('pelican-dev/panel',$panel));
+            if($panel&&$current&&version_compare($panel,$current,'>'))$items[]=self::withNotes(['key'=>'panel-pelican-'.self::slug($panel),'title'=>['available',['name'=>'Pelican','version'=>$panel]],
+                'text'=>['pelican_text',['version'=>$current]],'action'=>['label'=>'release_notes','url'=>'https://github.com/pelican-dev/panel/releases']],ReleaseNotes::release('pelican-dev/panel',$panel));
         }
         return self::seen($items);
     }
@@ -99,9 +101,9 @@ final class PanelUpdates
         try{
             $status=UpdateCheck::status();
             if(!$status||!$status['available'])return [];
-            return [['key'=>'panel-simplify-'.self::slug($status['version']),'version'=>$status['version'],'title'=>'Simplify '.$status['version'].' is available',
-                'text'=>'You run '.$status['current'].'. '.(FeatureSettings::enabled('auto_update_plugins')?'It is installed automatically with a backup.':'Update it with one click in the plugin manager.'),
-                'action'=>$status['url']?['label'=>'View update','url'=>$status['url']]:null]];
+            return [['key'=>'panel-simplify-'.self::slug($status['version']),'version'=>$status['version'],'title'=>['available',['name'=>'Simplify','version'=>$status['version']]],
+                'text'=>[FeatureSettings::enabled('auto_update_plugins')?'simplify_auto':'simplify_manual',['version'=>$status['current']]],
+                'action'=>$status['url']?['label'=>'view_update','url'=>$status['url']]:null]];
         }catch(\Throwable){return [];}
     }
 
@@ -175,8 +177,16 @@ final class PanelUpdates
     {
         try{
             $url=FeatureSettings::enabled('plugin_manager')?\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel:'admin'):\App\Filament\Admin\Resources\Plugins\PluginResource::getUrl('index',panel:'admin');
-            return ['label'=>'Open plugins','url'=>$url];
+            return ['label'=>'open_plugins','url'=>$url];
         }catch(\Throwable){return null;}
+    }
+
+    /** The list is shared between viewers, so it keeps keys ([key, values], or a key) and each viewer reads them in their own language. */
+    private static function say(mixed $text): string
+    {
+        if (is_string($text) && !preg_match('/^[a-z_]+$/', $text)) return $text;
+        [$key, $replace] = is_array($text) ? [$text[0], $text[1] ?? []] : [$text, []];
+        return __('pelican-simplify::announcements.panel_updates.'.$key, $replace);
     }
 
     private static function slug(string $value): string { return substr((string)preg_replace('/[^A-Za-z0-9._-]/','-',$value),0,60); }

@@ -105,4 +105,18 @@ return [
         'no_button' => 'No button',
         'open_a_server' => 'Open a server',
     ],
+    'panel_updates' => [
+        'available' => ':name :version is available',
+        'plugin_text' => 'You run :version. Update it in the plugin manager.',
+        'wings_title' => 'Wings :version is available for :node',
+        'wings_text' => ':node runs Wings :version. Update Wings on that machine when it suits you.',
+        'how_to_update' => 'How to update',
+        'pelican_text' => 'You run :version. Read the release notes before you update.',
+        'release_notes' => 'Release notes',
+        'simplify_auto' => 'You run :version. It is installed automatically with a backup.',
+        'simplify_manual' => 'You run :version. Update it with one click in the plugin manager.',
+        'view_update' => 'View update',
+        'open_plugins' => 'Open plugins',
+        'from' => 'Panel',
+    ],
 ];

@@ -6,6 +6,7 @@ namespace App\Services\Eggs\Sharing {class EggExporterService {}class EggImporte
 namespace App\Services\Servers {class ServerCreationService {}class ServerDeletionService {}}
 namespace App\Repositories\Daemon {class DaemonServerRepository {}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Services/EggUpdates.php';
 require __DIR__.'/../src/Services/EggUpdateTest.php';
 use Simplify\Panel\Services\EggUpdates;

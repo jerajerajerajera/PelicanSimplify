@@ -54,7 +54,7 @@ final class EggUpdateTest
             return $state;
         });
         if (($state['test'] ?? null) === null) self::tick();
-        return ['ok' => true, 'message' => 'Testing the update of '.$egg->name.' on a test server.'];
+        return ['ok' => true, 'message' => __('pelican-simplify::eggs.test.started', ['name' => $egg->name])];
     }
 
     /** Called every minute: moves the running test on, or starts the next one. */
@@ -66,7 +66,7 @@ final class EggUpdateTest
             return self::advance($test);
         } catch (\Throwable $exception) {
             report($exception);
-            return self::finish($test, false, 'could not be followed: '.self::reason($exception));
+            return self::finish($test, false, 'followed', self::reason($exception));
         }
     }
 
@@ -86,16 +86,18 @@ final class EggUpdateTest
             report($exception);
             $reason = self::reason($exception);
             EggUpdates::change(function (array $state) use ($egg, $reason): array {
-                $state['results'][$egg->id] = ['ok' => false, 'reason' => 'could not be made: '.$reason, 'at' => time()];
+                $state['results'][$egg->id] = ['ok' => false, 'code' => 'made', 'detail' => $reason, 'at' => time()];
                 return $state;
             });
-            EggUpdates::notify('Update of '.$egg->name.' not tested', 'No test server could be made: '.$reason.' Review the update under Egg updates.', 'warning');
+            EggUpdates::notify(fn () => [__('pelican-simplify::eggs.notify.not_tested_title', ['name' => $egg->name]), __('pelican-simplify::eggs.notify.not_tested_body', ['reason' => $reason])], 'warning');
+            // @english: scheduler output
             return [$egg->name.': no test server: '.$reason];
         }
         EggUpdates::change(function (array $state) use ($test): array {
             $state['test'] = $test;
             return $state;
         });
+        // @english
         return [$egg->name.': test server '.$test['server'].' is installing.'];
     }
 
@@ -120,8 +122,8 @@ final class EggUpdateTest
             $allocation = self::allocation($node);
             $server = app(ServerCreationService::class)->handle([
                 'external_id' => self::MARK.$egg->id.'-'.time(),
-                'name' => 'Egg update check: '.$egg->name,
-                'description' => 'Temporary server Simplify uses to test an egg update. It is removed automatically.',
+                'name' => __('pelican-simplify::eggs.test.server_name', ['name' => $egg->name]),
+                'description' => __('pelican-simplify::eggs.test.server_description'),
                 'owner_id' => $owner->id, 'node_id' => $node->id, 'allocation_id' => $allocation->id, 'egg_id' => $copy->id,
                 'environment' => OtherGameCatalog::environment($copy, []),
                 'memory' => 2048, 'swap' => 0, 'disk' => 8192, 'io' => 500, 'cpu' => 200,
@@ -152,11 +154,11 @@ final class EggUpdateTest
     private static function advance(array $test): array
     {
         $server = Server::query()->find($test['server']);
-        if (!$server) return self::finish($test, false, 'was deleted.');
+        if (!$server) return self::finish($test, false, 'deleted');
         $status = $server->status?->value ?? $server->status;
         $age = time() - (int) $test['since'];
         if ($test['stage'] === 'installing') {
-            if (in_array($status, ['install_failed', 'reinstall_failed'], true)) return self::finish($test, false, 'did not install.', $server);
+            if (in_array($status, ['install_failed', 'reinstall_failed'], true)) return self::finish($test, false, 'not_installed', null, $server);
             if ($status === null || $status === '') {
                 app(DaemonServerRepository::class)->setServer($server)->power('start')->throw();
                 EggUpdates::change(function (array $state): array {
@@ -164,18 +166,19 @@ final class EggUpdateTest
                     $state['test']['since'] = time();
                     return $state;
                 });
+                // @english
                 return ['Test server '.$server->id.' installed, starting.'];
             }
-            return $age > self::INSTALL_SECONDS ? self::finish($test, false, 'took longer than 15 minutes to install.', $server) : [];
+            return $age > self::INSTALL_SECONDS ? self::finish($test, false, 'install_slow', null, $server) : [];
         }
         $running = app(DaemonServerRepository::class)->setServer($server)->getDetails()['state'] ?? 'unknown';
-        if ($running === 'running') return self::finish($test, true, '');
-        if ($running === 'offline' && $age > 30) return self::finish($test, false, 'stopped while starting.', $server);
-        return $age > self::START_SECONDS ? self::finish($test, false, 'took longer than 3 minutes to start.', $server) : [];
+        if ($running === 'running') return self::finish($test, true);
+        if ($running === 'offline' && $age > 30) return self::finish($test, false, 'stopped', null, $server);
+        return $age > self::START_SECONDS ? self::finish($test, false, 'start_slow', null, $server) : [];
     }
 
-    /** Update on success, report on failure; clean up both ways. */
-    private static function finish(array $test, bool $ok, string $reason, ?Server $server = null): array
+    /** Update on success, report on failure; clean up both ways. $code names the failure (eggs.test.reasons), $detail the error behind it. */
+    private static function finish(array $test, bool $ok, string $code = '', ?string $detail = null, ?Server $server = null): array
     {
         $egg = Egg::query()->find($test['egg']);
         $log = $ok || !$server ? '' : self::logTail($server);
@@ -186,22 +189,33 @@ final class EggUpdateTest
         if ($ok && $egg && is_array($saved)) {
             $result = EggUpdates::update($egg, ['content' => (string) $saved['content'], 'format' => $saved['format'] === 'YAML' ? EggFormat::YAML : EggFormat::JSON, 'hash' => (string) $saved['hash']]);
             $ok = $result['ok'];
-            $reason = $ok ? '' : $result['message'];
+            if (!$ok) [$code, $detail] = ['update', $result['error'] ?? $result['message']];
         }
-        EggUpdates::change(function (array $state) use ($test, $ok, $reason): array {
+        EggUpdates::change(function (array $state) use ($test, $ok, $code, $detail): array {
             $state['test'] = null;
-            $state['results'][$test['egg']] = ['ok' => $ok, 'reason' => $reason, 'at' => time()];
+            $state['results'][$test['egg']] = ['ok' => $ok, 'code' => $code, 'detail' => $detail, 'at' => time()];
             return $state;
         });
-        $name = $egg?->name ?? 'the egg';
+        $name = $egg?->name ?? '?';
         if ($ok) {
-            EggUpdates::notify($name.' egg updated after a test', 'A test server installed and started with the new version. Running servers keep running. The previous version is kept.', 'success');
+            EggUpdates::notify(fn () => [__('pelican-simplify::eggs.notify.tested_title', ['name' => $name]), __('pelican-simplify::eggs.notify.tested_body')], 'success');
             $message = $name.' tested and updated.';
         } else {
-            EggUpdates::notify('Update of '.$name.' not installed', 'The test server '.$reason.($log !== '' ? ' Last lines: '.rtrim($log, '.').'.' : '').' The current egg stays. Review it under Egg updates.', 'danger');
-            $message = $name.': the test server '.$reason;
+            $result = ['code' => $code, 'detail' => $detail];
+            EggUpdates::notify(fn () => [__('pelican-simplify::eggs.notify.not_installed_title', ['name' => $name]), $log !== ''
+                ? __('pelican-simplify::eggs.notify.not_installed_log', ['reason' => self::reasonText($result), 'log' => rtrim($log, '.')])
+                : __('pelican-simplify::eggs.notify.not_installed_body', ['reason' => self::reasonText($result)])], 'danger');
+            // @english: scheduler output
+            $message = $name.': the test server '.($code === 'update' ? 'worked, but the update failed: ' : $code.': ').$detail;
         }
         return [$message];
+    }
+
+    /** Why the last test failed, in the reader's language ("did not install."); results saved before codes keep their English text. */
+    public static function reasonText(array $result): string
+    {
+        if (!isset($result['code'])) return (string) ($result['reason'] ?? '');
+        return __('pelican-simplify::eggs.test.reasons.'.$result['code'], ['detail' => rtrim((string) ($result['detail'] ?? ''), '.')]);
     }
 
     private static function cleanUp(array $test): void
@@ -230,7 +244,7 @@ final class EggUpdateTest
     private static function reason(\Throwable $exception): string
     {
         $text = trim(strip_tags($exception->getMessage()));
-        if ($exception instanceof \Illuminate\Validation\ValidationException) $text = 'a variable needs a value: '.implode(' ', array_map(fn ($m) => is_array($m) ? implode(' ', $m) : $m, $exception->errors()));
-        return $text === '' ? 'unknown error.' : rtrim(mb_strimwidth($text, 0, 200, '…'), '.').'.';
+        if ($exception instanceof \Illuminate\Validation\ValidationException) $text = __('pelican-simplify::eggs.test.variable_needed', ['errors' => implode(' ', array_map(fn ($m) => is_array($m) ? implode(' ', $m) : $m, $exception->errors()))]);
+        return $text === '' ? __('pelican-simplify::eggs.results.unknown_error') : rtrim(mb_strimwidth($text, 0, 200, '…'), '.').'.';
     }
 }

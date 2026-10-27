@@ -69,6 +69,7 @@ namespace App\Models {
  }
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  require __DIR__.'/../src/Services/PluginUpdater.php';
  require __DIR__.'/../src/Services/PanelUpdates.php';
  use Illuminate\Support\Facades\{File, Http, Process};

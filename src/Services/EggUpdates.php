@@ -30,6 +30,7 @@ final class EggUpdates
     /** Seconds between two checks of every update URL. */
     private const INTERVAL = 6 * 3600;
 
+    /** @lang settings.egg_modes */
     public const MODES = [
         'ask' => 'Ask first',
         'auto' => 'Update eggs without servers automatically',
@@ -154,10 +155,10 @@ final class EggUpdates
             }
             $waiting[] = $egg;
         }
-        if ($updated !== []) self::notify(count($updated) === 1 ? $updated[0].' egg updated' : count($updated).' eggs updated', self::names($updated).(count($updated) === 1 ? ' has' : ' have').' no servers and '.(count($updated) === 1 ? 'was' : 'were').' updated. The previous version is kept.', 'success');
+        if ($updated !== []) self::notify(fn () => [trans_choice('pelican-simplify::eggs.notify.updated_title', count($updated), ['name' => $updated[0]]), trans_choice('pelican-simplify::eggs.notify.updated_body', count($updated), ['names' => self::names($updated)])], 'success');
         if ($waiting !== []) {
             $names = array_map(fn (Egg $egg): string => $egg->name, $waiting);
-            self::notify(count($names) === 1 ? 'Egg update for '.$names[0] : count($names).' egg updates available', self::names($names).(count($names) === 1 ? ' has' : ' have').' a new version.', 'info');
+            self::notify(fn () => [trans_choice('pelican-simplify::eggs.notify.available_title', count($names), ['name' => $names[0]]), trans_choice('pelican-simplify::eggs.notify.available_body', count($names), ['names' => self::names($names)])], 'info');
         }
         return $messages;
     }
@@ -171,7 +172,7 @@ final class EggUpdates
     public static function update(Egg $egg, ?array $remote = null): array
     {
         $lock = Cache::lock('simplify.egg-update.'.$egg->id, 120);
-        if (!$lock->get()) return ['ok' => false, 'message' => $egg->name.' is already being updated.'];
+        if (!$lock->get()) return ['ok' => false, 'message' => __('pelican-simplify::eggs.results.busy', ['name' => $egg->name])];
         try {
             $remote ??= self::remote($egg);
             self::backup($egg);
@@ -183,10 +184,10 @@ final class EggUpdates
             });
             Cache::forget('eggs.'.$egg->uuid.'.update');
             Cache::forget('eggs.'.$egg->fresh()?->uuid.'.update');
-            return ['ok' => true, 'message' => $egg->name.' is updated.'];
+            return ['ok' => true, 'message' => __('pelican-simplify::eggs.results.updated', ['name' => $egg->name])];
         } catch (\Throwable $exception) {
             report($exception);
-            return ['ok' => false, 'message' => $egg->name.' could not be updated: '.self::reason($exception)];
+            return ['ok' => false, 'error' => self::reason($exception), 'message' => __('pelican-simplify::eggs.results.failed', ['name' => $egg->name, 'error' => self::reason($exception)])];
         } finally {
             $lock->release();
         }
@@ -196,7 +197,7 @@ final class EggUpdates
     public static function restore(Egg $egg): array
     {
         $backups = self::backups($egg);
-        if ($backups === []) return ['ok' => false, 'message' => 'There is no earlier version of '.$egg->name.' to put back.'];
+        if ($backups === []) return ['ok' => false, 'message' => __('pelican-simplify::eggs.results.no_backup', ['name' => $egg->name])];
         try {
             $content = (string) Storage::disk('local')->get($backups[0]['path']);
             app(EggImporterService::class)->fromContent($content, EggFormat::JSON, $egg);
@@ -208,10 +209,10 @@ final class EggUpdates
                 if ($hash !== null) $state['found'][$egg->id] = ['hash' => $hash, 'at' => time(), 'held' => true];
                 return $state;
             });
-            return ['ok' => true, 'message' => 'The previous version of '.$egg->name.' is back.'];
+            return ['ok' => true, 'message' => __('pelican-simplify::eggs.results.restored', ['name' => $egg->name])];
         } catch (\Throwable $exception) {
             report($exception);
-            return ['ok' => false, 'message' => 'The previous version of '.$egg->name.' could not be put back: '.self::reason($exception)];
+            return ['ok' => false, 'message' => __('pelican-simplify::eggs.results.restore_failed', ['name' => $egg->name, 'error' => self::reason($exception)])];
         }
     }
 
@@ -224,11 +225,11 @@ final class EggUpdates
     {
         $backup = self::backups($egg)[0] ?? null;
         $previous = $backup ? json_decode((string) Storage::disk('local')->get($backup['path']), true) : null;
-        if (!is_array($previous)) return ['ok' => false, 'message' => 'Simplify has no earlier version of '.$egg->name.' to compare with.', 'moved' => 0];
+        if (!is_array($previous)) return ['ok' => false, 'message' => __('pelican-simplify::eggs.results.nothing_to_compare', ['name' => $egg->name]), 'moved' => 0];
         $plan = self::movePlan($egg, $previous);
         foreach ($plan as $id => $change) Server::query()->whereKey($id)->update($change);
         $count = count($plan);
-        return ['ok' => true, 'moved' => $count, 'message' => $count === 0 ? 'All servers on '.$egg->name.' already use its current startup command and image.' : $count.' '.($count === 1 ? 'server uses' : 'servers use').' the new startup command or image of '.$egg->name.' from '.($count === 1 ? 'its' : 'their').' next start.'];
+        return ['ok' => true, 'moved' => $count, 'message' => trans_choice('pelican-simplify::eggs.results.moved', $count, ['name' => $egg->name])];
     }
 
     /** server id => [startup?, image?] for servers that still run what the previous definition offered. */
@@ -351,13 +352,15 @@ final class EggUpdates
         return Server::query()->where('egg_id', $egg->id)->count();
     }
 
-    /** A notification for every root admin, with a link to Egg updates. */
-    public static function notify(string $title, string $body, string $tone = 'info'): void
+    /** A notification for every root admin, in their own language: $texts returns [title, body]. */
+    public static function notify(\Closure $texts, string $tone = 'info'): void
     {
         try {
-            $notification = \Filament\Notifications\Notification::make()->status($tone)->title($title)->body($body)
-                ->actions([\Filament\Actions\Action::make('review')->label('Egg updates')->url(self::url())]);
-            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin()) as $user) $user->notifyNow($notification->toDatabase());
+            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin()) as $user) Translations::as($user, function () use ($user, $texts, $tone): void {
+                [$title, $body] = $texts();
+                $user->notifyNow(\Filament\Notifications\Notification::make()->status($tone)->title($title)->body($body)
+                    ->actions([\Filament\Actions\Action::make('review')->label(__('pelican-simplify::settings.tabs.egg_updates'))->url(self::url())])->toDatabase());
+            });
         } catch (\Throwable $exception) {
             report($exception);
         }
@@ -374,12 +377,12 @@ final class EggUpdates
     {
         if (count($names) <= 1) return (string) ($names[0] ?? '');
         $last = array_pop($names);
-        return implode(', ', $names).' and '.$last;
+        return __('pelican-simplify::eggs.notify.list', ['list' => implode(', ', $names), 'last' => $last]);
     }
 
     private static function reason(\Throwable $exception): string
     {
         $text = trim(strip_tags($exception->getMessage()));
-        return $text === '' ? 'unknown error.' : rtrim(mb_strimwidth($text, 0, 200, '…'), '.').'.';
+        return $text === '' ? __('pelican-simplify::eggs.results.unknown_error') : rtrim(mb_strimwidth($text, 0, 200, '…'), '.').'.';
     }
 }
