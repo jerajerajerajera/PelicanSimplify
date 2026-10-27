@@ -8,6 +8,15 @@
         @case('plus')
             <path d="M4 7h5a3 3 0 1 1 6 0h5v5a3 3 0 1 0 0 6v3h-6a3 3 0 1 0-6 0H4v-6a3 3 0 1 0 0-6z" />
             @break
+        @case('loader')
+            <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.8-.6-.6-2.8z" />
+            @break
+        @case('bedrock')
+            <rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" />
+            @break
+        @case('proxy')
+            <circle cx="12" cy="5" r="2.5" /><circle cx="5" cy="19" r="2.5" /><circle cx="19" cy="19" r="2.5" /><path d="M12 7.5V12 M12 12l-5.5 4.8 M12 12l5.5 4.8" />
+            @break
         @case('game')
             <rect x="3" y="7" width="18" height="12" rx="4" /><path d="M7 11v4 M5 13h4 M15 12h.01 M18 14h.01" />
             @break

@@ -14,7 +14,10 @@ final class ManagedSettings
     }
     public static function minecraft(Server $server): bool
     {
-        return preg_match('/minecraft|vanilla|paper|purpur|spigot|modrinth|curseforge|ftb|tekkit|hexxit|blightfall|b-team|forge|fabric|pack/i', (string) $server->egg?->name) === 1;
+        // Bedrock has no Java server.properties, status ping or EULA file, so it is handled like any other game.
+        $egg = (string) $server->egg?->name;
+        return preg_match('/minecraft|vanilla|paper|purpur|spigot|modrinth|curseforge|ftb|tekkit|hexxit|blightfall|b-team|forge|fabric|quilt|pack/i', $egg) === 1
+            && preg_match('/bedrock|pocketmine|nukkit/i', $egg) !== 1;
     }
     public static function content(Server $server): array
     {

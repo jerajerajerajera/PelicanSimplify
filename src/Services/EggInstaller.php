@@ -19,19 +19,16 @@ final class EggInstaller
     {
         return ($state['server_type'] ?? '') === 'modded'
             ? ModpackCatalog::egg($state['modpack_project'] ?? null)
-            : MinecraftCatalog::eggForType((string) ($state['server_type'] ?? ''));
+            : MinecraftCatalog::eggForType((string) ($state['server_type'] ?? ''), $state['server_software'] ?? null);
     }
 
     public static function file(array $state): ?string
     {
-        $type = $state['server_type'] ?? '';
-        if ($type === 'vanilla') {
-            return 'egg-vanilla-minecraft.json';
+        $type = (string) ($state['server_type'] ?? '');
+        if ($type !== 'modded') {
+            return MinecraftCatalog::eggFile($type, $state['server_software'] ?? null);
         }
-        if ($type === 'plus') {
-            return 'egg-paper.json';
-        }
-        if ($type !== 'modded' || !($parts = ModpackCatalog::split($state['modpack_project'] ?? null))) {
+        if (!($parts = ModpackCatalog::split($state['modpack_project'] ?? null))) {
             return null;
         }
         return match ($parts[0]) {

@@ -17,7 +17,7 @@ final class Packages
         $mods=preg_match('/neoforge|forge|fabric|quilt|modrinth|curseforge|ftb|technic|tekkit|hexxit|blightfall|b-team/',$egg)===1;
         if ($flavour==='vanilla') return '';
         if ($flavour==='plus') return $plugins?'plugins':'';
-        if ($flavour==='modded') return $mods?'mods':'';
+        if ($flavour==='modded'||$flavour==='loader') return $mods?'mods':'';
         return $plugins?'plugins':($mods?'mods':'');
     }
     public static function context(Server $s): array
