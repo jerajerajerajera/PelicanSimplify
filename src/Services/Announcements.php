@@ -5,13 +5,16 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Announcements: Info, Warning and Success messages root admins write under Admin tools → Announcements, shown as
  * bars above the server overview and server pages and in the bell. Also shows the announcements of the Hub plugin "Announcements"
- * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). While one is live it stays pinned:
- * collapsing it (per account) leaves a one-line pin that opens it again.
+ * (read only) and, for root admins, the Panel's own update announcements (PanelUpdates). Live ones are pinned there;
+ * each account can unpin one and pin it again from the bell. An admin can also pin one to everyone's notifications:
+ * it then stays at the top of the bell until it ends, whatever the account does with its bar.
  */
 final class Announcements
 {
     public const FILE='simplify/announcements.json';
     public const DISMISSED_DIR='simplify/announcements-dismissed/';
+    /** Per account: {"read_at": unix time}, everything up to then is read ("Mark all read"). */
+    public const READ_DIR='simplify/announcements-read/';
     public const CATEGORIES=['info'=>'Info','warning'=>'Warning','success'=>'Success'];
     public const AUDIENCES=['everyone'=>'Everyone','admins'=>'Admins only'];
     /** Category => tone of the dashboard's alerts and bell items. */
@@ -62,6 +65,7 @@ final class Announcements
             'created_by'=>$old['created_by']??$author,'created_at'=>$old['created_at']??$now,'updated_at'=>$now,
             // Sent as an app notification once, when it starts; editing does not send it again.
             'push'=>!empty($input['push']),'pushed_at'=>$old['pushed_at']??null,
+            'pinned'=>!empty($input['pinned']),
         ]);
         $rows=array_values(array_filter($rows,fn(array $r):bool=>$r['id']!==$row['id']));
         array_unshift($rows,$row);
@@ -107,13 +111,19 @@ final class Announcements
         array_push($items,...self::external($now));
         if(method_exists($user,'isRootAdmin')&&$user->isRootAdmin())array_push($items,...PanelUpdates::announcements($now));
         $hidden=array_flip(self::dismissedKeys($user));
-        foreach($items as &$item)$item['dismissed']=isset($hidden[$item['key']]);
+        $read=self::readAt($user);
+        foreach($items as &$item){
+            $item['dismissed']=isset($hidden[$item['key']]);
+            $item['pinned']=($item['pinned']??false)===true;
+            // Unread until "Mark all read" or until this account unpins its bar.
+            $item['unread']=!$item['dismissed']&&$item['at']>$read;
+        }
         unset($item);
         usort($items,fn(array $a,array $b):int=>$b['at']<=>$a['at']);
         return $items;
     }
 
-    /** Collapses an announcement for this account to a one-line pin; it stays pinned until it ends. */
+    /** Unpins an announcement for this account: no bar any more, it stays under the bell until it ends. */
     public static function dismiss(object $user,string $key): void
     {
         if(!self::validKey($key))return;
@@ -122,12 +132,24 @@ final class Announcements
         self::saveDismissed($user,array_slice($keys,-self::DISMISSED_LIMIT));
     }
 
-    /** Opens a collapsed announcement again for this account. */
+    /** Pins an unpinned announcement again for this account. */
     public static function restore(object $user,string $key): void
     {
         if(!self::validKey($key))return;
         $keys=self::dismissedKeys($user);
         if(in_array($key,$keys,true))self::saveDismissed($user,array_values(array_diff($keys,[$key])));
+    }
+
+    /** "Mark all read": every announcement up to now counts as read for this account. */
+    public static function markAllRead(object $user,?int $now=null): void
+    {
+        if(!Storage::disk('local')->put(self::READ_DIR.(int)$user->id.'.json',json_encode(['read_at'=>$now??time()],JSON_THROW_ON_ERROR)))throw new \RuntimeException('Could not save the announcements.');
+    }
+
+    public static function readAt(object $user): int
+    {
+        $at=JsonFile::read(self::READ_DIR.(int)$user->id.'.json')['read_at']??0;
+        return is_int($at)?$at:0;
     }
 
     public static function dismissedKeys(object $user): array
@@ -148,7 +170,7 @@ final class Announcements
         $at=max($row['starts_at']??0,$row['created_at']);
         return ['key'=>'own-'.$row['id'],'source'=>'own','category'=>$row['category'],'tone'=>self::TONES[$row['category']],'title'=>$row['title'],'text'=>$row['text'],
             'from'=>$row['created_by']!==''?$row['created_by']:'Admin','audience'=>$row['audience'],'at'=>$at,'time'=>self::ago($at,$now),
-            'until'=>$row['ends_at']!==null?self::until($row['ends_at']):null,'action'=>$action];
+            'until'=>$row['ends_at']!==null?self::until($row['ends_at']):null,'ends_at'=>$row['ends_at'],'action'=>$action,'pinned'=>$row['pinned']];
     }
 
     /** Announcements of the Hub plugin "Announcements" (Boy132) when it is installed: read only, for the app panel. */
@@ -171,7 +193,7 @@ final class Announcements
             $at=$from??self::stamp($record->created_at??null)??$now;
             $items[]=['key'=>'plugin-'.(int)$record->id,'source'=>'plugin','category'=>isset(self::TONES[$type])&&$type!=='danger'?$type:($type==='danger'?'warning':'info'),'tone'=>self::TONES[$type]??'info',
                 'title'=>$title,'text'=>self::text(strip_tags((string)($record->body??''))),'from'=>'Announcements','audience'=>'everyone','at'=>$at,'time'=>self::ago($at,$now),
-                'until'=>$to!==null?self::until($to):null,'action'=>$label!==''&&self::safeUrl($url)?['label'=>$label,'url'=>$url]:null];
+                'until'=>$to!==null?self::until($to):null,'ends_at'=>$to,'action'=>$label!==''&&self::safeUrl($url)?['label'=>$label,'url'=>$url]:null];
         }
         return $items;
     }
@@ -191,7 +213,7 @@ final class Announcements
         return ['id'=>$id,'category'=>isset(self::CATEGORIES[$row['category']??''])?$row['category']:'info','title'=>$title,'text'=>self::text($row['text']??''),
             'starts_at'=>$starts,'ends_at'=>$ends,'audience'=>isset(self::AUDIENCES[$row['audience']??''])?$row['audience']:'everyone','button'=>$button,
             'created_by'=>self::line($row['created_by']??'',64),'created_at'=>is_int($row['created_at']??null)?$row['created_at']:0,'updated_at'=>is_int($row['updated_at']??null)?$row['updated_at']:0,
-            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null];
+            'push'=>($row['push']??false)===true,'pushed_at'=>is_int($row['pushed_at']??null)?$row['pushed_at']:null,'pinned'=>($row['pinned']??false)===true];
     }
 
     /** "5 minutes ago", "yesterday", … */

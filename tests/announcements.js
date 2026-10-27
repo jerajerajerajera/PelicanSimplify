@@ -12,8 +12,7 @@ const wire={dismissAnnouncement:async(key)=>{calls.push(key);if(fail)throw new E
 const page=()=>{const d=context.window.pelicanSimplify(wire,{server:null,servers:[],user:'jera',announcements:items(),update:{available:true,version:'0.5.1',current:'0.5.0'}});d.initNotices();return d;};
 (async()=>{
   const d=page();
-  assert.deepEqual(d.announcementBars().map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available'],'collapsed announcements get no bar');
-  assert.deepEqual(d.announcementPins().map((i)=>i.title),['Old news'],'a collapsed announcement stays pinned as a one-line pin');
+  assert.deepEqual(d.announcementBars().map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available'],'unpinned announcements get no bar');
   const bell=d.notifications();
   assert.deepEqual(bell.filter((i)=>i.announcement).map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available','Old news'],'the bell keeps hidden announcements');
   assert.equal(bell.filter((i)=>i.title==='Simplify 0.5.1 is available').length,1,'the Simplify update shows once (as a Panel announcement)');
@@ -26,14 +25,13 @@ const page=()=>{const d=context.window.pelicanSimplify(wire,{server:null,servers
   await d.dismissAnnouncement('own-aaaa');
   assert.deepEqual(calls,['own-aaaa'],'hiding is saved with the account');
   assert.deepEqual(d.announcementBars().map((i)=>i.title),['Simplify 0.5.1 is available']);
-  assert.deepEqual(d.announcementPins().map((i)=>i.title).sort(),['Maintenance','Old news'],'collapsing moves the bar to the pins');
   assert.equal(d.unreadNotifications(),1);
   await d.restoreAnnouncement('own-bbbb');
-  assert.deepEqual(calls,['own-aaaa','open own-bbbb'],'opening a pin again is saved with the account');
-  assert.ok(d.announcementBars().some((i)=>i.title==='Old news'),'an opened pin is a full bar again');
+  assert.deepEqual(calls,['own-aaaa','open own-bbbb'],'pinning again is saved with the account');
+  assert.ok(d.announcementBars().some((i)=>i.title==='Old news'),'a pinned announcement is a bar again');
   fail=true;const e=page();await e.dismissAnnouncement('own-aaaa');
   assert.equal(e.announcementBars().length,2,'a failed save brings the bar back');assert.equal(toasts.at(-1)[1],'warn');
   await e.restoreAnnouncement('own-bbbb');
-  assert.deepEqual(e.announcementPins().map((i)=>i.key),['own-bbbb'],'a failed open keeps the pin');
-  console.log('PASS announcements dashboard: bars skip collapsed ones, collapsed ones stay pinned and open again, bell keeps them, count, labels, hide saved per account and restored on errors');
+  assert.ok(!e.announcementBars().some((i)=>i.key==='own-bbbb'),'a failed pin leaves it unpinned');assert.equal(toasts.at(-1)[0],'The announcement could not be pinned.');
+  console.log('PASS announcements dashboard: bars skip unpinned ones, pin again from the bell, bell keeps them, count, labels, hide saved per account and restored on errors');
 })().catch((e)=>{console.error(e);process.exit(1);});

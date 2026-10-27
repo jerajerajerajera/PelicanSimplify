@@ -1282,7 +1282,7 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 }
 
 /* Announcements above the overview and server pages (Admin tools → Announcements and the Panel's update notices).
-   Collapsed ones stay as one-line pins until they end. */
+   Pinned while they are live; the pin button (shown pressed) unpins one, the bell pins it again. */
 .ps-announcements-pinned { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
 .ps-server-dashboard > .ps-announcements-pinned { margin-bottom: 14px; }
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
@@ -1292,29 +1292,14 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-announcement-copy span { white-space: pre-line; }
 .ps-announcement-copy small { display: block; margin-top: 1px; }
 .ps-announcement-bar .ps-btn { flex: none; }
-.ps-announcement-hide svg { transform: rotate(-90deg); }
-.ps-announcement-pins { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.ps-announcement-pin {
-  --ps-tone: var(--ps-info);
-  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; height: 30px; padding: 0 8px 0 10px;
-  border: 1px solid color-mix(in srgb, var(--ps-tone) 35%, var(--ps-line)); border-radius: 999px;
-  background: color-mix(in srgb, var(--ps-tone) 9%, var(--ps-surface)); color: var(--ps-ink);
-  font: 550 12.5px/1 var(--ps-font); cursor: pointer;
-}
-.ps-announcement-pin:hover { background: color-mix(in srgb, var(--ps-tone) 16%, var(--ps-surface)); }
-.ps-announcement-pin:focus-visible { outline: 2px solid var(--ps-tone); outline-offset: 2px; }
-.ps-announcement-pin.is-warn { --ps-tone: var(--ps-warn); }
-.ps-announcement-pin.is-ok { --ps-tone: var(--ps-ok); }
-.ps-announcement-pin.is-danger { --ps-tone: var(--ps-danger); }
-.ps-announcement-pin svg { flex: none; width: 15px; height: 15px; color: var(--ps-tone); }
-.ps-announcement-pin span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ps-announcement-pin .ps-announcement-pin-open { width: 13px; height: 13px; color: var(--ps-muted); transform: rotate(90deg); }
+.ps-announcement-unpin { border-color: color-mix(in srgb, var(--ps-tone) 40%, var(--ps-line)); background: color-mix(in srgb, var(--ps-tone) 18%, var(--ps-surface)); color: var(--ps-tone); }
+.ps-announcement-unpin:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ps-tone) 55%, var(--ps-line)); background: color-mix(in srgb, var(--ps-tone) 26%, var(--ps-surface)); }
 @media (max-width: 600px) {
   .ps-announcement-bar { position: relative; flex-wrap: wrap; padding-right: 44px; }
   .ps-announcement-copy { flex-basis: calc(100% - 40px); }
   .ps-announcement-copy strong { display: block; margin: 0; }
   .ps-announcement-action { margin-left: 32px; }
-  .ps-announcement-hide { position: absolute; top: 6px; right: 6px; }
+  .ps-announcement-unpin { position: absolute; top: 6px; right: 6px; }
 }
 
 /* App notifications: settings popup and the offer under the bell. */
@@ -1366,11 +1351,20 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-explain-error svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--ps-danger); fill: none; stroke: currentColor; stroke-width: 2; }
 .ps-explain-error p { margin: 0; }
 .ps-explain-answer { display: grid; gap: 18px; }
-.ps-explain-problem { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; }
-.ps-explain-problem svg { flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
-.ps-explain-answer.is-fine .ps-explain-problem svg { color: var(--ps-ok); }
+.ps-explain-verdict { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-warn) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--ps-warn) 8%, transparent); }
+.ps-explain-answer.is-fine .ps-explain-verdict { border-color: color-mix(in srgb, var(--ps-ok) 35%, transparent); background: color-mix(in srgb, var(--ps-ok) 8%, transparent); }
+.ps-explain-verdict svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-answer.is-fine .ps-explain-verdict svg { color: var(--ps-ok); }
+.ps-explain-verdict strong { display: block; font-size: 15px; line-height: 1.5; }
+.ps-explain-verdict p { margin: 2px 0 0; color: var(--ps-muted); overflow-wrap: anywhere; }
+.ps-explain-issue { border: 1px solid var(--ps-line); border-radius: 10px; }
+.ps-explain-issue + .ps-explain-issue { margin-top: 8px; }
+.ps-explain-issue summary { padding: 10px 12px; font-weight: 600; cursor: pointer; }
+.ps-explain-issue[open] summary { border-bottom: 1px solid var(--ps-line); }
+.ps-explain-issue > p, .ps-explain-issue > ol { margin: 10px 12px; }
+.ps-explain-issue > ol { padding-left: 24px; }
 .ps-explain-answer h3 { margin: 0 0 6px; color: var(--ps-muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.ps-explain-answer section p { margin: 0; overflow-wrap: anywhere; }
+.ps-explain-answer section p { overflow-wrap: anywhere; }
 .ps-explain-answer ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; list-style: decimal; }
 .ps-explain-answer li::marker { color: var(--ps-muted); font-weight: 600; }
 .ps-explain-answer li { padding-left: 2px; overflow-wrap: anywhere; }

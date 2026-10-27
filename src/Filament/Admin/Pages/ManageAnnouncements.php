@@ -21,7 +21,25 @@ final class ManageAnnouncements extends Page
     protected string $view = 'pelican-simplify::admin-announcements';
     protected static bool $shouldRegisterNavigation = false;
 
+    /** The browser's time zone (set by the view), so "Show from" and "Show until" are the admin's own clock time. */
+    public string $browserTimezone = '';
+
     public static function canAccess(): bool { return (bool) user()?->isRootAdmin(); }
+
+    /** ?tz= is the browser's time zone (from "New announcement" in the dashboard's notifications, which opens with ?action=addAnnouncement). */
+    public function mount(): void
+    {
+        $zone = request()->query('tz');
+        $this->browserTimezone = is_string($zone) ? substr($zone, 0, 64) : '';
+    }
+
+    /** The browser's time zone, else the account's (profile), else the panel's. Times are saved as Unix time, so they do not shift. */
+    public function displayTimezone(): string
+    {
+        $zones = \DateTimeZone::listIdentifiers();
+        foreach ([$this->browserTimezone, (string) (user()?->timezone ?? ''), (string) config('app.timezone')] as $zone) if ($zone !== '' && in_array($zone, $zones, true)) return $zone;
+        return 'UTC';
+    }
 
     /** Rows for the view, newest first, with their state (live, scheduled, ended). */
     public function announcements(): array
@@ -42,7 +60,7 @@ final class ManageAnnouncements extends Page
 
     public function pluginInstalled(): bool { return class_exists('Boy132\\Announcements\\Models\\Announcement'); }
 
-    public function date(?int $at): string { return $at === null ? '' : date('D j M Y H:i', $at); }
+    public function date(?int $at): string { return $at === null ? '' : (new \DateTimeImmutable('@'.$at))->setTimezone(new \DateTimeZone($this->displayTimezone()))->format('D j M Y H:i T'); }
 
     private function serverOptions(): array
     {
@@ -58,14 +76,17 @@ final class ManageAnnouncements extends Page
             TextInput::make('title')->label('Title')->required()->maxLength(Announcements::TITLE_LENGTH),
             Textarea::make('text')->label('Message')->rows(3)->maxLength(Announcements::TEXT_LENGTH),
             Grid::make(2)->schema([
-                DateTimePicker::make('starts_at')->label('Show from')->seconds(false)->helperText('Empty: right away.'),
-                DateTimePicker::make('ends_at')->label('Show until')->seconds(false)->helperText('Empty: until you delete it.'),
+                // Entered and shown in the admin's own time zone; everyone else sees the times in theirs.
+                DateTimePicker::make('starts_at')->label('Show from')->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText(fn (): string => 'Empty: right away. Times in '.$this->displayTimezone().'.'),
+                DateTimePicker::make('ends_at')->label('Show until')->seconds(false)->timezone(fn (): string => $this->displayTimezone())->helperText('Empty: until you delete it.'),
             ]),
             ToggleButtons::make('audience')->label('Who sees it')->options(Announcements::AUDIENCES)->inline()->required()->default('everyone'),
             Select::make('link_type')->label('Button')->options(['none' => 'No button', 'server' => 'Open a server', 'url' => 'Open a link'])->default('none')->selectablePlaceholder(false)->live(),
             Select::make('server')->label('Server')->options(fn () => $this->serverOptions())->searchable()->visible(fn ($get) => $get('link_type') === 'server')->required(fn ($get) => $get('link_type') === 'server'),
             TextInput::make('url')->label('Link')->placeholder('https://… or /path on this panel')->maxLength(2048)->visible(fn ($get) => $get('link_type') === 'url')->required(fn ($get) => $get('link_type') === 'url'),
             TextInput::make('button_label')->label('Button text')->placeholder('Open')->maxLength(Announcements::LABEL_LENGTH)->visible(fn ($get) => in_array($get('link_type'), ['server', 'url'], true)),
+            Toggle::make('pinned')->label('Pin to everyone\'s notifications')
+                ->helperText('Stays at the top of the bell for everyone who sees it, until it ends. People can still unpin the bar on their own screen.'),
             Toggle::make('push')->label('Also send as app notification')
                 ->helperText('To everyone who turned on notifications (account menu → Notifications). Sent once, when the announcement starts.'),
         ];

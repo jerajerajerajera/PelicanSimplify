@@ -22,6 +22,42 @@ final class PanelNotifications
         }
     }
 
+    /** One page of all notifications (read and unread), newest first, for the bell and the full list. */
+    public static function page(int $page = 1, int $size = 20): array
+    {
+        $user = user();
+        $page = max(1, min($page, 500));
+        if (!$user || !method_exists($user, 'notifications')) return ['items' => [], 'more' => false, 'unread' => 0];
+        try {
+            // One row more than asked tells whether there is another page, without counting them all.
+            $rows = $user->notifications()->latest()->skip(($page - 1) * $size)->limit($size + 1)->get();
+            $items = $rows->take($size)->map(fn ($notification): ?array => self::present($notification))->filter()->values()->all();
+            return ['items' => $items, 'more' => $rows->count() > $size, 'unread' => self::unreadCount()];
+        } catch (\Throwable) {
+            return ['items' => [], 'more' => false, 'unread' => 0];
+        }
+    }
+
+    /** How many are unread, all of them (the bell's count). */
+    public static function unreadCount(): int
+    {
+        $user = user();
+        if (!$user || !method_exists($user, 'unreadNotifications')) return 0;
+        try {
+            return (int) $user->unreadNotifications()->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /** "Mark all read": every unread notification of this account, not only the ones loaded in the bell. */
+    public static function markAllRead(): void
+    {
+        $user = user();
+        if (!$user || !method_exists($user, 'unreadNotifications')) return;
+        $user->unreadNotifications()->update(['read_at' => now()]);
+    }
+
     public static function markRead(array $ids): void
     {
         $ids = array_values(array_filter($ids, fn ($id): bool => is_string($id) && preg_match('/^[0-9a-f-]{36}$/i', $id) === 1));
@@ -52,6 +88,7 @@ final class PanelNotifications
             'title' => $title !== '' ? $title : $body,
             'text' => $title !== '' ? $body : '',
             'time' => $notification->created_at?->diffForHumans(),
+            'unread' => $notification->read_at === null,
             'action' => $action,
         ];
     }
