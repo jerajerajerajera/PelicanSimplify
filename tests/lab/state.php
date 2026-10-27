@@ -56,7 +56,7 @@ switch($what){
             $v=(int)($argv[3]??1);
             if($v>0){$d['description']='Lab update '.$v;$d['docker_images']=['Java 25'=>'ghcr.io/pelican-eggs/yolks:java_25'];$d['startup_commands']=['Default'=>'java -Xms128M -jar server.jar --lab '.$v];}
             $d['meta']['update_url']=$url;
-            Illuminate\Support\Facades\File::put('/home/user/lab/egg-host/www/egg-'.$egg->id.'.json',json_encode($d,JSON_PRETTY_PRINT));
+            Illuminate\Support\Facades\File::put((getenv('LAB_DIR')?:getenv('HOME').'/pelican-lab').'/egg-host/www/egg-'.$egg->id.'.json',json_encode($d,JSON_PRETTY_PRINT));
         }
         break;
     case 'egg-run': print_r(Simplify\Panel\Services\EggUpdates::run(true)); break;
