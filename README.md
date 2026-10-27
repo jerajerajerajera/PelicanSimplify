@@ -1,6 +1,6 @@
 # PelicanSimplify
 
-A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel) game server panel. You manage your servers from one overview and create new ones with a guided wizard. Everything still runs on Pelican and [Wings](https://github.com/pelican/wings), and the original panel stays available.
+Simplify is an all-in-one plugin for [Pelican](https://github.com/pelican/panel) that puts usability first. It is packed with features that make the panel easier to use, starting with one clear overview of your servers and a set of add-ons you switch on when you need them. Pelican and [Wings](https://github.com/pelican/wings) keep doing the work underneath, and the original panel stays available. See the full feature list below.
 
 **Stable 0.5.2 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
 
@@ -10,6 +10,17 @@ A cleaner, simpler interface for the [Pelican](https://github.com/pelican/panel)
 <a href="docs/screenshots/server-dashboard.png"><img src="docs/screenshots/server-dashboard.png" alt="Server dashboard" width="280"></a>
 <a href="docs/screenshots/server-creator.png"><img src="docs/screenshots/server-creator.png" alt="Guided server creation" width="280"></a>
 <a href="docs/screenshots/server-list.png"><img src="docs/screenshots/server-list.png" alt="List view grouped by node" width="280"></a>
+
+## Add-ons
+
+You can switch each add-on on or off by itself, in the first setup or later in Simplify settings. You only use what you need.
+
+- Server Maker: create Minecraft servers (Vanilla, plugins, mods, modpacks or Bedrock) and 170+ other games step by step.
+- Plugin manager: install, update and remove Pelican plugins, and browse the Hub. Updates roll back by themselves when something breaks.
+- People & roles: invite people and decide on one page what each role may do.
+- Automatic subdomains: give every server its own address. Simplify makes and removes the DNS records in Cloudflare.
+- Error explanations: a server error explained in plain words, by Claude, GPT or Gemini with your own API key.
+- Plugin sites: find and install Minecraft plugins from Modrinth, Hangar, SpigotMC and CurseForge on one page.
 
 ## What it does
 
