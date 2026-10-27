@@ -11,6 +11,7 @@ const entry = (s, i) => ({ state: states[i % states.length], is_suspended: false
   utilization: { memory_bytes: 400e6 + i * 50e6, memory_limit_bytes: 2048e6, cpu_absolute: 5 + (i * 7) % 60, network: { rx_bytes: 1e6 * (i + 1) + Date.now() % 100000, tx_bytes: 2e6 * (i + 1) + Date.now() % 100000 }, uptime: 36000, state: states[i % states.length], disk_bytes: 900e6 },
   configuration: { uuid: s.uuid, meta: { name: s.name } } });
 const properties = 'motd=§aWelcome to the lab\nmax-players=20\ndifficulty=normal\ngamemode=survival\npvp=true\nwhite-list=false\nallow-flight=false\nview-distance=10\nspawn-protection=16\n';
+const made = {};
 http.createServer((req, res) => {
   const u = url.parse(req.url, true); const path = u.pathname;
   fs.appendFileSync(logFile, new Date().toISOString() + ' ' + req.method + ' ' + path + (u.search || '') + '\n');
@@ -22,8 +23,15 @@ http.createServer((req, res) => {
   if (path === '/api/servers') return send(200, list.map(entry));
   const m = path.match(/^\/api\/servers\/([^/]+)(\/.*)?$/);
   if (m) {
-    const i = list.findIndex((s) => s.uuid === m[1]); if (i < 0) return send(404, { error: 'not found' });
-    const rest = m[2] || '';
+    const i = list.findIndex((s) => s.uuid === m[1]); const rest = m[2] || '';
+    // A server the panel made while the lab runs (such as the egg update test server): offline until started.
+    if (i < 0) {
+      if (req.method === 'DELETE') { delete made[m[1]]; return send(204, ''); }
+      if (rest === '/power') { let body = ''; req.on('data', (c) => { body += c; }); req.on('end', () => { const action = (JSON.parse(body || '{}').action) || ''; made[m[1]] = action === 'start' ? 'running' : 'offline'; send(204, ''); }); return; }
+      if (rest === '/install-logs') return send(200, { data: 'lab: downloading server.jar\nlab: checksum mismatch\nlab: install script exited with 1' });
+      if (rest === '') { const state = made[m[1]] || 'offline'; return send(200, { state, is_suspended: false, utilization: { memory_bytes: 0, memory_limit_bytes: 2048e6, cpu_absolute: 0, network: { rx_bytes: 0, tx_bytes: 0 }, uptime: 0, state, disk_bytes: 0 } }); }
+      return send(200, {});
+    }
     if (rest === '') return send(200, entry(list[i], i));
     if (rest === '/files/contents') { const f = u.query.file || ''; if (f.endsWith('server.properties')) return send(200, properties, 'text/plain'); return send(404, { error: 'file not found' }); }
     if (rest === '/files/list-directory') return send(200, []);
