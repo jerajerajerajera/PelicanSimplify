@@ -1366,7 +1366,7 @@
     <div class="ps-modal-layer ps-explain-layer" :data-open="!!explain" x-show="explain" x-cloak x-on:click.self="closeExplain()" x-on:keydown.escape.stop="closeExplain()">
         <section class="ps-modal ps-explain" role="dialog" aria-modal="true" aria-labelledby="ps-explain-title" x-trap.noscroll="!!explain">
             <header class="ps-modal-head">
-                <h2 id="ps-explain-title">What went wrong?</h2>
+                <h2 id="ps-explain-title">Log check</h2>
                 <button type="button" class="ps-btn is-sm is-icon is-subtle ps-close" x-on:click="closeExplain()" aria-label="Close"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
             </header>
             <div class="ps-modal-body" aria-live="polite">
@@ -1378,22 +1378,28 @@
                 </div>
                 <div x-show="explain?.loading" class="ps-modal-loading" role="status"><span class="ps-spinner"></span><span x-text="'Reading the last lines of the '+explainNoun(explain?.source)+'…'"></span></div>
                 <div x-show="explain?.error" class="ps-explain-error" role="alert"><svg aria-hidden="true"><use href="#ps-alert"/></svg><p x-text="explain?.error"></p></div>
+                {{-- First the check (everything seems in order, or what is wrong), then each problem or warning to open when you want to fix it. --}}
                 <template x-if="explain?.answer">
                     <div class="ps-explain-answer" :class="{'is-fine': !explain.answer.found}">
-                        <p class="ps-explain-problem"><svg aria-hidden="true"><use :href="explain.answer.found ? '#ps-alert' : '#ps-check'"/></svg><span x-text="explain.answer.problem"></span></p>
-                        <section x-show="explain.answer.cause">
-                            <h3>Likely cause</h3>
-                            <p x-text="explain.answer.cause"></p>
-                        </section>
-                        <section x-show="explain.answer.steps.length">
-                            <h3>What you can try</h3>
-                            <ol><template x-for="(step, index) in explain.answer.steps" :key="index"><li x-text="step"></li></template></ol>
+                        <div class="ps-explain-verdict">
+                            <svg aria-hidden="true"><use :href="explain.answer.found ? '#ps-alert' : '#ps-check'"/></svg>
+                            <div><strong x-text="explain.answer.found ? 'Something needs attention' : 'Everything seems in order'"></strong><p x-show="explain.answer.summary" x-text="explain.answer.summary"></p></div>
+                        </div>
+                        <section x-show="explain.answer.issues.length">
+                            <h3 x-text="explain.answer.found ? 'What was found' : 'Noticed something?'"></h3>
+                            <template x-for="(issue, index) in explain.answer.issues" :key="index">
+                                <details class="ps-explain-issue" :open="explain.answer.found && index === 0">
+                                    <summary x-text="issue.title"></summary>
+                                    <p x-show="issue.cause" x-text="issue.cause"></p>
+                                    <ol x-show="issue.steps.length"><template x-for="(step, stepIndex) in issue.steps" :key="stepIndex"><li x-text="step"></li></template></ol>
+                                </details>
+                            </template>
                         </section>
                     </div>
                 </template>
             </div>
             <footer class="ps-modal-foot">
-                <span class="is-start" x-show="explain?.answer" x-text="explain?.answer ? 'Explained by '+explain.answer.model+' from the last '+explain.answer.lines+' lines of the '+explainNoun(explain.source)+'. Check before you delete anything.' : ''"></span>
+                <span class="is-start" x-show="explain?.answer?.model" x-text="explain?.answer?.model ? 'Checked by '+explain.answer.model+' from the last '+explain.answer.lines+' lines of the '+explainNoun(explain.source)+'. Check before you delete anything.' : ''"></span>
                 <button type="button" class="ps-btn" x-show="explain?.answer || explain?.error" x-on:click="explainError()" :disabled="!!explain?.loading"><svg aria-hidden="true"><use href="#ps-restart"/></svg>Ask again</button>
                 <button type="button" class="ps-btn is-primary" x-on:click="closeExplain()">Done</button>
             </footer>

@@ -2170,7 +2170,7 @@
         }
         if (this.explainRequest !== request || !this.explain) return;
         this.explain = result?.ok
-          ? { source, loading: false, error: null, answer: { found: result.found !== false, problem: result.problem, cause: result.cause || '', steps: result.steps || [], lines: result.lines, model: result.model } }
+          ? { source, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
           : { source, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
       },
       closeExplain() {

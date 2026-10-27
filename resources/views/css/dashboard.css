@@ -1366,11 +1366,20 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
 .ps-explain-error svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--ps-danger); fill: none; stroke: currentColor; stroke-width: 2; }
 .ps-explain-error p { margin: 0; }
 .ps-explain-answer { display: grid; gap: 18px; }
-.ps-explain-problem { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; }
-.ps-explain-problem svg { flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
-.ps-explain-answer.is-fine .ps-explain-problem svg { color: var(--ps-ok); }
+.ps-explain-verdict { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-warn) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--ps-warn) 8%, transparent); }
+.ps-explain-answer.is-fine .ps-explain-verdict { border-color: color-mix(in srgb, var(--ps-ok) 35%, transparent); background: color-mix(in srgb, var(--ps-ok) 8%, transparent); }
+.ps-explain-verdict svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ps-warn); fill: none; stroke: currentColor; stroke-width: 2; }
+.ps-explain-answer.is-fine .ps-explain-verdict svg { color: var(--ps-ok); }
+.ps-explain-verdict strong { display: block; font-size: 15px; line-height: 1.5; }
+.ps-explain-verdict p { margin: 2px 0 0; color: var(--ps-muted); overflow-wrap: anywhere; }
+.ps-explain-issue { border: 1px solid var(--ps-line); border-radius: 10px; }
+.ps-explain-issue + .ps-explain-issue { margin-top: 8px; }
+.ps-explain-issue summary { padding: 10px 12px; font-weight: 600; cursor: pointer; }
+.ps-explain-issue[open] summary { border-bottom: 1px solid var(--ps-line); }
+.ps-explain-issue > p, .ps-explain-issue > ol { margin: 10px 12px; }
+.ps-explain-issue > ol { padding-left: 24px; }
 .ps-explain-answer h3 { margin: 0 0 6px; color: var(--ps-muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.ps-explain-answer section p { margin: 0; overflow-wrap: anywhere; }
+.ps-explain-answer section p { overflow-wrap: anywhere; }
 .ps-explain-answer ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; list-style: decimal; }
 .ps-explain-answer li::marker { color: var(--ps-muted); font-weight: 600; }
 .ps-explain-answer li { padding-left: 2px; overflow-wrap: anywhere; }

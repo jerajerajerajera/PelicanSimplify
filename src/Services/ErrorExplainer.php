@@ -29,17 +29,24 @@ final class ErrorExplainer
     public const PER_DAY = 200;
     /** Glob of the panel log files; storage/logs/*.log when null. */
     public static ?string $panelLogs = null;
-    private const SCHEMA = ['type' => 'object', 'additionalProperties' => false, 'required' => ['problem', 'cause', 'steps', 'found'], 'properties' => [
-        'found' => ['type' => 'boolean', 'description' => 'False when the lines show no error or problem at all.'],
-        'problem' => ['type' => 'string', 'description' => 'One or two short sentences: what went wrong, in plain words.'],
-        'cause' => ['type' => 'string', 'description' => 'The most likely cause, quoting the decisive log line or mod/plugin name when there is one.'],
-        'steps' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Up to five concrete things to try, most likely fix first.'],
+    private const SCHEMA = ['type' => 'object', 'additionalProperties' => false, 'required' => ['found', 'summary', 'issues'], 'properties' => [
+        'found' => ['type' => 'boolean', 'description' => 'True only when the log shows a real problem: a crash, a failed start or install, something that stops a feature, a player or the server from working. False for a normal log, also when it has harmless warnings.'],
+        'summary' => ['type' => 'string', 'description' => 'One or two short sentences in plain words: what went wrong, or when found is false, that everything seems in order.'],
+        'issues' => ['type' => 'array', 'description' => 'At most four. Real problems first, then warnings someone might still want to look at. Empty when there is nothing worth mentioning.', 'items' => [
+            'type' => 'object', 'additionalProperties' => false, 'required' => ['title', 'cause', 'steps'], 'properties' => [
+                'title' => ['type' => 'string', 'description' => 'A few words naming the problem. When found is false, phrase it as something the person may notice, for example "My panel feels slow" or "Players get disconnected".'],
+                'cause' => ['type' => 'string', 'description' => 'What it means and the most likely cause, quoting the decisive log line or mod/plugin name when there is one. Say so when it is harmless.'],
+                'steps' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Up to five concrete things to try, most likely fix first. Empty when nothing needs to be done.'],
+            ],
+        ]],
     ]];
     private const SYSTEM = "You help people who run game servers (often Minecraft, sometimes other games) on a Pelican panel. "
-        ."You get the last lines of a server's console, or for panel administrators the panel's own log or the Wings daemon log. Explain what went wrong for someone who is not a developer: short, friendly sentences, no jargon without a short explanation. "
-        ."Point at the line or the mod, plugin, file or setting that causes the problem when the log shows it. Suggest steps that can be done from a game panel: change a setting, remove or update a mod, restore a backup, give the server more memory, accept the EULA, check a file. For panel and Wings logs, steps an administrator can take on the panel or node machine are fine too. "
+        ."You get the last lines of a server's console, or for panel administrators the panel's own log or the Wings daemon log. First check whether anything is actually wrong, then explain it for someone who is not a developer: short, friendly sentences, no jargon without a short explanation. "
+        ."Point at the line or the mod, plugin, file or setting that causes a problem when the log shows it. Suggest steps that can be done from a game panel: change a setting, remove or update a mod, restore a backup, give the server more memory, accept the EULA, check a file. For panel and Wings logs, steps an administrator can take on the panel or node machine are fine too. "
         ."Never invent details that are not in the log; say so when the log is not conclusive. Parts like [hidden] were removed for privacy. "
-        ."If the lines show a normal start or nothing wrong, set found to false and say that the console looks fine. Answer in English.";
+        ."Most logs are fine. Servers print many warnings that are normal and need no action: deprecation notices, \"Can't keep up!\", missing optional mods or config defaults, slow chunk loading, unknown or bad packets from scanner bots, players disconnecting, a single failed request or timeout that did not repeat (for example a few connection timeouts to Wings, such as cURL error 28, while everything else works), entries from hours or days ago that did not come back, and similar. "
+        ."Set found to true only for a real problem: a crash, a failed start or install, an error that keeps repeating, or something that clearly stops the server, a feature or a player from working. "
+        ."Otherwise set found to false and say that everything seems in order; list what the log does show as issues someone can open when they notice it (for example slow answers from Wings as \"My panel feels slow\"), and say when they are harmless. Answer in English.";
 
     /** ['model'=>..., 'audience'=>..., 'has_key'=>bool]; the key itself never leaves this class. */
     public static function settings(): array
@@ -100,7 +107,7 @@ final class ErrorExplainer
             'max_tokens' => 8000,
             'system' => self::SYSTEM,
             'output_config' => ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => self::SCHEMA]],
-            'messages' => [['role' => 'user', 'content' => ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nWhat went wrong, and what can I try?"]],
+            'messages' => [['role' => 'user', 'content' => ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nIs everything working, or is something wrong here?"]],
         ];
         // Opus and Sonnet may decline a request that looks like a security topic; Anthropic then retries it on a fitting model.
         if ($model !== 'claude-haiku-5-5') $payload['fallbacks'] = 'default';
@@ -113,9 +120,14 @@ final class ErrorExplainer
         foreach ((array) ($body['content'] ?? []) as $block) {
             if (($block['type'] ?? null) !== 'text') continue;
             $data = json_decode((string) ($block['text'] ?? ''), true);
-            if (!is_array($data) || !is_string($data['problem'] ?? null)) continue;
-            return ['found' => ($data['found'] ?? true) !== false, 'problem' => trim($data['problem']), 'cause' => trim((string) ($data['cause'] ?? '')),
-                'steps' => array_values(array_slice(array_filter(array_map(fn ($s) => trim((string) $s), (array) ($data['steps'] ?? [])), fn ($s) => $s !== ''), 0, 5))];
+            if (!is_array($data) || !is_string($data['summary'] ?? null)) continue;
+            $issues = [];
+            foreach (array_slice((array) ($data['issues'] ?? []), 0, 4) as $issue) {
+                if (!is_array($issue) || trim((string) ($issue['title'] ?? '')) === '') continue;
+                $issues[] = ['title' => trim((string) $issue['title']), 'cause' => trim((string) ($issue['cause'] ?? '')),
+                    'steps' => array_values(array_slice(array_filter(array_map(fn ($s) => trim((string) $s), (array) ($issue['steps'] ?? [])), fn ($s) => $s !== ''), 0, 5))];
+            }
+            return ['found' => ($data['found'] ?? true) !== false, 'summary' => trim($data['summary']), 'issues' => $issues];
         }
         return null;
     }
@@ -161,7 +173,7 @@ final class ErrorExplainer
     /** Where the lines come from: label for the popup, how the question introduces them, text when there are none. */
     public const SOURCES = [
         'console' => ['Console', null, 'The console is empty, so there is nothing to explain yet.'],
-        'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last', 'The panel log has no warnings or errors right now.'],
+        'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last. The panel itself is up: an administrator is using it to ask this.', 'The panel log has no warnings or errors right now.'],
         'wings' => ['Wings log', 'Wings daemon log of the node this server runs on', 'The Wings log of this node is empty.'],
     ];
     /** The panel log and the Wings log can hold anyone's details, so only root admins may send them. */
@@ -232,7 +244,7 @@ final class ErrorExplainer
         if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
         try { $lines = self::sanitize(self::lines($s, $source)); }
         catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
-        if ($lines === []) return ['ok' => false, 'error' => self::SOURCES[$source][2]];
+        if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => self::SOURCES[$source][2], 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
         $settings = self::settings();
         $cacheKey = 'simplify.explain.'.sha1($settings['model'].$source.implode("\n", $lines));
         if (is_array($cached = Cache::get($cacheKey))) return ['ok' => true, ...$cached];
@@ -242,6 +254,8 @@ final class ErrorExplainer
         RateLimiter::hit($personal, 600);
         RateLimiter::hit('simplify.explain.panel', 86400);
         $context = self::SOURCES[$source][1] ?? ($s?->egg?->name ? 'Game or software: '.$s->egg->name : '');
+        // The time lets Claude see that a warning from hours ago is not a problem now.
+        $context = trim($context."\nCurrent time on the panel: ".date('Y-m-d H:i:s T'));
         $result = self::call($key, self::payload($lines, $settings['model'], (string) $context));
         if (!$result['ok']) return $result;
         $answer = self::answer($result['body']);
