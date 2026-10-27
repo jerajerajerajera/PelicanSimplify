@@ -1431,6 +1431,9 @@ span.ps-card-background.ps-banner-color { width: 100%; opacity: .5; filter: none
    Pinned while they are live; the pin button (shown pressed) unpins one, the bell pins it again. */
 .ps-announcements-pinned { display: grid; gap: 8px; min-width: 0; margin: 0 0 18px; }
 .ps-server-dashboard > .ps-announcements-pinned { margin-bottom: 14px; }
+/* Host mode shows the bars once, above its pages and servers; the server page inside its frame leaves them out. */
+.ps-host-main > .ps-announcements-pinned { flex: none; margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--ps-line); }
+.is-embedded .ps-announcements-pinned { display: none !important; }
 .ps-announcement-bar { align-items: center; min-width: 0; margin: 0; padding: 10px 10px 10px 14px; }
 .ps-announcement-bar > svg { align-self: start; margin-top: 2px; }
 .ps-announcement-copy { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
