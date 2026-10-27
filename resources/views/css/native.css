@@ -47,6 +47,9 @@ html.ps-theme.dark { color-scheme: dark; }
 .ps-theme .fi-btn:hover:not(:disabled) { background: var(--ps-raised) !important; border-color: var(--ps-accent) !important; }
 .ps-theme .fi-btn.fi-color-primary:not(:disabled) { background: var(--ps-accent) !important; border-color: var(--ps-accent) !important; color: var(--ps-on-accent) !important; }
 .ps-theme .fi-btn.fi-color-primary:hover:not(:disabled) { filter: brightness(1.07); }
+/* Toggle buttons (one choice of several): only the chosen option is coloured, like in Pelican. */
+.ps-theme .fi-fo-toggle-buttons-input:not(:checked) + .fi-btn:not(:disabled) { background: var(--ps-surface) !important; border-color: var(--ps-line) !important; color: var(--ps-ink) !important; filter: none; }
+.ps-theme .fi-fo-toggle-buttons-input:not(:checked) + .fi-btn:hover:not(:disabled) { background: var(--ps-raised) !important; border-color: var(--ps-accent) !important; }
 .ps-theme .fi-btn.fi-color-danger { color: var(--ps-danger) !important; background: color-mix(in srgb, var(--ps-danger) 8%, var(--ps-surface)) !important; border-color: color-mix(in srgb, var(--ps-danger) 35%, var(--ps-line)) !important; }
 .ps-theme :is(.fi-btn, .fi-icon-btn):focus-visible { outline: 2px solid var(--ps-accent) !important; outline-offset: 2px; }
 .ps-theme :is(.fi-btn, .fi-icon-btn):disabled { opacity: .45; cursor: not-allowed; }
@@ -212,7 +215,7 @@ html.ps-frame .fi-section:not(.fi-section .fi-section) + .fi-section:not(.fi-sec
   html.ps-frame .fi-header-actions-ctn { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
   html.ps-frame .fi-tabs { flex-wrap: nowrap !important; max-width: 100%; overflow-x: auto !important; overscroll-behavior-x: contain; scrollbar-width: none; }
   html.ps-frame .fi-tabs::-webkit-scrollbar { display: none; }
-  html.ps-frame :is(.fi-tabs-item, .fi-sc-tabs-tab) { flex: none; min-height: 44px; white-space: nowrap; }
+  html.ps-frame .fi-tabs-item { flex: none; min-height: 44px; white-space: nowrap; }
   html.ps-frame :is(.fi-input-wrp, .fi-select-input) { min-height: 44px; }
   html.ps-frame :is(.fi-input, .fi-select-input) { font-size: 16px !important; } /* 16 px: iOS does not zoom into the field. */
   html.ps-frame .fi-fo-textarea textarea { font-size: 16px !important; }
