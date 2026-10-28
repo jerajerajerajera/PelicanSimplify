@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Kunne ikke nå :host fra panelet. Sjekk at panelserveren har lov til å koble til internett.',
+        'no_key' => 'Skriv inn en API-nøkkel først.',
+        'not_set_up' => 'Feilforklaringer er ikke satt opp på dette panelet.',
+        'unknown_log' => 'Ukjent logg.',
+        'read_panel' => 'Kunne ikke lese panelloggen.',
+        'read_wings' => 'Kunne ikke lese Wings-loggen fra Wings. Prøv igjen når noden kan nås.',
+        'read_console' => 'Kunne ikke lese konsollen fra Wings. Prøv igjen når noden kan nås.',
+        'too_many' => 'Du har stilt mange spørsmål på kort tid. Prøv igjen om :count minutt.|Du har stilt mange spørsmål på kort tid. Prøv igjen om :count minutter.',
+        'daily_limit' => 'Dette panelet har nådd den daglige grensen på :count forklaringer. Prøv igjen i morgen.',
+        'no_answer' => ':model kunne ikke forklare disse linjene. Prøv igjen når feilen dukker opp igjen.',
+    ],
+    'test' => [
+        'works' => 'Nøkkelen virker med :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsoll',
+            'empty' => 'Konsollen er tom, så det er ingenting å forklare ennå.',
+        ],
+        'panel' => [
+            'label' => 'Panellogg',
+            'empty' => 'Panelloggen har ingen advarsler eller feil akkurat nå.',
+        ],
+        'wings' => [
+            'label' => 'Wings-logg',
+            'empty' => 'Wings-loggen for denne noden er tom.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Det finnes ingen lagrede logglinjer for denne pluginen.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Logg inn på panelet først, og åpne deretter denne siden igjen.',
+        'owner_only' => 'Bare eieren av panelet (en root-administrator) kan bruke denne siden.',
+        'expired' => 'Denne adressen har utløpt eller er erstattet av en nyere.',
+        'no_key' => 'Ingen :provider-API-nøkkel er lagret på dette panelet. En root-administrator legger til en i Simplify-innstillinger under Feilforklaringer.',
+        'no_key_terminal' => 'Når panelet ikke åpnes, kjør :command på panelserveren. Den ber om en nøkkel og lagrer den ikke.',
+        'choose_node' => 'Velg en node.',
+        'panel_log' => 'Panellogg',
+        'wings_log_of' => 'Wings-logg for :node',
+        'wings_log' => 'Wings-logg',
+        'no_database' => 'Databasen kunne ikke nås, så Wings-loggene er ikke tilgjengelige her. Panelloggen viser ofte hvorfor.',
+        'lead' => 'Bruk denne siden når panelet viser en feil som 500 og de vanlige sidene ikke åpnes. AI-en som er valgt i Simplify-innstillinger, leser loggen og sier om noe er galt og hvordan det kan rettes.',
+        'check_panel' => 'Sjekk panelloggen',
+        'check_wings' => 'Sjekk Wings-loggen for :node',
+        'wait' => 'Sjekker loggen. Dette kan ta opptil et minutt.',
+        'attention' => 'Noe trenger oppmerksomhet',
+        'in_order' => 'Alt ser ut til å være i orden',
+        'noticed' => 'Lagt merke til noe?',
+        'checked' => ':count linje sjekket av :model. Adresser, e-postadresser og passord ble fjernet først.|:count linjer sjekket av :model. Adresser, e-postadresser og passord ble fjernet først.',
+        'terminal_hint' => 'Når panelet ikke åpnes, kjør :command på panelserveren, eller :url_command for en midlertidig adresse til denne siden.',
+        'broken' => 'Denne siden kunne ikke fullføres',
+        'title' => 'Forklar panelfeil',
+    ],
+    'failures' => [
+        'invalid_key' => 'API-nøkkelen for :name er ikke gyldig. En administrator kan skrive inn en ny i Simplify-innstillinger.',
+        'no_credit' => ':name-kontoen bak denne nøkkelen har ikke mer kreditt. En administrator kan fylle på kreditt eller sjekke faktureringen hos :name.',
+        'forbidden' => 'Denne :name-API-nøkkelen har ikke lov til å bruke den valgte modellen. En administrator kan velge en annen modell i Simplify-innstillinger.',
+        'no_model' => 'Den valgte :name-modellen er ikke tilgjengelig for denne nøkkelen. En administrator kan velge en annen modell i Simplify-innstillinger.',
+        'busy' => ':name er opptatt for denne nøkkelen akkurat nå. Prøv igjen om et minutt.',
+        'unavailable' => ':name er midlertidig utilgjengelig. Prøv igjen om et minutt.',
+        'other_status' => ':name kunne ikke svare på dette spørsmålet (feil :status). Prøv igjen senere.',
+        'other' => ':name kunne ikke svare på dette spørsmålet. Prøv igjen senere.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude fra Anthropic',
+            'key_help' => 'Opprett en nøkkel på console.anthropic.com → API keys. Hvert spørsmål faktureres den Anthropic-kontoen, vanligvis noen få cent eller mindre; sett en månedlig grense der for sikkerhets skyld.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini fra Google',
+            'key_help' => 'Opprett en nøkkel på aistudio.google.com → Get API key. Spørsmål faktureres det Google Cloud-prosjektet, vanligvis under en cent hver; sett et budsjett der for sikkerhets skyld.',
+        ],
+        'openai' => [
+            'label' => 'GPT fra OpenAI',
+            'key_help' => 'Opprett en nøkkel på platform.openai.com → API keys. Hvert spørsmål faktureres den OpenAI-kontoen, vanligvis noen få cent eller mindre; sett et månedlig budsjett der for sikkerhets skyld.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'beste svar, noen få cent',
+        'about_a_cent' => 'omtrent en cent',
+        'cheapest' => 'billigst',
+        'good_answers_under_a_cent' => 'gode svar, under en cent',
+        'good_answers_about_a_cent' => 'gode svar, omtrent en cent',
+    ],
+];
