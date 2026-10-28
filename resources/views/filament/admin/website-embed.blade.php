@@ -24,9 +24,10 @@
         <p>A link to the same list as a page, for example a status page for one server. <a href="{{ $snippet['page'] }}" target="_blank" rel="noopener" class="ps-embed-open">Open</a></p>
     </div>
     @if (\Simplify\Panel\Services\WebsiteEmbed::enabled())
-        <div class="ps-embed-preview">
+        {{-- The preview (a page, a script and a server list: three requests) only loads once this tab is on screen, so the settings page itself is ready at once. --}}
+        <div class="ps-embed-preview" x-data="{ shown: false }" x-init="const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { shown = true; io.disconnect(); } }); io.observe($el)">
             <strong>Preview of the saved list</strong>
-            <iframe src="{{ url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query) }}" title="Preview of the website embed" loading="lazy"></iframe>
+            <iframe :src="shown ? @js(url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query)) : null" title="Preview of the website embed"></iframe>
         </div>
     @endif
 </div>

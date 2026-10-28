@@ -16,6 +16,7 @@ namespace Illuminate\Support\Facades {
  class Cache {
   public static function lock(...$a) { return new class { public function get() { return true; } public function release() {} }; }
   public static function remember($k, $t, $c) { return $c(); }
+  public static function get($k) { return null; }
   public static function forget($k) {}
   public static array $put = [];
   public static function put($k, $v, $t = null) { self::$put[$k] = $v; }
@@ -69,7 +70,7 @@ namespace App\Models {
  }
 }
 namespace {
- require __DIR__.'/../src/Services/PluginUpdater.php';
+ require __DIR__.'/../src/Services/Remember.php';require __DIR__.'/../src/Services/PluginUpdater.php';
  require __DIR__.'/../src/Services/PanelUpdates.php';
  use Illuminate\Support\Facades\{File, Http, Process};
  use Simplify\Panel\Services\PluginUpdater as U;
