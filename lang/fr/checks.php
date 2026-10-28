@@ -29,11 +29,11 @@ return [
         ],
         'php_extension' => [
             'name' => 'Extension PHP : :extension',
-            'fix' => 'Activez l\'extension :extension dans le PHP utilisé par le panel et le queue worker, puis redémarrez ces services.',
+            'fix' => 'Activez l’extension :extension dans le PHP utilisé par le panel et le queue worker, puis redémarrez ces services.',
         ],
         'pelican' => [
             'name' => 'Application Pelican et dépendances Composer',
-            'fix' => 'Terminez l\'installation de Pelican et installez ses dépendances Composer.',
+            'fix' => 'Terminez l’installation de Pelican et installez ses dépendances Composer.',
         ],
         'composer' => [
             'name' => 'Composer : :class',
@@ -53,7 +53,7 @@ return [
         ],
         'writable' => [
             'name' => ':directory accessible en écriture',
-            'fix' => 'Donnez au panel et au queue worker l\'accès en lecture et écriture à :directory.',
+            'fix' => 'Donnez au panel et au queue worker l’accès en lecture et écriture à :directory.',
         ],
         'plugin_asset' => [
             'name' => 'Fichier du plugin : :file',
@@ -61,7 +61,7 @@ return [
         ],
         'legacy_creator' => [
             'name' => 'Ancien créateur autonome retiré',
-            'fix' => 'Désactivez et supprimez l\'ancien créateur autonome (simple-server-creator) sous Admin → Plugins avant d\'activer le nouveau créateur.',
+            'fix' => 'Désactivez et supprimez l’ancien créateur autonome (simple-server-creator) sous Admin → Plugins avant d’activer le nouveau créateur.',
         ],
         'built_assets' => [
             'name' => 'CSS et JavaScript compilés de Pelican',
@@ -69,7 +69,7 @@ return [
         ],
         'tested_release' => [
             'name' => 'Version de Pelican testée',
-            'fix' => 'Simplify est testé sur Pelican :tested ; ce panel indique :release. L\'installation continue, mais signalez les problèmes sur GitHub.',
+            'fix' => 'Simplify est testé sur Pelican :tested ; ce panel indique :release. L’installation continue, mais signalez les problèmes sur GitHub.',
             'no_version' => 'aucune version',
         ],
         'database' => [
@@ -82,11 +82,11 @@ return [
         ],
         'storage' => [
             'name' => 'Stockage des paramètres du plugin',
-            'fix' => 'Réparez le disque de stockage local de Laravel et donnez au panel l\'accès en écriture.',
+            'fix' => 'Réparez le disque de stockage local de Laravel et donnez au panel l’accès en écriture.',
         ],
         'queue' => [
-            'name' => 'File d\'attente en arrière-plan configurée',
-            'fix' => 'Configurez une connexion de file d\'attente persistante pour Pelican et démarrez son queue worker.',
+            'name' => 'File d’attente en arrière-plan configurée',
+            'fix' => 'Configurez une connexion de file d’attente persistante pour Pelican et démarrez son queue worker.',
         ],
     ],
     'assets' => [
@@ -104,11 +104,11 @@ return [
     'uploads' => [
         'runtime_cli' => 'PHP CLI (vérifiez PHP-FPM séparément)',
         'runtime_web' => 'PHP web',
-        'capacity' => 'Capacité d\'envoi · :size pour les bannières',
+        'capacity' => 'Capacité d’envoi · :size pour les bannières',
         'capacity_detail' => ':runtime : upload_max_filesize=:upload ; post_max_size=:post. Les envois de bannières sont plafonnés à la limite PHP/Livewire la plus basse (5 Mo maximum).',
         'capacity_fix' => 'Pour autoriser des bannières de 5 Mo, réglez dans PHP-FPM upload_max_filesize = 10M et post_max_size = 12M, vérifiez une éventuelle règle max de Livewire, puis rechargez PHP-FPM.',
-        'proxy' => 'Limite d\'envoi NGINX / proxy · non vérifiée',
+        'proxy' => 'Limite d’envoi NGINX / proxy · non vérifiée',
         'proxy_detail' => 'Un proxy peut refuser des envois avant que PHP ne les reçoive (HTTP 413), même si les vérifications ci-dessus réussissent.',
-        'proxy_fix' => 'Dans le bloc server NGINX de ce panel, réglez client_max_body_size 12m ; vérifiez les réglages location plus bas et les limites des proxys en amont. Lancez sudo nginx -t, puis sudo systemctl reload nginx. Vérifiez avec un vrai envoi. Aucune configuration serveur n\'est modifiée automatiquement.',
+        'proxy_fix' => 'Dans le bloc server NGINX de ce panel, réglez client_max_body_size 12m ; vérifiez les réglages location plus bas et les limites des proxys en amont. Lancez sudo nginx -t, puis sudo systemctl reload nginx. Vérifiez avec un vrai envoi. Aucune configuration serveur n’est modifiée automatiquement.',
     ],
 ];

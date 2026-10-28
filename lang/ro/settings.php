@@ -368,7 +368,7 @@ return [
             'help' => 'Afișați-vă serverele pe propriul site cu o singură linie de cod: stare, jucători, modpack și adresă de conectare. Apar doar serverele al căror proprietar a ales „Afișați pe site”.',
         ],
         'people_manager' => [
-            'label' => 'Let Simplify manage people & roles',
+            'label' => 'Lăsați Simplify să gestioneze persoanele și rolurile',
             'help' => 'O singură pagină Persoane și roluri înlocuiește paginile Users și Roles ale Pelican: invitați persoane (își aleg singure parola), atribuiți roluri și dați fiecărui rol permisiuni Simplify plus acces opțional de administrare. Construit pe rolurile proprii ale Pelican. Dezactivat folosește paginile Pelican.',
         ],
         'plugin_manager' => [

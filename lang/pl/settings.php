@@ -368,7 +368,7 @@ return [
             'help' => 'Pokazuj swoje serwery na własnej stronie jedną linią kodu: status, gracze, modpack i adres dołączenia. Pojawiają się tylko serwery, których właściciel wybrał "Pokaż na stronie".',
         ],
         'people_manager' => [
-            'label' => 'Let Simplify manage people & roles',
+            'label' => 'Pozwól Simplify zarządzać osobami i rolami',
             'help' => 'Jedna strona Osoby i role zastępuje strony Users i Roles w Pelican: zapraszaj osoby (same wybierają hasło), przypisuj role i dawaj każdej roli uprawnienia Simplify oraz opcjonalny dostęp administracyjny. Oparte na własnych rolach Pelican. Wył. używa stron Pelican.',
         ],
         'plugin_manager' => [

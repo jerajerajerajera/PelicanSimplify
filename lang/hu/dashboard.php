@@ -49,7 +49,7 @@ return [
         'server' => 'Szerver',
         'game' => 'Játék',
         'card_title' => 'Kártya címe',
-        'show_the_alias_you_gave_it' => 'Az általad adott álnév vagy a szerver valódi neve',
+        'show_the_alias_you_gave_it' => 'Az általad adott álnév vagy a szerver valódi nevének megjelenítése',
         'alias' => 'Álnév',
         'name' => 'Név',
         'show_on_each_card' => 'Megjelenítés minden kártyán',

@@ -368,7 +368,7 @@ return [
             'help' => 'Mostre os seus servidores no seu próprio site com uma linha de código: estado, jogadores, modpack e endereço de entrada. Só aparecem servidores cujo dono escolheu "Mostrar no site".',
         ],
         'people_manager' => [
-            'label' => 'Let Simplify manage people & roles',
+            'label' => 'Deixar o Simplify gerir pessoas e funções',
             'help' => 'Uma página Pessoas e funções substitui as páginas Utilizadores e Funções do Pelican: convide pessoas (elas escolhem a própria palavra-passe), atribua funções e dê a cada função permissões do Simplify mais acesso de admin opcional. Baseado nas funções do próprio Pelican. Desligado usa as páginas do Pelican.',
         ],
         'plugin_manager' => [

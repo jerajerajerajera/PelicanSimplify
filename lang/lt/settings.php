@@ -368,7 +368,7 @@ return [
             'help' => 'Parodykite savo serverius savo svetainėje viena kodo eilute: būsena, žaidėjai, modpackas ir prisijungimo adresas. Rodomi tik serveriai, kurių savininkas pasirinko "Rodyti svetainėje".',
         ],
         'people_manager' => [
-            'label' => 'Let Simplify manage people & roles',
+            'label' => 'Leisti Simplify tvarkyti žmones ir vaidmenis',
             'help' => 'Vienas puslapis Žmonės ir vaidmenys pakeičia Pelican puslapius Users ir Roles: kvieskite žmones (slaptažodį jie pasirenka patys), priskirkite vaidmenis ir suteikite kiekvienam vaidmeniui Simplify leidimus bei pasirenkamą administratoriaus prieigą. Paremta paties Pelican vaidmenimis. Išjungus naudojami Pelican puslapiai.',
         ],
         'plugin_manager' => [

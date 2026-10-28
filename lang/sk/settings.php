@@ -368,7 +368,7 @@ return [
             'help' => 'Ukážte svoje servery na vlastnom webe jedným riadkom kódu: stav, hráči, modpack a adresa na pripojenie. Objavia sa len servery, ktorých vlastník zvolil "Zobraziť na webe".',
         ],
         'people_manager' => [
-            'label' => 'Let Simplify manage people & roles',
+            'label' => 'Zveriť správu ľudí a rolí Simplify',
             'help' => 'Jedna stránka Ľudia a roly nahradí stránky Users a Roles v Pelican: pozývajte ľudí (heslo si zvolia sami), prideľujte roly a dajte každej role oprávnenia Simplify a voliteľný prístup správcu. Postavené na vlastných rolách Pelican. Vyp. používa stránky Pelican.',
         ],
         'plugin_manager' => [

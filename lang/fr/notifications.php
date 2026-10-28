@@ -14,7 +14,7 @@ return [
         'pinned' => 'Épinglé',
         'you_are_all_caught_up' => 'Vous êtes à jour.',
         'archived' => 'Archivées',
-        'nothing_archived' => 'Rien d\'archivé.',
+        'nothing_archived' => 'Rien d’archivé.',
         'loading' => 'Chargement…',
         'show_more' => 'Afficher plus',
         'clear_name' => 'Effacer :title',
@@ -25,7 +25,7 @@ return [
         'test_notification' => 'Notification de test',
         'notifications_work_on_this_device' => 'Les notifications fonctionnent sur cet appareil.',
         'test_sent_it_should_appear_within' => 'Test envoyé. Il devrait apparaître dans quelques secondes.',
-        'the_browser_no_longer_accepts_notifications' => 'Le navigateur n\'accepte plus les notifications pour cet appareil. Réactivez-les.',
-        'the_push_service_did_not_accept' => 'Le service push n\'a pas accepté le test. Réessayez dans une minute.',
+        'the_browser_no_longer_accepts_notifications' => 'Le navigateur n’accepte plus les notifications pour cet appareil. Réactivez-les.',
+        'the_push_service_did_not_accept' => 'Le service push n’a pas accepté le test. Réessayez dans une minute.',
     ],
 ];
