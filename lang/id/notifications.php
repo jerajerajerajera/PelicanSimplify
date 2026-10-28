@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Yang baru',
+        'full_release_notes' => 'Catatan rilis lengkap',
+        'mark_read' => 'Tandai dibaca',
+        'mark_as_unread' => 'Tandai belum dibaca',
+        'clear' => 'Hapus',
+        'show_less' => 'Tampilkan lebih sedikit',
+        'pin' => 'Sematkan ',
+        'unpin' => 'Lepas sematan ',
+        'pin_2' => 'Sematkan',
+        'unpin_2' => 'Lepas sematan',
+        'pinned' => 'Disematkan',
+        'you_are_all_caught_up' => 'Semua sudah dibaca.',
+        'archived' => 'Diarsipkan',
+        'nothing_archived' => 'Tidak ada yang diarsipkan.',
+        'loading' => 'Memuat…',
+        'show_more' => 'Tampilkan lebih banyak',
+        'clear_name' => 'Hapus :title',
+        'show_all' => 'Tampilkan semua :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Notifikasi belum aktif di perangkat ini.',
+        'test_notification' => 'Notifikasi uji',
+        'notifications_work_on_this_device' => 'Notifikasi berfungsi di perangkat ini.',
+        'test_sent_it_should_appear_within' => 'Uji terkirim. Seharusnya muncul dalam beberapa detik.',
+        'the_browser_no_longer_accepts_notifications' => 'Browser tidak lagi menerima notifikasi untuk perangkat ini. Aktifkan lagi.',
+        'the_push_service_did_not_accept' => 'Layanan push tidak menerima uji ini. Coba lagi dalam satu menit.',
+    ],
+];
