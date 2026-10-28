@@ -175,7 +175,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -183,6 +183,7 @@ class SimplifySettings extends Page implements HasForms
         'Appearance' => 'tabler-palette',
         'Users & access' => 'tabler-users',
         'Backups & performance' => 'tabler-gauge',
+        'Hosting' => 'tabler-building-store',
     ];
     /** Optional add-ons, switched on under General → Add-ons; each keeps its own settings tab after the core categories. */
     private const ADDONS = [
@@ -262,6 +263,7 @@ class SimplifySettings extends Page implements HasForms
         ]);
     }
     private static function full(Get $get): bool { return $get('experience') !== 'addons'; }
+    private static function hosting(Get $get): bool { return $get('profile.type') === 'hosting'; }
 
     public function form(Schema $schema): Schema
     {
@@ -271,6 +273,7 @@ class SimplifySettings extends Page implements HasForms
 
         $categories = [
             'General' => [
+                ...$this->panelTypeSections(false),
                 self::experienceSection(),
                 self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.')->visible(fn (Get $get) => self::full($get)),
                 self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.')->visible(fn (Get $get) => self::full($get)),
@@ -335,6 +338,7 @@ class SimplifySettings extends Page implements HasForms
                 Section::make('Refresh rates')->columns(2)->description('Lower values feel livelier but cost more requests to the panel and Wings. Hidden browser tabs and open popups never refresh.')
                     ->schema(array_map($numberField, ['overview_seconds', 'server_seconds', 'restart_seconds', 'health_seconds'])),
             ],
+            ...(class_exists(\Simplify\Panel\Services\PanelProfile::class) ? ['Hosting' => $this->hostingSections()] : []),
             'Easy Minecraft server creator' => [
                 Section::make('Self-service creation')->columns(2)->description('Where users may create Minecraft servers (also used by the game creator). Who may create servers is set per role under Users & access ("Create servers").')->schema([
                     Select::make('node_ids')->label('Hosting machines')->multiple()->searchable()->options(fn () => Node::query()->pluck('name', 'id')->all())->helperText('Nodes used for self-service creation. Users do not choose ports or nodes.'),
@@ -412,7 +416,7 @@ class SimplifySettings extends Page implements HasForms
         $categories = [...$categories, ...$addons];
         // "Only the add-ons" keeps Pelican's look and pages: the tabs that only serve the full panel step aside.
         $fullOnly = ['Appearance', 'Server banners', 'Backups & performance'];
-        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->visible(in_array($label, $fullOnly, true) ? fn (Get $get) => self::full($get) : true)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
+        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->visible(match (true) { in_array($label, $fullOnly, true) => fn (Get $get) => self::full($get), $label === 'Hosting' => fn (Get $get) => self::hosting($get), default => true })->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
         // Pelican's own settings close the list: each tab shows Pelican's page on that tab, so all settings live in one place.
         $pelican = \Simplify\Panel\Services\PelicanSettingsTabs::all();
         $this->pelicanTabs = count($pelican);
@@ -494,6 +498,52 @@ class SimplifySettings extends Page implements HasForms
                 Select::make('embed_code.group')->label('Server group')->live()->options(fn () => array_column($this->embedGroups(), 'name', 'id'))
                     ->placeholder('Pick a group')->helperText('Takes the servers in this group that are on the website now. Copy the code again after you change the group.')->visible(fn (Get $get) => $get('embed_code.show') === 'group'),
                 \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.website-embed')->columnSpanFull()->viewData(fn (Get $get) => ['show' => $this->embedShow($get) ?? [], 'waiting' => $this->embedShow($get) === null]),
+            ]),
+        ];
+    }
+    /**
+     * The panel type. In the setup, picking one fills in that type's defaults in the later steps (still changeable there);
+     * afterwards it only shows or hides the Hosting tab, so a switch never silently changes other settings.
+     */
+    private function panelTypeSections(bool $setup): array
+    {
+        if (!class_exists(\Simplify\Panel\Services\PanelProfile::class)) return [];
+        $profile = \Simplify\Panel\Services\PanelProfile::class;
+        $radio = \Filament\Forms\Components\Radio::make('profile.type')->hiddenLabel()->options($profile::TYPES)->required()->live()
+            ->descriptions([
+                'friends' => 'Your own servers and the people you play with. Everyone sees the servers they may use and can change their resources.',
+                'hosting' => 'Customers who pay for their servers. They only see their own servers, plans come from your billing system, updates wait for you, and the panel shows your name only.',
+            ]);
+        if ($setup) $radio->afterStateUpdated(fn (Set $set, ?string $state) => $this->applyPanelType($set, (string) $state));
+        return [Section::make($setup ? 'Who is this panel for?' : 'Panel type')
+            ->description($setup ? 'This fills in sensible choices for the next steps. You can still change each of them.' : 'Switching only shows or hides the Hosting tab after saving. Other settings stay as they are.')
+            ->schema([$radio])];
+    }
+    /** Fills the later setup steps with the defaults of a panel type. */
+    private function applyPanelType(Set $set, string $type): void
+    {
+        $profile = \Simplify\Panel\Services\PanelProfile::class;
+        foreach ($profile::FEATURES[$type] ?? [] as $key => $on) $set('features.'.$key, $on);
+        $set('appearance.brand.suffix', $type !== 'hosting');
+        $abilities = array_values(array_diff((array) data_get($this->data, 'roles.everyone.abilities', []), ['create']));
+        if ($type === 'hosting') $set('roles.everyone.abilities', $abilities);
+    }
+    /** Links to the hosting company's billing system and support, shown to customers. */
+    private function hostingSections(): array
+    {
+        $link = fn (string $key, string $label, bool $template = false) => TextInput::make('profile.'.$key)->label($label)->maxLength(500)->placeholder('https://')
+            ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail) use ($template) {
+                if ($value !== null && $value !== '' && \Simplify\Panel\Services\PanelProfile::url($value, $template) === null) $fail('Enter a full link that starts with https://.');
+            });
+        return [
+            Section::make('Billing')->columns(2)->description('Works with any billing system, such as WHMCS, Paymenter or HostBill. Customers get these buttons instead of creating servers or changing resources themselves. Empty links are not shown.')->schema([
+                $link('client_area', 'Client area')->helperText('Shown in the account menu, for invoices and account details.'),
+                $link('order', 'Order a new server')->helperText('Shown where people would otherwise create a server.'),
+                $link('upgrade', 'Upgrade a server', true)->columnSpanFull()->helperText('Shown on each server. {external_id}, {uuid}, {short_id} and {server_id} are replaced with that server\'s values, for example https://billing.example.com/upgrade?service={external_id}.'),
+            ]),
+            Section::make('Support')->columns(2)->description('Shown in the account menu and under "Explain this error", so customers know where to go when something is wrong.')->schema([
+                $link('support', 'Support link')->helperText('A ticket page, help desk or Discord invite.'),
+                TextInput::make('profile.support_label')->label('Button text')->maxLength(40)->placeholder('Open a ticket'),
             ]),
         ];
     }
@@ -599,11 +649,16 @@ class SimplifySettings extends Page implements HasForms
         'Automatic subdomains' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
     ];
 
-    /** Labels of the wizard steps for the progress bar, in order; follows the add-on switches as they are flipped. */
+    /**
+     * Labels of the wizard steps that apply now, in order, for the progress bar: the full panel's questions or the
+     * add-ons, Hosting for a hosting company on the full panel, an add-on's step while the add-on is on.
+     */
     public function setupSteps(): array
     {
         $features = (array) ($this->data['features'] ?? []);
-        $steps = ($this->data['experience'] ?? 'full') === 'addons' ? ['How much Simplify?', 'Add-ons'] : ['How much Simplify?', 'Features', 'People & access', 'Look'];
+        $steps = ['Panel type', 'How much Simplify?', ...(($this->data['experience'] ?? 'full') === 'addons' ? ['Add-ons'] : ['Features', 'People & access', 'Look'])];
+        // A hosting company's links only matter to customers of the full panel.
+        if (($this->data['profile']['type'] ?? 'friends') === 'hosting' && ($this->data['experience'] ?? 'full') !== 'addons') $steps[] = 'Hosting';
         foreach (self::ADDON_STEPS as $label => $addon) if (array_filter($addon['features'], fn (string $feature) => !empty($features[$feature]))) $steps[] = $label;
         if (\Simplify\Panel\Services\Extensions::webInstalled()) $steps[] = 'Website';
         $steps[] = 'Ready';
@@ -620,6 +675,7 @@ class SimplifySettings extends Page implements HasForms
         $step = fn (string $label, string $hint, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->description($hint)->schema($content);
         $full = fn (Get $get) => self::full($get);
         $steps = [
+            $step('Panel type', 'Needed', $this->panelTypeSections(true)),
             $step('How much Simplify?', 'Needed', [self::experienceSection()]),
             $step('Features', 'Needed', [
                 self::featureSection('What Simplify replaces', 'Interface', 'The Simplify dashboard, console and server pages in place of Pelican\'s own. Each can be turned off again later.'),
@@ -631,6 +687,7 @@ class SimplifySettings extends Page implements HasForms
             $step('People & access', 'Needed', $categories['Users & access'])->visible($full),
             $step('Look', 'Optional', $categories['Appearance'])->visible($full),
         ];
+        if (isset($categories['Hosting'])) $steps[] = $step('Hosting', 'Hosting company', $categories['Hosting'])->visible(fn (Get $get) => self::hosting($get) && self::full($get));
         foreach (self::ADDON_STEPS as $label => $addon) {
             if (!isset($addons[$addon['tab']])) continue;
             $steps[] = $step($label, 'Add-on', $addons[$addon['tab']])->visible(fn (Get $get) => (bool) array_filter($addon['features'], fn (string $feature) => (bool) $get('features.'.$feature)));
@@ -697,6 +754,11 @@ class SimplifySettings extends Page implements HasForms
         if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
         if (!empty($state['egg_updates']) && class_exists(\Simplify\Panel\Services\EggUpdates::class)) \Simplify\Panel\Services\EggUpdates::save($state['egg_updates']);
         if (!empty($state['embed']) && class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $embedState = $state['embed'];
+        if (isset($state['profile']) && class_exists(\Simplify\Panel\Services\PanelProfile::class)) {
+            $profile = \Simplify\Panel\Services\PanelProfile::save($state['profile']);
+            // Only the first setup applies the hosting default for error explanations: that page is not part of the wizard.
+            if ($firstSetup && $profile['type'] === 'hosting' && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) \Simplify\Panel\Services\ErrorExplainer::save(['audience' => 'admins']);
+        }
         if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
