@@ -1,5 +1,12 @@
 # Changes
 
+## 0.7.0-snapshot.2 (snapshot channel)
+Customers see the hosting links.
+- On a hosting company's panel, people who cannot create servers see Order a server where Create server would be.
+- The account menu has Client area and a support button.
+- A server's ⋯ menu has Upgrade this server, with the link filled in for that server.
+- Explain this error shows a support button when it finds a problem.
+
 ## 0.7.0-snapshot.1 (snapshot channel)
 The first part of the hosting profile.
 - The setup starts with a new step, Who is this panel for?: Me and my friends, or Hosting company. A hosting company gets fitting defaults in the later steps, such as host mode on and Create servers removed from Everyone. Each one can still be changed.
