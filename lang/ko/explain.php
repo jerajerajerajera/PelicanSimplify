@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => '패널에서 :host 에 연결할 수 없습니다. 패널 서버가 인터넷에 연결할 수 있는지 확인하세요.',
+        'no_key' => '먼저 API 키를 입력하세요.',
+        'not_set_up' => '이 패널에는 오류 설명이 설정되어 있지 않습니다.',
+        'unknown_log' => '알 수 없는 로그입니다.',
+        'read_panel' => '패널 로그를 읽을 수 없습니다.',
+        'read_wings' => 'Wings에서 Wings 로그를 읽을 수 없습니다. 노드에 연결할 수 있을 때 다시 시도하세요.',
+        'read_console' => 'Wings에서 콘솔을 읽을 수 없습니다. 노드에 연결할 수 있을 때 다시 시도하세요.',
+        'too_many' => '짧은 시간에 질문을 많이 했습니다. :count분 후 다시 시도하세요.',
+        'daily_limit' => '이 패널은 하루 설명 한도 :count개에 도달했습니다. 내일 다시 시도하세요.',
+        'no_answer' => ':model 이(가) 이 줄들을 설명하지 못했습니다. 오류가 다시 나타나면 다시 시도하세요.',
+    ],
+    'test' => [
+        'works' => '이 키는 :model 에서 작동합니다.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => '콘솔',
+            'empty' => '콘솔이 비어 있어 아직 설명할 내용이 없습니다.',
+        ],
+        'panel' => [
+            'label' => '패널 로그',
+            'empty' => '현재 패널 로그에 경고나 오류가 없습니다.',
+        ],
+        'wings' => [
+            'label' => 'Wings 로그',
+            'empty' => '이 노드의 Wings 로그가 비어 있습니다.',
+        ],
+        'plugin' => [
+            'label' => '플러그인',
+            'empty' => '이 플러그인에 대해 저장된 로그 줄이 없습니다.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => '먼저 패널에 로그인한 뒤 이 페이지를 다시 여세요.',
+        'owner_only' => '이 페이지는 패널 소유자(root 관리자)만 사용할 수 있습니다.',
+        'expired' => '이 주소는 만료되었거나 새 주소로 바뀌었습니다.',
+        'no_key' => '이 패널에 저장된 :provider API 키가 없습니다. root 관리자가 Simplify 설정의 오류 설명에서 추가합니다.',
+        'no_key_terminal' => '패널이 열리지 않으면 패널 서버에서 :command 를 실행하세요. 키를 묻지만 저장하지는 않습니다.',
+        'choose_node' => '노드를 고르세요.',
+        'panel_log' => '패널 로그',
+        'wings_log_of' => ':node 의 Wings 로그',
+        'wings_log' => 'Wings 로그',
+        'no_database' => '데이터베이스에 연결할 수 없어 여기서는 Wings 로그를 볼 수 없습니다. 원인은 패널 로그에 나오는 경우가 많습니다.',
+        'lead' => '패널에 500 같은 오류가 나타나고 일반 페이지가 열리지 않을 때 이 페이지를 사용하세요. Simplify 설정에서 고른 AI가 로그를 읽고 문제가 있는지, 어떻게 고치는지 알려 줍니다.',
+        'check_panel' => '패널 로그 확인',
+        'check_wings' => ':node 의 Wings 로그 확인',
+        'wait' => '로그를 확인하는 중입니다. 최대 1분 걸릴 수 있습니다.',
+        'attention' => '확인이 필요한 항목이 있습니다',
+        'in_order' => '모두 정상으로 보입니다',
+        'noticed' => '뭔가 발견했나요?',
+        'checked' => ':model 이(가) :count줄을 확인했습니다. 주소, 이메일 주소, 비밀번호는 미리 제거되었습니다.',
+        'terminal_hint' => '패널이 열리지 않으면 패널 서버에서 :command 를 실행하거나, 이 페이지의 임시 주소가 필요하면 :url_command 를 실행하세요.',
+        'broken' => '이 페이지를 완료할 수 없습니다',
+        'title' => '패널 오류 설명',
+    ],
+    'failures' => [
+        'invalid_key' => ':name API 키가 올바르지 않습니다. 관리자가 Simplify 설정에서 새 키를 입력할 수 있습니다.',
+        'no_credit' => '이 키의 :name 계정에 크레딧이 남아 있지 않습니다. 관리자가 :name 에서 크레딧을 추가하거나 결제를 확인할 수 있습니다.',
+        'forbidden' => '이 :name API 키로는 선택한 모델을 쓸 수 없습니다. 관리자가 Simplify 설정에서 다른 모델을 고를 수 있습니다.',
+        'no_model' => '선택한 :name 모델을 이 키로 사용할 수 없습니다. 관리자가 Simplify 설정에서 다른 모델을 고를 수 있습니다.',
+        'busy' => ':name 이(가) 지금 이 키로는 바쁩니다. 1분 후 다시 시도하세요.',
+        'unavailable' => ':name 을(를) 일시적으로 사용할 수 없습니다. 1분 후 다시 시도하세요.',
+        'other_status' => ':name 이(가) 이 질문에 답하지 못했습니다(오류 :status). 나중에 다시 시도하세요.',
+        'other' => ':name 이(가) 이 질문에 답하지 못했습니다. 나중에 다시 시도하세요.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => 'console.anthropic.com → API keys에서 키를 만드세요. 질문마다 해당 Anthropic 계정에 요금이 청구되며, 보통 몇 센트 이하입니다. 안전하게 그곳에서 월 한도를 설정하세요.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => 'aistudio.google.com → Get API key에서 키를 만드세요. 질문은 해당 Google Cloud 프로젝트에 청구되며, 보통 건당 1센트 미만입니다. 안전하게 그곳에서 예산을 설정하세요.',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => 'platform.openai.com → API keys에서 키를 만드세요. 질문마다 해당 OpenAI 계정에 요금이 청구되며, 보통 몇 센트 이하입니다. 안전하게 그곳에서 월 예산을 설정하세요.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => '최고의 답변, 몇 센트',
+        'about_a_cent' => '약 1센트',
+        'cheapest' => '가장 저렴함',
+        'good_answers_under_a_cent' => '좋은 답변, 1센트 미만',
+        'good_answers_about_a_cent' => '좋은 답변, 약 1센트',
+    ],
+];
