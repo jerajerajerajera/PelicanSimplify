@@ -175,7 +175,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?[...\Simplify\Panel\Services\Subdomains::settings(),'token'=>'','remove_token'=>false]:[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -377,8 +377,15 @@ class SimplifySettings extends Page implements HasForms
                     TextInput::make('subdomains.port_min')->label('First forwarded port')->integer()->minValue(1)->maxValue(65535)->required(),
                     TextInput::make('subdomains.port_max')->label('Last forwarded port')->integer()->minValue(1)->maxValue(65535)->required()->gte('subdomains.port_min')->helperText('Only servers with a port in this range get a subdomain. New servers get a port from this range when one is free.'),
                 ]),
-                Section::make('Cloudflare token')->description('Create a Cloudflare API token with only Zone → DNS → Edit for this zone. Add it and the zone ID (on the zone\'s overview page) to the panel\'s .env as CLOUDFLARE_API_TOKEN=… and CLOUDFLARE_ZONE_ID=…. Simplify reads them from there and never stores or shows the token.')->schema([
-                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? 'Still missing: '.implode(', ', $missing).'.' : 'Ready: new subdomains are connected automatically.'),
+                Section::make('Cloudflare token')->columns(2)->description('In Cloudflare, create an API token with only Zone → DNS → Edit for this domain, paste it here and press Test: Simplify checks the token and finds the zone itself. The token is stored encrypted and never shown again.')->schema([
+                    TextInput::make('subdomains.token')->label('API token')->password()->autocomplete(false)->maxLength(200)->columnSpanFull()
+                        ->placeholder(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token'] ? 'A token is saved. Leave empty to keep it.' : 'Paste the token from Cloudflare'),
+                    TextInput::make('subdomains.zone_id')->label('Zone ID')->maxLength(32)->placeholder('Filled in by Test')->helperText('Found with Test. You can also copy it from the zone\'s overview page in Cloudflare.'),
+                    Toggle::make('subdomains.remove_token')->label('Remove the saved token when saving')->visible(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token']),
+                    \Filament\Schemas\Components\Actions::make([
+                        \Filament\Actions\Action::make('testSubdomains')->button()->label('Test')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testSubdomains()),
+                    ])->columnSpanFull(),
+                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? 'Still missing: '.implode(', ', $missing).'.' : 'Ready: new subdomains are connected automatically.')->columnSpanFull(),
                 ]),
             ],
         ];
@@ -637,6 +644,14 @@ class SimplifySettings extends Page implements HasForms
         Notification::make()->title($result['ok'] ? 'CurseForge key works' : 'CurseForge key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     /** Tries the typed key, or the saved one, with the chosen model (Test key button). */
+    /** Checks the typed (or saved) Cloudflare token and fills in the zone ID of the domain. */
+    public function testSubdomains(): void
+    {
+        abort_unless(static::canAccess(), 403);
+        $result = \Simplify\Panel\Services\Subdomains::test((string) data_get($this->data, 'subdomains.token', ''), (string) data_get($this->data, 'subdomains.domain', ''));
+        if ($result['zone_id']) data_set($this->data, 'subdomains.zone_id', $result['zone_id']);
+        Notification::make()->title($result['ok'] ? 'Cloudflare token works' : 'Cloudflare token not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
+    }
     public function testErrorExplainer(): void
     {
         abort_unless(static::canAccess(), 403);
@@ -646,7 +661,7 @@ class SimplifySettings extends Page implements HasForms
     /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. */
     private const ADDON_STEPS = [
         'Server Maker' => ['tab' => 'Easy Minecraft server creator', 'features' => ['easy_creator', 'game_creator']],
-        'Automatic subdomains' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
+        'Addresses' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
     ];
 
     /**
@@ -759,7 +774,11 @@ class SimplifySettings extends Page implements HasForms
             // Only the first setup applies the hosting default for error explanations: that page is not part of the wizard.
             if ($firstSetup && $profile['type'] === 'hosting' && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) \Simplify\Panel\Services\ErrorExplainer::save(['audience' => 'admins']);
         }
-        if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) \Simplify\Panel\Services\Subdomains::save($state['subdomains']);
+        if (isset($state['subdomains']) && class_exists(\Simplify\Panel\Services\Subdomains::class)) {
+            \Simplify\Panel\Services\Subdomains::save($state['subdomains'], !empty($state['subdomains']['remove_token']));
+            data_set($this->data, 'subdomains.token', '');
+            data_set($this->data, 'subdomains.remove_token', false);
+        }
         if (!empty($state['explainer']) && class_exists(\Simplify\Panel\Services\ErrorExplainer::class)) {
             \Simplify\Panel\Services\ErrorExplainer::save($state['explainer'], !empty($state['explainer']['remove_key']));
             data_set($this->data, 'explainer.key', '');

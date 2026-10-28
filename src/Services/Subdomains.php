@@ -6,8 +6,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 /**
  * Automatic subdomains: a server named "oak" becomes oak.<domain>, a CNAME to the shared game address
- * (plus an SRV record for Minecraft, so Java players need no port). The Cloudflare token and zone ID are read
- * from the panel's .env (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID) and never stored or shown by Simplify.
+ * (plus an SRV record for Minecraft, so Java players need no port). The Cloudflare token is entered in Simplify
+ * settings and stored encrypted (never shown again); the zone ID is found from the domain. Panels that set
+ * CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID in .env before keep working until a token is saved here.
  * Cloudflare is called after the response is sent; simplify:subdomains retries failures every few minutes.
  */
 final class Subdomains
@@ -15,7 +16,7 @@ final class Subdomains
     public const FILE='simplify/subdomains.json';
     public const STATES='simplify/subdomains';
     public const RESERVED=['www','mail','smtp','imap','pop','ftp','ns1','ns2','mx','panel','node','api','admin','status','autodiscover'];
-    private const DEFAULTS=['domain'=>'','target'=>'','port_min'=>25565,'port_max'=>25600];
+    private const DEFAULTS=['domain'=>'','target'=>'','port_min'=>25565,'port_max'=>25600,'zone_id'=>''];
     /** @var null|callable(string,string,?array):array Replaced by tests. */
     public static $transport=null;
     private static ?array $settings=null;
@@ -23,22 +24,34 @@ final class Subdomains
     public static function settings(): array
     {
         if(self::$settings!==null)return self::$settings;
-        return self::$settings=array_replace(self::DEFAULTS,array_intersect_key(JsonFile::read(self::FILE),self::DEFAULTS));
+        $saved=JsonFile::read(self::FILE);
+        return self::$settings=[...array_replace(self::DEFAULTS,array_intersect_key($saved,self::DEFAULTS)),'has_token'=>is_string($saved['token']??null)&&$saved['token']!==''];
     }
-    public static function save(array $input): void
+    /** Saves the addresses; a typed token replaces the saved one, an empty token keeps it, $removeToken deletes it. */
+    public static function save(array $input,bool $removeToken=false): void
     {
         $values=validator(array_intersect_key($input,self::DEFAULTS),[
             'domain'=>['nullable','string','max:200','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/'],
             'target'=>['nullable','string','max:253','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/'],
             'port_min'=>'required|integer|min:1|max:65535','port_max'=>'required|integer|min:1|max:65535|gte:port_min',
-        ],[],['domain'=>'domain','target'=>'game address','port_min'=>'first port','port_max'=>'last port'])->validate();
-        $next=['domain'=>strtolower((string)($values['domain']??'')),'target'=>strtolower((string)($values['target']??'')),'port_min'=>(int)$values['port_min'],'port_max'=>(int)$values['port_max']];
+            'zone_id'=>['nullable','string','regex:/^[a-f0-9]{32}$/'],
+        ],[],['domain'=>'domain','target'=>'game address','port_min'=>'first port','port_max'=>'last port','zone_id'=>'zone ID'])->validate();
+        $next=['domain'=>strtolower((string)($values['domain']??'')),'target'=>strtolower((string)($values['target']??'')),'port_min'=>(int)$values['port_min'],'port_max'=>(int)$values['port_max'],'zone_id'=>(string)($values['zone_id']??'')];
+        $token=trim((string)($input['token']??''));
+        $saved=JsonFile::read(self::FILE)['token']??'';
+        if($removeToken)$saved='';
+        elseif($token!=='')$saved=encrypt($token);
+        if($saved!=='')$next['token']=$saved;
         if(!Storage::disk('local')->put(self::FILE,json_encode($next,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT)))throw new \RuntimeException('Could not save subdomain settings.');
-        self::$settings=$next;
+        self::$settings=null;
     }
-    /** [token, zone ID] from the environment, or from .env when the configuration is cached. */
+    /** [token, zone ID]: the token saved in Simplify settings, otherwise the environment or .env (older setups). */
     public static function credentials(): array
     {
+        $saved=JsonFile::read(self::FILE);
+        if(is_string($saved['token']??null)&&$saved['token']!==''){
+            try{return [(string)decrypt($saved['token']),(string)($saved['zone_id']??'')];}catch(\Throwable $e){report($e);return ['',''];}
+        }
         static $file=null;
         $read=function(string $key)use(&$file): string {
             $value=(string)(env($key)??'');
@@ -52,7 +65,31 @@ final class Subdomains
     public static function missing(): array
     {
         $s=self::settings();[$token,$zone]=self::credentials();
-        return array_keys(array_filter(['domain'=>$s['domain']==='','game address'=>$s['target']==='','CLOUDFLARE_API_TOKEN in .env'=>$token==='','CLOUDFLARE_ZONE_ID in .env'=>$zone==='']));
+        return array_keys(array_filter(['domain'=>$s['domain']==='','game address'=>$s['target']==='','Cloudflare token'=>$token==='','zone ID (press Test)'=>$zone==='']));
+    }
+    /**
+     * Checks a token and finds the zone of the domain (example.com for play.example.com too).
+     * Returns ['ok'=>bool,'message'=>string,'zone_id'=>?string]; an empty token tests the saved one.
+     */
+    public static function test(string $token,string $domain): array
+    {
+        $token=trim($token);
+        if($token==='')[$token]=self::credentials();
+        $domain=strtolower(trim($domain));
+        if($token==='')return ['ok'=>false,'message'=>'Enter a Cloudflare API token first.','zone_id'=>null];
+        if($domain==='')return ['ok'=>false,'message'=>'Enter the domain first.','zone_id'=>null];
+        $send=self::$transport??CloudflareDns::http($token);
+        try{
+            $labels=explode('.',$domain);
+            for($i=0;$i<count($labels)-1;$i++){
+                $name=implode('.',array_slice($labels,$i));
+                $result=$send('GET','/zones?name='.rawurlencode($name),null);
+                if(!($result['success']??false))return ['ok'=>false,'message'=>'Cloudflare refused the token: '.((string)($result['errors'][0]['message']??'unknown error')).'. It needs Zone → DNS → Edit for this zone.','zone_id'=>null];
+                $zone=$result['result'][0]['id']??null;
+                if(is_string($zone)&&preg_match('/^[a-f0-9]{32}$/',$zone))return ['ok'=>true,'message'=>'Token works. Found the zone '.$name.'.','zone_id'=>$zone];
+            }
+        }catch(\Throwable $e){report($e);return ['ok'=>false,'message'=>'Could not reach Cloudflare. Try again in a moment.','zone_id'=>null];}
+        return ['ok'=>false,'message'=>'This token cannot see '.$domain.'. Give it access to that zone, or check the domain.','zone_id'=>null];
     }
     public static function active(): bool { return FeatureSettings::enabled('subdomains')&&self::missing()===[]; }
 
