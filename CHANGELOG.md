@@ -1,5 +1,12 @@
 # Changes
 
+## 0.7.0-snapshot.5 (snapshot channel)
+Automatic subdomains without editing .env.
+- The Cloudflare token can be entered in Simplify settings → Automatic subdomains. It is stored encrypted and never shown again.
+- Test checks the token and finds the zone ID for the domain, also when the domain is a subdomain.
+- Tokens in .env keep working until a token is saved in the settings.
+- The setup step for this add-on is now called Addresses.
+
 ## 0.7.0-snapshot.4 (snapshot channel)
 A fix for the Server Maker button bar.
 - Back and Next are on one line with the steps and the draft buttons.
