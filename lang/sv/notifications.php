@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Nyheter',
+        'full_release_notes' => 'Fullständiga versionsanteckningar',
+        'mark_read' => 'Markera som läst',
+        'mark_as_unread' => 'Markera som oläst',
+        'clear' => 'Rensa',
+        'show_less' => 'Visa mindre',
+        'pin' => 'Fäst ',
+        'unpin' => 'Lossa ',
+        'pin_2' => 'Fäst',
+        'unpin_2' => 'Lossa',
+        'pinned' => 'Fäst',
+        'you_are_all_caught_up' => 'Du har inget mer att läsa.',
+        'archived' => 'Arkiverat',
+        'nothing_archived' => 'Inget arkiverat.',
+        'loading' => 'Läser in…',
+        'show_more' => 'Visa mer',
+        'clear_name' => 'Rensa :title',
+        'show_all' => 'Visa alla :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Aviseringar är inte på för den här enheten ännu.',
+        'test_notification' => 'Testavisering',
+        'notifications_work_on_this_device' => 'Aviseringar fungerar på den här enheten.',
+        'test_sent_it_should_appear_within' => 'Test skickat. Det bör visas inom några sekunder.',
+        'the_browser_no_longer_accepts_notifications' => 'Webbläsaren tar inte längre emot aviseringar för den här enheten. Slå på dem igen.',
+        'the_push_service_did_not_accept' => 'Pushtjänsten tog inte emot testet. Försök igen om en minut.',
+    ],
+];
