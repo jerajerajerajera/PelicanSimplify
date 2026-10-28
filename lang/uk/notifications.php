@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Що нового',
+        'full_release_notes' => 'Повні примітки до випуску',
+        'mark_read' => 'Позначити прочитаним',
+        'mark_as_unread' => 'Позначити непрочитаним',
+        'clear' => 'Очистити',
+        'show_less' => 'Показати менше',
+        'pin' => 'Закріпити ',
+        'unpin' => 'Відкріпити ',
+        'pin_2' => 'Закріпити',
+        'unpin_2' => 'Відкріпити',
+        'pinned' => 'Закріплено',
+        'you_are_all_caught_up' => 'Усе прочитано.',
+        'archived' => 'Архів',
+        'nothing_archived' => 'В архіві порожньо.',
+        'loading' => 'Завантаження…',
+        'show_more' => 'Показати більше',
+        'clear_name' => 'Очистити :title',
+        'show_all' => 'Показати всі (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Сповіщення на цьому пристрої ще не ввімкнено.',
+        'test_notification' => 'Тестове сповіщення',
+        'notifications_work_on_this_device' => 'Сповіщення на цьому пристрої працюють.',
+        'test_sent_it_should_appear_within' => 'Тест надіслано. Він має з\'явитися за кілька секунд.',
+        'the_browser_no_longer_accepts_notifications' => 'Браузер більше не приймає сповіщення для цього пристрою. Увімкніть їх знову.',
+        'the_push_service_did_not_accept' => 'Push-сервіс не прийняв тест. Спробуйте ще раз за хвилину.',
+    ],
+];
