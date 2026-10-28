@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Што новага',
+        'full_release_notes' => 'Поўныя заўвагі да выпуску',
+        'mark_read' => 'Пазначыць прачытаным',
+        'mark_as_unread' => 'Пазначыць непрачытаным',
+        'clear' => 'Ачысціць',
+        'show_less' => 'Паказаць менш',
+        'pin' => 'Замацаваць ',
+        'unpin' => 'Адмацаваць ',
+        'pin_2' => 'Замацаваць',
+        'unpin_2' => 'Адмацаваць',
+        'pinned' => 'Замацавана',
+        'you_are_all_caught_up' => 'Усё прачытана.',
+        'archived' => 'Архіў',
+        'nothing_archived' => 'У архіве пуста.',
+        'loading' => 'Загрузка…',
+        'show_more' => 'Паказаць больш',
+        'clear_name' => 'Ачысціць :title',
+        'show_all' => 'Паказаць усе (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Паведамленні на гэтай прыладзе яшчэ не ўключаны.',
+        'test_notification' => 'Тэставае паведамленне',
+        'notifications_work_on_this_device' => 'Паведамленні на гэтай прыладзе працуюць.',
+        'test_sent_it_should_appear_within' => 'Тэст адпраўлены. Ён павінен з\'явіцца праз некалькі секунд.',
+        'the_browser_no_longer_accepts_notifications' => 'Браўзер больш не прымае паведамленні для гэтай прылады. Уключыце іх зноў.',
+        'the_push_service_did_not_accept' => 'Push-сэрвіс не прыняў тэст. Паспрабуйце яшчэ раз праз хвіліну.',
+    ],
+];
