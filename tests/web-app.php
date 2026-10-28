@@ -6,6 +6,7 @@ namespace Simplify\Panel\Services {
  final class AppearanceSettings {public static array $data=['brand'=>['text'=>'']];public static function all():array{return self::$data;}}
  final class FeatureSettings {public static bool $dashboard=true;public static function enabled(string $k):bool{return self::$dashboard;}}
  final class BuildInfo {public static function version():?string{return '0.5.0-snapshot.4';}}
+ final class AppIcon {public static string $version='--';public static function version():string{return self::$version;}}
 }
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(...$a):string{return \url('/').'/simplify';}}}
 namespace {
@@ -14,7 +15,7 @@ require_once __DIR__.'/fixtures/lang.php';
  $GLOBALS['config']=['app.name'=>'Pelican'];
  function url($p=''){return $GLOBALS['base'];}
  function config($k,$d=null){return $GLOBALS['config'][$k]??$d;}
- function route($name,$params=[]){return $GLOBALS['base'].'/simplify/app-icon/'.($params['size']??'').'.png';}
+ function route($name,$params=[]){return $name==='simplify.app-badge'?$GLOBALS['base'].'/simplify/app-badge.png':$GLOBALS['base'].'/simplify/app-icon/'.($params['size']??'').'.png';}
  function plugin_path($id,$path){return dirname(__DIR__).'/'.$path;}
  require __DIR__.'/../src/Services/WebApp.php';
  use Simplify\Panel\Services\WebApp;
@@ -27,7 +28,16 @@ require_once __DIR__.'/fixtures/lang.php';
  foreach($m['icons'] as $icon){
   preg_match('/(\d+)x\1/',$icon['sizes'],$size);
   $check(in_array((int)$size[1],WebApp::ICON_SIZES,true),'icon size is served: '.$icon['sizes']);
+  $check(str_contains($icon['src'],$icon['purpose']==='maskable'?'/app-icon/maskable.png?v=':'/app-icon/'.$size[1].'.png?v='),'maskable icon has its own file: '.$icon['src']);
  }
+ $info=getimagesize(dirname(__DIR__).'/resources/branding/app-badge-96.png');
+ $check($info!==false&&$info[0]===96&&$info[1]===96&&$info['mime']==='image/png','the default badge is a 96 px PNG');
+
+ // A new upload changes the version, so manifest icons, the worker and the notification icons are fetched again.
+ $before=WebApp::version();
+ \Simplify\Panel\Services\AppIcon::$version='0123456789abcdef-';
+ $check(WebApp::version()!==$before&&str_contains(WebApp::icon(192),'?v='.WebApp::version())&&str_contains(WebApp::badge(),'/app-badge.png?v='.WebApp::version()),'uploads bust the icon cache');
+ \Simplify\Panel\Services\AppIcon::$version='--';
  foreach(WebApp::ICON_SIZES as $size){
   $info=getimagesize(dirname(__DIR__).'/resources/branding/app-icon-'.$size.'.png');
   $check($info!==false&&$info[0]===$size&&$info[1]===$size&&$info['mime']==='image/png','icon '.$size.' is a '.$size.' px PNG');
@@ -47,7 +57,8 @@ require_once __DIR__.'/fixtures/lang.php';
  // A hostile name cannot break out of the worker's template string or the offline page.
  \Simplify\Panel\Services\AppearanceSettings::$data=['brand'=>['text'=>'a`${alert(1)}<b>\\']];
  $worker=WebApp::worker();
- $check(!str_contains($worker,'`${alert')&&!str_contains($worker,'<b>')&&!str_contains($worker,'__NAME__')&&!str_contains($worker,'__VERSION__'),'worker escapes the name');
+ $check(!str_contains($worker,'`${alert')&&!str_contains($worker,'<b>')&&!str_contains($worker,'__NAME__')&&!str_contains($worker,'__VERSION__')&&!str_contains($worker,'__BADGE__'),'worker escapes the name');
+ $check(str_contains($worker,"const BADGE = 'https://example.com/panel/simplify/app-badge.png?v=")&&str_contains($worker,'badge: local(message.badge, BADGE)'),'notifications use the badge, also from the message');
  $check(str_contains($worker,"event.request.mode !== 'navigate' || event.request.method !== 'GET'"),'worker only handles page loads');
- echo "PASS web app manifest, icons, folder scope and service worker\n";
+ echo "PASS web app manifest, icons, badge, cache busting, folder scope and service worker\n";
 }

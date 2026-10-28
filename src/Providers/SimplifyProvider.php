@@ -43,7 +43,8 @@ final class SimplifyProvider extends ServiceProvider
         \Illuminate\Support\Facades\Route::match(['get','post'],'/simplify/explain/access/{token}',[\Simplify\Panel\Http\Controllers\EmergencyExplainController::class,'token'])->where('token','[0-9a-f]{40}')->name('simplify.explain.access');
         // Installable web app: manifest, icons and the service worker (served at the root so its scope is the whole panel).
         \Illuminate\Support\Facades\Route::get('/simplify/manifest.webmanifest',[\Simplify\Panel\Http\Controllers\WebAppController::class,'manifest'])->name('simplify.manifest');
-        \Illuminate\Support\Facades\Route::get('/simplify/app-icon/{size}.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'icon'])->whereNumber('size')->name('simplify.app-icon');
+        \Illuminate\Support\Facades\Route::get('/simplify/app-icon/{size}.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'icon'])->where('size','[0-9]+|maskable')->name('simplify.app-icon');
+        \Illuminate\Support\Facades\Route::get('/simplify/app-badge.png',[\Simplify\Panel\Http\Controllers\WebAppController::class,'badge'])->name('simplify.app-badge');
         \Illuminate\Support\Facades\Route::get('/simplify-worker.js',[\Simplify\Panel\Http\Controllers\WebAppController::class,'worker'])->name('simplify.worker');
         // Website embed add-on: public, read-only and without a session, so any website can show the server list.
         \Illuminate\Support\Facades\Route::get('/simplify/embed/servers.json',[\Simplify\Panel\Http\Controllers\EmbedController::class,'servers'])->middleware('throttle:120,1')->name('simplify.embed.servers');

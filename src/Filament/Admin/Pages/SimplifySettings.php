@@ -31,6 +31,8 @@ class SimplifySettings extends Page implements HasForms
     use \Livewire\WithFileUploads;
     public $bannerUpload = null;
     public $logoUpload = null;
+    public $appIconUpload = null;
+    public $appBadgeUpload = null;
     public ?string $bannerServer = null;
     public bool $useUploadedBanner = true;
     public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable { return __('pelican-simplify::settings.page.pelicansimplify_settings'); }
@@ -88,6 +90,28 @@ class SimplifySettings extends Page implements HasForms
         AppearanceSettings::setLogo(null);
         data_set($this->data,'appearance.brand.mode','text');
         Notification::make()->success()->title(__('pelican-simplify::settings.form.logo_removed'))->send();
+    }
+    public function uploadAppIcon(): void
+    {
+        abort_unless(static::canAccess(),403);
+        $this->validate(['appIconUpload'=>'required|file|max:'.\Simplify\Panel\Services\AppIcon::MAX_KB]);
+        \Simplify\Panel\Services\AppIcon::storeIcon($this->appIconUpload);
+        $this->appIconUpload=null;
+        Notification::make()->success()->title(__('pelican-simplify::settings.app_icon.icon_uploaded'))->body(__('pelican-simplify::settings.app_icon.reinstall_note'))->send();
+    }
+    public function uploadAppBadge(): void
+    {
+        abort_unless(static::canAccess(),403);
+        $this->validate(['appBadgeUpload'=>'required|file|max:'.\Simplify\Panel\Services\AppIcon::MAX_KB]);
+        \Simplify\Panel\Services\AppIcon::storeBadge($this->appBadgeUpload);
+        $this->appBadgeUpload=null;
+        Notification::make()->success()->title(__('pelican-simplify::settings.app_icon.badge_uploaded'))->send();
+    }
+    public function removeAppIcon(string $kind): void
+    {
+        abort_unless(static::canAccess(),403);
+        \Simplify\Panel\Services\AppIcon::remove($kind==='badge'?'badge':'icon');
+        Notification::make()->success()->title($kind==='badge'?__('pelican-simplify::settings.app_icon.badge_removed'):__('pelican-simplify::settings.app_icon.icon_removed'))->send();
     }
     public function brandInfo(): array
     {
@@ -321,6 +345,9 @@ class SimplifySettings extends Page implements HasForms
                     Toggle::make('appearance.brand.suffix')->label(__('pelican-simplify::settings.form.show_pelican_after_the_name')),
                     TextInput::make('appearance.brand.logo_height')->label(__('pelican-simplify::settings.form.logo_height'))->integer()->minValue(16)->maxValue(64)->suffix('px')->required(),
                     Toggle::make('appearance.brand.logo_text')->label(__('pelican-simplify::settings.form.show_the_text_next_to_the')),
+                ]),
+                Section::make(__('pelican-simplify::settings.sections.app_icon'))->description(__('pelican-simplify::settings.app_icon.description'))->schema([
+                    \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.app-icon-editor'),
                 ]),
             ],
             'Users & access' => [

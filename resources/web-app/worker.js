@@ -4,6 +4,7 @@
    App notifications (announcements, updates) arrive as push messages; a tap opens the panel on that page. */
 const OFFLINE = 'simplify-offline-__VERSION__';
 const ICON = '__ICON__';
+const BADGE = '__BADGE__';
 const OFFLINE_URL = new URL('./?simplify-offline=__VERSION__', self.registration.scope).href;
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>__NAME__</title><style>
@@ -49,15 +50,20 @@ self.addEventListener('push', (event) => {
     message = { body: event.data ? event.data.text() : '' };
   }
   const scope = self.registration.scope;
-  let url = scope;
-  try {
-    const target = new URL(message.url || scope, scope);
-    if (target.origin === new URL(scope).origin) url = target.href;
-  } catch {}
+  // Links and icons from the message only when they point at this panel.
+  const local = (value, fallback) => {
+    try {
+      const target = new URL(value || fallback, scope);
+      return target.origin === new URL(scope).origin ? target.href : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const url = local(message.url, scope);
   event.waitUntil(self.registration.showNotification(String(message.title || '__NAME__'), {
     body: String(message.body || ''),
-    icon: ICON,
-    badge: ICON,
+    icon: local(message.icon, ICON),
+    badge: local(message.badge, BADGE),
     tag: message.tag ? String(message.tag) : undefined,
     data: { url },
   }));

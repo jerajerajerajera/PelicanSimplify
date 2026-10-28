@@ -115,6 +115,7 @@ final class PushNotifications
     private static function deliver(object $user,array $device,array $message,?string $once=null): string
     {
         try{
+            $message+=self::icons();
             $request=WebPush::request($device,json_encode($message,JSON_THROW_ON_ERROR|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),self::keys(),self::subject());
             $response=Http::timeout(8)->connectTimeout(4)->withHeaders($request['headers'])->withBody($request['body'],'application/octet-stream')->post($request['url']);
             $status=$response->status();
@@ -141,6 +142,13 @@ final class PushNotifications
         if(str_starts_with($url,'https://'))return $url;
         $mail=(string)config('mail.from.address');
         return 'mailto:'.($mail!==''?$mail:'admin@localhost');
+    }
+
+    /** The panel's current app icon and badge, so a new upload shows before the service worker updates itself. */
+    private static function icons(): array
+    {
+        if(!class_exists(WebApp::class))return [];
+        try{return ['icon'=>WebApp::icon(192),'badge'=>WebApp::badge()];}catch(\Throwable){return [];}
     }
 
     private static function home(): string

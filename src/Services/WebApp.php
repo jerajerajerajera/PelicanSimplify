@@ -3,8 +3,8 @@ declare(strict_types=1);
 namespace Simplify\Panel\Services;
 
 /**
- * The panel as an installable web app: a manifest with the panel's name and Simplify's icons, and a small service
- * worker that only shows an offline page when the panel cannot be reached (nothing is cached otherwise).
+ * The panel as an installable web app: a manifest with the panel's name and icon (its own upload, see AppIcon, or
+ * Simplify's), and a small service worker that only shows an offline page when the panel cannot be reached (nothing is cached otherwise).
  */
 final class WebApp
 {
@@ -34,15 +34,22 @@ final class WebApp
         return rtrim((string) (parse_url(url('/'), PHP_URL_PATH) ?: ''), '/').'/';
     }
 
-    public static function icon(int $size): string
+    /** A size from ICON_SIZES, or "maskable" for Android's shaped icon. */
+    public static function icon(int|string $size): string
     {
         return route('simplify.app-icon', ['size' => $size]).'?v='.self::version();
     }
 
-    /** Changes with the plugin version, so installed apps pick up new icons and offline pages. */
+    /** The small white icon Android shows in the status bar for an app notification. */
+    public static function badge(): string
+    {
+        return route('simplify.app-badge').'?v='.self::version();
+    }
+
+    /** Changes with the plugin version and the uploaded icons, so installed apps pick up new icons and offline pages. */
     public static function version(): string
     {
-        return substr(hash('sha256', (string) BuildInfo::version()), 0, 12);
+        return substr(hash('sha256', BuildInfo::version().'|'.AppIcon::version()), 0, 12);
     }
 
     public static function manifest(): array
@@ -62,7 +69,7 @@ final class WebApp
             'icons' => [
                 ['src' => self::icon(192), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => self::icon(512), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => self::icon(512), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+                ['src' => self::icon('maskable'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
         ];
     }
@@ -73,6 +80,12 @@ final class WebApp
         $source = (string) file_get_contents(plugin_path('pelican-simplify', 'resources/web-app/worker.js'));
         // The name lands in HTML inside a JavaScript template string: escaped for both.
         $name = strtr(htmlspecialchars(self::name(), ENT_QUOTES), ['`' => '&#96;', '$' => '&#36;', '\\' => '&#92;']);
-        return strtr($source, ['__VERSION__' => self::version(), '__NAME__' => $name, '__ICON__' => str_replace(['\\', "'"], ['', ''], self::icon(192))]);
+        return strtr($source, ['__VERSION__' => self::version(), '__NAME__' => $name, '__ICON__' => self::quoted(self::icon(192)), '__BADGE__' => self::quoted(self::badge())]);
+    }
+
+    /** A URL safe inside a single-quoted JavaScript string. */
+    private static function quoted(string $url): string
+    {
+        return str_replace(['\\', "'"], ['', ''], $url);
     }
 }
