@@ -29,16 +29,20 @@ final class PluginUpdater
         })->values()->all();
     }
 
-    /** The version an update file offers for this panel; cached 50 s, or read fresh (past GitHub's CDN) on request. */
+    /**
+     * The version an update file offers for this panel; cached 50 s, or read fresh (past GitHub's CDN) on request.
+     * An update file that cannot be read is remembered for five minutes too: otherwise the Plugins page (which
+     * refreshes every 15 s) and the scheduled check (every minute) would wait for the same timeouts again and again.
+     */
     public static function latestVersion(Plugin $plugin, bool $fresh = false): ?string
     {
         if (!$plugin->update_url) return null;
         $key = 'simplify.plugin-latest.'.$plugin->id.'.'.self::channel();
         if ($fresh) Cache::forget($key);
-        return Cache::remember($key, 50, function () use ($plugin, $fresh): ?string {
+        return Remember::value($key, 50, function () use ($plugin, $fresh): ?string {
             $entry = self::entry($plugin, $fresh);
             return is_string($entry['version'] ?? null) ? $entry['version'] : null;
-        });
+        }, 300);
     }
 
     /** This panel's entry of the plugin's update.json. Fresh reads of raw.githubusercontent.com go through GitHub's API, which is not held for five minutes by the CDN. */
