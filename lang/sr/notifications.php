@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Шта је ново',
+        'full_release_notes' => 'Комплетне белешке о издању',
+        'mark_read' => 'Означи као прочитано',
+        'mark_as_unread' => 'Означи као непрочитано',
+        'clear' => 'Обриши',
+        'show_less' => 'Прикажи мање',
+        'pin' => 'Закачи ',
+        'unpin' => 'Откачи ',
+        'pin_2' => 'Закачи',
+        'unpin_2' => 'Откачи',
+        'pinned' => 'Закачено',
+        'you_are_all_caught_up' => 'Све сте прочитали.',
+        'archived' => 'Архивирано',
+        'nothing_archived' => 'Ништа није архивирано.',
+        'loading' => 'Учитавање…',
+        'show_more' => 'Прикажи више',
+        'clear_name' => 'Обриши :title',
+        'show_all' => 'Прикажи свих :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Обавештења још нису укључена на овом уређају.',
+        'test_notification' => 'Пробно обавештење',
+        'notifications_work_on_this_device' => 'Обавештења раде на овом уређају.',
+        'test_sent_it_should_appear_within' => 'Проба је послата. Требало би да се појави за неколико секунди.',
+        'the_browser_no_longer_accepts_notifications' => 'Прегледач више не прихвата обавештења за овај уређај. Поново их укључите.',
+        'the_push_service_did_not_accept' => 'Push услуга није прихватила пробу. Покушајте поново за минут.',
+    ],
+];
