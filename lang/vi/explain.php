@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Panel không kết nối được tới :host. Hãy kiểm tra máy chủ panel có được phép kết nối internet không.',
+        'no_key' => 'Hãy nhập khóa API trước.',
+        'not_set_up' => 'Giải thích lỗi chưa được thiết lập trên panel này.',
+        'unknown_log' => 'Nhật ký không xác định.',
+        'read_panel' => 'Không đọc được nhật ký panel.',
+        'read_wings' => 'Không đọc được nhật ký Wings từ Wings. Hãy thử lại khi node truy cập được.',
+        'read_console' => 'Không đọc được console từ Wings. Hãy thử lại khi node truy cập được.',
+        'too_many' => 'Bạn đã hỏi nhiều câu trong thời gian ngắn. Hãy thử lại sau :count phút.',
+        'daily_limit' => 'Panel này đã đạt giới hạn :count lần giải thích mỗi ngày. Hãy thử lại vào ngày mai.',
+        'no_answer' => ':model không giải thích được các dòng này. Hãy thử lại khi lỗi xuất hiện lần nữa.',
+    ],
+    'test' => [
+        'works' => 'Khóa hoạt động với :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Console',
+            'empty' => 'Console trống, nên chưa có gì để giải thích.',
+        ],
+        'panel' => [
+            'label' => 'Nhật ký panel',
+            'empty' => 'Nhật ký panel hiện không có cảnh báo hay lỗi.',
+        ],
+        'wings' => [
+            'label' => 'Nhật ký Wings',
+            'empty' => 'Nhật ký Wings của node này trống.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Không có dòng nhật ký nào được lưu cho plugin này.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Hãy đăng nhập panel trước, rồi mở lại trang này.',
+        'owner_only' => 'Chỉ chủ sở hữu panel (một root administrator) mới dùng được trang này.',
+        'expired' => 'Địa chỉ này đã hết hạn hoặc đã được thay bằng địa chỉ mới hơn.',
+        'no_key' => 'Không có khóa API :provider nào được lưu trên panel này. Root administrator thêm khóa trong cài đặt Simplify, mục Giải thích lỗi.',
+        'no_key_terminal' => 'Khi panel không mở được, hãy chạy :command trên máy chủ panel. Lệnh sẽ hỏi khóa và không lưu nó.',
+        'choose_node' => 'Chọn một node.',
+        'panel_log' => 'Nhật ký panel',
+        'wings_log_of' => 'Nhật ký Wings của :node',
+        'wings_log' => 'Nhật ký Wings',
+        'no_database' => 'Không kết nối được cơ sở dữ liệu, nên nhật ký Wings không có ở đây. Nhật ký panel thường cho biết lý do.',
+        'lead' => 'Dùng trang này khi panel hiện lỗi như 500 và các trang bình thường không mở được. AI được chọn trong cài đặt Simplify sẽ đọc nhật ký, cho biết có vấn đề gì không và cách khắc phục.',
+        'check_panel' => 'Kiểm tra nhật ký panel',
+        'check_wings' => 'Kiểm tra nhật ký Wings của :node',
+        'wait' => 'Đang kiểm tra nhật ký. Việc này có thể mất đến một phút.',
+        'attention' => 'Có điều cần chú ý',
+        'in_order' => 'Mọi thứ có vẻ ổn',
+        'noticed' => 'Bạn thấy điều gì đó?',
+        'checked' => ':model đã kiểm tra :count dòng. Địa chỉ, địa chỉ email và mật khẩu đã được xóa trước.',
+        'terminal_hint' => 'Khi panel không mở được, hãy chạy :command trên máy chủ panel, hoặc :url_command để có địa chỉ tạm đến trang này.',
+        'broken' => 'Trang này không thể hoàn tất',
+        'title' => 'Giải thích lỗi panel',
+    ],
+    'failures' => [
+        'invalid_key' => 'Khóa API :name không hợp lệ. Quản trị viên có thể nhập khóa mới trong cài đặt Simplify.',
+        'no_credit' => 'Tài khoản :name của khóa này đã hết tín dụng. Quản trị viên có thể nạp thêm hoặc kiểm tra thanh toán với :name.',
+        'forbidden' => 'Khóa API :name này không được dùng model đã chọn. Quản trị viên có thể chọn model khác trong cài đặt Simplify.',
+        'no_model' => 'Model :name đã chọn không khả dụng cho khóa này. Quản trị viên có thể chọn model khác trong cài đặt Simplify.',
+        'busy' => ':name hiện đang bận với khóa này. Hãy thử lại sau một phút.',
+        'unavailable' => ':name tạm thời không khả dụng. Hãy thử lại sau một phút.',
+        'other_status' => ':name không trả lời được câu hỏi này (lỗi :status). Hãy thử lại sau.',
+        'other' => ':name không trả lời được câu hỏi này. Hãy thử lại sau.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude của Anthropic',
+            'key_help' => 'Tạo khóa tại console.anthropic.com → API keys. Mỗi câu hỏi được tính phí vào tài khoản Anthropic đó, thường vài cent hoặc ít hơn; hãy đặt giới hạn hằng tháng ở đó cho an toàn.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini của Google',
+            'key_help' => 'Tạo khóa tại aistudio.google.com → Get API key. Câu hỏi được tính phí vào dự án Google Cloud đó, thường dưới một cent mỗi câu; hãy đặt ngân sách ở đó cho an toàn.',
+        ],
+        'openai' => [
+            'label' => 'GPT của OpenAI',
+            'key_help' => 'Tạo khóa tại platform.openai.com → API keys. Mỗi câu hỏi được tính phí vào tài khoản OpenAI đó, thường vài cent hoặc ít hơn; hãy đặt ngân sách hằng tháng ở đó cho an toàn.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'câu trả lời tốt nhất, vài cent',
+        'about_a_cent' => 'khoảng một cent',
+        'cheapest' => 'rẻ nhất',
+        'good_answers_under_a_cent' => 'câu trả lời tốt, dưới một cent',
+        'good_answers_about_a_cent' => 'câu trả lời tốt, khoảng một cent',
+    ],
+];
