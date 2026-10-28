@@ -1,5 +1,10 @@
 # Changes
 
+## 0.7.0-snapshot.6 (snapshot channel)
+What customers of a hosting company see.
+- Customers get a greeting above their servers, with the Client area and support buttons on the same line. Administrators do not see it.
+- A server's ⋯ menu has Copy website code once the server is shown on the website. It copies the embed code for that one server.
+
 ## 0.7.0-snapshot.5 (snapshot channel)
 Automatic subdomains without editing .env.
 - The Cloudflare token can be entered in Simplify settings → Automatic subdomains. It is stored encrypted and never shown again.
