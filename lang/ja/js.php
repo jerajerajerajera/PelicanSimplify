@@ -426,5 +426,6 @@ return [
         'package_off' => ':name はオフです。フォルダーには残ります。',
         'package_on' => ':name を再びオンにしました。',
         'by_author' => '作者 :author',
+        'order_server' => 'サーバーを注文',
     ],
 ];

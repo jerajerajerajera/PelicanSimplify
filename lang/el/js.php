@@ -426,5 +426,6 @@ return [
         'package_off' => 'Το :name είναι ανενεργό. Μένει στον φάκελο.',
         'package_on' => 'Το :name είναι ξανά ενεργό.',
         'by_author' => 'από :author',
+        'order_server' => 'Παραγγελία διακομιστή',
     ],
 ];

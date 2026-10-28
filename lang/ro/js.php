@@ -426,5 +426,6 @@ return [
         'package_off' => ':name este dezactivat. Rămâne în folder.',
         'package_on' => ':name este din nou activat.',
         'by_author' => 'de :author',
+        'order_server' => 'Comandați un server',
     ],
 ];

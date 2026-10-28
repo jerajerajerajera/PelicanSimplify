@@ -426,5 +426,6 @@ return [
         'package_off' => ':name је искључен. Остаје у фасцикли.',
         'package_on' => ':name је поново укључен.',
         'by_author' => 'аутор :author',
+        'order_server' => 'Наручи сервер',
     ],
 ];

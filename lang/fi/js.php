@@ -426,5 +426,6 @@ return [
         'package_off' => ':name on pois päältä. Se jää kansioon.',
         'package_on' => ':name on taas päällä.',
         'by_author' => 'tekijä :author',
+        'order_server' => 'Tilaa palvelin',
     ],
 ];

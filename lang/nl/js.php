@@ -426,5 +426,6 @@ return [
         'package_off' => ':name staat uit. Hij blijft in de map.',
         'package_on' => ':name staat weer aan.',
         'by_author' => 'door :author',
+        'order_server' => 'Server bestellen',
     ],
 ];

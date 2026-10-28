@@ -426,5 +426,6 @@ return [
         'package_off' => ':name är avstängt. Det finns kvar i mappen.',
         'package_on' => ':name är på igen.',
         'by_author' => 'av :author',
+        'order_server' => 'Beställ en server',
     ],
 ];

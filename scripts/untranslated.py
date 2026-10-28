@@ -21,7 +21,7 @@ SINGLE = re.compile(r"'((?:[^'\\\n]|\\.)*)'()")
 TEXT_ATTR = re.compile(r'(?<![:\w-])(?:title|aria-label|placeholder|alt|data-tip|label|wire:confirm)="([^"]*)"()')
 TEXT_NODE = re.compile(r'>([^<>]*)<')
 TRANSLATED = re.compile(r"(?:__|trans|trans_choice|t|tc|sscText|Simplify\.t|Simplify\.tc|@lang)\(\s*'[^']*'")
-ID_PATHS = ['settings.tabs', 'settings.steps', 'settings.step_hints', 'settings.check_groups', 'settings.experiences', 'settings.channels',
+ID_PATHS = ['settings.tabs', 'settings.panel_types', 'settings.steps', 'settings.step_hints', 'settings.check_groups', 'settings.experiences', 'settings.channels',
             'settings.features', 'settings.abilities', 'settings.performance', 'settings.egg_modes', 'settings.explain_audiences', 'maker.minecraft', 'maker.steps', 'settings.fonts', 'dashboard.admin_menu', 'announcements.repeats', 'announcements.targets', 'announcements.audiences', 'announcements.categories',
             'checks.requirements', 'checks.assets', 'checks.uploads', 'explain.emergency', 'explain.model_notes']
 THROWN = re.compile(r'new \\?(RuntimeException|LogicException|InvalidArgumentException|UnexpectedValueException|JsonException)\(')  # internal errors stay English for the log

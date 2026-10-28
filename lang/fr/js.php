@@ -426,5 +426,6 @@ return [
         'package_off' => ':name est désactivé. Il reste dans le dossier.',
         'package_on' => ':name est à nouveau activé.',
         'by_author' => 'par :author',
+        'order_server' => 'Commander un serveur',
     ],
 ];

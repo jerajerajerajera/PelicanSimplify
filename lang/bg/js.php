@@ -426,5 +426,6 @@ return [
         'package_off' => ':name е изключен. Остава в папката.',
         'package_on' => ':name е включен отново.',
         'by_author' => 'от :author',
+        'order_server' => 'Поръчай сървър',
     ],
 ];

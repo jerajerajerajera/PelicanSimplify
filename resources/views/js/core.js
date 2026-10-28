@@ -71,6 +71,14 @@
     const item = [...document.querySelectorAll('.fi-tabs-item')].find((el) => el.textContent.trim() === frameTab);
     if (item && !item.classList.contains('fi-active')) item.click();
   };
+  // The frame grows with the tab's content, so the settings scroll as one page: no second scrollbar, no empty band.
+  const fitFrameTab = () => {
+    const host = window.frameElement;
+    if (!frameTab || !host || !window.ResizeObserver) return;
+    const fit = () => { host.style.height = Math.ceil(document.body.getBoundingClientRect().height) + 'px'; };
+    new ResizeObserver(fit).observe(document.body);
+    fit();
+  };
 
   // A theme plugin can force one mode (Catppuccin is dark only); then the choice in the menu has no effect.
   const forced = () => options.panel_theme?.mode || '';
@@ -704,7 +712,10 @@
   };
   const scheduleEnhance = () => setTimeout(enhanceEditPages, 300);
   document.addEventListener('DOMContentLoaded', scheduleEnhance);
-  if (frameTab) window.addEventListener('load', () => setTimeout(focusFrameTab, 60));
+  if (frameTab) {
+    window.addEventListener('load', () => setTimeout(focusFrameTab, 60));
+    document.addEventListener('DOMContentLoaded', fitFrameTab);
+  }
   document.addEventListener('livewire:navigated', scheduleEnhance);
   window.Simplify.saveBar = saveBar;
   // Inline style for the panel name in the top-left corner; the font stack comes from the server's whitelist.

@@ -290,9 +290,12 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge)::before { content: "Add-ons"; position: absolute; top: -22px; inset-inline-start: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { flex: 1; min-width: 0; padding: 22px 26px 8px; }
 /* Pelican's own settings inside Simplify settings: one frame per Pelican tab, saved with Pelican's button. */
-.ps-pelican-frame { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 360px; }
-.ps-pelican-frame > p { margin: 0; color: var(--ps-muted); font-size: 13px; }
-.ps-pelican-frame > iframe { flex: 1; width: 100%; min-height: 0; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+/* The frame is as tall as Pelican's form (core.js sizes it) and sits straight on the settings: one scrollbar, no card. */
+/* Pelican's Save (and Send test mail) sit at the start of the frame, on the line of the explanation (the frame is
+   transparent and overlaps that line; the explanation leaves room on the right). */
+.ps-pelican-frame { display: flex; flex-direction: column; }
+.ps-pelican-frame > p { display: flex; align-items: center; min-height: 36px; margin: 0; padding-right: 240px; color: var(--ps-muted); font-size: 13px; }
+.ps-pelican-frame > iframe { display: block; width: 100%; height: 320px; margin-top: -36px; border: 0; background: transparent; }
 body.ps-pelican-tab .ps-savebar { display: none !important; }
 
 /* Sections: quiet cards with a clear title. */
@@ -391,10 +394,8 @@ body.ps-pelican-tab .ps-savebar { display: none !important; }
 html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 /* The settings scroll on their own; room at the bottom keeps the last switch clear of the save bar. */
 .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: 100%; padding-bottom: 88px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) { display: flex; flex-direction: column; padding-bottom: 8px; overflow: hidden; }
-/* The frame with Pelican's page fills the panel: every wrapper between the panel and the frame passes the height on. */
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) :is(.fi-grid, .fi-grid-col, .fi-sc-component) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active > * > * > * > .ps-pelican-frame { flex: 1; height: auto; min-height: 0; }
+/* A Pelican tab has no Simplify save bar to keep clear of. */
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) { padding-bottom: 22px; }
 /* Embedded in the dashboard popup or the host workspace, the card is sized to the frame: nothing outside it scrolls. */
 html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: hidden; }
 /* In the host workspace the settings sit straight on the page like the rest of host mode: no card, no margin,
@@ -429,7 +430,8 @@ html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-sectio
   html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: auto; }
   html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { height: auto !important; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { overflow: visible; flex-wrap: wrap !important; }
-  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active .ps-pelican-frame { min-height: 480px; }
+  .ps-pelican-frame > p { padding-right: 0; }
+  .ps-pelican-frame > iframe { margin-top: 6px; }
 }
 
 /* Phone layout (creator and first setup): "Step 1 of 4" with a progress bar instead of every step,
@@ -639,6 +641,18 @@ html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-sectio
   .ssc-navbar .ssc-progress-phone::after { content: none; }
   .ssc-navbar .ssc-draft-bar { padding: 0 3px; }
 }
+/* In a frame, Pelican's wizard footer gets 12px padding on top (native.css), which pushed Back and Next below the
+   middle line of the steps and the draft. The frame also fills its window, so on a short step the bar stays at
+   the bottom instead of halfway with an empty band below it. */
+html.ps-frame .ssc-maker .fi-sc-wizard-footer { padding-top: 0 !important; padding-bottom: 0 !important; }
+/* The footer's 1px top line moves its middle down half a pixel; the bar on top of it gets the same (invisible) line. */
+.ssc-navbar { box-sizing: border-box; border-top: 1px solid transparent; }
+html.ps-frame .ssc-maker { display: flex; flex-direction: column; min-height: 100dvh; }
+html.ps-frame .ssc-maker > form { display: flex; flex: 1 0 auto; flex-direction: column; }
+html.ps-frame .ssc-maker > form > .fi-sc { flex: 1 0 auto; }
+html.ps-frame .ssc-maker > form > .fi-sc > .fi-grid-col > .fi-sc-component { height: 100%; }
+html.ps-frame .ssc-maker .fi-sc-wizard { min-height: 100%; }
+html.ps-frame .ssc-maker .fi-sc-wizard-step.fi-active { flex: 1 0 auto; }
 
 /* Minecraft step: server types as compact cards (icon beside the name and its line), software as one row of
    buttons. Both still grow with their text; nothing is smaller than it needs to be. */

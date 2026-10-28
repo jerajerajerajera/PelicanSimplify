@@ -426,5 +426,6 @@ return [
         'package_off' => ':name đã tắt. Nó vẫn nằm trong thư mục.',
         'package_on' => ':name đã bật lại.',
         'by_author' => 'bởi :author',
+        'order_server' => 'Đặt máy chủ',
     ],
 ];

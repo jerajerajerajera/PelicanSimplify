@@ -426,5 +426,6 @@ return [
         'package_off' => ':name nonaktif. Tetap ada di folder.',
         'package_on' => ':name aktif lagi.',
         'by_author' => 'oleh :author',
+        'order_server' => 'Pesan server',
     ],
 ];

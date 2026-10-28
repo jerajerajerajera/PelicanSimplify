@@ -426,5 +426,6 @@ return [
         'package_off' => ':name está desactivado. Sigue en la carpeta.',
         'package_on' => ':name vuelve a estar activado.',
         'by_author' => 'de :author',
+        'order_server' => 'Pedir un servidor',
     ],
 ];

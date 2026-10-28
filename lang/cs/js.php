@@ -426,5 +426,6 @@ return [
         'package_off' => ':name vypnut. Zůstává ve složce.',
         'package_on' => ':name znovu zapnut.',
         'by_author' => 'autor: :author',
+        'order_server' => 'Objednat server',
     ],
 ];

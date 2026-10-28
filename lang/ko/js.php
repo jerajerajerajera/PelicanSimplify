@@ -426,5 +426,6 @@ return [
         'package_off' => ':name 꺼짐. 폴더에는 남아 있습니다.',
         'package_on' => ':name 다시 켜짐.',
         'by_author' => '제작자 :author',
+        'order_server' => '서버 주문',
     ],
 ];

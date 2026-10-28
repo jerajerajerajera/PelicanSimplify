@@ -426,5 +426,6 @@ return [
         'package_off' => ':name 已關閉。它仍保留在資料夾中。',
         'package_on' => ':name 已重新開啟。',
         'by_author' => '作者：:author',
+        'order_server' => '訂購伺服器',
     ],
 ];

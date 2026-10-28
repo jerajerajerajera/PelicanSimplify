@@ -426,5 +426,6 @@ return [
         'package_off' => ':name išjungtas. Jis lieka aplanke.',
         'package_on' => ':name vėl įjungtas.',
         'by_author' => 'autorius: :author',
+        'order_server' => 'Užsakyti serverį',
     ],
 ];

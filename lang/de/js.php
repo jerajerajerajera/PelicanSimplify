@@ -426,5 +426,6 @@ return [
         'package_off' => ':name ist aus. Es bleibt im Ordner.',
         'package_on' => ':name ist wieder an.',
         'by_author' => 'von :author',
+        'order_server' => 'Server bestellen',
     ],
 ];

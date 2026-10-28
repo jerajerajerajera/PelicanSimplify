@@ -428,5 +428,6 @@ return [
         'package_off' => ':name is off. It stays in the folder.',
         'package_on' => ':name is on again.',
         'by_author' => 'by :author',
+        'order_server' => 'Order a server',
     ],
 ];

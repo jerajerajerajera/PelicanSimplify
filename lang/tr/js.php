@@ -426,5 +426,6 @@ return [
         'package_off' => 'Kapalı: :name. Klasörde kalır.',
         'package_on' => 'Yeniden açık: :name.',
         'by_author' => 'yapan: :author',
+        'order_server' => 'Sunucu sipariş et',
     ],
 ];

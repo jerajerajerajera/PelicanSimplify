@@ -426,5 +426,6 @@ return [
         'package_off' => ':name kikapcsolva. A mappában marad.',
         'package_on' => ':name újra bekapcsolva.',
         'by_author' => 'készítette: :author',
+        'order_server' => 'Szerver rendelése',
     ],
 ];

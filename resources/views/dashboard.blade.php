@@ -369,7 +369,7 @@
                             </span>
                             <span class="ps-account-username" x-text="boot.user"></span>
                         </button>
-                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 5 : 4) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
+                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 5 : 4) + (pluginPages().length ? 1 : 0) + (boot.hosting?.client_area ? 1 : 0) + (boot.hosting?.support ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
                             <div class="ps-account-actions-inner">
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="{{ __('pelican-simplify::dashboard.ui.profile_settings') }}" aria-label="{{ __('pelican-simplify::dashboard.ui.profile_settings') }}" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
@@ -389,6 +389,9 @@
                                 <button type="button" class="ps-btn is-icon" x-show="adminPages().length && !server" x-on:click="setHostMode(!hostMode); accountMenu=false" :data-tip="hostMode ? @js(__('pelican-simplify::dashboard.ui.switch_to_simple_mode')) : @js(__('pelican-simplify::dashboard.ui.switch_to_host_mode'))" :aria-label="hostMode ? @js(__('pelican-simplify::dashboard.ui.switch_to_simple_mode')) : @js(__('pelican-simplify::dashboard.ui.switch_to_host_mode'))">
                                     <svg aria-hidden="true"><use :href="hostMode ? '#ps-grid' : '#ps-host'"/></svg>
                                 </button>
+                                {{-- A hosting company's client area (invoices, plans) and support, from Simplify settings → Hosting. --}}
+                                <a class="ps-btn is-icon" x-show="boot.hosting?.client_area" x-cloak :href="safeLink(boot.hosting?.client_area)" target="_blank" rel="noopener noreferrer" data-tip="{{ __('pelican-simplify::dashboard.ui.client_area') }}" aria-label="{{ __('pelican-simplify::dashboard.ui.opens_in_new_tab', ['label' => __('pelican-simplify::dashboard.ui.client_area')]) }}"><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                                <a class="ps-btn is-icon" x-show="boot.hosting?.support" x-cloak :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer" :data-tip="boot.hosting?.support_label" :aria-label="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.opens_in_new_tab')), { label: boot.hosting?.support_label || @js(__('pelican-simplify::dashboard.ui.support')) })"><svg aria-hidden="true"><use href="#ps-question"/></svg></a>
                                 {{-- Account-level pages other plugins add (such as Legal Pages), listed below the menu. --}}
                                 <button type="button" class="ps-btn is-icon" x-show="pluginPages().length" x-on:click="pluginMenu=!pluginMenu; themeOpen=false" data-tip="{{ __('pelican-simplify::dashboard.ui.pages_from_other_plugins') }}" aria-label="{{ __('pelican-simplify::dashboard.ui.pages_from_other_plugins') }}" aria-controls="ps-plugin-pages" :aria-expanded="pluginMenu">
                                     <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
@@ -520,6 +523,17 @@
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="{{ __('pelican-simplify::dashboard.ui.servers') }}">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
                     @include('pelican-simplify::announcement-bars')
+                    {{-- Customers of a hosting company: a greeting with their account links next to it. --}}
+                    <div class="ps-customer-head" x-show="boot.hosting && !boot.settings_url" x-cloak>
+                        <div>
+                            <h2 x-text="Simplify.fill(@js(__('pelican-simplify::dashboard.ui.customer_greeting')), { name: boot.user })"></h2>
+                            <p x-text="Simplify.choice(@js(__('pelican-simplify::dashboard.ui.customer_servers')), boot.servers.length)"></p>
+                        </div>
+                        <div class="ps-customer-links">
+                            <a class="ps-btn" x-show="boot.hosting?.client_area" :href="safeLink(boot.hosting?.client_area)" target="_blank" rel="noopener noreferrer"><span>{{ __('pelican-simplify::dashboard.ui.client_area') }}</span><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                            <a class="ps-btn" x-show="boot.hosting?.support" :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer"><span x-text="boot.hosting?.support_label"></span><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                        </div>
+                    </div>
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-overview-filters">
                             <div class="ps-game-filters" role="group" aria-label="{{ __('pelican-simplify::dashboard.ui.filter_servers_by_game') }}">
@@ -819,8 +833,11 @@
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; toggleColorMenu($refs.infoMore)"><span class="ps-color-dot" aria-hidden="true"></span><span>{{ __('pelican-simplify::dashboard.ui.server_color') }}</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg><span>{{ __('pelican-simplify::dashboard.ui.server_background') }}</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.permissions['settings.rename']" x-on:click="infoMenu=false; openAlias()"><svg aria-hidden="true"><use href="#ps-edit"/></svg><span>{{ __('pelican-simplify::dashboard.ui.change_alias') }}</span></button>
+                        <span class="ps-label ps-menu-heading" x-show="server?.upgrade_url" x-cloak>{{ __('pelican-simplify::dashboard.ui.plan') }}</span>
+                        <a class="ps-menu-item" role="menuitem" x-show="server?.upgrade_url" x-cloak :href="safeLink(server?.upgrade_url)" target="_blank" rel="noopener noreferrer" x-on:click="infoMenu=false"><svg aria-hidden="true"><use href="#ps-arrow-right"/></svg><span>{{ __('pelican-simplify::dashboard.ui.upgrade_this_server') }}</span><svg class="ps-menu-item-out" aria-hidden="true"><use href="#ps-external"/></svg></a>
                         <span class="ps-label ps-menu-heading" x-show="server?.website_listing" x-cloak>{{ __('pelican-simplify::dashboard.ui.website') }}</span>
                         <button type="button" class="ps-menu-item ps-web-listing" role="menuitemcheckbox" x-show="server?.website_listing" x-cloak :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)"><svg aria-hidden="true"><use href="#ps-web"/></svg><span>{{ __('pelican-simplify::dashboard.ui.show_on_the_website') }}</span><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span></button>
+                        <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.website_listing?.code && server?.website_listing?.visible" x-cloak x-on:click="infoMenu=false; copyText(server.website_listing.code, @js(__('pelican-simplify::dashboard.ui.code_copied')))"><svg aria-hidden="true"><use href="#ps-copy"/></svg><span>{{ __('pelican-simplify::dashboard.ui.copy_website_code') }}</span></button>
                         <hr>
                         <button type="button" class="ps-menu-item is-danger" role="menuitem" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" x-on:click="infoMenu=false; power('kill')"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>{{ __('pelican-simplify::dashboard.ui.force_stop') }}</span></button>
                     </div>
@@ -1566,6 +1583,7 @@
             </div>
             <footer class="ps-modal-foot">
                 <span class="is-start" x-show="explain?.answer?.model" x-text="explain?.answer?.model ? Simplify.fill(@js(__('pelican-simplify::dashboard.ui.checked_by')), { model: explain.answer.model, lines: explain.answer.lines, log: explainNoun(explain.source) }) : ''"></span>
+                <a class="ps-btn" x-show="boot.hosting?.support && (explain?.answer?.found || explain?.error)" x-cloak :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#ps-question"/></svg><span x-text="boot.hosting?.support_label"></span></a>
                 <button type="button" class="ps-btn" x-show="explain?.answer || explain?.error" x-on:click="explainError()" :disabled="!!explain?.loading"><svg aria-hidden="true"><use href="#ps-restart"/></svg>{{ __('pelican-simplify::dashboard.ui.ask_again') }}</button>
                 <button type="button" class="ps-btn is-primary" x-on:click="closeExplain()">{{ __('pelican-simplify::dashboard.ui.done') }}</button>
             </footer>

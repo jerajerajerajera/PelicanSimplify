@@ -29,6 +29,8 @@ function app($c=null){return new class{public function runningInConsole(){return
 function report($e){}
 function env($k){return ['CLOUDFLARE_API_TOKEN'=>'test-token','CLOUDFLARE_ZONE_ID'=>'zone'][$k]??null;}
 function base_path($p=''){return '/nonexistent/'.$p;}
+function encrypt($v){return 'enc:'.base64_encode($v);}
+function decrypt($v){return base64_decode(substr($v,4));}
 function validator($data,$rules,$m=[],$a=[]){return new class($data){public function __construct(private $d){}public function validate(){return $this->d;}};}
 function check($ok,$message){if(!$ok)throw new \RuntimeException('FAIL '.$message);echo "PASS $message\n";}
 // Fake Cloudflare: records in memory, with the comment and name filters the client uses.
@@ -106,5 +108,23 @@ check(D::suggest('Ash')==='ash-2'&&D::suggest('Ash',$a)==='ash','a taken suggest
 check(D::suggest('www')==='www-2'&&D::suggest('!!!')==='','reserved names are skipped and names without letters suggest nothing');
 check(strlen(D::suggest(str_repeat('a',80)))<=63,'suggestions fit a DNS label');
 check(CloudflareDns::diff([],[])===[],'nothing to do for a server without a subdomain');
+
+// The token typed in Simplify settings: stored encrypted, used before .env, kept when the field is left empty.
+$s0=D::settings();
+D::save([...$s0,'zone_id'=>str_repeat('a',32),'token'=>'typed-token']);
+$file=json_decode(Storage::$files[D::FILE],true);
+check($file['token']==='enc:'.base64_encode('typed-token')&&!str_contains(Storage::$files[D::FILE],'typed-token'),'the token is stored encrypted, never in plain text');
+check(D::credentials()===['typed-token',str_repeat('a',32)]&&D::settings()['has_token'],'a saved token and zone ID come before .env');
+D::save([...D::settings(),'token'=>'']);check(D::credentials()[0]==='typed-token','an empty token field keeps the saved token');
+D::save(D::settings(),true);check(D::credentials()===['test-token','zone']&&!D::settings()['has_token'],'removing the token falls back to .env');
+// Test: finds the zone for the domain, also from a subdomain, and explains a refused token.
+$zones=new class{public array $asked=[];public bool $refuse=false;public function __invoke($m,$p,$b){$this->asked[]=$p;if($this->refuse)return ['success'=>false,'errors'=>[['message'=>'Invalid API Token']]];return ['success'=>true,'result'=>str_contains($p,'name=example.com')?[['id'=>str_repeat('b',32)]]:[]];}};
+$keep=D::$transport;D::$transport=$zones;
+$r=D::test('typed','play.example.com');
+check($r['ok']&&$r['zone_id']===str_repeat('b',32)&&count($zones->asked)===2,'Test finds the zone of the domain, also for a subdomain');
+check(!D::test('typed','other.org')['ok'],'Test reports a domain the token cannot see');
+$zones->refuse=true;$r=D::test('typed','example.com');check(!$r['ok']&&str_contains($r['message'],'Invalid API Token'),'Test explains a refused token');
+check(!D::test('','')['ok'],'Test asks for the domain first');
+D::$transport=$keep;
 echo "All subdomain checks passed.\n";
 }

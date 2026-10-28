@@ -1875,7 +1875,10 @@
       /** Create buttons for the overview (top bar or toolbar): the Server Maker first, as the one main button. */
       createButtons() {
         const labels = { server: t('dashboard.create_server'), other: t('dashboard.other_server'), native: t('dashboard.new_server') };
-        return this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? labels.server : labels[c.key], primary: index === 0 }));
+        const buttons = this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? labels.server : labels[c.key], primary: index === 0 }));
+        // Customers of a hosting company order new servers in its billing system.
+        if (!buttons.length && this.boot.hosting?.order) return [{ key: 'order', label: t('dashboard.order_server'), icon: 'plus', primary: true }];
+        return buttons;
       },
       /** Puts the top-bar health details right under the Healthy button, left edges in line, inside the screen. */
       placeHealthPopover() {
@@ -1892,6 +1895,7 @@
         return this.boot.features?.host_health ? this.overviewPreferences.healthPlace : null;
       },
       openCreate(game = 'server') {
+        if (game === 'order') { const url = this.safeLink(this.boot.hosting?.order); if (url !== '#') window.open(url, '_blank', 'noopener'); return; }
         if (!['server', 'minecraft', 'other', 'native'].includes(game) || this.busy || this.server || !this.canCreateGame(game)) return;
         this.createGame = game;
         this.openPopup('create');

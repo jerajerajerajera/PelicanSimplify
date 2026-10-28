@@ -426,5 +426,6 @@ return [
         'package_off' => ':name está desligado. Ele continua na pasta.',
         'package_on' => ':name está ligado novamente.',
         'by_author' => 'por :author',
+        'order_server' => 'Encomendar um servidor',
     ],
 ];

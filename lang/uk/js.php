@@ -426,5 +426,6 @@ return [
         'package_off' => ':name вимкнено. Він залишається в теці.',
         'package_on' => ':name знову ввімкнено.',
         'by_author' => 'автор: :author',
+        'order_server' => 'Замовити сервер',
     ],
 ];

@@ -426,5 +426,6 @@ return [
         'package_off' => ':name متوقفة. تبقى في المجلد.',
         'package_on' => ':name مفعّلة مجددًا.',
         'by_author' => 'بواسطة :author',
+        'order_server' => 'طلب خادم',
     ],
 ];
