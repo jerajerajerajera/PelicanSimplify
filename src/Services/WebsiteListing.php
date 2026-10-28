@@ -25,10 +25,13 @@ final class WebsiteListing
         if(Extensions::web()){$adapter=Extensions::webAdapter();$adapter->save($server,[...$adapter->metadata($server),'visible'=>$visible]);return;}
         (self::STORE)::save($server,[...(self::STORE)::metadata($server),'visible'=>$visible]);
     }
-    /** {visible} for the server page, or null when the toggle should not show. */
+    /** {visible, code} for the server page, or null when the toggle should not show; code is the embed for this one server. */
     public static function forPage(Server $server): ?array
     {
         if(!self::available()||!(user()?->isRootAdmin()||(int)$server->owner_id===(int)user()?->id))return null;
-        try{return ['visible'=>self::visible($server)];}catch(\Throwable $e){report($e);return null;}
+        try{
+            $code=WebsiteEmbed::enabled()?WebsiteEmbed::snippet(url('/'),['server'=>(string)$server->uuid_short])['script']:null;
+            return ['visible'=>self::visible($server),'code'=>$code];
+        }catch(\Throwable $e){report($e);return null;}
     }
 }

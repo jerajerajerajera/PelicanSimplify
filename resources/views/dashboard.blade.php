@@ -523,6 +523,17 @@
             <div class="ps-server-scroll" tabindex="0" role="region" aria-label="Servers">
                 <div class="ps-server-stage" :class="{'is-list': overviewView==='list'}">
                     @include('pelican-simplify::announcement-bars')
+                    {{-- Customers of a hosting company: a greeting with their account links next to it. --}}
+                    <div class="ps-customer-head" x-show="boot.hosting && !boot.settings_url" x-cloak>
+                        <div>
+                            <h2 x-text="'Hi ' + boot.user + ', here are your servers'"></h2>
+                            <p x-text="boot.servers.length + (boot.servers.length === 1 ? ' server' : ' servers') + ' · everything you can do for them is here'"></p>
+                        </div>
+                        <div class="ps-customer-links">
+                            <a class="ps-btn" x-show="boot.hosting?.client_area" :href="safeLink(boot.hosting?.client_area)" target="_blank" rel="noopener noreferrer"><span>Client area</span><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                            <a class="ps-btn" x-show="boot.hosting?.support" :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer"><span x-text="boot.hosting?.support_label"></span><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                        </div>
+                    </div>
                     <div class="ps-overview-toolbar" x-init="scrollHint($el)">
                         <div class="ps-overview-filters">
                             <div class="ps-game-filters" role="group" aria-label="Filter servers by game">
@@ -826,6 +837,7 @@
                         <a class="ps-menu-item" role="menuitem" x-show="server?.upgrade_url" x-cloak :href="safeLink(server?.upgrade_url)" target="_blank" rel="noopener noreferrer" x-on:click="infoMenu=false"><svg aria-hidden="true"><use href="#ps-arrow-right"/></svg><span>Upgrade this server</span><svg class="ps-menu-item-out" aria-hidden="true"><use href="#ps-external"/></svg></a>
                         <span class="ps-label ps-menu-heading" x-show="server?.website_listing" x-cloak>Website</span>
                         <button type="button" class="ps-menu-item ps-web-listing" role="menuitemcheckbox" x-show="server?.website_listing" x-cloak :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)"><svg aria-hidden="true"><use href="#ps-web"/></svg><span>Show on the website</span><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span></button>
+                        <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.website_listing?.code && server?.website_listing?.visible" x-cloak x-on:click="infoMenu=false; copyText(server.website_listing.code, 'Code copied. Paste it into your website.')"><svg aria-hidden="true"><use href="#ps-copy"/></svg><span>Copy website code</span></button>
                         <hr>
                         <button type="button" class="ps-menu-item is-danger" role="menuitem" :disabled="busy || !server?.permissions['control.stop'] || status==='offline'" x-on:click="infoMenu=false; power('kill')"><svg aria-hidden="true"><use href="#ps-kill"/></svg><span>Force stop</span></button>
                     </div>
