@@ -382,6 +382,20 @@ body.ps-pelican-tab .ps-savebar { display: none !important; }
 .ps-brand-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .ps-brand-upload > img { height: 32px; max-width: 160px; object-fit: contain; border-radius: 6px; background: rgb(127 127 127 / .08); padding: 2px; }
 .ps-brand-upload .ps-btn { cursor: pointer; }
+/* App icon: home-screen tile and an Android-style notification as preview. */
+.ps-app-icon-editor { display: grid; gap: 16px; }
+.ps-app-icon-editor .ps-help { margin: 0; }
+.ps-app-icon-stage { flex-wrap: wrap; gap: 16px 28px; }
+.ps-app-icon-home { display: grid; justify-items: center; gap: 6px; margin: 0; width: 76px; }
+.ps-app-icon-home img { width: 60px; height: 60px; border-radius: 50%; }
+.ps-app-icon-home figcaption { max-width: 76px; overflow: hidden; color: var(--ps-ink); font-size: 12px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.ps-app-icon-note { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 4px 12px; flex: 1 1 260px; max-width: 380px; padding: 12px 14px; border-radius: 18px; background: var(--ps-surface); color: var(--ps-ink); box-shadow: var(--ps-shadow-sm); }
+.ps-app-icon-note-head { display: flex; grid-column: 1 / -1; align-items: center; gap: 6px; color: var(--ps-muted); font-size: 12px; }
+.ps-app-icon-note-head img { width: 16px; height: 16px; padding: 2px; border-radius: 50%; background: #3f3f46; }
+.ps-app-icon-note-text { display: grid; gap: 2px; min-width: 0; font-size: 13px; line-height: 1.35; }
+.ps-app-icon-note-text span { color: var(--ps-muted); }
+.ps-app-icon-note-icon { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.ps-app-icon-row { display: grid; gap: 6px; }
 .ps-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Settings in the style of the server page: one rounded card that fits the window. The menu on the left
