@@ -1,5 +1,13 @@
 # Changes
 
+## 0.7.0-snapshot.7 (snapshot channel)
+Faster pages.
+- The settings page no longer loads the embed preview and the banner pictures until you open those tabs.
+- Pages, scripts and styles are sent compressed when the web server does not do that already.
+- Browse Hub loads in one go.
+- Update files that cannot be reached are not retried every few seconds.
+- Server Maker steps are lighter.
+
 ## 0.7.0-snapshot.6 (snapshot channel)
 What customers of a hosting company see.
 - Customers get a greeting above their servers, with the Client area and support buttons on the same line. Administrators do not see it.
