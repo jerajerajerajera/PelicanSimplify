@@ -1,5 +1,10 @@
 # Changes
 
+## 0.7.0-snapshot.4 (snapshot channel)
+A fix for the Server Maker button bar.
+- Back and Next are on one line with the steps and the draft buttons.
+- In the popup, the button bar stays at the bottom on short steps, without a white band below it.
+
 ## 0.7.0-snapshot.3 (snapshot channel)
 A fix for the Pelican tabs in Simplify settings.
 - General, Captcha, Mail, Backup, OAuth and Misc no longer show a grey card with an empty band or a second scrollbar. The form is as tall as its content.
