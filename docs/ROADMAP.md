@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned work after the 0.3 betas. Scope and order may change.
+Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.6.0, and the beta channel has the same features. The snapshot channel has 0.7.0-snapshot.8 with a hosting profile, faster pages and Simplify in Pelican's languages. All support Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2.
 
 ## Easy server creator
 A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
@@ -23,17 +23,23 @@ A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.
 - Larger hosts (several nodes) can switch to host mode: servers in a compact list per node on the left, Pelican's admin pages as the main workspace.
 
 ## Other plugins
-- Done in the 0.5.0 snapshots: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
-- Done in 0.5.0-snapshot.7: buttons that plugins add to Pelican's server list and console (for example Create server from User Creatable Servers), shown and run in Simplify. Tabs and form fields plugins add to Pelican's own forms show in the embedded pages.
+- Done in 0.5.1: account pages from plugins in the account menu, widgets from plugins as tiles on the overview and the server page, and overlapping plugins (such as Subdomains) switching off only the matching Simplify feature. Every page and widget can be switched off in the settings.
+- Done in 0.5.1: buttons that plugins add to Pelican's server list and console (for example Create server from User Creatable Servers), shown and run in Simplify. Tabs and form fields plugins add to Pelican's own forms show in the embedded pages.
+- Still open: installing, updating and switching plugins on or off from Simplify's plugin manager.
+
+## Overview
+- Done in 0.5.1: your own server groups (with their own button, saved per account), server order (Name, Created, Port, or your own order per group), layouts (Cards, Compact, List) with 2 to 6 columns and three card widths, quick actions Off, On or Hover, and a full screen width overview.
+- Done in 0.5.1: the interface keeps its normal size below 1440p and only scales down (never below 75%) when the page would not fit.
+- Still open: extra information fields on the cards.
 
 ## Phone experience
-- Done in the 0.4.7 snapshots: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
+- Done in 0.5.1: the overview (one page scroll, one filter row, compact rows with one power button, a one-line health summary and a bottom tab bar), the server page (four tabs, a full-height console with quick commands), popups as sheets with a drag handle, and the creator ("Step 1 of 4", choice rows, Back / Next at the bottom).
 - Bottom tab bar (Servers, Create, Alerts, Account) and a top bar that collapses on scroll.
 - Full-screen sheets with a drag handle instead of centred popups; the save bar sits above the tab bar.
 - Server page on phones: a status header with large power buttons, swipeable sections (Console, Players, Files, Settings), and a console with a command bar above the keyboard plus quick-command chips.
-- Done in 0.5.0-snapshot.5: embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
-- Done in 0.5.0-snapshot.6: host mode on phones, with a node and server switcher instead of three columns.
-- Done in 0.5.0-snapshot.4: installable web app (manifest, icons, theme colour, offline page) and safe-area support for notched phones.
+- Done in 0.5.1: embedded Pelican pages (files, admin) restyled for narrow screens: one column and 44 px touch targets.
+- Done in 0.5.1: host mode on phones, with a node and server switcher instead of three columns.
+- Done in 0.5.1: installable web app (manifest, icons, theme colour, offline page) and safe-area support for notched phones.
 - Checked with automated phone screenshots (360, 390 and 430 px wide) in the browser tests.
 
 ## Server page

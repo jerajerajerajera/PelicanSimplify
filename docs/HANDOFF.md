@@ -1,6 +1,6 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 20 October 2026 (0.4.2).
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 28 October 2026 (stable 0.6.0, beta 0.6.0-beta.13, snapshot 0.7.0-snapshot.8).
 
 ## The project in short
 
@@ -16,16 +16,17 @@ Three channels, each on its own branch (decided 20 October 2026):
 
 | Channel | Branch | Update file | Versions | Latest zip |
 |---|---|---|---|---|
-| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.4.3` | `dist/pelican-simplify-latest.zip` + GitHub Release |
-| Beta | `beta` | `update-beta.json` | `0.4.3-beta.N`, `0.4.3-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
-| Snapshot | `snapshot` | `update-snapshot.json` | `0.4.3-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
+| Stable | `main` | `update.json` (the Pelican Hub syncs `main`) | `0.6.0` | `dist/pelican-simplify-latest.zip` + GitHub Release |
+| Beta | `beta` | `update-beta.json` | `0.7.0-beta.N`, `0.7.0-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
+| Snapshot | `snapshot` | `update-snapshot.json` | `0.7.0-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.4.3 for Pelican 1.0.0-beta38 and 1.0.0-rc.1.
+- **Current:** stable 0.6.0, beta 0.6.0-beta.13 and snapshot 0.7.0-snapshot.8, all for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2. On an untested Pelican release the setup check warns instead of blocking (from 0.4.7 and 0.5.0-beta.4). Beta 0.5.0-beta.3 was tested on fresh panels: beta38 with PHP 8.3, 8.4 and 8.5, rc.1 and rc.2 with PHP 8.4 and 8.5 (the compatibility table in the README and INSTALLATION). Beta has the same features as stable. The 0.7.0 snapshots add a hosting profile (setup step Who is this panel for?, client area and support links for customers), the Cloudflare token for automatic subdomains in Simplify settings, faster pages, and Simplify in all 32 of Pelican's languages.
+- **Documentation on `main`:** the README's "What's new" section (or a "Now in beta" section while a beta has more than stable), channel table, compatibility table, CHANGELOG, ROADMAP and these docs are kept up to date on `main` (documentation only, no version or plugin files). The CHANGELOG on `main` has one summary entry per beta that links to the full beta changelog; when the beta becomes stable, that summary is replaced by the stable entry.
 - **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.
 - **Channel choice:** Simplify settings → Plugin manager → "Simplify versions": Stable (default), Beta or Snapshot. Stored as the `simplify_beta` and `simplify_snapshot` switches. A panel gets the newest of its channel and every more stable one (`PluginUpdater::channelUrls`).
 - **Bridge for old betas:** installations up to 0.4.2-beta.7 read `main/update-beta.json`. A stable build writes that file too, so they move to the stable release, whose code then reads the beta branch.
-- Version order (PHP `version_compare`): `0.4.3-snapshot.N < 0.4.3-beta.N < 0.4.3-rc.N < 0.4.3`.
+- Version order (PHP `version_compare`): `0.7.0-snapshot.N < 0.7.0-beta.N < 0.7.0-rc.N < 0.7.0`.
 
 ## How a release is made
 
@@ -67,7 +68,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - `resources/views/js/dashboard.js`: the Alpine component `pelicanSimplify`.
   - `resources/views/js/core.js`: shared UI such as the save bar, dialogs, tooltips and `brandTextStyle`.
 - **CSS:** `resources/views/css/tokens.css`, `components.css`, `dashboard.css`, `native.css` (styling of embedded Pelican pages), `wizard.css` (settings and creators).
-- `conflicts.json`: plugins that clash with Simplify. Currently empty. It is also fetched hourly from GitHub `main`, so it can be changed without a release.
+- `conflicts.json`: plugins that clash with Simplify (`plugins`, currently empty). From 0.5.0 also `overlaps`: plugins that do part of what Simplify does, with the Simplify `features` that switch off while they are enabled (Subdomains switches off automatic subdomains). It is also fetched hourly from GitHub `main`, so it can be changed without a release; older versions ignore `overlaps`.
 
 ## What the plugin does now (short)
 
@@ -75,7 +76,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Grid or list view. Create buttons and filters on the toolbar row.
   - Grouping by node (Auto/Always/Off).
   - Host health tile.
-  - "Customize overview" menu (simple mode only).
+  - "Customize overview" menu (simple mode only). From 0.5.1: own server groups (saved per account, Server groups button), server order, layouts Cards/Compact/List with columns and card width, quick actions Off/On/Hover, full screen width.
 - **Host mode:** for admins. A server list per node and the admin menu with pages in a pane. Clicking a server opens its page in the pane; an arrow or ✕ closes it.
 - **Server page:**
   - Banner (image, colour or broken heart when offline).
@@ -83,7 +84,7 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Power, players and resources on the right.
   - A status bar appears when you scroll.
 - **Creators:** Easy Minecraft server creator, and the Easy server creator with 170+ games. Includes Steam art and automatic Steam tokens.
-- **Appearance:** themes, accent colour, panel name/logo editor, automatic scaling (1440p = 100%, about 80% on 1080p).
+- **Appearance:** themes, accent colour, panel name/logo editor, automatic scaling (from 0.5.1: normal size, only scaled down to at least 75% when the page would not fit).
 - **Account menu:** profile, theme (unfolds Light/Dark/System), host/simple switch, sign out.
 - **People & roles, plugin manager:** safe updates with rollback; update channels.
 - **Other plugins:**
@@ -91,15 +92,15 @@ Three channels, each on its own branch (decided 20 October 2026):
   - Per page you can show or hide them (Settings → General → "Pages from other plugins").
   - Plugins on the conflict list switch the Simplify dashboard off, with an explanation.
   - Tested with Tickets and Legal Pages from `pelican-dev/plugins`.
+  - From 0.5.1: their account pages in the account menu, their widgets as tiles, their buttons on the server list and console, and overlapping plugins switch off only the matching Simplify feature.
+- **Phones (from 0.5.1):** the overview, the server page (four tabs, quick commands), popups as sheets, the creator, Pelican's embedded pages and host mode have their own layout below 600 px wide; the panel is an installable web app with an offline page.
 
 ## Open items and ideas
 
-- **Plugin support, next steps:**
-  - App-panel pages from plugins in the account menu (for example Legal Pages).
-  - Widgets from plugins as tiles.
-  - Check overlap with the official plugins `minecraft-modrinth`, `subdomains` and `user-creatable-servers`.
+- **Plugin support:** account pages, widgets, buttons and overlaps are done in 0.5.1. Still open: installing, updating and switching plugins from Simplify's plugin manager.
+- **Phones:** done in 0.5.1 (overview, server page, sheets, creator, embedded Pelican pages, host mode, installable web app).
 - **Optional:** a manual "interface size" choice next to the automatic scaling.
-- **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): better phone experience, Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
+- **Roadmap** (README "Coming features" and `docs/ROADMAP.md`): Simplify as the whole panel, clearer installation, egg settings, alerts, presets.
 - **Pelican Hub:** it reads the repository, so `main` must stay stable-only.
 
 ## Notes on the owner's own panel
