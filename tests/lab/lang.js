@@ -63,7 +63,7 @@ const ok = (name, pass, detail = '') => { results.push({ name, pass, detail }); 
       const missed = leftovers.filter(([, text]) => seen.text.includes(text)).map(([key]) => key);
       ok(`${tag} no English left`, missed.length === 0, missed.slice(0, 4).join(', '));
       // Short words such as server states slip past the sentence check above.
-      const states = locale === 'en' ? [] : seen.states.filter((text) => /^(running|offline|starting|stopping|installing|install failed)$/i.test(text));
+      const states = seen.states.filter((text) => Object.keys(english).some((key) => key.startsWith('js.status.') && english[key] === text && local[key] !== text));
       ok(`${tag} server states translated`, states.length === 0, [...new Set(states)].join(', '));
       ok(`${tag} fits the screen`, seen.wide <= 1, seen.wide + 'px wider');
       ok(`${tag} no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
