@@ -47,24 +47,42 @@ final class HubCatalog
         return $catalog;
     }
 
-    /** List pages plus a detail record per theme, keyed by slug. */
+    /**
+     * List pages plus a detail record per theme, keyed by slug. The first page says how many pages there are; the
+     * other pages are fetched together, and so are the theme details, so a cold catalogue takes two round trips
+     * instead of one per page and per theme.
+     */
     private static function read(): array
     {
-        $get=fn(string $path)=>Http::timeout(10)->connectTimeout(4)->acceptJson()
-            ->withHeaders(['User-Agent'=>'PelicanSimplify/'.BuildInfo::version().' (+https://github.com/jerajerajerajera/PelicanSimplify)'])
-            ->get(self::HUB.$path)->throw()->json();
-        $list=[];$page=1;
-        do{
-            $body=$get('/api/plugins?page='.$page);
-            foreach((array)($body['data']??[]) as $row)if(is_array($row))$list[]=$row;
-            $last=min(self::MAX_PAGES,(int)($body['last_page']??1));
-        }while(++$page<=$last);
-        $details=[];
+        $agent='PelicanSimplify/'.BuildInfo::version().' (+https://github.com/jerajerajerajera/PelicanSimplify)';
+        $get=fn(string $path)=>Http::timeout(10)->connectTimeout(4)->acceptJson()->withHeaders(['User-Agent'=>$agent])->get(self::HUB.$path)->throw()->json();
+        $pool=function(array $paths)use($agent):array{
+            if(!$paths)return [];
+            $responses=Http::pool(fn(\Illuminate\Http\Client\Pool $pool)=>array_map(fn(string $path)=>$pool->as($path)->timeout(10)->connectTimeout(4)->acceptJson()->withHeaders(['User-Agent'=>$agent])->get(self::HUB.$path),$paths));
+            $bodies=[];
+            foreach($paths as $path){
+                $response=$responses[$path]??null;
+                if($response instanceof \Illuminate\Http\Client\Response&&$response->successful()&&is_array($response->json()))$bodies[$path]=$response->json();
+            }
+            return $bodies;
+        };
+        $first=$get('/api/plugins?page=1');
+        $pages=[1=>$first];
+        $last=min(self::MAX_PAGES,(int)($first['last_page']??1));
+        $paths=[];for($page=2;$page<=$last;$page++)$paths[]='/api/plugins?page='.$page;
+        foreach($pool($paths) as $path=>$body)$pages[(int)substr($path,strlen('/api/plugins?page='))]=$body;
+        $list=[];
+        for($page=1;$page<=$last;$page++){
+            if(!isset($pages[$page]))throw new \RuntimeException('Hub page '.$page.' could not be read.');
+            foreach((array)($pages[$page]['data']??[]) as $row)if(is_array($row))$list[]=$row;
+        }
+        $slugs=[];
         foreach($list as $row){
             $slug=(string)($row['slug']??'');
-            if(($row['type']??'')!=='theme'||!self::validSlug($slug))continue;
-            try{$details[$slug]=(array)$get('/api/plugins/'.$slug);}catch(\Throwable){}
+            if(($row['type']??'')==='theme'&&self::validSlug($slug))$slugs[]=$slug;
         }
+        $details=[];
+        foreach($pool(array_map(fn(string $slug)=>'/api/plugins/'.$slug,array_unique($slugs))) as $path=>$body)$details[substr($path,strlen('/api/plugins/'))]=(array)$body;
         return ['list'=>$list,'details'=>$details];
     }
 

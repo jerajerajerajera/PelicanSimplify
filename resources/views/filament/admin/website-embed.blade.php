@@ -24,9 +24,10 @@
         <p>{{ __('pelican-simplify::embed.settings.a_link_to_the_same_list') }} <a href="{{ $snippet['page'] }}" target="_blank" rel="noopener" class="ps-embed-open">{{ __('pelican-simplify::embed.settings.open') }}</a></p>
     </div>
     @if (\Simplify\Panel\Services\WebsiteEmbed::enabled())
-        <div class="ps-embed-preview">
+        {{-- The preview (a page, a script and a server list: three requests) only loads once this tab is on screen, so the settings page itself is ready at once. --}}
+        <div class="ps-embed-preview" x-data="{ shown: false }" x-init="const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { shown = true; io.disconnect(); } }); io.observe($el)">
             <strong>{{ __('pelican-simplify::embed.settings.preview_of_the_saved_list') }}</strong>
-            <iframe src="{{ url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query) }}" title="{{ __('pelican-simplify::embed.settings.preview_of_the_website_embed') }}" loading="lazy"></iframe>
+            <iframe :src="shown ? @js(url('/simplify/embed').'?'.str_replace('page=1', 'page=0', (string) $query)) : null" title="{{ __('pelican-simplify::embed.settings.preview_of_the_website_embed') }}"></iframe>
         </div>
     @endif
 </div>

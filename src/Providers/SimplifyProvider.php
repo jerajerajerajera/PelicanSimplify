@@ -29,6 +29,8 @@ final class SimplifyProvider extends ServiceProvider
     }
     public function boot(): void
     {
+        // Text responses go out gzipped when the browser accepts it and the web server did not compress them already.
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Foundation\Http\Events\RequestHandled::class,fn($event)=>\Simplify\Panel\Http\ResponseCompression::apply($event->request,$event->response));
         \Illuminate\Support\Facades\Route::get('/simplify/assets/{asset}',\Simplify\Panel\Http\Controllers\AssetController::class)->name('simplify.asset');
         \Illuminate\Support\Facades\Route::get('/simplify/background/{id}',\Simplify\Panel\Http\Controllers\BackgroundController::class)->name('simplify.background');
         \Illuminate\Support\Facades\Route::get('/simplify/banner/{id}',\Simplify\Panel\Http\Controllers\BannerController::class)->middleware(['web','auth'])->name('simplify.banner');

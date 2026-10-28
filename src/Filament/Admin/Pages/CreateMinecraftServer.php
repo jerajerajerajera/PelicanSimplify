@@ -181,6 +181,12 @@ class CreateMinecraftServer extends Page implements HasForms
         return 'ssc/creator-drafts/' . (int) user()->id . (in_array($this->creationGame,['minecraft','other'],true)?'-'.$this->creationGame:'') . '.enc';
     }
 
+    /** The game picker's cards: installed eggs and the egg index, for the first render and for a picker that lost them. */
+    #[Renderless]
+    public function gameCards(): array
+    {
+        return in_array('other', $this->allowedGames(), true) ? \Simplify\Panel\Services\GameCatalog::cards(in_array('minecraft', $this->allowedGames(), true)) : [];
+    }
     #[Renderless]
     public function saveDraft(int $step = 1, int $furthestStep = 1): bool
     {
@@ -566,7 +572,10 @@ class CreateMinecraftServer extends Page implements HasForms
                         \Filament\Forms\Components\ViewField::make('game_key')->hiddenLabel()
                             ->view('pelican-simplify::filament.admin.game-picker')
                             ->viewData(fn () => [
-                                'cards' => in_array('other', $this->allowedGames(), true) ? \Simplify\Panel\Services\GameCatalog::cards(in_array('minecraft', $this->allowedGames(), true)) : [],
+                                // The card list (about 65 KB for the egg index) only travels with the page itself: the picker keeps it
+                                // (wire:ignore) and asks for it again with gameCards() if it ever loses it. Every Next and every
+                                // choice re-renders the form, so this keeps those round trips small.
+                                'cards' => \Livewire\Livewire::isLivewireRequest() ? [] : $this->gameCards(),
                                 'minecraft' => in_array('minecraft', $this->allowedGames(), true) ? self::minecraftChoices() : [],
                                 'game' => $this->gameNow(),
                                 'type' => $this->data['server_type'] ?? null,

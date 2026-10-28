@@ -55,7 +55,9 @@
             installing: null,
             phase: 0,
             timer: null,
-            init() {
+            async init() {
+                // Only the page itself carries the cards; a picker that was rebuilt during a round trip asks for them.
+                if (!this.cards.length) this.cards = await $wire.gameCards();
                 // Next on an index game installs its egg first: show that as its own screen until the step changes.
                 this.$root.closest('.fi-sc-wizard')?.addEventListener('click', (event) => {
                     const button = event.target.closest('button');
