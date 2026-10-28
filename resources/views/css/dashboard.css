@@ -818,6 +818,9 @@ button.ps-package:hover { border-color: var(--ps-accent); }
 .ps-host-leaf svg { width: 15px; height: 15px; color: var(--ps-tone); }
 .ps-host-group-head svg, .ps-host-leaf svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ps-host-group-head span, .ps-host-leaf span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A page name too long for the menu (in some languages) wraps onto a second line instead of being cut off. */
+.ps-host-leaf { padding-block: 5px; line-height: 1.25; }
+.ps-host-leaf span { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 .ps-host-group-head:hover, .ps-host-leaf:hover { background: var(--ps-raised); }
 .ps-host-group-head[aria-current="page"], .ps-host-leaf[aria-current="page"] { background: color-mix(in srgb, var(--ps-tone) 14%, transparent); }
 .ps-host-branch { display: grid; gap: 1px; margin-inline-start: 16px; padding: 0 0 4px 16px; }

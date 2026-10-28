@@ -437,7 +437,7 @@
                                     <button type="button" class="ps-host-group-head" :aria-current="hostSection?.key===section.key && !hostServer && (section.pages.length === 1 || !hostPage) ? 'page' : null" x-on:click="openHostSection(section)">
                                         <svg aria-hidden="true"><use :href="'#ps-'+section.icon"/></svg><span x-text="section.label"></span>
                                     </button>
-                                    <div class="ps-host-branch" x-show="section.pages.length > 1">
+                                    <div class="ps-host-branch" x-show="hostBranchOpen(section)">
                                         <template x-for="item in section.pages" :key="item.key">
                                             <button type="button" class="ps-host-leaf" :aria-current="hostSection?.key===section.key && hostPage?.key===item.key && !hostServer ? 'page' : null" x-on:click="openHostLeaf(section, item)">
                                                 <svg aria-hidden="true"><use :href="'#ps-'+item.icon"/></svg><span x-text="item.label"></span>
@@ -512,7 +512,7 @@
                     </div>
                     <div class="ps-host-frame" x-show="!hostServer">
                         <template x-if="hostPage">
-                            <iframe data-ps-frame="native" data-ps-host="1" :data-ps-accent="currentAccentHex()" :src="frameUrl(hostPage.url)" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
+                            <iframe data-ps-frame="native" data-ps-host="1" :data-ps-accent="currentAccentHex()" :data-ps-tree="hostPage.settingsTab ? '1' : null" :src="hostFrameSrc()" :title="hostPage.label" x-on:load="styleFrame($el, 'native')"></iframe>
                         </template>
                     </div>
                 </div>

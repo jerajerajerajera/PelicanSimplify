@@ -308,10 +308,10 @@ body.ps-pelican-tab .ps-savebar { display: none !important; }
 .ps-settings-tabs .fi-section-content { padding: 6px 20px 8px !important; }
 
 /* Switches as setting rows: name and explanation on the left, switch on the right. */
-.ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) { position: relative; display: block; padding: 12px 64px 12px 0; }
+.ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) { position: relative; display: block; padding-block: 12px; padding-inline: 0 72px; }
 .ps-setting-list .fi-grid-col + .fi-grid-col .fi-fo-field, .ps-setting-list .fi-sc-component + .fi-sc-component .fi-fo-field { border-top: 1px solid var(--ps-line); }
 .ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) .fi-fo-field-label { display: block; }
-.ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) .fi-fo-toggle { position: absolute; top: 14px; inset-inline-end: 0; }
+.ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) .fi-fo-toggle { position: absolute; top: 14px; inset-inline-end: 8px; }
 .ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) .fi-fo-field-label-content { font-size: 14px; font-weight: 650; }
 .ps-settings-tabs .fi-fo-field:has(> .fi-fo-field-label-col .fi-fo-toggle) .fi-fo-field-content-col { margin-top: 3px; color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
 .ps-setting-list .fi-section-content { row-gap: 0 !important; }
@@ -401,13 +401,14 @@ body.ps-pelican-tab .ps-savebar { display: none !important; }
 /* Settings in the style of the server page: one rounded card that fits the window. The menu on the left
    never moves; only the settings on the right scroll. */
 .ps-settings-page:not(:has(.ssc-progress)) .ps-settings-form { border-radius: 20px !important; }
-.ps-settings-tabs.fi-vertical { height: var(--ps-settings-height, auto) !important; align-items: stretch !important; background: linear-gradient(to right, var(--ps-nav-bg) 0 269px, var(--ps-line) 269px 270px, transparent 270px) !important; }
-/* The menu scrolls on its own when the window is short (it never wraps into a second column behind the settings). */
-.ps-settings-tabs.fi-vertical > .fi-tabs { position: static; width: 270px; max-height: none; height: 100%; min-height: 0; padding: 14px 12px; flex-wrap: nowrap !important; overflow: hidden auto; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+.ps-settings-tabs.fi-vertical { height: var(--ps-settings-height, auto) !important; align-items: stretch !important; background: none !important; }
+/* The menu in the style of host mode's tree: plain rows, one line beside the settings. It scrolls on its own only
+   when the window is too short for it (it never wraps into a second column behind the settings). */
+.ps-settings-tabs.fi-vertical > .fi-tabs { position: static; width: 236px; max-height: none; height: 100%; min-height: 0; padding: 12px 10px; gap: 1px !important; flex-wrap: nowrap !important; overflow: hidden auto; background: none !important; border-inline-end: 1px solid var(--ps-line) !important; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
 .ps-settings-tabs.fi-vertical > .fi-tabs > .fi-tabs-item { flex: none; }
 html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 /* The settings scroll on their own; room at the bottom keeps the last switch clear of the save bar. */
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: 100%; padding-bottom: 88px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: 100%; padding-bottom: 88px; overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
 /* A Pelican tab has no Simplify save bar to keep clear of. */
 .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) { padding-bottom: 22px; }
 /* Embedded in the dashboard popup or the host workspace, the card is sized to the frame: nothing outside it scrolls. */
@@ -422,11 +423,16 @@ html.ps-frame[data-ps-host] .fi-page:has(.ps-settings-page, .ssc-wizard) { paddi
 html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker { background: transparent !important; }
 html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker .fi-sc-wizard-footer { background: var(--ps-bg) !important; }
 html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-section-content-ctn) { background: transparent !important; }
-.ps-settings-tabs .fi-tabs-item { min-height: 40px; padding: 5px 8px !important; border: 1px solid transparent; border-radius: 11px !important; white-space: nowrap; }
-.ps-settings-tabs .fi-tabs-item > .fi-icon { padding: 6px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 16%, transparent); color: var(--ps-tone, var(--ps-accent)); box-shadow: none; }
+/* Host mode lists the tabs in its menu tree (data-ps-tree): the page shows only the settings, full width. */
+html.ps-frame[data-ps-tree] .ps-settings-tabs.fi-vertical > .fi-tabs { display: none !important; }
+html.ps-frame[data-ps-tree] .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { padding-inline: 24px; }
+/* Rows like the tree's leaves: icon in its colour, no tile; a long (translated) name wraps instead of being cut. */
+.ps-settings-tabs .fi-tabs-item { min-height: 30px; padding: 5px 9px !important; gap: 9px !important; border: 0; border-radius: var(--ps-radius-sm, 8px) !important; font: 550 13px/1.25 var(--ps-font) !important; white-space: normal; text-align: start; }
+.ps-settings-tabs .fi-tabs-item > .fi-icon { flex: none; width: 16px; height: 16px; padding: 0; border-radius: 0; background: none; color: var(--ps-tone, var(--ps-accent)); box-shadow: none; }
+.ps-settings-tabs .fi-tabs-item .fi-tabs-item-label { min-width: 0; white-space: normal !important; overflow-wrap: anywhere; }
 .ps-settings-tabs .fi-tabs-item:hover { background: var(--ps-raised) !important; }
-.ps-settings-tabs .fi-tabs-item.fi-active { border-color: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 45%, transparent); background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 12%, var(--ps-raised)) !important; box-shadow: none; }
-.ps-settings-tabs .fi-tabs-item.fi-active > .fi-icon { background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 22%, transparent); color: var(--ps-tone, var(--ps-accent)); }
+.ps-settings-tabs .fi-tabs-item.fi-active { background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 14%, transparent) !important; box-shadow: none; }
+.ps-settings-tabs .fi-tabs-item.fi-active > .fi-icon { background: none; color: var(--ps-tone, var(--ps-accent)); }
 .ps-settings-tabs .fi-tabs-item:nth-child(1) { --ps-tone: #9a9aa6; }
 .ps-settings-tabs .fi-tabs-item:nth-child(2) { --ps-tone: #e0a050; }
 .ps-settings-tabs .fi-tabs-item:nth-child(3) { --ps-tone: #6ea8fe; }
@@ -443,7 +449,10 @@ html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-sectio
   .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: auto; margin: 0 !important; overflow: visible; }
   html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: auto; }
   html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { height: auto !important; }
-  .ps-settings-tabs.fi-vertical > .fi-tabs { overflow: visible; flex-wrap: wrap !important; }
+  /* Phones: the menu as two tidy columns above the settings (no group titles, every tab in reach without sideways scrolling). */
+  .ps-settings-tabs.fi-vertical > .fi-tabs { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 2px 6px !important; height: auto !important; overflow: visible; padding: 8px 8px 10px; border-inline-end: 0 !important; }
+  .ps-settings-tabs.fi-vertical > .fi-tabs > .fi-tabs-item { min-width: 0; margin: 0 !important; }
+  .ps-settings-tabs.fi-vertical > .fi-tabs > .fi-tabs-item::before { display: none !important; }
   .ps-pelican-frame > p { padding-right: 0; }
   .ps-pelican-frame > iframe { margin-top: 6px; }
 }
