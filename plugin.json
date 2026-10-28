@@ -2,7 +2,7 @@
   "id": "pelican-simplify",
   "name": "PelicanSimplify",
   "author": "jera",
-  "version": "0.6.0-snapshot.19",
+  "version": "0.7.0-snapshot.1",
   "description": "All-in-one plugin that makes Pelican easier to use, with one server overview and optional add-ons.",
   "category": "plugin",
   "namespace": "Simplify\\Panel",

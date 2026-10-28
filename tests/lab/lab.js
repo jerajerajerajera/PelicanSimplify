@@ -26,7 +26,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   watch(page, () => current);
   const shot = async (name) => { await page.screenshot({ path: path.join(out, name + '.png'), fullPage: false }); await layout(name); };
   // Phones open workspaces as sheets with their own close button; Escape only closes desktop popups.
-  const closeSheet = async () => { const close = page.locator('.ps-modal button[aria-label^="Close"], [role="dialog"] button[aria-label^="Close"]').first(); if (await close.count() && await close.isVisible().catch(() => false)) await close.click().catch(() => {}); else await page.keyboard.press('Escape'); await sleep(300); };
+  const closeSheet = async () => { const close = page.locator('.ps-modal button[aria-label^="Close"]:visible, [role="dialog"] button[aria-label^="Close"]:visible').first(); if (await close.count()) await close.click().catch(() => {}); else await page.keyboard.press('Escape'); await sleep(300); };
   const settle = async () => { await page.waitForLoadState('networkidle').catch(() => {}); await sleep(400); };
   // 1. Login (Filament login form).
   await page.goto('/login'); await settle();
@@ -37,40 +37,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const themes = ['light', 'dark'];
   // Desktop, two portrait phones and the same phones turned to landscape (Jeroen: scrolling locked up when tilted).
   const viewports = { desktop: { width: 1440, height: 900 }, 'phone-390': { width: 390, height: 844 }, 'phone-360': { width: 360, height: 780 }, 'landscape-844': { width: 844, height: 390 }, 'landscape-780': { width: 780, height: 360 } };
-  // Layout problems a screenshot alone would not flag: sideways overflow, clipped single-line text, content taller than the screen that nothing scrolls.
-  const layoutProblems = async () => page.evaluate(() => {
-    const problems = [];
-    const root = document.documentElement;
-    if (root.scrollWidth > innerWidth + 2) problems.push('page is wider than the screen (' + root.scrollWidth + ' > ' + innerWidth + ')');
-    const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && getComputedStyle(el).visibility !== 'hidden'; };
-    const clipped = [];
-    // A control inside a strip that scrolls sideways on purpose (chips, quick commands) is reachable; one under an open sheet is not on screen.
-    const inSideScroller = (el) => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const cs = getComputedStyle(a); if (/(auto|scroll)/.test(cs.overflowX) && a.scrollWidth > a.clientWidth + 2) return true; } return false; };
-    const covered = (el) => { const r = el.getBoundingClientRect(); const top = document.elementFromPoint(Math.min(Math.max(r.left + 8, 0), innerWidth - 1), Math.min(Math.max(r.top + r.height / 2, 0), innerHeight - 1)); return top && !el.contains(top) && !top.contains(el); };
-    for (const el of document.querySelectorAll('body *')) {
-      if (clipped.length >= 5 || !visible(el) || !el.childElementCount === false) continue;
-      const cs = getComputedStyle(el);
-      if (!el.matches('.sr-only, .fi-sr-only') && cs.whiteSpace === 'nowrap' && cs.overflow === 'hidden' && cs.textOverflow !== 'ellipsis' && el.scrollWidth > el.clientWidth + 2 && (el.textContent || '').trim()) clipped.push((el.className || el.tagName).toString().slice(0, 40) + ': "' + el.textContent.trim().slice(0, 30) + '"');
-      const r = el.getBoundingClientRect();
-      if (r.right > innerWidth + 2 && r.width > 40 && el.matches('button, a, input, select, textarea') && !inSideScroller(el) && !covered(el)) problems.push('control sticks out of the screen: ' + (el.getAttribute('aria-label') || el.textContent.trim().slice(0, 30) || el.tagName));
-    }
-    if (clipped.length) problems.push('text cut off without an ellipsis: ' + clipped.join(' | '));
-    // Popups and menus must sit on the screen, not off to one side or below it.
-    for (const el of document.querySelectorAll('[role="dialog"], [role="menu"], .ps-modal, .ps-popover, .ps-sheet, [x-ref][class*="popup"]')) {
-      if (!visible(el) || el.closest('.ps-server-workspace.has-dock')) continue; // A docked workspace sits in the page and scrolls with it.
-      const r = el.getBoundingClientRect();
-      const pageScrolls = root.scrollHeight > innerHeight + 20 && r.top >= 0;
-      if (r.left < -2 || r.top < -2 || r.right > innerWidth + 2 || (r.bottom > innerHeight + 2 && !pageScrolls)) problems.push('popup partly off screen: ' + (el.getAttribute('aria-label') || el.id || el.className.toString().slice(0, 40)) + ` (${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} in ${innerWidth}x${innerHeight})`);
-    }
-    // Scrolling: either the window scrolls, or a visible pane that holds the content does.
-    const tall = root.scrollHeight > innerHeight + 20;
-    if (tall) {
-      const before = scrollY; scrollTo(0, 300); const moved = scrollY !== before; scrollTo(0, before);
-      const panes = [...document.querySelectorAll('body *')].filter((el) => { const cs = getComputedStyle(el); return /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 20 && visible(el) && el.clientHeight > innerHeight * 0.4; });
-      if (!moved && !panes.length) problems.push('content is taller than the screen but nothing scrolls');
-    }
-    return problems;
-  });
+  const layoutProblems = async () => page.evaluate(require('./layout'));
   const layout = async (label) => { for (const problem of await layoutProblems()) issues.push(label + ' layout: ' + problem); };
   const setTheme = async (theme) => { await page.evaluate((t) => { localStorage.setItem('pelicanSimplify.theme', t); localStorage.setItem('theme', t); }, theme); };
   const user = 'lab-admin';
@@ -94,8 +61,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await modal.locator('input[id$=".title"]').fill('Lab announcement');
     await modal.locator('textarea[id$=".text"]').fill('Maintenance tonight at 22:00; the lab servers restart once.');
     await shot('admin-announcements-form');
-    await modal.locator('button[type="submit"]').first().click(); await sleep(1500);
+    await modal.locator('button[type="submit"]').first().click();
     const row = page.locator('.ps-announcement').filter({ hasText: 'Lab announcement' }).first();
+    await row.waitFor({ timeout: 15000 }).catch(() => {}); await sleep(500);
     ok('announcement saved and listed as live', await row.count() > 0 && /Live/.test(await row.innerText().catch(() => '')));
     await shot('admin-announcements-list');
   }
@@ -180,7 +148,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const account = page.locator('.ps-account-button').first();
         if (await account.isVisible().catch(() => false)) {
           await account.click(); await sleep(400);
-          await page.locator('button[aria-label="Notifications on your devices"]').first().click({ timeout: 5000 }).catch(() => {}); await sleep(1200);
+          await page.locator('button[aria-label="Notifications on this device"], button[aria-label="Notifications on your devices"]').first().click({ timeout: 5000 }).catch(() => {}); await sleep(1200);
           const dialog = page.locator('.ps-push').first();
           ok(`notifications dialog opens from the account menu (${tag})`, await dialog.isVisible().catch(() => false) && /Notifications on this device/.test(await dialog.innerText().catch(() => '')));
           await shot(`notifications-dialog-${tag}`);
@@ -198,13 +166,17 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         if (on) {
           ok(`halloween web and lantern visible (${tag})`, await page.locator('.ps-hw-corner').first().isVisible().catch(() => false) && await page.locator('.ps-hw-lantern').first().isVisible().catch(() => false));
           ok(`halloween web never catches a click (${tag})`, await page.evaluate(() => getComputedStyle(document.querySelector('.ps-hw-corner')).pointerEvents === 'none'));
-          const accent = await page.evaluate(() => getComputedStyle(document.querySelector('.ps-overview, main, body')).getPropertyValue('--ps-accent').trim());
+          // The overview accent sits inline on the overview's own blocks (toolbar, create card), not on main or body.
+          const accent = await page.evaluate(() => { const values = [...document.querySelectorAll('[style*="--ps-accent"]')].map((e) => e.style.getPropertyValue('--ps-accent').trim()); return values.find((v) => /#c2621a|#f0a35a/i.test(v)) || values[0] || ''; });
           ok(`halloween orange overview accent (${tag})`, /#c2621a|#f0a35a|194,\s*98,\s*26|240,\s*163,\s*90/i.test(accent), accent || 'no accent');
           await shot(`halloween-${tag}`);
           // Off through Customize overview, and back on.
           const customize = page.locator('[aria-label="Customize overview"]').first();
           if (await customize.isVisible().catch(() => false)) {
             await customize.click(); await sleep(400);
+            // 0.6.0 folds the Customize sections: unfold them all first.
+            for (const head of await page.locator('#ps-overview-appearance-menu .ps-customize-head.is-toggle[aria-expanded="false"]').all()) await head.click().catch(() => {});
+            await sleep(300);
             const sw = page.locator('.ps-customize-switch').filter({ hasText: 'Halloween theme' }).first();
             ok(`halloween switch in Customize overview (${tag})`, await sw.isVisible().catch(() => false));
             await sw.click().catch(() => {}); await sleep(400);
@@ -264,7 +236,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         for (const label of labels) {
           const key = label.split(/\s[—-]\s/)[0].toLowerCase().replace(/[^a-z]+/g, '-');
           current = `server ${key} ${tag}`;
-          await page.locator(`.ps-widget[aria-label="${label}"]`).first().click(); await sleep(1200);
+          // Something left on top of the section menu (a workspace that did not close) is a finding, not a crash.
+          if (!(await page.locator(`.ps-widget[aria-label="${label}"]`).first().click({ timeout: 8000 }).then(() => true).catch(() => false))) { ok(`workspace ${key} can be opened from the section menu (${tag})`, false, 'click blocked'); await closeSheet(); continue; }
+          await sleep(1200);
           ok(`workspace ${key} opens (${tag})`, await page.locator('.ps-modal-layer[data-open="true"], .ps-server-workspace.has-dock').first().isVisible().catch(() => false));
           await shot(`server-${key}-${tag}`);
           if (/^game settings/i.test(label)) await motd(tag);
@@ -338,7 +312,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   if (adminAnnouncements) {
     current = 'announcement hide';
     await page.setViewportSize(viewports.desktop); await page.goto(info.pages['Dashboard (app)']); await settle();
-    await page.locator('.ps-announcement-hide').first().click().catch(() => {}); await sleep(1200);
+    await page.locator('.ps-announcement-unpin, .ps-announcement-hide').first().click().catch(() => {}); await sleep(1200);
     await page.reload(); await settle();
     ok('hidden announcement stays hidden after a reload', !(await page.locator('.ps-announcement-bar').filter({ hasText: 'Lab announcement' }).first().isVisible().catch(() => false)));
     await page.locator('.ps-notify button[aria-label="Notifications"]').first().click().catch(() => {}); await sleep(500);
