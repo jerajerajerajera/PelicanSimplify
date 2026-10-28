@@ -25,7 +25,10 @@ $server=(object)['uuid'=>'7f3a2b1c-0000-4000-8000-000000000001','uuid_short'=>'7
 check(P::upgradeUrl($server)==='https://billing.example.com/upgrade?service=svc%2088&id=7f3a2b1c-0000-4000-8000-000000000001','the upgrade link is filled in per server, encoded');
 P::save(['upgrade'=>'']);
 check(P::upgradeUrl($server)===null&&P::settings()['client_area']!=='','an empty upgrade link shows no button and keeps the other links');
+check(P::customerLinks()===['client_area'=>'https://billing.example.com/clientarea.php','order'=>'','support'=>'https://discord.gg/example','support_label'=>'Open a ticket'],'customers get the client area, order and support links');
+P::save(['support_label'=>'']);check(P::customerLinks()['support_label']==='Open a ticket','the support button has a default text');
 P::save(['type'=>'friends']);
+check(P::customerLinks()===null,'a panel for friends shows customers no hosting links');
 check(!P::hosting()&&P::settings()['support']==='https://discord.gg/example','switching back keeps the hosting links for later');
 echo "All panel profile checks passed.\n";
 }

@@ -62,6 +62,13 @@ final class PanelProfile
         if(!preg_match('#^https?://#i',$check)||filter_var($check,FILTER_VALIDATE_URL)===false)return null;
         return $value;
     }
+    /** What customers of a hosting company see (account menu, Explain, Order); null on a panel for friends. */
+    public static function customerLinks(): ?array
+    {
+        $s=self::settings();
+        if($s['type']!=='hosting')return null;
+        return ['client_area'=>$s['client_area'],'order'=>$s['order'],'support'=>$s['support'],'support_label'=>$s['support_label']!==''?$s['support_label']:'Open a ticket'];
+    }
     /** The upgrade link for one server, or null when there is none. */
     public static function upgradeUrl(object $server): ?string
     {

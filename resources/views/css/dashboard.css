@@ -516,6 +516,7 @@ a.ps-info-modpack { color: var(--ps-ink); font-weight: 600; text-decoration: non
 a.ps-info-modpack:hover { color: var(--ps-accent); }
 a.ps-info-modpack:hover > span { text-decoration: underline; text-underline-offset: 3px; }
 .ps-info-modpack-out { width: 13px; height: 13px; opacity: .7; }
+.ps-menu-item .ps-menu-item-out { width: 13px; height: 13px; margin-left: auto; opacity: .6; }
 .ps-info-meta svg { flex: none; width: 15px; height: 15px; }
 .ps-address { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; border: 0; background: none; color: var(--ps-ink); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
 .ps-address > span { min-width: 0; overflow-wrap: anywhere; }
