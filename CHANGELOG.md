@@ -1,5 +1,10 @@
 # Changes
 
+## 0.7.0-snapshot.3 (snapshot channel)
+A fix for the Pelican tabs in Simplify settings.
+- General, Captcha, Mail, Backup, OAuth and Misc no longer show a grey card with an empty band or a second scrollbar. The form is as tall as its content.
+- Pelican's Save button has its own row and no longer covers Send Test Mail.
+
 ## 0.7.0-snapshot.2 (snapshot channel)
 Customers see the hosting links.
 - On a hosting company's panel, people who cannot create servers see Order a server where Create server would be.
