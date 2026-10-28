@@ -1,5 +1,11 @@
 # Changes
 
+## 0.7.0-snapshot.10 (snapshot channel)
+Simpler settings menu.
+- In host mode the settings are listed in the admin menu on the left, so there is one menu instead of three.
+- Elsewhere the settings menu looks like that menu: plain rows, no grey block. On phones it shows two columns.
+- Long names wrap onto a second line, and the settings no longer scroll sideways.
+
 ## 0.7.0-snapshot.9 (snapshot channel)
 Your own app icon.
 - Settings → Appearance → App icon: upload your logo and it is used for the installed app and in app notifications.
