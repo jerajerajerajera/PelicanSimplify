@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'ما الجديد',
+        'full_release_notes' => 'ملاحظات الإصدار كاملة',
+        'mark_read' => 'تحديد كمقروء',
+        'mark_as_unread' => 'تحديد كغير مقروء',
+        'clear' => 'مسح',
+        'show_less' => 'عرض أقل',
+        'pin' => 'تثبيت ',
+        'unpin' => 'إلغاء تثبيت ',
+        'pin_2' => 'تثبيت',
+        'unpin_2' => 'إلغاء التثبيت',
+        'pinned' => 'مثبّت',
+        'you_are_all_caught_up' => 'لا جديد لديك.',
+        'archived' => 'المؤرشفة',
+        'nothing_archived' => 'لا يوجد شيء مؤرشف.',
+        'loading' => 'جارٍ التحميل…',
+        'show_more' => 'عرض المزيد',
+        'clear_name' => 'مسح :title',
+        'show_all' => 'عرض الكل (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'الإشعارات غير مفعّلة على هذا الجهاز بعد.',
+        'test_notification' => 'إشعار تجريبي',
+        'notifications_work_on_this_device' => 'الإشعارات تعمل على هذا الجهاز.',
+        'test_sent_it_should_appear_within' => 'تم إرسال الاختبار. يُفترض أن يظهر خلال ثوانٍ.',
+        'the_browser_no_longer_accepts_notifications' => 'لم يعد المتصفح يقبل الإشعارات لهذا الجهاز. فعّلها مرة أخرى.',
+        'the_push_service_did_not_accept' => 'لم تقبل خدمة الإشعارات الاختبار. حاول مرة أخرى بعد دقيقة.',
+    ],
+];
