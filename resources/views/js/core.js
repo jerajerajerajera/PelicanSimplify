@@ -387,6 +387,8 @@
     tc,
     fill: (text, params = {}) => fill(String(text), params),
     choice,
+    // A server's state from Pelican or Wings (running, install failed) as words in the panel's language.
+    status: (state) => { const key = 'status.' + String(state || 'offline').replace(/ /g, '_'); const text = lookup(key); return text === key ? String(state) : text; },
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),

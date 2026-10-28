@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => '생성됨',
+        'starting' => '시작 중',
+        'running' => '실행 중',
+        'restarting' => '재시작 중',
+        'exited' => '종료됨',
+        'paused' => '일시 중지',
+        'dead' => '비정상 종료',
+        'removing' => '제거 중',
+        'stopping' => '정지 중',
+        'offline' => '오프라인',
+        'missing' => '없음',
+        'installing' => '설치 중',
+        'install_failed' => '설치 실패',
+    ],
     'common' => [
         'cancel' => '취소',
         'confirm' => '확인',

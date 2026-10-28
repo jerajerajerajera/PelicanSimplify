@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Направљен',
+        'starting' => 'Покреће се',
+        'running' => 'Ради',
+        'restarting' => 'Поново се покреће',
+        'exited' => 'Завршен',
+        'paused' => 'Паузиран',
+        'dead' => 'Пао',
+        'removing' => 'Уклања се',
+        'stopping' => 'Зауставља се',
+        'offline' => 'Ван мреже',
+        'missing' => 'Недостаје',
+        'installing' => 'Инсталира се',
+        'install_failed' => 'Инсталација није успела',
+    ],
     'common' => [
         'cancel' => 'Откажи',
         'confirm' => 'Потврди',

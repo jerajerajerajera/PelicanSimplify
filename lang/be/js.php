@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Створаны',
+        'starting' => 'Запускаецца',
+        'running' => 'Працуе',
+        'restarting' => 'Перазапускаецца',
+        'exited' => 'Завершаны',
+        'paused' => 'Прыпынены',
+        'dead' => 'Збой',
+        'removing' => 'Выдаляецца',
+        'stopping' => 'Спыняецца',
+        'offline' => 'Па-за сеткай',
+        'missing' => 'Не знойдзены',
+        'installing' => 'Усталёўка',
+        'install_failed' => 'Памылка ўсталёўкі',
+    ],
     'common' => [
         'cancel' => 'Скасаваць',
         'confirm' => 'Пацвердзіць',

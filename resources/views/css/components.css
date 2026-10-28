@@ -241,7 +241,6 @@ input[type="file"].ps-input::file-selector-button {
 :is(.ps-badge, .ps-alert, .ps-toast).is-danger, .ps-status:is(.offline, .critical, .install.failed) { --ps-tone: var(--ps-danger); }
 :is(.ps-badge, .ps-alert, .ps-toast).is-info, .ps-status:is(.installing, .restoring) { --ps-tone: var(--ps-info); }
 .ps-badge:is(.is-ok, .is-warn, .is-danger, .is-info), .ps-badge.ps-status:not(.unavailable) { background: color-mix(in srgb, var(--ps-tone) 14%, var(--ps-surface)); }
-.ps-status { text-transform: capitalize; }
 
 /* Inline alerts. */
 .ps-alert {

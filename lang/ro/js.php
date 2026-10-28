@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Creat',
+        'starting' => 'Pornește',
+        'running' => 'Rulează',
+        'restarting' => 'Repornește',
+        'exited' => 'Oprit',
+        'paused' => 'În pauză',
+        'dead' => 'Căzut',
+        'removing' => 'Se elimină',
+        'stopping' => 'Se oprește',
+        'offline' => 'Offline',
+        'missing' => 'Lipsă',
+        'installing' => 'Se instalează',
+        'install_failed' => 'Instalare eșuată',
+    ],
     'common' => [
         'cancel' => 'Anulați',
         'confirm' => 'Confirmați',

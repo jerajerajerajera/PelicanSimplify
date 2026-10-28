@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Vytvorený',
+        'starting' => 'Spúšťa sa',
+        'running' => 'Beží',
+        'restarting' => 'Reštartuje',
+        'exited' => 'Ukončený',
+        'paused' => 'Pozastavený',
+        'dead' => 'Spadol',
+        'removing' => 'Odstraňuje sa',
+        'stopping' => 'Zastavuje sa',
+        'offline' => 'Offline',
+        'missing' => 'Chýba',
+        'installing' => 'Inštalácia',
+        'install_failed' => 'Inštalácia zlyhala',
+    ],
     'common' => [
         'cancel' => 'Zrušiť',
         'confirm' => 'Potvrdiť',

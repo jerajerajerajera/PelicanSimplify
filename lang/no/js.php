@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Opprettet',
+        'starting' => 'Starter',
+        'running' => 'Kjører',
+        'restarting' => 'Starter på nytt',
+        'exited' => 'Avsluttet',
+        'paused' => 'Satt på pause',
+        'dead' => 'Krasjet',
+        'removing' => 'Fjernes',
+        'stopping' => 'Stopper',
+        'offline' => 'Frakoblet',
+        'missing' => 'Mangler',
+        'installing' => 'Installerer',
+        'install_failed' => 'Installasjonen mislyktes',
+    ],
     'common' => [
         'cancel' => 'Avbryt',
         'confirm' => 'Bekreft',

@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => '已创建',
+        'starting' => '启动中',
+        'running' => '运行中',
+        'restarting' => '重启中',
+        'exited' => '已退出',
+        'paused' => '已暂停',
+        'dead' => '已崩溃',
+        'removing' => '删除中',
+        'stopping' => '停止中',
+        'offline' => '离线',
+        'missing' => '缺失',
+        'installing' => '安装中',
+        'install_failed' => '安装失败',
+    ],
     'common' => [
         'cancel' => '取消',
         'confirm' => '确认',

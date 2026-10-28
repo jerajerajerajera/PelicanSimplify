@@ -459,7 +459,7 @@
                                     <span class="ps-label"><svg aria-hidden="true"><use href="#ps-host"/></svg><span x-text="node.name"></span><small x-text="Simplify.choice(@js(__('pelican-simplify::dashboard.ui.server_count')), node.servers.length)"></small></span>
                                     <template x-for="s in node.servers" :key="s.uuid">
                                         <a class="ps-host-server" :href="s.linked ? s.url : null" :style="accentStyle(s.uuid)" :aria-disabled="!s.linked" :aria-current="hostServer?.uuid===s.uuid ? 'page' : null" x-on:click="if (s.linked && !$event.ctrlKey && !$event.metaKey && !$event.shiftKey) { $event.preventDefault(); openHostServer(s); }">
-                                            <i class="ps-host-dot ps-status" :class="s.status" :aria-label="s.status"></i>
+                                            <i class="ps-host-dot ps-status" :class="s.status" :aria-label="Simplify.status(s.status)"></i>
                                             <strong x-text="cardNames(s).large"></strong>
                                             <small x-text="hostServerVersion(s)"></small>
                                             <span class="ps-host-players"><svg aria-hidden="true"><use href="#ps-players"/></svg><span x-text="playerCount(s)"></span></span>
@@ -611,7 +611,7 @@
                                         </div>
                                         <div class="ps-card-badges ps-identity-badges">
                                             <span class="ps-badge is-strong ps-list-game"><svg aria-hidden="true"><use :href="s.game==='minecraft' ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="s.game_label"></span></span>
-                                            <span class="ps-badge ps-status" :class="s.status"><i></i><span x-text="s.status"></span></span>
+                                            <span class="ps-badge ps-status" :class="s.status"><i></i><span x-text="Simplify.status(s.status)"></span></span>
                                         </div>
                                         <div class="ps-card-bottom" x-show="overviewView!=='list'">
                                             <span x-text="playerCount(s)"></span>
@@ -710,7 +710,7 @@
                                                         <div>
                                                             <a x-show="item.linked" :href="item.url" x-text="item.alias || item.name"></a>
                                                             <strong x-show="!item.linked" x-text="item.alias || item.name"></strong>
-                                                            <span class="ps-badge ps-status" :class="item.status" x-text="item.status"></span>
+                                                            <span class="ps-badge ps-status" :class="item.status" x-text="Simplify.status(item.status)"></span>
                                                         </div>
                                                         <span><small>{{ __('pelican-simplify::dashboard.ui.cpu') }}</small><strong x-text="cpuLabel(item)"></strong></span>
                                                         <span><small>{{ __('pelican-simplify::dashboard.ui.ram') }}</small><strong x-text="memoryLabel(item)"></strong></span>
@@ -736,7 +736,7 @@
             {{-- Status bar: slides in once the server card scrolls out of view, so status and power stay in reach. --}}
             <div class="ps-statusbar" :class="{'is-visible': statusBarVisible && !!server}" :inert="!statusBarVisible" role="region" aria-label="{{ __('pelican-simplify::dashboard.ui.server_status') }}">
                 <span class="ps-statusbar-name" x-text="server?.alias || server?.name"></span>
-                <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
+                <span class="ps-badge ps-status" :class="status"><i></i><span x-text="Simplify.status(status)"></span></span>
                 <button type="button" class="ps-statusbar-item ps-statusbar-address" x-show="server?.address" x-on:click="copyText(server.address)" data-tip="{{ __('pelican-simplify::dashboard.ui.copy_server_address') }}"><svg aria-hidden="true"><use href="#ps-link"/></svg><span x-text="server?.address"></span></button>
                 <span class="ps-statusbar-item" data-tip="{{ __('pelican-simplify::dashboard.ui.players_online') }}"><svg aria-hidden="true"><use href="#ps-players"/></svg><span x-text="playerCount({ ...server, status })"></span></span>
                 <div class="ps-statusbar-power" :inert="['installing','restoring_backup'].includes(serverSetup())">
@@ -796,7 +796,7 @@
                     </div>
                     {{-- One line: status, software and version, modpack, address. --}}
                     <div class="ps-info-meta">
-                        <span class="ps-badge ps-status" :class="status"><i></i><span x-text="status"></span></span>
+                        <span class="ps-badge ps-status" :class="status"><i></i><span x-text="Simplify.status(status)"></span></span>
                         <span class="ps-info-meta-item" data-tip-label="Server software" :data-tip="server?.software || @js(__('pelican-simplify::dashboard.ui.not_reported'))"><svg aria-hidden="true"><use :href="server?.minecraft ? '#ps-cube' : '#ps-gamepad'"/></svg><span x-text="softwareLabel()"></span></span>
                         {{-- The modpack links to its page; this replaced the separate modpack card under the console. --}}
                         <a class="ps-info-meta-item ps-info-modpack" x-show="server?.pack?.modpack_name && safeLink(server?.pack?.modpack_url) !== '#'" :href="safeLink(server?.pack?.modpack_url)" target="_blank" rel="noopener noreferrer" data-tip="{{ __('pelican-simplify::dashboard.ui.modpack_info') }}"><svg aria-hidden="true"><use href="#ps-packages"/></svg><span x-text="modpackLabel()"></span><svg class="ps-info-modpack-out" aria-hidden="true"><use href="#ps-external"/></svg></a>

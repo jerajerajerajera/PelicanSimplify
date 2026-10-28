@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Đã tạo',
+        'starting' => 'Đang khởi động',
+        'running' => 'Đang chạy',
+        'restarting' => 'Đang khởi động lại',
+        'exited' => 'Đã thoát',
+        'paused' => 'Tạm dừng',
+        'dead' => 'Bị lỗi',
+        'removing' => 'Đang gỡ',
+        'stopping' => 'Đang dừng',
+        'offline' => 'Ngoại tuyến',
+        'missing' => 'Không tìm thấy',
+        'installing' => 'Đang cài',
+        'install_failed' => 'Cài đặt thất bại',
+    ],
     'common' => [
         'cancel' => 'Hủy',
         'confirm' => 'Xác nhận',

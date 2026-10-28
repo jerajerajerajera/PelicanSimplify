@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Sukurtas',
+        'starting' => 'Paleidžiamas',
+        'running' => 'Veikia',
+        'restarting' => 'Paleidžiamas iš naujo',
+        'exited' => 'Išjungtas',
+        'paused' => 'Pristabdytas',
+        'dead' => 'Sugedo',
+        'removing' => 'Šalinamas',
+        'stopping' => 'Stabdomas',
+        'offline' => 'Neprisijungęs',
+        'missing' => 'Nerastas',
+        'installing' => 'Diegiamas',
+        'install_failed' => 'Diegimas nepavyko',
+    ],
     'common' => [
         'cancel' => 'Atšaukti',
         'confirm' => 'Patvirtinti',

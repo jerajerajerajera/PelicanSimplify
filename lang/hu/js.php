@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Létrehozva',
+        'starting' => 'Indul',
+        'running' => 'Fut',
+        'restarting' => 'Újraindul',
+        'exited' => 'Leállt',
+        'paused' => 'Szüneteltetve',
+        'dead' => 'Összeomlott',
+        'removing' => 'Eltávolítás',
+        'stopping' => 'Leáll',
+        'offline' => 'Offline',
+        'missing' => 'Hiányzik',
+        'installing' => 'Telepítés',
+        'install_failed' => 'Sikertelen telepítés',
+    ],
     'common' => [
         'cancel' => 'Mégse',
         'confirm' => 'Megerősítés',

@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'تم الإنشاء',
+        'starting' => 'جارٍ البدء',
+        'running' => 'يعمل',
+        'restarting' => 'إعادة التشغيل',
+        'exited' => 'متوقف',
+        'paused' => 'موقوف مؤقتًا',
+        'dead' => 'متعطل',
+        'removing' => 'قيد الإزالة',
+        'stopping' => 'قيد الإيقاف',
+        'offline' => 'غير متصل',
+        'missing' => 'مفقود',
+        'installing' => 'قيد التثبيت',
+        'install_failed' => 'فشل التثبيت',
+    ],
     'common' => [
         'cancel' => 'إلغاء',
         'confirm' => 'تأكيد',

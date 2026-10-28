@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Δημιουργήθηκε',
+        'starting' => 'Εκκινεί',
+        'running' => 'Εκτελείται',
+        'restarting' => 'Επανεκκινεί',
+        'exited' => 'Τερματίστηκε',
+        'paused' => 'Σε παύση',
+        'dead' => 'Κατέρρευσε',
+        'removing' => 'Αφαιρείται',
+        'stopping' => 'Σταματά',
+        'offline' => 'Εκτός σύνδεσης',
+        'missing' => 'Λείπει',
+        'installing' => 'Εγκαθίσταται',
+        'install_failed' => 'Η εγκατάσταση απέτυχε',
+    ],
     'common' => [
         'cancel' => 'Ακύρωση',
         'confirm' => 'Επιβεβαίωση',

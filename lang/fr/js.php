@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Créé',
+        'starting' => 'Démarrage',
+        'running' => 'En marche',
+        'restarting' => 'Redémarrage',
+        'exited' => 'Arrêté',
+        'paused' => 'En pause',
+        'dead' => 'Planté',
+        'removing' => 'Suppression',
+        'stopping' => 'Arrêt en cours',
+        'offline' => 'Hors ligne',
+        'missing' => 'Introuvable',
+        'installing' => 'Installation',
+        'install_failed' => 'Échec de l’installation',
+    ],
     'common' => [
         'cancel' => 'Annuler',
         'confirm' => 'Confirmer',

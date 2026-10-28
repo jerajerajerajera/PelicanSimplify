@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Dibuat',
+        'starting' => 'Memulai',
+        'running' => 'Berjalan',
+        'restarting' => 'Memulai ulang',
+        'exited' => 'Berhenti',
+        'paused' => 'Dijeda',
+        'dead' => 'Mati',
+        'removing' => 'Menghapus',
+        'stopping' => 'Menghentikan',
+        'offline' => 'Offline',
+        'missing' => 'Hilang',
+        'installing' => 'Memasang',
+        'install_failed' => 'Pemasangan gagal',
+    ],
     'common' => [
         'cancel' => 'Batal',
         'confirm' => 'Konfirmasi',

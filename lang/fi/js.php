@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Luotu',
+        'starting' => 'Käynnistyy',
+        'running' => 'Käynnissä',
+        'restarting' => 'Käynnistyy uudelleen',
+        'exited' => 'Päättynyt',
+        'paused' => 'Tauolla',
+        'dead' => 'Kaatunut',
+        'removing' => 'Poistetaan',
+        'stopping' => 'Pysähtyy',
+        'offline' => 'Offline',
+        'missing' => 'Puuttuu',
+        'installing' => 'Asennetaan',
+        'install_failed' => 'Asennus epäonnistui',
+    ],
     'common' => [
         'cancel' => 'Peruuta',
         'confirm' => 'Vahvista',

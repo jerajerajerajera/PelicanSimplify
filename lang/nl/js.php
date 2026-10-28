@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Aangemaakt',
+        'starting' => 'Start op',
+        'running' => 'Draait',
+        'restarting' => 'Herstart',
+        'exited' => 'Gestopt',
+        'paused' => 'Gepauzeerd',
+        'dead' => 'Vastgelopen',
+        'removing' => 'Wordt verwijderd',
+        'stopping' => 'Stopt',
+        'offline' => 'Offline',
+        'missing' => 'Ontbreekt',
+        'installing' => 'Installeren',
+        'install_failed' => 'Installatie mislukt',
+    ],
     'common' => [
         'cancel' => 'Annuleren',
         'confirm' => 'Bevestigen',

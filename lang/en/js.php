@@ -2,6 +2,21 @@
 // Texts used by the JavaScript bundles. Shared with the browser as window.simplifyLang (Simplify.t and
 // Simplify.tc in core.js); placeholders use Laravel's :name style, plurals Laravel's 'one|many' forms.
 return [
+    'status' => [
+        'created' => 'Created',
+        'starting' => 'Starting',
+        'running' => 'Running',
+        'restarting' => 'Restarting',
+        'exited' => 'Exited',
+        'paused' => 'Paused',
+        'dead' => 'Dead',
+        'removing' => 'Removing',
+        'stopping' => 'Stopping',
+        'offline' => 'Offline',
+        'missing' => 'Missing',
+        'installing' => 'Installing',
+        'install_failed' => 'Install failed',
+    ],
     'common' => [
         'cancel' => 'Cancel',
         'confirm' => 'Confirm',

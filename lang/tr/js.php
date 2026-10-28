@@ -1,5 +1,20 @@
 <?php
 return [
+    'status' => [
+        'created' => 'Oluşturuldu',
+        'starting' => 'Başlatılıyor',
+        'running' => 'Çalışıyor',
+        'restarting' => 'Yeniden başlatılıyor',
+        'exited' => 'Sonlandı',
+        'paused' => 'Duraklatıldı',
+        'dead' => 'Çöktü',
+        'removing' => 'Kaldırılıyor',
+        'stopping' => 'Durduruluyor',
+        'offline' => 'Çevrimdışı',
+        'missing' => 'Bulunamadı',
+        'installing' => 'Kuruluyor',
+        'install_failed' => 'Kurulum başarısız',
+    ],
     'common' => [
         'cancel' => 'İptal',
         'confirm' => 'Onayla',

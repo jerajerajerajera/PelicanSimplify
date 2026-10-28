@@ -19,7 +19,8 @@ if [[ ! -d vendor/fakerphp/faker ]]; then
 fi
 sed -i "s/'version' => 'canary'/'version' => '$VERSION'/" config/app.php
 [[ -f .env ]] || cp .env.example .env
-sed -i 's/^APP_INSTALLED=.*/APP_INSTALLED=true/; s/^APP_DEBUG=.*/APP_DEBUG=true/; s#^APP_URL=.*#APP_URL=http://127.0.0.1:$PORT#' .env
+sed -i 's/^APP_INSTALLED=.*/APP_INSTALLED=true/; s/^APP_DEBUG=.*/APP_DEBUG=true/' .env
+sed -i "s#^APP_URL=.*#APP_URL=http://127.0.0.1:$PORT#" .env
 grep -q '^DB_CONNECTION=sqlite' .env || printf 'DB_CONNECTION=sqlite\nQUEUE_CONNECTION=database\nCACHE_STORE=file\nSESSION_DRIVER=file\nMAIL_MAILER=log\n' >> .env
 touch database/database.sqlite
 $PHP artisan key:generate --force --quiet
