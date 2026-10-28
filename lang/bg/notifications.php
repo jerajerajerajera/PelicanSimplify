@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Какво ново',
+        'full_release_notes' => 'Пълни бележки към версията',
+        'mark_read' => 'Маркирай като прочетено',
+        'mark_as_unread' => 'Маркирай като непрочетено',
+        'clear' => 'Изчисти',
+        'show_less' => 'Покажи по-малко',
+        'pin' => 'Закачи ',
+        'unpin' => 'Откачи ',
+        'pin_2' => 'Закачи',
+        'unpin_2' => 'Откачи',
+        'pinned' => 'Закачено',
+        'you_are_all_caught_up' => 'Прочели сте всичко.',
+        'archived' => 'Архивирани',
+        'nothing_archived' => 'Няма нищо архивирано.',
+        'loading' => 'Зареждане…',
+        'show_more' => 'Покажи повече',
+        'clear_name' => 'Изчисти :title',
+        'show_all' => 'Покажи всички :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Известията още не са включени на това устройство.',
+        'test_notification' => 'Тестово известие',
+        'notifications_work_on_this_device' => 'Известията работят на това устройство.',
+        'test_sent_it_should_appear_within' => 'Тестът е изпратен. Трябва да се появи до няколко секунди.',
+        'the_browser_no_longer_accepts_notifications' => 'Браузърът вече не приема известия за това устройство. Включете ги отново.',
+        'the_push_service_did_not_accept' => 'Push услугата не прие теста. Опитайте отново след минута.',
+    ],
+];
