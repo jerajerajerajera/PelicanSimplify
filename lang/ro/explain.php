@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => ':host nu a putut fi contactat din panou. Verificați dacă serverul panoului se poate conecta la internet.',
+        'no_key' => 'Introduceți mai întâi o cheie API.',
+        'not_set_up' => 'Explicațiile erorilor nu sunt configurate pe acest panou.',
+        'unknown_log' => 'Jurnal necunoscut.',
+        'read_panel' => 'Jurnalul panoului nu a putut fi citit.',
+        'read_wings' => 'Jurnalul Wings nu a putut fi citit de la Wings. Încercați din nou când nodul este accesibil.',
+        'read_console' => 'Consola nu a putut fi citită de la Wings. Încercați din nou când nodul este accesibil.',
+        'too_many' => 'Ați pus multe întrebări într-un timp scurt. Încercați din nou peste :count minut.|Ați pus multe întrebări într-un timp scurt. Încercați din nou peste :count minute.|Ați pus multe întrebări într-un timp scurt. Încercați din nou peste :count de minute.',
+        'daily_limit' => 'Acest panou a atins limita zilnică de :count explicații. Încercați din nou mâine.',
+        'no_answer' => ':model nu a putut explica aceste rânduri. Încercați din nou după ce eroarea apare din nou.',
+    ],
+    'test' => [
+        'works' => 'Cheia funcționează cu :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Consolă',
+            'empty' => 'Consola este goală, așa că nu există încă nimic de explicat.',
+        ],
+        'panel' => [
+            'label' => 'Jurnalul panoului',
+            'empty' => 'Jurnalul panoului nu are avertismente sau erori în acest moment.',
+        ],
+        'wings' => [
+            'label' => 'Jurnalul Wings',
+            'empty' => 'Jurnalul Wings al acestui nod este gol.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Nu există rânduri de jurnal salvate pentru acest plugin.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Autentificați-vă mai întâi în panou, apoi deschideți din nou această pagină.',
+        'owner_only' => 'Doar proprietarul panoului (un administrator root) poate folosi această pagină.',
+        'expired' => 'Această adresă a expirat sau a fost înlocuită de una mai nouă.',
+        'no_key' => 'Nicio cheie API :provider nu este salvată pe acest panou. Un administrator root adaugă una în setările Simplify, la Explicații erori.',
+        'no_key_terminal' => 'Când panoul nu se deschide, rulați :command pe serverul panoului. Comanda cere o cheie și nu o salvează.',
+        'choose_node' => 'Alegeți un nod.',
+        'panel_log' => 'Jurnalul panoului',
+        'wings_log_of' => 'Jurnalul Wings al :node',
+        'wings_log' => 'Jurnalul Wings',
+        'no_database' => 'Baza de date nu a putut fi contactată, așa că jurnalele Wings nu sunt disponibile aici. Jurnalul panoului arată adesea de ce.',
+        'lead' => 'Folosiți această pagină când panoul afișează o eroare precum 500 și paginile obișnuite nu se deschid. AI-ul ales în setările Simplify citește jurnalul și spune dacă ceva nu este în regulă și cum se rezolvă.',
+        'check_panel' => 'Verificați jurnalul panoului',
+        'check_wings' => 'Verificați jurnalul Wings al :node',
+        'wait' => 'Se verifică jurnalul. Poate dura până la un minut.',
+        'attention' => 'Ceva necesită atenție',
+        'in_order' => 'Totul pare în regulă',
+        'noticed' => 'Ați observat ceva?',
+        'checked' => ':count rând verificat de :model. Adresele, adresele de e-mail și parolele au fost eliminate mai întâi.|:count rânduri verificate de :model. Adresele, adresele de e-mail și parolele au fost eliminate mai întâi.|:count de rânduri verificate de :model. Adresele, adresele de e-mail și parolele au fost eliminate mai întâi.',
+        'terminal_hint' => 'Când panoul nu se deschide, rulați :command pe serverul panoului sau :url_command pentru o adresă temporară către această pagină.',
+        'broken' => 'Această pagină nu s-a putut finaliza',
+        'title' => 'Explicați erorile panoului',
+    ],
+    'failures' => [
+        'invalid_key' => 'Cheia API :name nu este validă. Un administrator poate introduce una nouă în setările Simplify.',
+        'no_credit' => 'Contul :name din spatele acestei chei nu mai are credit. Un administrator poate adăuga credit sau verifica facturarea la :name.',
+        'forbidden' => 'Această cheie API :name nu poate folosi modelul ales. Un administrator poate alege alt model în setările Simplify.',
+        'no_model' => 'Modelul :name ales nu este disponibil pentru această cheie. Un administrator poate alege alt model în setările Simplify.',
+        'busy' => ':name este ocupat pentru această cheie în acest moment. Încercați din nou peste un minut.',
+        'unavailable' => ':name este temporar indisponibil. Încercați din nou peste un minut.',
+        'other_status' => ':name nu a putut răspunde la această întrebare (eroare :status). Încercați din nou mai târziu.',
+        'other' => ':name nu a putut răspunde la această întrebare. Încercați din nou mai târziu.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude de la Anthropic',
+            'key_help' => 'Creați o cheie la console.anthropic.com → API keys. Fiecare întrebare este facturată acelui cont Anthropic, de obicei câțiva cenți sau mai puțin; setați acolo o limită lunară pentru siguranță.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini de la Google',
+            'key_help' => 'Creați o cheie la aistudio.google.com → Get API key. Întrebările sunt facturate acelui proiect Google Cloud, de obicei mai puțin de un cent fiecare; setați acolo un buget pentru siguranță.',
+        ],
+        'openai' => [
+            'label' => 'GPT de la OpenAI',
+            'key_help' => 'Creați o cheie la platform.openai.com → API keys. Fiecare întrebare este facturată acelui cont OpenAI, de obicei câțiva cenți sau mai puțin; setați acolo un buget lunar pentru siguranță.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'cele mai bune răspunsuri, câțiva cenți',
+        'about_a_cent' => 'aproximativ un cent',
+        'cheapest' => 'cel mai ieftin',
+        'good_answers_under_a_cent' => 'răspunsuri bune, sub un cent',
+        'good_answers_about_a_cent' => 'răspunsuri bune, aproximativ un cent',
+    ],
+];
