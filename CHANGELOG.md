@@ -1,5 +1,11 @@
 # Changes
 
+## 0.7.0-snapshot.9 (snapshot channel)
+Your own app icon.
+- Settings → Appearance → App icon: upload your logo and it is used for the installed app and in app notifications.
+- Android's status bar shows a small white icon made from your logo; you can also upload your own.
+- Notifications without an own icon get a proper white pelican in the status bar.
+
 ## 0.7.0-snapshot.8 (snapshot channel)
 Simplify in your own language.
 - Simplify follows the language each person picks in their Pelican profile. All 32 of Pelican's languages are included, and missing texts fall back to English.
