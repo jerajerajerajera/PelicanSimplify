@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Čo je nové',
+        'full_release_notes' => 'Úplné poznámky k vydaniu',
+        'mark_read' => 'Označiť ako prečítané',
+        'mark_as_unread' => 'Označiť ako neprečítané',
+        'clear' => 'Vymazať',
+        'show_less' => 'Zobraziť menej',
+        'pin' => 'Pripnúť ',
+        'unpin' => 'Odopnúť ',
+        'pin_2' => 'Pripnúť',
+        'unpin_2' => 'Odopnúť',
+        'pinned' => 'Pripnuté',
+        'you_are_all_caught_up' => 'Všetko prečítané.',
+        'archived' => 'Archív',
+        'nothing_archived' => 'Archív je prázdny.',
+        'loading' => 'Načítava sa…',
+        'show_more' => 'Zobraziť viac',
+        'clear_name' => 'Vymazať :title',
+        'show_all' => 'Zobraziť všetko (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Upozornenia na tomto zariadení ešte nie sú zapnuté.',
+        'test_notification' => 'Testovacie upozornenie',
+        'notifications_work_on_this_device' => 'Upozornenia na tomto zariadení fungujú.',
+        'test_sent_it_should_appear_within' => 'Test odoslaný. Mal by sa zobraziť do niekoľkých sekúnd.',
+        'the_browser_no_longer_accepts_notifications' => 'Prehliadač už pre toto zariadenie upozornenia neprijíma. Zapnite ich znova.',
+        'the_push_service_did_not_accept' => 'Služba push test neprijala. Skúste to znova o minútu.',
+    ],
+];
