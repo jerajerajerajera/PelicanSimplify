@@ -1,5 +1,11 @@
 # Changes
 
+## 0.7.0-snapshot.1 (snapshot channel)
+The first part of the hosting profile.
+- The setup starts with a new step, Who is this panel for?: Me and my friends, or Hosting company. A hosting company gets fitting defaults in the later steps, such as host mode on and Create servers removed from Everyone. Each one can still be changed.
+- A hosting company gets a Hosting step and tab with links to the client area, ordering a server, upgrading a server and support. Customers do not see these links yet.
+- Panel type under Simplify settings → General switches the type later.
+
 ## 0.6.0-snapshot.19 (snapshot channel)
 A fix for the scheduler warning.
 - The Plugins page only warns that the scheduler stopped when it really did. Right after a plugin update it no longer shows a false warning for a few minutes.
