@@ -369,7 +369,7 @@
                             </span>
                             <span class="ps-account-username" x-text="boot.user"></span>
                         </button>
-                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 5 : 4) + (pluginPages().length ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
+                        <div id="ps-account-actions" class="ps-account-menu" :style="{'--ps-account-count': (adminPages().length && !server ? 5 : 4) + (pluginPages().length ? 1 : 0) + (boot.hosting?.client_area ? 1 : 0) + (boot.hosting?.support ? 1 : 0) + (themeOpen ? 2 : 0) - (themeForced ? 1 : 0)}" :inert="!accountMenu" :aria-hidden="!accountMenu">
                             <div class="ps-account-actions-inner">
                                 <button type="button" class="ps-btn is-icon" x-on:click="openAccount()" data-tip="Profile settings" aria-label="Profile settings" aria-haspopup="dialog">
                                     <svg aria-hidden="true"><use href="#ps-account"/></svg>
@@ -389,6 +389,9 @@
                                 <button type="button" class="ps-btn is-icon" x-show="adminPages().length && !server" x-on:click="setHostMode(!hostMode); accountMenu=false" :data-tip="hostMode ? 'Switch to simple mode' : 'Switch to host mode'" :aria-label="hostMode ? 'Switch to simple mode' : 'Switch to host mode'">
                                     <svg aria-hidden="true"><use :href="hostMode ? '#ps-grid' : '#ps-host'"/></svg>
                                 </button>
+                                {{-- A hosting company's client area (invoices, plans) and support, from Simplify settings → Hosting. --}}
+                                <a class="ps-btn is-icon" x-show="boot.hosting?.client_area" x-cloak :href="safeLink(boot.hosting?.client_area)" target="_blank" rel="noopener noreferrer" data-tip="Client area" aria-label="Client area, opens in a new tab"><svg aria-hidden="true"><use href="#ps-external"/></svg></a>
+                                <a class="ps-btn is-icon" x-show="boot.hosting?.support" x-cloak :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer" :data-tip="boot.hosting?.support_label" :aria-label="(boot.hosting?.support_label || 'Support')+', opens in a new tab'"><svg aria-hidden="true"><use href="#ps-question"/></svg></a>
                                 {{-- Account-level pages other plugins add (such as Legal Pages), listed below the menu. --}}
                                 <button type="button" class="ps-btn is-icon" x-show="pluginPages().length" x-on:click="pluginMenu=!pluginMenu; themeOpen=false" data-tip="Pages from other plugins" aria-label="Pages from other plugins" aria-controls="ps-plugin-pages" :aria-expanded="pluginMenu">
                                     <svg aria-hidden="true"><use href="#ps-plugins"/></svg>
@@ -819,6 +822,8 @@
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; toggleColorMenu($refs.infoMore)"><span class="ps-color-dot" aria-hidden="true"></span><span>Server color</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" :disabled="busy || !server?.permissions['settings.rename']" x-on:click="infoMenu=false; openBackground()"><svg aria-hidden="true"><use href="#ps-image"/></svg><span>Server background</span></button>
                         <button type="button" class="ps-menu-item" role="menuitem" x-show="server?.permissions['settings.rename']" x-on:click="infoMenu=false; openAlias()"><svg aria-hidden="true"><use href="#ps-edit"/></svg><span>Change alias</span></button>
+                        <span class="ps-label ps-menu-heading" x-show="server?.upgrade_url" x-cloak>Plan</span>
+                        <a class="ps-menu-item" role="menuitem" x-show="server?.upgrade_url" x-cloak :href="safeLink(server?.upgrade_url)" target="_blank" rel="noopener noreferrer" x-on:click="infoMenu=false"><svg aria-hidden="true"><use href="#ps-arrow-right"/></svg><span>Upgrade this server</span><svg class="ps-menu-item-out" aria-hidden="true"><use href="#ps-external"/></svg></a>
                         <span class="ps-label ps-menu-heading" x-show="server?.website_listing" x-cloak>Website</span>
                         <button type="button" class="ps-menu-item ps-web-listing" role="menuitemcheckbox" x-show="server?.website_listing" x-cloak :aria-checked="!!server?.website_listing?.visible" :disabled="busy" x-on:click="saveListing(!server.website_listing.visible)"><svg aria-hidden="true"><use href="#ps-web"/></svg><span>Show on the website</span><span class="ps-switch" :class="{'is-on': server?.website_listing?.visible}" aria-hidden="true"></span></button>
                         <hr>
@@ -1566,6 +1571,7 @@
             </div>
             <footer class="ps-modal-foot">
                 <span class="is-start" x-show="explain?.answer?.model" x-text="explain?.answer?.model ? 'Checked by '+explain.answer.model+' from the last '+explain.answer.lines+' lines of the '+explainNoun(explain.source)+'. Check before you delete anything.' : ''"></span>
+                <a class="ps-btn" x-show="boot.hosting?.support && (explain?.answer?.found || explain?.error)" x-cloak :href="safeLink(boot.hosting?.support)" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#ps-question"/></svg><span x-text="boot.hosting?.support_label"></span></a>
                 <button type="button" class="ps-btn" x-show="explain?.answer || explain?.error" x-on:click="explainError()" :disabled="!!explain?.loading"><svg aria-hidden="true"><use href="#ps-restart"/></svg>Ask again</button>
                 <button type="button" class="ps-btn is-primary" x-on:click="closeExplain()">Done</button>
             </footer>
