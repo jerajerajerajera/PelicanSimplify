@@ -9,6 +9,7 @@ namespace Simplify\Panel\Services {
 }
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(...$a):string{return \url('/').'/simplify';}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  $GLOBALS['base']='https://panel.example.com';
  $GLOBALS['config']=['app.name'=>'Pelican'];
  function url($p=''){return $GLOBALS['base'];}

@@ -130,7 +130,7 @@ final class PluginUpdater
     {
         $id = $plugin->id;
         $lock = Cache::lock('simplify.plugin-update.'.$id, 1200);
-        if (!$lock->get()) return ['ok' => false, 'message' => $plugin->name.' is already being updated.'];
+        if (!$lock->get()) return ['ok' => false] + self::say('busy', ['name' => $plugin->name]);
         $directory = plugin_path($id);
         $backup = storage_path('app/simplify/plugin-backups/'.$id);
         $from = $plugin->version;
@@ -163,18 +163,18 @@ final class PluginUpdater
                 // A second fresh process proves the panel still boots with the new code.
                 $boot = Process::path(base_path())->timeout(120)->run([self::php(), 'artisan', 'list', '--raw']);
                 if (!$boot->successful()) throw new \RuntimeException('The panel does not start with the new version: '.self::output($boot));
-                $result = ['ok' => true, 'message' => $plugin->name.' updated from '.$from.' to '.$to.'.'];
+                $result = ['ok' => true] + self::say('updated', ['name' => $plugin->name, 'from' => $from, 'to' => $to]);
                 PanelUpdates::forget();
                 // What's new right in the "Plugin updated" notification; usually already read by the update check.
                 try { $result['notes'] = PanelUpdates::notesFor($plugin, $to); } catch (\Throwable) {}
             } catch (\Throwable $exception) {
                 self::restore($directory, $backup);
                 report($exception);
-                $result = ['ok' => false, 'message' => $plugin->name.' could not be updated, version '.$from.' was restored: '.$exception->getMessage()];
+                $result = ['ok' => false] + self::say('restored', ['name' => $plugin->name, 'from' => $from, 'error' => $exception->getMessage()]);
             }
         } catch (\Throwable $exception) {
             report($exception);
-            $result = ['ok' => false, 'message' => $plugin->name.' could not be updated: '.$exception->getMessage()];
+            $result = ['ok' => false] + self::say('failed', ['name' => $plugin->name, 'error' => $exception->getMessage()]);
         } finally {
             $lock->release();
             try {
@@ -230,11 +230,10 @@ final class PluginUpdater
         $latest = self::latestVersion($plugin);
         if (!$latest || !\Illuminate\Support\Facades\Cache::add('simplify.plugin-announced.'.$plugin->id.'.'.$latest, true, now()->addDays(60))) return;
         try {
-            $notification = \Filament\Notifications\Notification::make()->info()
-                ->title($plugin->name.' '.$latest.' is available')
-                ->body('Installing it now with a backup and automatic rollback. You get another notification when it is done.')
-                ->actions([\Filament\Actions\Action::make('open')->label('Open plugins')->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
-            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin()) as $user) $user->notifyNow($notification->toDatabase());
+            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin()) as $user) Translations::as($user, fn () => $user->notifyNow(\Filament\Notifications\Notification::make()->info()
+                ->title(__('pelican-simplify::plugins.notify.available', ['name' => $plugin->name, 'version' => $latest]))
+                ->body(__('pelican-simplify::plugins.notify.installing'))
+                ->actions([\Filament\Actions\Action::make('open')->label(__('pelican-simplify::plugins.notify.open_plugins'))->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))])->toDatabase()));
         } catch (\Throwable $exception) {
             report($exception);
         }
@@ -293,7 +292,7 @@ final class PluginUpdater
     /** Installs, reinstalls or uninstalls a plugin in a fresh process and always reports the outcome as a notification. */
     public static function change(Plugin $plugin, string $action, ?int $userId = null): array
     {
-        $label = ['install' => 'installed', 'reinstall' => 'installed again'][$action] ?? 'uninstalled';
+        $done = in_array($action, ['install', 'reinstall'], true) ? $action : 'uninstall';
         try {
             if ($action === 'install' || $action === 'reinstall') {
                 // A reinstall keeps the plugin enabled or disabled as it was; an errored one is enabled again.
@@ -305,15 +304,15 @@ final class PluginUpdater
             }
             $boot = Process::path(base_path())->timeout(120)->run([self::php(), 'artisan', 'list', '--raw']);
             if (!$boot->successful()) throw new \RuntimeException('The panel does not start with this plugin: '.(self::output($boot) ?: 'unknown error'));
-            $result = ['ok' => true, 'message' => $plugin->name.' was '.$label.'. Reload the panel to see the change.'];
+            $result = ['ok' => true] + self::say('done_'.$done, ['name' => $plugin->name]);
         } catch (\Throwable $exception) {
             report($exception);
             // Pelican enables a plugin before its code is known to load; a broken one would stop the whole panel.
             if ($action !== 'uninstall') self::quarantine($plugin->id, $exception->getMessage());
-            $result = ['ok' => false, 'message' => $plugin->name.' could not be '.$label.': '.$exception->getMessage()];
+            $result = ['ok' => false] + self::say('failed_'.$done, ['name' => $plugin->name, 'error' => $exception->getMessage()]);
         }
         \Illuminate\Support\Facades\Cache::forget('simplify.plugin-queued.'.$plugin->id);
-        self::notify($result, $userId, $action === 'uninstall' ? ['Plugin uninstalled', 'Plugin uninstall failed'] : ['Plugin installed', 'Plugin install failed']);
+        self::notify($result, $userId, $action === 'uninstall' ? ['uninstalled', 'uninstall_failed'] : ['installed', 'install_failed']);
         return $result;
     }
 
@@ -336,19 +335,30 @@ final class PluginUpdater
     {
         \Illuminate\Support\Facades\Cache::forget('simplify.plugin-queued.'.$pluginId);
         \Illuminate\Support\Facades\Cache::forget('simplify.plugin-update-queued.'.$pluginId);
-        self::notify(['ok' => false, 'message' => 'The '.$action.' of '.$pluginId.' stopped: '.$exception->getMessage()], $userId, ['', 'Plugin '.$action.' failed']);
+        self::notify(['ok' => false] + self::say('stopped', ['action' => $action, 'plugin' => $pluginId, 'error' => $exception->getMessage()]), $userId, ['', $action === 'uninstall' ? 'uninstall_failed' : ($action === 'update' ? 'update_failed' : 'install_failed')]);
     }
 
-    private static function notify(array $result, ?int $userId, array $titles = ['Plugin updated', 'Plugin update failed']): void
+    /** A result message by key: shown now in the acting user's language and sent again in each recipient's own. */
+    private static function say(string $key, array $replace = []): array
+    {
+        return ['message' => __('pelican-simplify::plugins.updater.'.$key, $replace), 'say' => [$key, $replace]];
+    }
+
+    /** $titles are keys under plugins.notify: [success, failure]. */
+    private static function notify(array $result, ?int $userId, array $titles = ['updated', 'update_failed']): void
     {
         try {
             $users = $userId ? \App\Models\User::query()->whereKey($userId)->get() : \App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin());
-            $notification = \Filament\Notifications\Notification::make()->title($result['ok'] ? $titles[0] : $titles[1])->body($result['message']);
-            $result['ok'] ? $notification->success() : $notification->danger();
-            if (!empty($result['notes']['lines'])) $notification->viewData(['simplify_notes' => $result['notes']['lines'], 'simplify_notes_url' => $result['notes']['url'] ?? null]);
-            if (FeatureSettings::enabled('plugin_manager')) $notification->actions([\Filament\Actions\Action::make('open')->label('Open plugins')->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
             // Delivered right away: the result must arrive even when the queue worker is busy or down.
-            foreach ($users as $user) $user->notifyNow($notification->toDatabase());
+            foreach ($users as $user) Translations::as($user, function () use ($user, $result, $titles): void {
+                $title = $titles[$result['ok'] ? 0 : 1];
+                $notification = \Filament\Notifications\Notification::make()->title($title === '' ? '' : __('pelican-simplify::plugins.notify.'.$title))
+                    ->body(isset($result['say']) ? __('pelican-simplify::plugins.updater.'.$result['say'][0], $result['say'][1]) : $result['message']);
+                $result['ok'] ? $notification->success() : $notification->danger();
+                if (!empty($result['notes']['lines'])) $notification->viewData(['simplify_notes' => $result['notes']['lines'], 'simplify_notes_url' => $result['notes']['url'] ?? null]);
+                if (FeatureSettings::enabled('plugin_manager')) $notification->actions([\Filament\Actions\Action::make('open')->label(__('pelican-simplify::plugins.notify.open_plugins'))->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
+                $user->notifyNow($notification->toDatabase());
+            });
         } catch (\Throwable $exception) {
             report($exception);
         }

@@ -13,6 +13,7 @@ final class PluginUpdater {public const REPOSITORY='https://raw.githubuserconten
 namespace App\Services\Helpers {final class SoftwareVersionService {public function latestWingsVersion(){return 'v1.0.1';}public function latestPanelVersion(){return 'v1.0.0';}}}
 namespace App\Models {final class Node {public static array $nodes=[];public static function query(){return new class{public function get(){return Node::$nodes;}};}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function now(){return new class{public function addDays($d){return $d;}public function addMinutes($m){return $m;}};}
 function app($class){return new $class;}
 require __DIR__.'/../src/Services/Announcements.php';
@@ -39,7 +40,7 @@ PluginUpdater::$plugins=[(object)['id'=>'pelican-simplify','name'=>'PelicanSimpl
 ];
 Cache::$store['simplify.panel-update-seen.panel-pelican-1.0.0']=500;
 $list=P::refresh();
-check(array_column($list,'title')===['Simplify 0.5.1 is available','Player Counter 1.3.0 is available','Wings 1.0.1 is available for node-eu-2','Pelican 1.0.0 is available'],'one announcement per update; unreachable and develop nodes are skipped');
+check(array_map(fn($item)=>P::present($item,0)['title'],$list)===['Simplify 0.5.1 is available','Player Counter 1.3.0 is available','Wings 1.0.1 is available for node-eu-2','Pelican 1.0.0 is available'],'one announcement per update; unreachable and develop nodes are skipped');
 check(array_column($list,'key')===['panel-simplify-0.5.1','panel-plugin-player-counter-1.3.0','panel-wings-2-1.0.1','panel-pelican-1.0.0'],'stable keys, so hiding one keeps it hidden');
 $shown=P::announcements(500+7200);
 check(count($shown)===4&&$shown[3]['time']==='2 hours ago','the bell says when an update was first seen');

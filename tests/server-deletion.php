@@ -6,6 +6,7 @@ namespace App\Models {class Server {public string $name='Example';}}
 namespace App\Services\Servers {class ServerDeletionService {public static bool $fail=false;public function handle($s){if(self::$fail)throw new \RuntimeException('Deletion failed');\Simplify\Panel\Services\Access::$deleted=true;}}}
 namespace Simplify\Panel\Services {class Access {public static bool $deleted=false;public static bool $owner=true;public static bool $offline=true;public static function server($uuid){if(self::$deleted)throw new \RuntimeException('404');return new \App\Models\Server;}public static function feature($key){return true;}public static function owner($s){\abort_unless(self::$owner,403);}public static function offline($s){\abort_unless(self::$offline,409);}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function app($c){return new $c;}function abort_unless($ok,$code,$message=''){if(!$ok)throw new \RuntimeException((string)$code);}
 require __DIR__.'/../src/Filament/App/Pages/Dashboard.php';
 use Simplify\Panel\Filament\App\Pages\Dashboard;use Simplify\Panel\Services\Access;use App\Services\Servers\ServerDeletionService;

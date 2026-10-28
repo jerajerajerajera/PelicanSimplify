@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Nouveautés',
+        'full_release_notes' => 'Notes de version complètes',
+        'mark_read' => 'Marquer comme lu',
+        'mark_as_unread' => 'Marquer comme non lu',
+        'clear' => 'Effacer',
+        'show_less' => 'Afficher moins',
+        'pin' => 'Épingler ',
+        'unpin' => 'Désépingler ',
+        'pin_2' => 'Épingler',
+        'unpin_2' => 'Désépingler',
+        'pinned' => 'Épinglé',
+        'you_are_all_caught_up' => 'Vous êtes à jour.',
+        'archived' => 'Archivées',
+        'nothing_archived' => 'Rien d’archivé.',
+        'loading' => 'Chargement…',
+        'show_more' => 'Afficher plus',
+        'clear_name' => 'Effacer :title',
+        'show_all' => 'Afficher les :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Les notifications ne sont pas encore activées sur cet appareil.',
+        'test_notification' => 'Notification de test',
+        'notifications_work_on_this_device' => 'Les notifications fonctionnent sur cet appareil.',
+        'test_sent_it_should_appear_within' => 'Test envoyé. Il devrait apparaître dans quelques secondes.',
+        'the_browser_no_longer_accepts_notifications' => 'Le navigateur n’accepte plus les notifications pour cet appareil. Réactivez-les.',
+        'the_push_service_did_not_accept' => 'Le service push n’a pas accepté le test. Réessayez dans une minute.',
+    ],
+];

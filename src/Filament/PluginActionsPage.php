@@ -14,7 +14,7 @@ abstract class PluginActionsPage extends \Filament\Pages\Page
 {
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $slug = 'simplify-actions';
-    protected static ?string $title = 'Plugin actions';
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable { return __('pelican-simplify::plugins.pages.plugin_actions'); }
     protected string $view = 'pelican-simplify::plugin-actions';
 
     #[\Livewire\Attributes\Locked] public string $run = '';

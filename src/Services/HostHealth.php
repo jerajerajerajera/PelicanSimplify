@@ -10,7 +10,7 @@ final class HostHealth
     /** One snapshot shared by every viewer for the configured cache time. */
     public static function snapshot(): array
     {
-        return Remember::value('simplify.host-health',(int)PerformanceSettings::get('health_seconds'),fn():array=>self::collect(),15) ?? self::summarize([]);
+        return self::present(Remember::value('simplify.host-health',(int)PerformanceSettings::get('health_seconds'),fn():array=>self::collect(),15) ?? self::summarize([]));
     }
     /** The refresh button: drops the shared snapshot unless it is only a few seconds old, so clicks cannot flood Wings. */
     public static function refresh(): array
@@ -37,13 +37,13 @@ final class HostHealth
             $health['metric_states']['network']=$traffic!==null?'healthy':'unavailable';
             $health['problem']=$problem;
             // Publish names and utilization only, never connection addresses or daemon credentials.
-            $nodes[]=['id'=>$node->id??$index,'name'=>$node->name??'Node '.($index+1),...$health];
+            $nodes[]=['id'=>$node->id??$index,'name'=>$node->name??('#'.($index+1)),...$health];
             if($traffic===null)$networkAvailable=false;else{$rx+=$traffic['rx_bytes'];$tx+=$traffic['tx_bytes'];}
         }
         $result=self::summarize($samples);
         $result['nodes']=$nodes;$result['checked_at']=time();
         $failing=array_values(array_filter($nodes,fn(array $n):bool=>$n['problem']!==null));
-        $result['problem']=match(count($failing)){0=>null,1=>count($nodes)>1?$failing[0]['name'].': '.$failing[0]['problem']:$failing[0]['problem'],default=>count($failing).' nodes did not report'};
+        $result['problem']=match(count($failing)){0=>null,1=>count($nodes)>1?['node_problem',['node'=>$failing[0]['name'],'problem'=>$failing[0]['problem']]]:$failing[0]['problem'],default=>['nodes_silent',['count'=>count($failing)]]};
         $result['network_rx_bytes']=$networkAvailable?$rx:null;$result['network_tx_bytes']=$networkAvailable?$tx:null;
         $result['network_rx_per_second']=$ratesAvailable&&$result['hosts']>0?$rxRate:null;$result['network_tx_per_second']=$ratesAvailable&&$result['hosts']>0?$txRate:null;
         $result['metric_states']['network']=$networkAvailable&&$result['hosts']>0?'healthy':'unavailable';
@@ -60,21 +60,32 @@ final class HostHealth
         try {
             $response=Http::daemon($node)->connectTimeout(3)->timeout(5)->get('/api/system/utilization');
         } catch (ConnectionException $e) {
-            return [[], str_contains(strtolower($e->getMessage()),'timed out')?'Wings did not answer in time':'Could not connect to Wings'];
+            return [[], [str_contains(strtolower($e->getMessage()),'timed out')?'timeout':'connect']];
         } catch (\Throwable) {
-            return [[], 'Could not connect to Wings'];
+            return [[], ['connect']];
         }
         if (!$response->successful()) return [[], self::httpProblem($response->status())];
         $data=$response->json();
-        return is_array($data)&&!empty($data['memory_total'])?[$data,null]:[[], 'Wings sent no usable statistics'];
+        return is_array($data)&&!empty($data['memory_total'])?[$data,null]:[[], ['no_stats']];
     }
-    public static function httpProblem(int $status): string
+    /** A problem as [key, values] (dashboard.health.problems), so the shared snapshot is read in each viewer's language. */
+    public static function httpProblem(int $status): array
     {
-        return match(true){
-            $status===401||$status===403=>"Wings refused the request (HTTP $status)",
-            $status>=500=>"Wings is unreachable (HTTP $status)",
-            default=>"Wings answered with HTTP $status",
+        return [match(true){$status===401||$status===403=>'refused',$status>=500=>'unreachable',default=>'http'},['status'=>$status]];
+    }
+    /** The shared snapshot with its labels and problems in the viewer's language. */
+    public static function present(array $result): array
+    {
+        $say=static function(mixed $problem) use (&$say): ?string {
+            if(!is_array($problem))return is_string($problem)?$problem:null;
+            $values=$problem[1]??[];
+            if(isset($values['problem']))$values['problem']=$say($values['problem']);
+            return ($problem[0]??'')==='nodes_silent'?trans_choice('pelican-simplify::dashboard.health.problems.nodes_silent',(int)$values['count']):__('pelican-simplify::dashboard.health.problems.'.$problem[0],$values);
         };
+        $label=static fn(array $item):string=>isset($item['label_key'])?__('pelican-simplify::dashboard.health.labels.'.$item['label_key']):(string)($item['label']??'');
+        $result['label']=$label($result);$result['problem']=$say($result['problem']??null);
+        foreach($result['nodes']??[] as $index=>$node){$result['nodes'][$index]['label']=$label($node);$result['nodes'][$index]['problem']=$say($node['problem']??null);}
+        return $result;
     }
     private static function traffic(Node $node): ?array
     {
@@ -94,7 +105,7 @@ final class HostHealth
     }
     public static function summarize(array $samples): array
     {
-        $result=['hosts'=>count($samples),'available'=>0,'cpu_percent'=>null,'memory_used'=>null,'memory_total'=>null,'disk_used'=>null,'disk_total'=>null,'state'=>'unavailable','label'=>'Unavailable','metric_states'=>['cpu'=>'unavailable','memory'=>'unavailable','disk'=>'unavailable'],'problem'=>null];
+        $result=['hosts'=>count($samples),'available'=>0,'cpu_percent'=>null,'memory_used'=>null,'memory_total'=>null,'disk_used'=>null,'disk_total'=>null,'state'=>'unavailable','label_key'=>'unavailable','label'=>__('pelican-simplify::dashboard.health.labels.unavailable'),'metric_states'=>['cpu'=>'unavailable','memory'=>'unavailable','disk'=>'unavailable'],'problem'=>null];
         $levels=['cpu'=>0,'memory'=>0,'disk'=>0];$cpu=0.0;$memoryUsed=0.0;$memoryTotal=0.0;$diskUsed=0.0;$diskTotal=0.0;$maintenance=false;$critical=false;$warning=false;
         $number=static fn($v):bool=>is_numeric($v)&&is_finite((float)$v)&&(float)$v>=0;
         foreach($samples as $sample){
@@ -110,9 +121,9 @@ final class HostHealth
         $result=array_replace($result,['cpu_percent'=>$cpu/$result['available'],'memory_used'=>$memoryUsed,'memory_total'=>$memoryTotal,'disk_used'=>$diskUsed,'disk_total'=>$diskTotal]);
         foreach($levels as $key=>$level)$result['metric_states'][$key]=['healthy','warning','critical'][$level];
         if($result['available']<$result['hosts']){foreach($result['metric_states'] as $key=>$state)if($state==='healthy')$result['metric_states'][$key]='unavailable';}
-        if($result['available']<$result['hosts'])return array_replace($result,['state'=>'unavailable','label'=>'Partly unavailable']);
-        if($critical)return array_replace($result,['state'=>'critical','label'=>'Critical load']);
-        if($maintenance)return array_replace($result,['state'=>'warning','label'=>'Maintenance']);
-        return array_replace($result,['state'=>$warning?'warning':'healthy','label'=>$warning?'High load':'Healthy']);
+        if($result['available']<$result['hosts'])return array_replace($result,['state'=>'unavailable','label_key'=>'partly_unavailable','label'=>__('pelican-simplify::dashboard.health.labels.partly_unavailable')]);
+        if($critical)return array_replace($result,['state'=>'critical','label_key'=>'critical','label'=>__('pelican-simplify::dashboard.health.labels.critical')]);
+        if($maintenance)return array_replace($result,['state'=>'warning','label_key'=>'maintenance','label'=>__('pelican-simplify::dashboard.health.labels.maintenance')]);
+        return array_replace($result,['state'=>$warning?'warning':'healthy','label_key'=>$warning?'high':'healthy','label'=>$warning?__('pelican-simplify::dashboard.health.labels.high'):__('pelican-simplify::dashboard.health.labels.healthy')]);
     }
 }

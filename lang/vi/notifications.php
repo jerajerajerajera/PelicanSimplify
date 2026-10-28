@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Có gì mới',
+        'full_release_notes' => 'Ghi chú phát hành đầy đủ',
+        'mark_read' => 'Đánh dấu đã đọc',
+        'mark_as_unread' => 'Đánh dấu chưa đọc',
+        'clear' => 'Xóa',
+        'show_less' => 'Thu gọn',
+        'pin' => 'Ghim ',
+        'unpin' => 'Bỏ ghim ',
+        'pin_2' => 'Ghim',
+        'unpin_2' => 'Bỏ ghim',
+        'pinned' => 'Đã ghim',
+        'you_are_all_caught_up' => 'Bạn đã xem hết.',
+        'archived' => 'Đã lưu trữ',
+        'nothing_archived' => 'Không có gì được lưu trữ.',
+        'loading' => 'Đang tải…',
+        'show_more' => 'Xem thêm',
+        'clear_name' => 'Xóa :title',
+        'show_all' => 'Xem tất cả :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Thông báo chưa được bật trên thiết bị này.',
+        'test_notification' => 'Thông báo thử',
+        'notifications_work_on_this_device' => 'Thông báo hoạt động trên thiết bị này.',
+        'test_sent_it_should_appear_within' => 'Đã gửi thử. Thông báo sẽ xuất hiện trong vài giây.',
+        'the_browser_no_longer_accepts_notifications' => 'Trình duyệt không còn nhận thông báo cho thiết bị này. Hãy bật lại.',
+        'the_push_service_did_not_accept' => 'Dịch vụ push không nhận bản thử. Hãy thử lại sau một phút.',
+    ],
+];

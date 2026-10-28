@@ -1,6 +1,9 @@
 /* Simplify dashboard (Alpine component). Server data arrives through Livewire ($wire) calls;
    everything else is local UI state. Dialogs, toasts and tooltips come from core.js (window.Simplify). */
 (() => {
+  // Texts from lang/<locale>/js.php (core.js); the key itself when core.js is missing.
+  const t = (key, params) => (window.Simplify?.t ? window.Simplify.t(key, params) : key);
+  const tc = (key, count, params) => (window.Simplify?.tc ? window.Simplify.tc(key, count, params) : key);
   /** Returned by run() when an action was skipped (busy) or failed (already reported). */
   const SKIPPED = Symbol('skipped');
   const MINECRAFT_VERSION = /(?:^|[^0-9])((?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?))(?![0-9])/;
@@ -13,9 +16,9 @@
   const GROUP_LIMIT = 30;
   const GROUP_NAME_LENGTH = 40;
   // Server order for the overview, and per group (Overview follows the overview's order, Manual uses the arrows).
-  const SERVER_ORDERS = [{ key: 'name', label: 'Name' }, { key: 'created', label: 'Created' }, { key: 'port', label: 'Port' }];
-  const GROUP_ORDERS = [{ key: 'overview', label: 'Same as the overview' }, { key: 'manual', label: 'My own order' }, ...SERVER_ORDERS.map((o) => ({ ...o, label: { name: 'Name (A to Z)', created: 'Oldest first', port: 'Port (lowest first)' }[o.key] }))];
-  const POWER_LABELS = { start: 'Start', stop: 'Stop', restart: 'Restart', kill: 'Force stop' };
+  const SERVER_ORDERS = [{ key: 'name', label: t('dashboard.name') }, { key: 'created', label: t('dashboard.created') }, { key: 'port', label: t('dashboard.port') }];
+  const GROUP_ORDERS = [{ key: 'overview', label: t('dashboard.same_as_the_overview') }, { key: 'manual', label: t('dashboard.my_own_order') }, ...SERVER_ORDERS.map((o) => ({ ...o, label: { name: t('dashboard.name_a_to_z'), created: t('dashboard.oldest_first'), port: t('dashboard.port_lowest_first') }[o.key] }))];
+  const POWER_LABELS = { start: t('dashboard.start'), stop: t('dashboard.stop'), restart: t('dashboard.restart'), kill: t('dashboard.force_stop') };
   // Phones: the sections that get their own tab next to Console (the rest sit under More), and the console's quick commands.
   const PHONE_SECTIONS = ['players', 'files'];
   const QUICK_COMMANDS = ['list', 'say ', 'time set day', 'weather clear', 'save-all'];
@@ -97,10 +100,10 @@
       healthOpenNodes: [],
       healthRefreshing: false,
       hostMetrics: [
-        { key: 'cpu', label: 'CPU', icon: 'cpu' },
+        { key: 'cpu', label: t('dashboard.cpu'), icon: 'cpu' },
         { key: 'memory', label: 'RAM', icon: 'ram' },
-        { key: 'disk', label: 'Storage', icon: 'disk' },
-        { key: 'network', label: 'Network', icon: 'traffic' },
+        { key: 'disk', label: t('dashboard.storage'), icon: 'disk' },
+        { key: 'network', label: t('dashboard.network'), icon: 'traffic' },
       ],
       overviewPowerBusy: null,
       overviewNetwork: {},
@@ -170,25 +173,25 @@
       stats: { cpu_absolute: null, memory_bytes: null, disk_bytes: null },
       series: { cpu: [], ram: [], disk: [], network: [] },
       metrics: [
-        { key: 'cpu', label: 'CPU load', icon: 'cpu' },
-        { key: 'ram', label: 'Memory', icon: 'ram' },
-        { key: 'disk', label: 'Storage', icon: 'disk' },
-        { key: 'network', label: 'Network usage', icon: 'traffic' },
+        { key: 'cpu', label: t('dashboard.cpu_load'), icon: 'cpu' },
+        { key: 'ram', label: t('dashboard.memory'), icon: 'ram' },
+        { key: 'disk', label: t('dashboard.storage'), icon: 'disk' },
+        { key: 'network', label: t('dashboard.network_usage'), icon: 'traffic' },
       ],
       widgets: [
-        { key: 'settings', title: 'Game settings', description: 'Gameplay, MOTD & server appearance', icon: 'settings' },
-        { key: 'players', title: 'Player management', description: 'Whitelist, operators & moderation', icon: 'players' },
-        { key: 'plugins', title: 'Plugins', description: 'Install and manage server plugins', icon: 'plugins' },
-        { key: 'mods', title: 'Mods', description: 'Install and manage server mods', icon: 'mods' },
-        { key: 'files', title: 'Files', description: 'Browse, upload & connect with SFTP', icon: 'files' },
-        { key: 'backups', title: 'Backups', description: 'Recovery points & automatic backups', icon: 'backups' },
-        { key: 'schedules', title: 'Scheduled tasks', description: 'Planned restarts & console commands', icon: 'clock' },
-        { key: 'software', title: 'Server software', description: 'Minecraft version, loader & modpack', icon: 'packages' },
-        { key: 'connection', title: 'Network', description: 'Server address & subdomain', icon: 'link' },
-        { key: 'performance', title: 'Performance', description: 'CPU, memory & storage limits', icon: 'cpu' },
-        { key: 'web', title: 'Website', description: 'Visibility & website presentation', icon: 'web' },
-        { key: 'activity', title: 'Activity log', description: 'Review recent server management actions', icon: 'activity' },
-        { key: 'advanced', title: 'Advanced', description: 'Runtime details & server management', icon: 'advanced' },
+        { key: 'settings', title: t('dashboard.game_settings'), description: t('dashboard.gameplay_motd_server_appearance'), icon: 'settings' },
+        { key: 'players', title: t('dashboard.player_management'), description: t('dashboard.whitelist_operators_moderation'), icon: 'players' },
+        { key: 'plugins', title: t('dashboard.plugins'), description: t('dashboard.install_and_manage_server_plugins'), icon: 'plugins' },
+        { key: 'mods', title: t('dashboard.mods'), description: t('dashboard.install_and_manage_server_mods'), icon: 'mods' },
+        { key: 'files', title: t('dashboard.files'), description: t('dashboard.browse_upload_connect_with_sftp'), icon: 'files' },
+        { key: 'backups', title: t('dashboard.backups'), description: t('dashboard.recovery_points_automatic_backups'), icon: 'backups' },
+        { key: 'schedules', title: t('dashboard.scheduled_tasks'), description: t('dashboard.planned_restarts_console_commands'), icon: 'clock' },
+        { key: 'software', title: t('dashboard.server_software'), description: t('dashboard.minecraft_version_loader_modpack'), icon: 'packages' },
+        { key: 'connection', title: t('dashboard.network'), description: t('dashboard.server_address_subdomain'), icon: 'link' },
+        { key: 'performance', title: t('dashboard.performance'), description: t('dashboard.cpu_memory_storage_limits'), icon: 'cpu' },
+        { key: 'web', title: t('dashboard.website'), description: t('dashboard.visibility_website_presentation'), icon: 'web' },
+        { key: 'activity', title: t('dashboard.activity_log'), description: t('dashboard.review_recent_server_management_actions'), icon: 'activity' },
+        { key: 'advanced', title: t('dashboard.advanced'), description: t('dashboard.runtime_details_server_management'), icon: 'advanced' },
       ],
       settings: {},
       settingsTab: 'general',
@@ -231,7 +234,7 @@
           const feature = { performance: 'resources', plugins: 'packages', mods: 'packages', web: 'web' }[w.key] || w.key;
           return feature === 'web' ? this.boot.web : this.boot.features?.[feature] !== false;
         });
-        if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · Console';
+        if (this.consoleWindow && this.server && typeof document !== 'undefined') document.title = (this.server.alias || this.server.name) + ' · ' + t('dashboard.console');
         this.restoreOverviewView();
         this.restoreOverviewPreferences();
         this.consoleFocus = this.overviewPreferences.serverBiggerConsole;
@@ -276,7 +279,7 @@
           this.openPanelSettings(settings);
         } else if (admin && admin.startsWith('/')) {
           const known = this.adminPages().flatMap((group) => group.items).find((item) => new URL(item.url, location.origin).pathname === admin);
-          this.openAdminPage(known || { key: 'link', label: 'Admin', url: admin });
+          this.openAdminPage(known || { key: 'link', label: t('dashboard.admin'), url: admin });
         } else if (open && this.server && this.widgets.some((widget) => widget.key === open)) {
           this.open(open);
         } else return;
@@ -456,14 +459,14 @@
       },
       /** The power button that fits the state: Stop while the server runs, Start otherwise. */
       mainPower() {
-        return ['running', 'starting'].includes(this.status) ? { action: 'stop', label: 'Stop', icon: 'stop' } : { action: 'start', label: 'Start', icon: 'play' };
+        return ['running', 'starting'].includes(this.status) ? { action: 'stop', label: t('dashboard.stop'), icon: 'stop' } : { action: 'start', label: t('dashboard.start'), icon: 'play' };
       },
       /** "Paper 1.21.4", "Valheim" or "Not reported" for the line under the server name. */
       softwareLabel() {
-        const software = this.server?.software || 'Not reported';
+        const software = this.server?.software || t('dashboard.not_reported');
         if (!this.server?.minecraft) return software;
         const version = this.minecraftVersion();
-        return version === 'Not reported' ? software : software + ' ' + version;
+        return version === t('dashboard.not_reported') ? software : software + ' ' + version;
       },
       modpackLabel() {
         const pack = this.server?.pack || {};
@@ -477,7 +480,7 @@
         try {
           popup = window.open(url.toString(), 'simplify-console-' + (this.server?.uuid || ''), 'popup,width=960,height=640');
         } catch {}
-        if (!popup) this.toast('The browser blocked the new window. Allow pop-ups for this panel to open the console separately.', 'warn');
+        if (!popup) this.toast(t('dashboard.the_browser_blocked_the_new_window'), 'warn');
       },
       openHostServer(s) {
         this.hostServer = s;
@@ -569,23 +572,23 @@
           items.push({
             id: 'pending',
             tone: pending.error ? 'danger' : 'warn',
-            title: pending.error ? 'Changes need attention' : 'Changes are waiting for a restart',
-            text: pending.error || (pending.restart_at ? 'A restart is scheduled to apply your changes.' : 'Restart the server to apply your saved changes.'),
-            action: this.showWidget('restart') && !pending.restart_requested ? { label: 'Restart now', url: '#', run: () => this.restartChanges(0) } : null,
+            title: pending.error ? t('dashboard.changes_need_attention') : t('dashboard.changes_are_waiting_for_a_restart'),
+            text: pending.error || (pending.restart_at ? t('dashboard.a_restart_is_scheduled_to_apply') : t('dashboard.restart_the_server_to_apply_your')),
+            action: this.showWidget('restart') && !pending.restart_requested ? { label: t('dashboard.restart_now'), url: '#', run: () => this.restartChanges(0) } : null,
           });
         }
         for (const p of this.pluginFailures || []) {
           items.push({
             id: 'plugin-off-' + p.file,
             tone: 'warn',
-            title: p.title + ' did not load and was switched off',
-            text: 'The server starts cleanly again without it. ' + p.reason,
-            action: this.canExplain() ? { label: 'Ask the AI assistant why', url: '#', run: () => this.explainPlugin(p.file) } : { label: 'Open plugins', url: '#', run: () => this.open('plugins') },
+            title: t('dashboard.plugin_switched_off', { plugin: p.title }),
+            text: t('dashboard.plugin_switched_off_text') + ' ' + p.reason,
+            action: this.canExplain() ? { label: t('dashboard.ask_the_ai_assistant_why'), url: '#', run: () => this.explainPlugin(p.file) } : { label: t('dashboard.open_plugins'), url: '#', run: () => this.open('plugins') },
           });
         }
         const health = this.boot.host_health;
         if (!this.server && ['warning', 'critical'].includes(health?.state)) {
-          items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: 'Host health: ' + (health.label || 'Attention needed'), text: (health.available ?? 0) + ' of ' + (health.hosts ?? 0) + ' hosts reporting.', action: null });
+          items.push({ id: 'health', tone: health.state === 'critical' ? 'danger' : 'warn', title: t('dashboard.host_health_title', { state: health.label || t('dashboard.attention_needed') }), text: tc('dashboard.hosts_reporting', health.hosts ?? 0, { available: health.available ?? 0 }), action: null });
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
@@ -629,7 +632,7 @@
           const known = new Set(reset ? [] : this.archive.items.map((n) => n.key));
           this.archive = { ...this.archive, items: reset ? result.items : [...this.archive.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loaded: true };
         } catch {
-          this.toast('Archived notifications could not be loaded.', 'warn');
+          this.toast(t('dashboard.archived_notifications_could_not_be_loaded'), 'warn');
         } finally {
           this.archive.loading = false;
         }
@@ -657,7 +660,7 @@
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           Object.assign(this, before);
-          this.toast('The notification could not be cleared.', 'warn');
+          this.toast(t('dashboard.the_notification_could_not_be_cleared'), 'warn');
         }
       },
       async clearReadNotifications() {
@@ -674,7 +677,7 @@
           if (this.feed.more) this.loadNotificationPage(true);
         } catch {
           Object.assign(this, before);
-          this.toast('Read notifications could not be cleared.', 'warn');
+          this.toast(t('dashboard.read_notifications_could_not_be_cleared'), 'warn');
         }
       },
       /** The bell's count: alerts, unread announcements and every unread Pelican notification (also the ones not loaded). */
@@ -701,7 +704,7 @@
           this.feed = { items: reset ? result.items : [...this.feed.items, ...result.items.filter((n) => !known.has(n.key))], page, more: !!result.more, loading: false, loaded: true };
           this.panelUnread = Number(result.unread) || 0;
         } catch {
-          if (!reset) this.toast('Older notifications could not be loaded.', 'warn');
+          if (!reset) this.toast(t('dashboard.older_notifications_could_not_be_loaded'), 'warn');
         } finally {
           this.feed.loading = false;
         }
@@ -740,7 +743,7 @@
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           Object.assign(this, before);
-          this.toast('Notifications could not be marked as read.', 'warn');
+          this.toast(t('dashboard.notifications_could_not_be_marked_as'), 'warn');
         }
       },
       /** Announcement bars above the overview and server pages: live and pinned (not unpinned by this account). */
@@ -748,17 +751,17 @@
         return this.announcements.filter((item) => !item.dismissed);
       },
       announcementMeta(item) {
-        const details = [item.source === 'panel' ? 'Panel' : '', item.audience === 'admins' ? 'admins only' : '', this.announcementUntil(item)].filter(Boolean);
+        const details = [item.source === 'panel' ? t('dashboard.panel') : '', item.audience === 'admins' ? t('dashboard.admins_only') : '', this.announcementUntil(item)].filter(Boolean);
         // The category only as context for other details; the colour already says it.
-        const category = { info: 'Info', warning: 'Warning', success: 'Success' }[item.category];
+        const category = { info: t('dashboard.category_info'), warning: t('dashboard.category_warning'), success: t('dashboard.category_success') }[item.category];
         return (details.length && category ? [category, ...details] : details).join(' · ');
       },
       /** "until Sun 26 Oct 03:00" in this browser's time zone (the panel's own time zone can differ). */
       announcementUntil(item) {
         if (!Number.isFinite(item.ends_at) || typeof Intl === 'undefined') return item.until || '';
         try {
-          const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(item.ends_at * 1000)).map((p) => [p.type, p.value]));
-          return 'until ' + parts.weekday + ' ' + parts.day + ' ' + parts.month + ' ' + parts.hour + ':' + parts.minute;
+          const parts = Object.fromEntries(new Intl.DateTimeFormat(document.documentElement.lang || 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(item.ends_at * 1000)).map((p) => [p.type, p.value]));
+          return t('dashboard.until', { date: parts.weekday + ' ' + parts.day + ' ' + parts.month + ' ' + parts.hour + ':' + parts.minute });
         } catch {
           return item.until || '';
         }
@@ -788,7 +791,7 @@
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           this.announcements = before;
-          this.toast(pinned ? 'The announcement could not be pinned.' : 'The announcement could not be unpinned.', 'warn');
+          this.toast(pinned ? t('dashboard.the_announcement_could_not_be_pinned') : t('dashboard.the_announcement_could_not_be_unpinned'), 'warn');
         }
       },
       /** Push needs a service worker, the Push API and https; iPhones and iPads only in the installed app. */
@@ -843,7 +846,7 @@
         try {
           this.push.settings = await wire.pushSettings(this.push.endpoint);
         } catch {
-          this.push.error = 'Notification settings could not be loaded.';
+          this.push.error = t('dashboard.notification_settings_could_not_be_loaded');
         }
       },
       pushOn() {
@@ -851,10 +854,10 @@
       },
       deviceLabel() {
         const agent = globalThis.navigator?.userAgent || '';
-        const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /SamsungBrowser/.test(agent) ? 'Samsung Internet' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : 'Browser';
+        const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /SamsungBrowser/.test(agent) ? 'Samsung Internet' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : t('dashboard.browser');
         const system = /iPhone/.test(agent) ? 'iPhone' : /iPad/.test(agent) ? 'iPad' : /Android/.test(agent) ? 'Android' : /Windows/.test(agent) ? 'Windows' : /Mac OS X/.test(agent) ? 'Mac' : /Linux/.test(agent) ? 'Linux' : '';
         const app = globalThis.matchMedia?.('(display-mode: standalone)').matches || globalThis.navigator?.standalone === true;
-        return browser + (system ? ' on ' + system : '') + (app ? ' · installed app' : '');
+        return (system ? t('dashboard.browser_on_system', { browser, system }) : browser) + (app ? ' · ' + t('dashboard.installed_app') : '');
       },
       async enablePush() {
         if (this.push.busy) return;
@@ -863,12 +866,12 @@
         try {
           const permission = await globalThis.Notification.requestPermission();
           if (permission !== 'granted') {
-            this.push.error = permission === 'denied' ? 'Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.' : 'Notifications were not allowed.';
+            this.push.error = permission === 'denied' ? t('dashboard.notifications_blocked') : t('dashboard.notifications_were_not_allowed');
             return;
           }
           const registration = await this.pushRegistration();
           if (!registration) {
-            this.push.error = 'The app is still starting. Reload the page and try again.';
+            this.push.error = t('dashboard.the_app_is_still_starting_reload');
             return;
           }
           const key = this.push.settings?.key || (await wire.pushSettings(null)).key;
@@ -884,14 +887,14 @@
           const result = await wire.savePushSubscription(subscription.toJSON(), this.deviceLabel());
           if (!result?.ok) {
             await subscription.unsubscribe().catch(() => {});
-            this.push.error = result?.message || 'Notifications could not be turned on.';
+            this.push.error = result?.message || t('dashboard.notifications_could_not_be_turned_on');
             return;
           }
           this.push.endpoint = subscription.endpoint;
           this.push.settings = { ...this.push.settings, ...result };
-          this.toast('Notifications are on for this device.', 'ok');
+          this.toast(t('dashboard.notifications_are_on_for_this_device'), 'ok');
         } catch {
-          this.push.error = 'Notifications could not be turned on in this browser.';
+          this.push.error = t('dashboard.notifications_could_not_be_turned_on_2');
         } finally {
           this.push.busy = false;
         }
@@ -907,9 +910,9 @@
         try {
           this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(endpoint)) };
           this.push.endpoint = null;
-          this.toast('Notifications are off for this device.', 'info');
+          this.toast(t('dashboard.notifications_are_off_for_this_device'), 'info');
         } catch {
-          this.push.error = 'Notifications could not be turned off.';
+          this.push.error = t('dashboard.notifications_could_not_be_turned_off');
         } finally {
           this.push.busy = false;
         }
@@ -919,9 +922,9 @@
         this.push.busy = true;
         try {
           const result = await wire.sendTestPush(this.push.endpoint);
-          this.toast(result?.message || 'Test sent.', result?.ok ? 'ok' : 'warn');
+          this.toast(result?.message || t('dashboard.test_sent'), result?.ok ? 'ok' : 'warn');
         } catch {
-          this.toast('The test could not be sent.', 'warn');
+          this.toast(t('dashboard.the_test_could_not_be_sent'), 'warn');
         } finally {
           this.push.busy = false;
         }
@@ -930,7 +933,7 @@
         try {
           this.push.settings = { ...this.push.settings, ...(await wire.removePushDevice(id)) };
         } catch {
-          this.toast('The device could not be removed.', 'warn');
+          this.toast(t('dashboard.the_device_could_not_be_removed'), 'warn');
         }
       },
       async setPushPreference(kind, value) {
@@ -940,15 +943,15 @@
           this.push.settings.preferences = await wire.savePushPreferences({ [kind]: value });
         } catch {
           this.push.settings = { ...this.push.settings, preferences: before };
-          this.toast('Your choice could not be saved.', 'warn');
+          this.toast(t('dashboard.your_choice_could_not_be_saved'), 'warn');
         }
       },
       pushDeviceTime(device) {
-        if (!device.last_sent_at) return 'No notification sent yet';
+        if (!device.last_sent_at) return t('dashboard.no_notification_yet');
         const seconds = Math.max(0, Date.now() / 1000 - device.last_sent_at);
         const days = Math.round(seconds / 86400);
-        const ago = seconds < 3600 ? Math.max(1, Math.round(seconds / 60)) + ' min ago' : seconds < 86400 ? Math.round(seconds / 3600) + ' h ago' : days === 1 ? 'yesterday' : days + ' days ago';
-        return 'Last notification ' + ago;
+        const ago = seconds < 3600 ? t('dashboard.minutes_ago', { count: Math.max(1, Math.round(seconds / 60)) }) : seconds < 86400 ? t('dashboard.hours_ago', { count: Math.round(seconds / 3600) }) : days === 1 ? t('dashboard.yesterday') : tc('dashboard.days_ago', days);
+        return t('dashboard.last_notification', { ago });
       },
       async refreshAnnouncements() {
         if (typeof wire.announcements !== 'function') return;
@@ -1012,16 +1015,16 @@
       hostSections() {
         // Grouped by what an admin wants to do; Simplify's own pages never land under "Other plugins".
         const plan = [
-          { key: 'servers', label: 'Servers', icon: 'host', color: '#5fb87a', pages: ['easycreator', 'eggresource', 'mountresource'] },
-          { key: 'nodes', label: 'Nodes', icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'databasehostresource', 'backuphostresource'] },
-          { key: 'people', label: 'People', icon: 'players', color: '#a78bfa', pages: ['userresource', 'roleresource'] },
-          { key: 'announcements', label: 'Announcements', icon: 'bell', color: '#fbbf24', pages: ['manageannouncements'] },
-          { key: 'tools', label: 'Tools', icon: 'plugins', color: '#f472b6', pages: ['pluginresource', 'serverdirectory', 'explain'] },
-          { key: 'integrations', label: 'Integrations', icon: 'link', color: '#f0a35b', pages: ['apikeyresource', 'webhookresource'] },
-          { key: 'panel', label: 'Panel', icon: 'gear', color: '#94a3b8', pages: ['simplifysettings', 'settings', 'listlogs'] },
-          { key: 'extensions', label: 'Other plugins', icon: 'plugins', color: '#2dd4bf', pages: [] },
-          { key: 'health', label: 'Health', icon: 'heart', color: '#f87171', pages: ['health'] },
-          { key: 'legacy', label: 'Legacy', icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
+          { key: 'servers', label: t('dashboard.admin_groups.servers'), icon: 'host', color: '#5fb87a', pages: ['easycreator', 'eggresource', 'mountresource'] },
+          { key: 'nodes', label: t('dashboard.admin_groups.nodes'), icon: 'monitor', color: '#5b9cf0', pages: ['noderesource', 'databasehostresource', 'backuphostresource'] },
+          { key: 'people', label: t('dashboard.admin_groups.people'), icon: 'players', color: '#a78bfa', pages: ['userresource', 'roleresource'] },
+          { key: 'announcements', label: t('dashboard.admin_groups.announcements'), icon: 'bell', color: '#fbbf24', pages: ['manageannouncements'] },
+          { key: 'tools', label: t('dashboard.admin_groups.tools'), icon: 'plugins', color: '#f472b6', pages: ['pluginresource', 'serverdirectory', 'explain'] },
+          { key: 'integrations', label: t('dashboard.admin_groups.integrations'), icon: 'link', color: '#f0a35b', pages: ['apikeyresource', 'webhookresource'] },
+          { key: 'panel', label: t('dashboard.admin_groups.panel'), icon: 'gear', color: '#94a3b8', pages: ['simplifysettings', 'settings', 'listlogs'] },
+          { key: 'extensions', label: t('dashboard.other_plugins'), icon: 'plugins', color: '#2dd4bf', pages: [] },
+          { key: 'health', label: t('dashboard.admin_groups.health'), icon: 'heart', color: '#f87171', pages: ['health'] },
+          { key: 'legacy', label: t('dashboard.admin_groups.legacy'), icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
         ];
         const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || []), ...this.adminActions()];
         const known = new Set(plan.flatMap((section) => section.pages));
@@ -1035,8 +1038,8 @@
       adminActions() {
         const items = [];
         // Admin tools open the settings in a popup; host mode shows the same page in its workspace (url).
-        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: 'Settings', icon: 'gear', action: 'settings', url: this.boot.settings_url });
-        if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: 'Explain panel errors', icon: 'question', action: 'explain' });
+        if (this.boot.settings_url) items.push({ key: 'simplifysettings', label: t('dashboard.settings'), icon: 'gear', action: 'settings', url: this.boot.settings_url });
+        if (this.explainSources().includes('panel')) items.push({ key: 'explain', label: t('dashboard.explain_panel_errors'), icon: 'question', action: 'explain' });
         return items;
       },
       /** True when the item ran as an action (popup) rather than opening as a page. */
@@ -1154,7 +1157,7 @@
         this.notifyMenu = false;
         this.incomingShown = false;
         const known = this.hostSections().flatMap((section) => section.pages).find((item) => new URL(item.url, location.origin).pathname === admin);
-        this.openAdminPage(known || { key: 'link', label: action.label || 'Admin', url: admin });
+        this.openAdminPage(known || { key: 'link', label: action.label || t('dashboard.admin'), url: admin });
       },
       /** Mark as unread on one read notification: back in the list (also out of Archived) and counted again. */
       async markNotificationUnread(item) {
@@ -1176,7 +1179,7 @@
           if (item.pelican && item.archived && this.feed.loaded) this.loadNotificationPage(true);
         } catch {
           Object.assign(this, before);
-          this.toast('The notification could not be marked as unread.', 'warn');
+          this.toast(t('dashboard.the_notification_could_not_be_marked'), 'warn');
         }
       },
       /** Mark read on one notification: Pelican's by id, announcements by key. */
@@ -1190,7 +1193,7 @@
           if (Array.isArray(items)) this.announcements = items;
         } catch {
           this.announcements = before;
-          this.toast('The announcement could not be marked as read.', 'warn');
+          this.toast(t('dashboard.the_announcement_could_not_be_marked'), 'warn');
         }
       },
       async markPanelNoticesRead(keys) {
@@ -1204,7 +1207,7 @@
           const items = await wire.markPanelNotificationsRead(ids);
           if (Array.isArray(items)) this.panelNotices = items;
         } catch {
-          this.toast('Notifications could not be marked as read.', 'warn');
+          this.toast(t('dashboard.notifications_could_not_be_marked_as'), 'warn');
         }
       },
       enhanceCopyright() {
@@ -1218,7 +1221,7 @@
           line.setAttribute('data-ps-copyright-line', '');
           const credit = document.createElement('span');
           credit.dataset.psAttribution = '';
-          credit.append(document.createTextNode(' - Enhanced by '));
+          credit.append(document.createTextNode(' - ' + t('dashboard.enhanced_by') + ' '));
           const link = document.createElement('a');
           link.href = 'https://github.com/jerajerajerajera/PelicanSimplify';
           link.className = 'ps-project-link';
@@ -1226,7 +1229,7 @@
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           credit.append(link);
-          if (this.boot.build_version) credit.append(document.createTextNode(' · Build ' + this.boot.build_version));
+          if (this.boot.build_version) credit.append(document.createTextNode(' · ' + t('dashboard.build', { version: this.boot.build_version })));
           line.append(credit);
         }
       },
@@ -1329,10 +1332,10 @@
         this.overviewPowerBusy = s.uuid;
         try {
           await wire.overviewPower(s.uuid, action);
-          this.toast(POWER_LABELS[action] + ' sent to ' + (s.alias || s.name), 'ok');
+          this.toast(t('dashboard.power_sent', { action: POWER_LABELS[action], server: s.alias || s.name }), 'ok');
           await this.refreshOverview();
         } catch (error) {
-          this.toast(error?.message || 'The power action could not be sent.', 'danger');
+          this.toast(error?.message || t('dashboard.the_power_action_could_not_be'), 'danger');
         } finally {
           this.overviewPowerBusy = null;
         }
@@ -1373,13 +1376,14 @@
         while (size > 8 && (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1)) box.style.fontSize = (size -= .5) + 'px';
       },
       softwareTooltip(s) {
-        const software = String(s.software || 'Server software').trim();
+        const software = String(s.software || t('dashboard.server_software')).trim();
         const raw = String(s.reported_version || s.minecraft_version || '').trim();
         const version = s.game === 'minecraft' ? raw.match(MINECRAFT_VERSION)?.[1] || '' : raw;
-        return (s.status === 'running' ? 'Running ' : '') + software + (version ? ' · ' + version : '');
+        const label = software + (version ? ' · ' + version : '');
+        return s.status === 'running' ? t('dashboard.running_software', { software: label }) : label;
       },
       gameLabel(s) {
-        return s.game === 'minecraft' ? 'Minecraft' : String(s.game_label || 'Other game').trim() || 'Other game';
+        return s.game === 'minecraft' ? 'Minecraft' : String(s.game_label || t('dashboard.other_game')).trim() || t('dashboard.other_game');
       },
       gameKey(s) {
         return this.gameLabel(s).toLocaleLowerCase();
@@ -1404,7 +1408,7 @@
         const nodes = new Map();
         for (const s of this.boot.servers || []) {
           const id = Number(s.node_id);
-          if (!nodes.has(id)) nodes.set(id, { id, name: s.node_name || names.get(id) || 'Node ' + id });
+          if (!nodes.has(id)) nodes.set(id, { id, name: s.node_name || names.get(id) || t('dashboard.node_number', { id }) });
         }
         return [...nodes.values()].sort((a, b) => a.name.localeCompare(b.name));
       },
@@ -1431,7 +1435,7 @@
           }
           return items;
         }
-        if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: 'Other servers', count: rest.length });
+        if (items.length && rest.length) items.push({ isNodeHeader: true, icon: 'grid', uuid: 'group-other', name: t('dashboard.other_servers'), count: rest.length });
         return items.concat(rest);
       },
       /** Name sorts by server name (A to Z, like Pelican's list); Created is oldest first and Port lowest first, then by name. */
@@ -1457,7 +1461,7 @@
         const groups = [], seen = new Set();
         for (const group of Array.isArray(list) ? list : []) {
           if (groups.length >= GROUP_LIMIT || !group || typeof group.id !== 'string' || groups.some((g) => g.id === group.id)) continue;
-          const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || 'Group';
+          const name = String(group.name || '').trim().slice(0, GROUP_NAME_LENGTH) || t('dashboard.group');
           const servers = (Array.isArray(group.servers) ? group.servers : []).filter((uuid) => typeof uuid === 'string' && !seen.has(uuid) && seen.add(uuid));
           const sort = GROUP_ORDERS.some((o) => o.key === group.sort) ? group.sort : 'overview';
           const color = typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color) ? group.color.toLowerCase() : null;
@@ -1490,7 +1494,7 @@
             await wire.saveOverviewGroups(this.overviewGroups, this.overviewServerOrder);
             if (handover) localStorage.removeItem(this.overviewGroupsKey());
           } catch {
-            if (!handover) this.toast('Your groups could not be saved. Try again in a moment.', 'danger');
+            if (!handover) this.toast(t('dashboard.your_groups_could_not_be_saved'), 'danger');
           }
         }, handover ? 0 : 400);
       },
@@ -1527,9 +1531,9 @@
       addOverviewGroup() {
         if (this.overviewGroups.length >= GROUP_LIMIT) return;
         let number = this.overviewGroups.length + 1;
-        while (this.overviewGroups.some((g) => g.name === 'Group ' + number)) number++;
+        while (this.overviewGroups.some((g) => g.name === t('dashboard.group_number', { number }))) number++;
         const id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        this.saveOverviewGroups([...this.overviewGroups, { id, name: 'Group ' + number, servers: [], sort: 'overview' }]);
+        this.saveOverviewGroups([...this.overviewGroups, { id, name: t('dashboard.group_number', { number }), servers: [], sort: 'overview' }]);
         this.groupEditing = id;
       },
       renameOverviewGroup(id, name) {
@@ -1636,7 +1640,7 @@
       },
       overviewMetrics() {
         return [
-          { key: 'cpu', label: 'CPU', icon: 'cpu', show: this.overviewPreferences.showCpu },
+          { key: 'cpu', label: t('dashboard.cpu'), icon: 'cpu', show: this.overviewPreferences.showCpu },
           { key: 'ram', label: 'RAM', icon: 'ram', show: this.overviewPreferences.showRam },
         ].filter((metric) => metric.show);
       },
@@ -1737,8 +1741,8 @@
         return n >= 95 ? 'critical' : n >= 85 ? 'warning' : 'healthy';
       },
       hostMetricLabel(kind, h = this.boot.host_health) {
-        if (kind === 'network') return this.hostMetricState(kind, h) === 'healthy' ? 'Traffic reported; bandwidth capacity unknown' : 'Unavailable';
-        return { healthy: 'Healthy', warning: 'High load', critical: 'Critical load', unavailable: 'Unavailable' }[this.hostMetricState(kind, h)] || 'Unavailable';
+        if (kind === 'network') return this.hostMetricState(kind, h) === 'healthy' ? t('dashboard.traffic_reported') : t('dashboard.unavailable');
+        return { healthy: t('dashboard.healthy'), warning: t('dashboard.high_load'), critical: t('dashboard.critical_load'), unavailable: t('dashboard.unavailable') }[this.hostMetricState(kind, h)] || t('dashboard.unavailable');
       },
       hostFill(kind, h = this.boot.host_health) {
         if (kind === 'network') return (h?.network_rx_bytes ?? 0) + (h?.network_tx_bytes ?? 0) > 0 ? 100 : 0;
@@ -1863,17 +1867,17 @@
       /** Create options for the phone tab bar, in the same order as the overview's create tiles. */
       createChoices() {
         return [
-          { key: 'server', label: 'Server', icon: 'plus' },
-          { key: 'other', label: 'Other server (Pelican form)', icon: 'gamepad' },
-          { key: 'native', label: 'New server', icon: 'host' },
+          { key: 'server', label: t('dashboard.server'), icon: 'plus' },
+          { key: 'other', label: t('dashboard.other_server_pelican_form'), icon: 'gamepad' },
+          { key: 'native', label: t('dashboard.new_server'), icon: 'host' },
         ].filter((c) => (c.key === 'native' ? this.canCreateGame('native') : c.key === 'server' ? this.canCreateGame('server') : this.pelicanFormForOthers()));
       },
       /** Create buttons for the overview (top bar or toolbar): the Server Maker first, as the one main button. */
       createButtons() {
-        const labels = { server: 'Create server', other: 'Other server', native: 'New server' };
-        const buttons = this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? 'Create server' : labels[c.key], primary: index === 0 }));
+        const labels = { server: t('dashboard.create_server'), other: t('dashboard.other_server'), native: t('dashboard.new_server') };
+        const buttons = this.createChoices().map((c, index) => ({ ...c, label: index === 0 ? labels.server : labels[c.key], primary: index === 0 }));
         // Customers of a hosting company order new servers in its billing system.
-        if (!buttons.length && this.boot.hosting?.order) return [{ key: 'order', label: 'Order a server', icon: 'plus', primary: true }];
+        if (!buttons.length && this.boot.hosting?.order) return [{ key: 'order', label: t('dashboard.order_server'), icon: 'plus', primary: true }];
         return buttons;
       },
       /** Puts the top-bar health details right under the Healthy button, left edges in line, inside the screen. */
@@ -1935,7 +1939,7 @@
             return;
           }
           await this.refreshOverview();
-          this.toast('Server created. Installation has started.', 'ok');
+          this.toast(t('dashboard.server_created_installation_has_started'), 'ok');
           return;
         }
         this.styleFrame(frame, this.createFrameKind());
@@ -1961,10 +1965,10 @@
           frame.contentWindow.addEventListener('simplify-settings-saved', () => {
             if (this.modal !== 'panel-settings' || this.destroyed) return;
             this.settingsChanged = true;
-            this.toast('Settings saved', 'ok');
+            this.toast(t('dashboard.settings_saved'), 'ok');
           });
         } catch {
-          this.toast('Settings could not be opened.', 'danger');
+          this.toast(t('dashboard.settings_could_not_be_opened'), 'danger');
         }
       },
       /** Measured height of each plugin widget frame (app list, or per server uuid); 0 hides the tile. */
@@ -2054,7 +2058,7 @@
         this.openPopup('alias');
       },
       async saveAlias() {
-        const result = await this.run(() => wire.saveAlias(this.aliasDraft), 'Alias saved');
+        const result = await this.run(() => wire.saveAlias(this.aliasDraft), t('dashboard.alias_saved'));
         if (result !== SKIPPED && result) Object.assign(this.server, result);
       },
 
@@ -2063,7 +2067,7 @@
         const match = String(this.server?.reported_version || '').match(MINECRAFT_VERSION);
         if (match) return match[1];
         const saved = String(this.server?.pack?.version || '').trim();
-        return /^(?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?)$/.test(saved) ? saved : 'Not reported';
+        return /^(?:1\.[0-9]+(?:\.[0-9]+)?|2[6-9]\.[0-9]+(?:\.[0-9]+)?)$/.test(saved) ? saved : t('dashboard.not_reported');
       },
       /** Read-only MOTD rendering for cards and the server header (the editor lives in motd.js). */
       motdPreview(value) {
@@ -2115,13 +2119,13 @@
           if (message) this.toast(message, 'ok');
           return result;
         } catch (e) {
-          this.toast(e?.message || 'The action could not be completed.', 'danger');
+          this.toast(e?.message || t('dashboard.the_action_could_not_be_completed'), 'danger');
           return SKIPPED;
         } finally {
           this.busy = false;
         }
       },
-      async copyText(text, message = 'Address copied') {
+      async copyText(text, message = t('dashboard.address_copied')) {
         try {
           await navigator.clipboard.writeText(text);
         } catch {
@@ -2156,9 +2160,9 @@
       },
       /* Resource presets: the same choices as in the server creator, plus your own value. */
       resourceGroups: [
-        { key: 'memory_gb', label: 'RAM', icon: 'ram', custom: 'Custom RAM in GB', min: 1, max: 128, presets: [[2, '2 GB', 'Small worlds'], [4, '4 GB', 'Everyday play'], [8, '8 GB', 'More headroom'], [12, '12 GB', 'Larger modpacks']] },
-        { key: 'cpu', label: 'CPU allocation', icon: 'cpu', custom: 'Custom CPU (%)', min: 1, max: 1600, presets: [[100, '100%', '1 CPU core'], [150, '150%', '1.5 CPU cores'], [200, '200%', '2 CPU cores'], [400, '400%', '4 CPU cores']] },
-        { key: 'disk_mb', label: 'Disk allocation', icon: 'disk', custom: 'Custom disk (MB)', min: 1024, max: 10485760, presets: [[5120, '5 GB', '5 GB storage'], [10240, '10 GB', '10 GB storage'], [20480, '20 GB', '20 GB storage'], [40960, '40 GB', '40 GB storage']] },
+        { key: 'memory_gb', label: t('dashboard.ram'), icon: 'ram', custom: t('dashboard.custom_ram'), min: 1, max: 128, presets: [[2, '2 GB', t('dashboard.small_worlds')], [4, '4 GB', t('dashboard.everyday_play')], [8, '8 GB', t('dashboard.more_headroom')], [12, '12 GB', t('dashboard.larger_modpacks')]] },
+        { key: 'cpu', label: t('dashboard.cpu_allocation'), icon: 'cpu', custom: t('dashboard.custom_cpu'), min: 1, max: 1600, presets: [[100, '100%', tc('dashboard.cpu_cores', 1)], [150, '150%', tc('dashboard.cpu_cores', 1.5)], [200, '200%', tc('dashboard.cpu_cores', 2)], [400, '400%', tc('dashboard.cpu_cores', 4)]] },
+        { key: 'disk_mb', label: t('dashboard.disk_allocation'), icon: 'disk', custom: t('dashboard.custom_disk'), min: 1024, max: 10485760, presets: [[5120, '5 GB', t('dashboard.gb_storage', { count: 5 })], [10240, '10 GB', t('dashboard.gb_storage', { count: 10 })], [20480, '20 GB', t('dashboard.gb_storage', { count: 20 })], [40960, '40 GB', t('dashboard.gb_storage', { count: 40 })]] },
       ],
       resourceCustom: {},
       resourceChoice(group) {
@@ -2203,31 +2207,31 @@
       },
       widgetTitle(widget) {
         if (!this.server?.minecraft) {
-          if (widget.key === 'settings') return 'Server settings';
-          if (widget.key === 'software') return 'Startup settings';
+          if (widget.key === 'settings') return t('dashboard.server_settings');
+          if (widget.key === 'software') return t('dashboard.startup_settings');
         }
         return widget.title;
       },
       widgetDescription(widget) {
         if (this.server?.minecraft) return widget.description;
         return {
-          settings: 'Server name & appearance',
-          software: (this.server?.software || 'Game') + ' startup variables',
-          advanced: 'Runtime details & ' + (this.server?.software || 'server') + ' management',
+          settings: t('dashboard.server_name_appearance'),
+          software: t('dashboard.startup_variables', { software: this.server?.software || t('dashboard.game') }),
+          advanced: t('dashboard.runtime_details', { software: this.server?.software || t('dashboard.server_lower') }),
         }[widget.key] || widget.description;
       },
       modalTitle() {
-        if (this.modal === 'alias') return 'Change server alias';
-        if (this.modal === 'background') return 'Server background';
-        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? 'Server banners' : 'Settings';
-        if (this.modal === 'create') return { other: 'Create other server', native: 'Create server' }[this.createGame] || 'Server Maker';
-        if (this.modal === 'account') return 'Profile';
-        if (this.modal === 'notifications') return 'Notifications';
-        if (this.modal === 'inbox') return 'Notifications';
-        if (this.modal === 'admin-page') return this.adminPage?.label || 'Admin';
-        if (this.modal === 'external') return (this.externalPage?.label || 'External') + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
+        if (this.modal === 'alias') return t('dashboard.change_server_alias');
+        if (this.modal === 'background') return t('dashboard.server_background');
+        if (this.modal === 'panel-settings') return this.settingsSection === 'banners' ? t('dashboard.server_banners') : t('dashboard.settings');
+        if (this.modal === 'create') return { other: t('dashboard.create_other_server'), native: t('dashboard.create_server') }[this.createGame] || t('dashboard.server_maker');
+        if (this.modal === 'account') return t('dashboard.profile');
+        if (this.modal === 'notifications') return t('dashboard.notifications');
+        if (this.modal === 'inbox') return t('dashboard.notifications');
+        if (this.modal === 'admin-page') return this.adminPage?.label || t('dashboard.admin');
+        if (this.modal === 'external') return (this.externalPage?.label || t('dashboard.external')) + (this.externalPage?.plugin && this.externalPage.plugin !== this.externalPage.label ? ' · ' + this.externalPage.plugin : '');
         const widget = this.widgets.find((w) => w.key === this.modal);
-        return (widget ? this.widgetTitle(widget) : null) || (this.modal === 'restart' ? 'Schedule restart' : 'Workspace');
+        return (widget ? this.widgetTitle(widget) : null) || (this.modal === 'restart' ? t('dashboard.schedule_restart') : t('dashboard.workspace'));
       },
       /** Every popup has a fixed size: small for short forms, large for embedded or list workspaces. */
       modalSize() {
@@ -2240,17 +2244,17 @@
       },
       settingsTabs() {
         return [
-          { key: 'general', label: 'General', icon: 'edit' },
-          { key: 'gameplay', label: 'Gameplay', icon: 'settings' },
+          { key: 'general', label: t('dashboard.general'), icon: 'edit' },
+          { key: 'gameplay', label: t('dashboard.gameplay'), icon: 'settings' },
           { key: 'motd', label: 'MOTD', icon: 'image' },
         ];
       },
       backupPolicyLabel() {
         const options = this.server?.backup_options || {};
-        if (options.enabled === false) return 'Paused for this server';
+        if (options.enabled === false) return t('dashboard.backups_paused');
         const minutes = Number(options.interval_minutes) || 360;
-        const every = minutes % 60 === 0 ? (minutes === 60 ? 'Every hour' : 'Every ' + minutes / 60 + ' hours') : 'Every ' + minutes + ' minutes';
-        return every + ' · ' + (options.retention || 2) + ' recovery points' + (options.only_when_used !== false ? ' · skipped while the server has not run' : '');
+        const every = minutes % 60 === 0 ? tc('dashboard.every_hours', minutes / 60) : tc('dashboard.every_minutes', minutes);
+        return every + ' · ' + tc('dashboard.recovery_points', options.retention || 2) + (options.only_when_used !== false ? ' · ' + t('dashboard.skipped_unused') : '');
       },
       /** Server workspaces open inside the page instead of as a popup. */
       docked() {
@@ -2329,7 +2333,7 @@
         const current = () => !this.destroyed && this.modalRequest === request && this.modal === key;
         const load = async (fn) => {
           const value = await fn();
-          if (!current()) throw new Error('Workspace closed');
+          if (!current()) throw new Error(t('dashboard.workspace_closed'));
           return value;
         };
         try {
@@ -2339,7 +2343,7 @@
           if (['mods', 'plugins'].includes(key)) {
             Object.assign(this, { packageQuery: '', packageResults: [], packageDetails: {}, packageVersion: '', packageSite: 'all', packageSearched: false, packageOffline: [] });
             this.installed = await load(() => wire.installedPackages());
-            if (this.installed.context?.kind !== key) throw new Error('This server does not support ' + key + '.');
+            if (this.installed.context?.kind !== key) throw new Error(t('dashboard.section_unsupported', { section: key }));
             this.packageVersion = this.installed.context?.version || '';
             this.openPackageSearch();
           }
@@ -2356,7 +2360,7 @@
           if (key === 'backups') this.backupSettings = { only_when_used: true, ...this.server?.backup_options };
         } catch (e) {
           if (current()) {
-            this.toast(e?.message || 'This section is unavailable.', 'danger');
+            this.toast(e?.message || t('dashboard.this_section_is_unavailable'), 'danger');
             this.modal = null;
           }
         } finally {
@@ -2387,7 +2391,7 @@
       },
       async close() {
         if (this.busy || this.closingCreator) return;
-        if (this.fileEditorDirty && !(await this.ask({ title: 'Discard unsaved file changes?', message: 'Your edits in the file editor have not been saved.', confirmLabel: 'Discard changes', tone: 'danger' }))) return;
+        if (this.fileEditorDirty && !(await this.ask({ title: t('dashboard.discard_unsaved_file_changes'), message: t('dashboard.your_edits_in_the_file_editor'), confirmLabel: t('dashboard.discard_changes'), tone: 'danger' }))) return;
         this.fileEditorUrl = null;
         this.fileEditorDirty = false;
         this.sftpOpen = false;
@@ -2396,11 +2400,11 @@
         if (creating) {
           this.closingCreator = true;
           try {
-            const save = this.$root?.querySelector('iframe[title="Create server"]')?.contentWindow?.sscSaveDraft;
+            const save = this.$root?.querySelector('iframe[data-ps-create]')?.contentWindow?.sscSaveDraft;
             if (save) await save();
-            else if (!(await this.ask({ title: 'Leave the creator?', message: 'Unsaved changes may be lost.', confirmLabel: 'Leave' }))) return;
+            else if (!(await this.ask({ title: t('dashboard.leave_the_creator'), message: t('dashboard.unsaved_changes_may_be_lost'), confirmLabel: t('dashboard.leave') }))) return;
           } catch {
-            this.toast('Draft could not be saved. Please try again before closing.', 'danger');
+            this.toast(t('dashboard.draft_could_not_be_saved_please'), 'danger');
             return;
           } finally {
             this.closingCreator = false;
@@ -2531,11 +2535,11 @@
         return (this.boot.explain_sources || []).filter((source) => source !== 'console' || this.canExplain());
       },
       explainLabel(source) {
-        return { console: 'Console', panel: 'Panel log', wings: 'Wings log', plugin: 'Plugin' }[source] || source;
+        return { console: t('dashboard.console'), panel: t('dashboard.panel_log'), wings: t('dashboard.wings_log'), plugin: t('dashboard.plugin') }[source] || source;
       },
       /** The same name inside a sentence: "the last lines of the Wings log". */
       explainNoun(source) {
-        return { console: 'console', panel: 'panel log', wings: 'Wings log', plugin: 'server log about this plugin' }[source] || 'log';
+        return { console: t('dashboard.console_lower'), panel: t('dashboard.panel_log_lower'), wings: t('dashboard.wings_log'), plugin: t('dashboard.plugin_log_lower') }[source] || t('dashboard.log_lower');
       },
       /** Why a plugin that Simplify switched off did not load, from the log lines saved at that moment. */
       async explainPlugin(file) {
@@ -2546,12 +2550,12 @@
         try {
           result = await wire.explainPluginFailure(file);
         } catch {
-          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+          result = { ok: false, error: t('dashboard.the_panel_could_not_answer_try') };
         }
         if (this.explainRequest !== request || !this.explain) return;
         this.explain = result?.ok
           ? { source: 'plugin', file, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
-          : { source: 'plugin', file, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+          : { source: 'plugin', file, loading: false, error: result?.error || t('dashboard.no_explanation_is_available_right_now'), answer: null };
       },
       /** Sends the last lines of a log (read again by the panel) to the chosen AI and shows the answer. */
       async explainError(source) {
@@ -2564,12 +2568,12 @@
         try {
           result = await wire.explainConsole(source);
         } catch {
-          result = { ok: false, error: 'The panel could not answer. Try again in a moment.' };
+          result = { ok: false, error: t('dashboard.the_panel_could_not_answer_try') };
         }
         if (this.explainRequest !== request || !this.explain) return;
         this.explain = result?.ok
           ? { source, loading: false, error: null, answer: { found: result.found !== false, summary: result.summary || '', issues: result.issues || [], lines: result.lines, model: result.model } }
-          : { source, loading: false, error: result?.error || 'No explanation is available right now.', answer: null };
+          : { source, loading: false, error: result?.error || t('dashboard.no_explanation_is_available_right_now'), answer: null };
       },
       closeExplain() {
         this.explainRequest = (this.explainRequest || 0) + 1;
@@ -2613,10 +2617,10 @@
       metricLimit(key) {
         if (key === 'network') {
           const n = this.stats.network;
-          return 'Used ' + (n?.rx_bytes == null || n?.tx_bytes == null ? '—' : '↓ ' + this.trafficBytes(n.rx_bytes) + ' / ↑ ' + this.trafficBytes(n.tx_bytes)) + ' · since server start';
+          return t('dashboard.traffic_used', { traffic: n?.rx_bytes == null || n?.tx_bytes == null ? '—' : '↓ ' + this.trafficBytes(n.rx_bytes) + ' / ↑ ' + this.trafficBytes(n.tx_bytes) });
         }
-        if (key === 'cpu') return `of ${this.server?.cpu || '∞'}% allocated`;
-        return `of ${this.bytes(((key === 'ram' ? this.server?.memory : this.server?.disk) || 0) * 1048576)} allocated`;
+        if (key === 'cpu') return t('dashboard.of_allocated', { amount: (this.server?.cpu || '∞') + '%' });
+        return t('dashboard.of_allocated', { amount: this.bytes(((key === 'ram' ? this.server?.memory : this.server?.disk) || 0) * 1048576) });
       },
       spark(key) {
         const a = this.series[key];
@@ -2643,29 +2647,29 @@
         return this.serverSetup() === 'installing' && !!this.server?.install_fresh && !!this.server?.owner && !!this.server?.permissions?.['control.stop'];
       },
       installTitle() {
-        if (this.serverSetup() === 'restoring_backup') return 'Restoring a backup…';
-        if (this.installKilled()) return 'Installation stopped';
-        if (this.installFailed()) return 'The installation did not finish';
-        return 'Setting up ' + (this.server?.alias || this.server?.name);
+        if (this.serverSetup() === 'restoring_backup') return t('dashboard.restoring_a_backup');
+        if (this.installKilled()) return t('dashboard.installation_stopped');
+        if (this.installFailed()) return t('dashboard.the_installation_did_not_finish');
+        return t('dashboard.setting_up', { server: this.server?.alias || this.server?.name });
       },
       installText() {
-        if (this.serverSetup() === 'restoring_backup') return 'Everything opens again when the restore is done.';
-        if (this.installKilled()) return 'You stopped the installation and its files were removed. Change the resources if needed, then try again.';
-        if (this.installFailed()) return 'The last lines of the installation log are below. Nothing was started.';
-        return 'This takes a few minutes, longer for big games. You can leave this page; the server keeps installing.';
+        if (this.serverSetup() === 'restoring_backup') return t('dashboard.everything_opens_again_when_the_restore');
+        if (this.installKilled()) return t('dashboard.you_stopped_the_installation_and_its');
+        if (this.installFailed()) return t('dashboard.the_last_lines_of_the_installation');
+        return t('dashboard.this_takes_a_few_minutes_longer');
       },
       /**
        * The steps as far as Pelican and Wings report them: the server exists, Wings prepares the installer
        * (no output yet), the install script runs (output arrives), Wings reports it finished.
        */
       installSteps() {
-        const software = this.server?.software || this.server?.pack?.modpack_name || 'the game';
+        const software = this.server?.software || this.server?.pack?.modpack_name || t('dashboard.the_game');
         const reached = this.installFailed() ? 2 : this.installCompleted ? 3 : this.installLines || this.server?.install_log ? 2 : 1;
         const steps = [
-          { key: 'created', label: 'Server created', detail: 'Resources reserved' },
-          { key: 'prepare', label: 'Preparing', detail: 'Wings gets the installer ready' },
-          { key: 'install', label: 'Installing ' + software, detail: this.installKilled() ? 'Stopped' : this.installFailed() ? 'Stopped with an error' : 'Downloading the game files' },
-          { key: 'ready', label: 'Ready to start', detail: 'Everything opens' },
+          { key: 'created', label: t('dashboard.server_created'), detail: t('dashboard.resources_reserved') },
+          { key: 'prepare', label: t('dashboard.preparing'), detail: t('dashboard.wings_gets_the_installer_ready') },
+          { key: 'install', label: t('dashboard.installing_software', { software }), detail: this.installKilled() ? t('dashboard.stopped') : this.installFailed() ? t('dashboard.stopped_with_error') : t('dashboard.downloading_game_files') },
+          { key: 'ready', label: t('dashboard.ready_to_start'), detail: t('dashboard.everything_opens') },
         ];
         return steps.map((step, index) => ({ ...step, state: index < reached ? 'done' : index > reached ? 'todo' : this.installFailed() ? 'failed' : 'active' }));
       },
@@ -2679,7 +2683,7 @@
       /** How long this egg usually takes on this panel (from earlier installations), such as "usually about 2 min". */
       installTypical() {
         const seconds = this.server?.install_typical;
-        return seconds ? 'usually about ' + Math.max(1, Math.round(seconds / 60)) + ' min' : '';
+        return seconds ? t('dashboard.usually_about', { count: Math.max(1, Math.round(seconds / 60)) }) : '';
       },
       installLogText() {
         return this.logs.join('\n');
@@ -2693,9 +2697,9 @@
       notifyInstalled() {
         const name = this.server?.alias || this.server?.name;
         try {
-          if (typeof Notification === 'function' && Notification.permission === 'granted' && document.hidden) new Notification(name + ' is ready', { body: 'You can now start your server.' });
+          if (typeof Notification === 'function' && Notification.permission === 'granted' && document.hidden) new Notification(t('dashboard.is_ready', { server: name }), { body: t('dashboard.can_start_now') });
         } catch {}
-        this.toast(name + ' is ready. You can now start it.', 'ok');
+        this.toast(t('dashboard.ready_toast', { server: name }), 'ok');
       },
       installFiles() {
         window.open(this.server.files_url, '_blank', 'noopener');
@@ -2704,21 +2708,21 @@
         window.open(this.server.native_sections?.startup, '_blank', 'noopener');
       },
       async killInstall() {
-        if (!(await this.ask({ title: 'Stop the installation?', message: 'The installer stops right away and the files it downloaded are removed. The server stays here: change its resources if needed and try again, or delete it.', confirmLabel: 'Kill', tone: 'danger' }))) return;
-        const result = await this.run(() => wire.killInstallation(), 'Installation stopped');
+        if (!(await this.ask({ title: t('dashboard.stop_the_installation'), message: t('dashboard.the_installer_stops_right_away_and'), confirmLabel: t('dashboard.kill'), tone: 'danger' }))) return;
+        const result = await this.run(() => wire.killInstallation(), t('dashboard.installation_stopped'));
         if (result === SKIPPED || !result) return;
         Object.assign(this.server, result);
-        this.logs.push('[Simplify]: Installation stopped.');
+        this.logs.push('[Simplify]: ' + t('dashboard.installation_stopped') + '.');
         this.renderLogs();
       },
       async cancelInstall() {
         const name = this.server?.alias || this.server?.name;
-        if (!(await this.ask({ title: 'Delete ' + name + '?', message: (this.serverSetup() === 'installing' ? 'The installation stops and the server' : 'The server') + ' is deleted with all its files. This cannot be undone.', confirmLabel: 'Delete server', tone: 'danger' }))) return;
-        await this.run(() => wire.deleteSetupServer(this.server.name), 'Server deleted');
+        if (!(await this.ask({ title: t('dashboard.delete_name', { name }), message: this.serverSetup() === 'installing' ? t('dashboard.delete_installing') : t('dashboard.delete_setup'), confirmLabel: t('dashboard.delete_server'), tone: 'danger' }))) return;
+        await this.run(() => wire.deleteSetupServer(this.server.name), t('dashboard.server_deleted'));
       },
       async reinstall() {
-        if (!(await this.ask({ title: 'Try the installation again?', message: 'Pelican runs the install script again. Files the script replaces are overwritten.', confirmLabel: 'Reinstall' }))) return;
-        const result = await this.run(() => wire.reinstallServer(), 'Installation started');
+        if (!(await this.ask({ title: t('dashboard.try_the_installation_again'), message: t('dashboard.pelican_runs_the_install_script_again'), confirmLabel: t('dashboard.reinstall') }))) return;
+        const result = await this.run(() => wire.reinstallServer(), t('dashboard.installation_started'));
         if (result !== SKIPPED && result) {
           this.installLines = 0;
           this.installCompleted = false;
@@ -2755,7 +2759,7 @@
         this.eulaNeeded = true;
       },
       async acceptEula() {
-        const result = await this.run(() => wire.acceptEula(), 'EULA accepted, start sent');
+        const result = await this.run(() => wire.acceptEula(), t('dashboard.eula_accepted_start_sent'));
         if (result === SKIPPED) return;
         this.eulaNeeded = false;
         this.installReady = false;
@@ -2772,8 +2776,8 @@
         return this.eulaNeeded ? this.acceptEula() : this.power('start');
       },
       async power(action) {
-        if (action === 'kill' && !(await this.ask({ title: 'Force stop this server?', message: 'The server stops immediately. Unsaved game progress may be lost.', confirmLabel: 'Force stop', tone: 'danger' }))) return;
-        const result = await this.run(() => wire.power(action), action === 'restart' && this.server.pending ? 'Restart queued' : POWER_LABELS[action] + ' sent');
+        if (action === 'kill' && !(await this.ask({ title: t('dashboard.force_stop_title'), message: t('dashboard.force_stop_message'), confirmLabel: t('dashboard.force_stop'), tone: 'danger' }))) return;
+        const result = await this.run(() => wire.power(action), action === 'restart' && this.server.pending ? t('dashboard.restart_queued') : t('dashboard.action_sent', { action: POWER_LABELS[action] }));
         if (result !== SKIPPED && ['restart', 'stop'].includes(action) && this.server.pending) Object.assign(this.server, await wire.refreshInfo());
       },
 
@@ -2785,15 +2789,15 @@
         this.openPopup('background');
       },
       async uploadBanner() {
-        const result = await this.run(() => wire.uploadServerBanner(), 'Banner uploaded');
+        const result = await this.run(() => wire.uploadServerBanner(), t('dashboard.banner_uploaded'));
         if (result === SKIPPED || !result) return;
         this.uploadedBackgrounds = result.uploaded_backgrounds || [];
         this.backgroundDraft = result.background_id;
         Object.assign(this.server, result);
       },
       async deleteBanner(id) {
-        if (this.busy || !(await this.ask({ title: 'Remove this uploaded banner?', message: 'Servers using it return to their automatic background.', confirmLabel: 'Remove banner', tone: 'danger' }))) return;
-        const result = await this.run(() => wire.deleteServerBanner(id), 'Banner removed');
+        if (this.busy || !(await this.ask({ title: t('dashboard.remove_this_uploaded_banner'), message: t('dashboard.servers_using_it_return_to_their'), confirmLabel: t('dashboard.remove_banner'), tone: 'danger' }))) return;
+        const result = await this.run(() => wire.deleteServerBanner(id), t('dashboard.banner_removed'));
         if (result === SKIPPED || !result) return;
         this.uploadedBackgrounds = result.uploaded_backgrounds || [];
         this.backgroundDraft = result.background_id;
@@ -2801,7 +2805,7 @@
       },
       async saveBackground() {
         if (this.busy || !this.server?.permissions?.['settings.rename']) return;
-        const result = await this.run(() => wire.saveServerBackground(this.backgroundDraft), 'Server background saved');
+        const result = await this.run(() => wire.saveServerBackground(this.backgroundDraft), t('dashboard.server_background_saved'));
         if (result === SKIPPED || !result || !Object.hasOwn(result, 'background')) return;
         Object.assign(this.server, result);
       },
@@ -2821,7 +2825,7 @@
       },
       async saveServerColor(color) {
         if (!this.server?.permissions?.['settings.rename'] || this.busy) return false;
-        const saved = await this.run(() => wire.saveServerColor(color), 'Server color saved');
+        const saved = await this.run(() => wire.saveServerColor(color), t('dashboard.server_color_saved'));
         if (typeof saved !== 'string' || !/^#[0-9a-f]{6}$/i.test(saved)) return false;
         this.server.color = saved;
         try {
@@ -2840,22 +2844,22 @@
         try {
           Object.assign(this.server, await wire.refreshInfo());
         } catch {}
-        if (result?.changed === false) this.toast('No changes to save.', 'info');
-        else if (result?.pending && this.server?.pending) this.toast('Changes saved. Stop or restart to apply them.', 'ok');
-        else if (resources && this.installFailed()) this.toast('Resources changed. They are used when you try again.', 'ok');
-        else this.toast('Changes applied. They will load at the next start.', 'ok');
+        if (result?.changed === false) this.toast(t('dashboard.no_changes_to_save'), 'info');
+        else if (result?.pending && this.server?.pending) this.toast(t('dashboard.changes_saved_stop_or_restart_to'), 'ok');
+        else if (resources && this.installFailed()) this.toast(t('dashboard.resources_changed_they_are_used_when'), 'ok');
+        else this.toast(t('dashboard.changes_applied_they_will_load_at'), 'ok');
       },
       async renameServer() {
         const name = this.name;
-        const result = await this.run(() => wire.renameServer(name), 'Server renamed');
+        const result = await this.run(() => wire.renameServer(name), t('dashboard.server_renamed'));
         if (result !== SKIPPED) this.server.name = name;
       },
       async discard() {
-        const result = await this.run(() => wire.discard(), this.server?.pending?.file_only ? 'Restart reminder dismissed' : 'Pending changes discarded');
+        const result = await this.run(() => wire.discard(), this.server?.pending?.file_only ? t('dashboard.restart_reminder_dismissed') : t('dashboard.pending_changes_discarded'));
         if (result !== SKIPPED) this.server.pending = null;
       },
       async restartChanges(minutes) {
-        const result = await this.run(() => wire.restartChanges(Number(minutes)), minutes ? 'Restart scheduled' : 'Restart queued. Settings will be applied when the server is stopped.');
+        const result = await this.run(() => wire.restartChanges(Number(minutes)), minutes ? t('dashboard.restart_scheduled') : t('dashboard.restart_queued_settings_will_be_applied'));
         if (result === SKIPPED) return;
         if (this.modal === 'restart') this.modal = null;
         try {
@@ -2865,24 +2869,24 @@
       async saveListing(value) {
         const listing = this.server?.website_listing;
         if (!listing) return;
-        const result = await this.run(() => wire.saveListing(value), value ? 'Shown on the website' : 'Hidden from the website');
+        const result = await this.run(() => wire.saveListing(value), value ? t('dashboard.shown_on_the_website') : t('dashboard.hidden_from_the_website'));
         if (result !== SKIPPED) listing.visible = result === true;
       },
       async saveWebsite() {
         const state = { ...this.website };
         delete state.display_name;
-        await this.run(() => wire.saveWebsite(state), 'Website settings saved');
+        await this.run(() => wire.saveWebsite(state), t('dashboard.website_settings_saved'));
       },
       async saveSubdomain() {
         if (!this.advanced?.subdomains) {
-          await this.run(() => wire.subdomain(this.requestedSubdomain), 'Subdomain request saved. DNS will be connected later.');
+          await this.run(() => wire.subdomain(this.requestedSubdomain), t('dashboard.subdomain_request_saved_dns_will_be'));
           return;
         }
         const name = this.requestedSubdomain.trim().toLowerCase();
         const result = await this.run(() => wire.subdomain(name));
         if (result === SKIPPED) return;
         if (result?.error) return this.toast(result.error, 'danger');
-        this.toast(name ? 'Subdomain saved. Connecting…' : 'Subdomain removed', 'ok');
+        this.toast(name ? t('dashboard.subdomain_saved_connecting') : t('dashboard.subdomain_removed'), 'ok');
         // Cloudflare is called right after the response; one follow-up read shows the outcome.
         await new Promise((resolve) => setTimeout(resolve, 2500));
         await this.refreshConnection();
@@ -2899,24 +2903,27 @@
         const state = this.advanced?.subdomain || {};
         if (!state.name) return null;
         return {
-          active: { tone: 'is-ok', label: 'Connected' },
-          pending: { tone: 'is-info', label: 'Connecting…' },
-          removing: { tone: 'is-info', label: 'Removing…' },
-          error: { tone: 'is-danger', label: 'Not connected' },
+          active: { tone: 'is-ok', label: t('dashboard.connected') },
+          pending: { tone: 'is-info', label: t('dashboard.connecting') },
+          removing: { tone: 'is-info', label: t('dashboard.removing') },
+          error: { tone: 'is-danger', label: t('dashboard.not_connected') },
         }[state.status] || null;
       },
 
       /* Players and packages ------------------------------------------------------------------- */
+      playerActionLabel(action) {
+        return t('dashboard.player_actions.' + action);
+      },
       async playerAction(action) {
         if (!/^[A-Za-z0-9_]{1,16}$/.test(this.playerName)) {
-          this.toast('Enter a valid Minecraft username.', 'warn');
+          this.toast(t('dashboard.enter_a_valid_minecraft_username'), 'warn');
           return;
         }
-        if (['OP', 'Ban', 'Kick'].includes(action) && !(await this.ask({ title: action + ' ' + this.playerName + '?', message: action === 'OP' ? 'Operators can run every server command.' : 'The player is removed from the server.', confirmLabel: action, tone: action === 'OP' ? 'primary' : 'danger' }))) return;
+        if (['OP', 'Ban', 'Kick'].includes(action) && !(await this.ask({ title: t('dashboard.player_action_title', { action: this.playerActionLabel(action), player: this.playerName }), message: action === 'OP' ? t('dashboard.op_message') : t('dashboard.removed_message'), confirmLabel: this.playerActionLabel(action), tone: action === 'OP' ? 'primary' : 'danger' }))) return;
         const prefixes = { Whitelist: 'whitelist add', Unwhitelist: 'whitelist remove', OP: 'op', DeOP: 'deop', Kick: 'kick', Ban: 'ban', Unban: 'pardon' };
         this.command = prefixes[action] + ' ' + this.playerName;
         this.sendCommand();
-        this.toast('Command sent. The console shows the result.', 'ok');
+        this.toast(t('dashboard.command_sent_the_console_shows_the'), 'ok');
         setTimeout(async () => {
           try {
             this.playerLists = await wire.players();
@@ -2928,15 +2935,15 @@
         return loader + ' ' + (this.installed.context?.version || this.packageVersion);
       },
       packageSites() {
-        const sites = [{ key: 'all', label: 'All sites' }, { key: 'modrinth', label: 'Modrinth' }];
+        const sites = [{ key: 'all', label: t('dashboard.all_sites') }, { key: 'modrinth', label: 'Modrinth' }];
         if (['paper', 'purpur'].includes(this.installed.context?.loader)) sites.push({ key: 'hangar', label: 'Hangar' });
         if (this.modal === 'plugins') sites.push({ key: 'spigot', label: 'SpigotMC' });
         if (this.installed.context?.curseforge) sites.push({ key: 'curseforge', label: 'CurseForge' });
         return sites;
       },
       packageHeading() {
-        const what = this.modal === 'plugins' ? 'plugins' : 'mods';
-        return this.packageSearched && this.packageQuery.trim() ? 'Results for “' + this.packageQuery.trim() + '”' : 'Popular ' + what + ' for ' + this.packageTarget();
+        if (this.packageSearched && this.packageQuery.trim()) return t('dashboard.results_for', { query: this.packageQuery.trim() });
+        return this.modal === 'plugins' ? t('dashboard.popular_plugins', { target: this.packageTarget() }) : t('dashboard.popular_mods', { target: this.packageTarget() });
       },
       /** Cards for the chosen site. A card whose plugin is also on that site switches to that site's listing. */
       visiblePackages() {
@@ -2978,7 +2985,7 @@
           this.packageSearched = true;
           this.loadPackageDetails(this.packageResults.map((p) => p.key));
         } catch (e) {
-          if (request === this.packageRequest) this.toast(e?.message || 'Search failed. Try again in a moment.', 'danger');
+          if (request === this.packageRequest) this.toast(e?.message || t('dashboard.search_failed_try_again_in_a'), 'danger');
         } finally {
           if (request === this.packageRequest) this.packageSearching = false;
         }
@@ -2996,34 +3003,34 @@
         const detail = this.packageDetails[p.key];
         if (!update && detail && !detail.fits) {
           const ok = await this.ask({
-            title: 'Install ' + p.title + ' anyway?',
-            message: 'There is no release of ' + p.title + ' for Minecraft ' + this.packageVersion + '. The newest one, ' + this.versionLabel(detail.version) + (detail.for ? ', is made for ' + detail.for : '') + '. It may not work on your version.',
-            confirmLabel: 'Install anyway',
+            title: t('dashboard.install_anyway_title', { name: p.title }),
+            message: detail.for ? t('dashboard.no_release_for_made_for', { name: p.title, version: this.packageVersion, newest: this.versionLabel(detail.version), for: detail.for }) : t('dashboard.no_release_newest', { name: p.title, version: this.packageVersion, newest: this.versionLabel(detail.version) }),
+            confirmLabel: t('dashboard.install_anyway'),
           });
           if (!ok) return;
         }
         let result = await this.run(() => wire.installPackage(p.key, this.packageVersion, !update && !!detail && !detail.fits, { title: p.title, icon: p.icon, page: p.page }));
-        if (result === SKIPPED && update && this.notice.startsWith('There is no release')) {
-          if (await this.ask({ title: 'Update ' + p.title + ' anyway?', message: this.notice + ' The newest release may not work on your version.', confirmLabel: 'Update anyway' })) result = await this.run(() => wire.installPackage(p.key, this.packageVersion, true, p));
+        if (result === SKIPPED && update && this.notice === t('dashboard.no_release_for', { version: this.packageVersion })) {
+          if (await this.ask({ title: t('dashboard.update_anyway_title', { name: p.title }), message: this.notice + ' ' + t('dashboard.newest_may_not_work'), confirmLabel: t('dashboard.update_anyway') })) result = await this.run(() => wire.installPackage(p.key, this.packageVersion, true, p));
         }
         if (result === SKIPPED) return;
-        this.toast(p.title + ' ' + this.versionLabel(result.version) + ' installed from ' + result.label + '. Start the server to load it; if it fails to load, Simplify switches it off again.', 'ok');
+        this.toast(t('dashboard.package_installed', { name: p.title, version: this.versionLabel(result.version), source: result.label }), 'ok');
         if (this.modal === 'plugins' && this.server) this.server.plugin_watch = true;
         this.installed = await wire.installedPackages();
       },
       /** Bigger hosts can let people search CurseForge with their own free API key; an empty key removes it. */
       async setCurseForgeKey() {
         const key = await this.ask({
-          title: 'Your CurseForge API key',
-          message: 'Create a free key at console.curseforge.com (sign in, then API keys). It is stored encrypted on this panel and only sent to CurseForge.' + (this.installed.context?.curseforge_mine ? ' Leave the field empty and save to remove your key.' : ''),
+          title: t('dashboard.your_curseforge_api_key'),
+          message: t('dashboard.curseforge_key_message') + (this.installed.context?.curseforge_mine ? ' ' + t('dashboard.curseforge_key_remove') : ''),
           input: true,
-          inputLabel: 'API key',
+          inputLabel: t('dashboard.api_key'),
           inputType: 'password',
           placeholder: '$2a$10$…',
-          confirmLabel: 'Save',
+          confirmLabel: t('dashboard.save'),
         });
         if (key === false || key === null || key === undefined) return;
-        const result = await this.run(() => wire.saveCurseForgeKey(String(key)), String(key).trim() ? 'CurseForge key saved. Search now includes CurseForge.' : 'Your CurseForge key was removed.');
+        const result = await this.run(() => wire.saveCurseForgeKey(String(key)), String(key).trim() ? t('dashboard.curseforge_key_saved_search_now_includes') : t('dashboard.your_curseforge_key_was_removed'));
         if (result === SKIPPED) return;
         this.installed = result;
         this.packageDetails = {};
@@ -3049,20 +3056,20 @@
             this.server.plugin_watch = !!result.watching;
             if (!(result.disabled || []).length) return;
             this.pluginFailures = result.disabled;
-            for (const p of result.disabled) this.toast(p.title + ' did not load and was switched off, so the server starts cleanly next time. See the bell or Plugins for why.', 'warn');
+            for (const p of result.disabled) this.toast(t('dashboard.plugin_failed_toast', { name: p.title }), 'warn');
             if (this.isPackageModal()) this.installed = await wire.installedPackages();
           } catch {}
         }, 2500);
       },
       async togglePackage(f) {
-        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? f.title + ' is off. It stays in the folder.' : f.title + ' is on again.');
+        const result = await this.run(() => wire.togglePackage(f.file, !f.enabled), f.enabled ? t('dashboard.package_off', { name: f.title }) : t('dashboard.package_on', { name: f.title }));
         if (result === SKIPPED) return;
         if (!f.enabled && f.key && this.server) this.server.plugin_watch = true;
         this.installed = await wire.installedPackages();
       },
       async removePackage(file) {
-        if (!(await this.ask({ title: 'Remove ' + file + '?', message: 'A copy is kept in the server package backup folder.', confirmLabel: 'Remove', tone: 'danger' }))) return;
-        const result = await this.run(() => wire.removePackage(file), 'Package removed');
+        if (!(await this.ask({ title: t('dashboard.remove_name', { name: file }), message: t('dashboard.package_copy_kept'), confirmLabel: t('dashboard.remove'), tone: 'danger' }))) return;
+        const result = await this.run(() => wire.removePackage(file), t('dashboard.package_removed'));
         if (result !== SKIPPED) this.installed = await wire.installedPackages();
       },
       async searchPacks() {
@@ -3078,15 +3085,15 @@
       },
       async changeSoftware() {
         if (this.softwareConfirm !== this.server.name) {
-          this.toast('Enter the exact server name.', 'warn');
+          this.toast(t('dashboard.enter_the_exact_server_name'), 'warn');
           return;
         }
-        if (!(await this.ask({ title: 'Reinstall this server?', message: 'The selected software is installed. Existing files may change.', confirmLabel: 'Reinstall', tone: 'danger' }))) return;
-        await this.run(() => wire.changeSoftware(this.software, this.softwareConfirm), 'Software installation started');
+        if (!(await this.ask({ title: t('dashboard.reinstall_this_server'), message: t('dashboard.the_selected_software_is_installed_existing'), confirmLabel: t('dashboard.reinstall'), tone: 'danger' }))) return;
+        await this.run(() => wire.changeSoftware(this.software, this.softwareConfirm), t('dashboard.software_installation_started'));
       },
       async deleteServer() {
         if (this.busy) return;
-        if (!(await this.ask({ title: 'Delete ' + this.server.name + '?', message: 'The server and all of its files are removed permanently.', confirmLabel: 'Delete server', tone: 'danger' }))) return;
+        if (!(await this.ask({ title: t('dashboard.delete_name', { name: this.server.name }), message: t('dashboard.delete_permanently'), confirmLabel: t('dashboard.delete_server'), tone: 'danger' }))) return;
         this.stopServerTimers();
         const result = await this.run(() => wire.deleteServer(this.deleteConfirm));
         if (result === SKIPPED) {
@@ -3104,7 +3111,7 @@
 
       /* Backups ------------------------------------------------------------------------------------ */
       async saveBackups() {
-        const result = await this.run(() => wire.backupOptions(this.backupSettings), 'Backup policy saved');
+        const result = await this.run(() => wire.backupOptions(this.backupSettings), t('dashboard.backup_policy_saved'));
         if (result !== SKIPPED) this.server.backup_options = { ...this.backupSettings };
       },
       async downloadBackup(uuid) {
@@ -3112,16 +3119,16 @@
         if (url !== SKIPPED && url) location.href = this.safeLink(url);
       },
       async restoreBackup(uuid) {
-        const confirmation = await window.Simplify?.prompt?.({ title: 'Restore this backup?', message: 'Stop the server first. Current files are replaced by the backup.', requireText: this.server.name, confirmLabel: 'Restore backup', tone: 'danger' });
+        const confirmation = await window.Simplify?.prompt?.({ title: t('dashboard.restore_this_backup'), message: t('dashboard.stop_the_server_first_current_files'), requireText: this.server.name, confirmLabel: t('dashboard.restore_backup'), tone: 'danger' });
         if (confirmation === null || confirmation === undefined) return;
-        await this.run(() => wire.restoreBackup(uuid, confirmation), 'Backup restoration started.');
+        await this.run(() => wire.restoreBackup(uuid, confirmation), t('dashboard.backup_restoration_started'));
       },
       bannerUploadChanged(event) {
         const file = event.target.files?.[0], limit = this.boot.banner_upload_bytes ?? 5242880;
         if (file && file.size > limit) {
           event.stopImmediatePropagation();
           event.target.value = '';
-          this.toast('This banner exceeds the panel upload limit (' + this.bytes(limit) + '). See System checks.', 'warn');
+          this.toast(t('dashboard.banner_too_big', { limit: this.bytes(limit) }), 'warn');
         }
       },
       sftpLink() {
@@ -3145,7 +3152,7 @@
       },
       async openFileEditor(url) {
         if (this.busy) return;
-        if (this.fileEditorDirty && !(await this.ask({ title: 'Discard unsaved file changes?', message: 'Open the other file without saving.', confirmLabel: 'Discard changes', tone: 'danger' }))) return;
+        if (this.fileEditorDirty && !(await this.ask({ title: t('dashboard.discard_unsaved_file_changes'), message: t('dashboard.open_the_other_file_without_saving'), confirmLabel: t('dashboard.discard_changes'), tone: 'danger' }))) return;
         url.searchParams.set('simplify_embed', '1');
         this.fileEditorDirty = false;
         this.fileEditorSaving = false;
@@ -3155,7 +3162,7 @@
         this.fileEditorUrl = url.href;
         wire.fileRevision(this.fileEditorPath)
           .then((hash) => this.fileEditorUrl === url.href && (this.fileEditorRevision = hash))
-          .catch(() => this.toast('The file revision could not be checked. Reopen the editor before saving.', 'warn'));
+          .catch(() => this.toast(t('dashboard.the_file_revision_could_not_be'), 'warn'));
       },
       filesFrameLoaded(frame) {
         this.styleFrame(frame, 'files');
@@ -3174,7 +3181,7 @@
           doc.addEventListener('click', click, true);
           doc._psFilesClick = click;
         } catch {
-          this.toast('The file workspace could not be opened.', 'danger');
+          this.toast(t('dashboard.the_file_workspace_could_not_be'), 'danger');
         }
       },
       /** Clicks Pelican's (hidden) "Save and close", which runs the revision check above first. */
@@ -3184,11 +3191,11 @@
           const button = doc && [...doc.querySelectorAll('button[wire\\:click]')].find((b) => (b.getAttribute('wire:click') || '').includes('fm_save_and_close'));
           if (button) return button.click();
         } catch {}
-        this.toast('The editor is not ready yet.', 'warn');
+        this.toast(t('dashboard.the_editor_is_not_ready_yet'), 'warn');
       },
       async closeFileEditor() {
         if (this.busy) return;
-        if (this.fileEditorDirty && !(await this.ask({ title: 'Discard unsaved file changes?', message: 'Your edits have not been saved.', confirmLabel: 'Discard changes', tone: 'danger' }))) return;
+        if (this.fileEditorDirty && !(await this.ask({ title: t('dashboard.discard_unsaved_file_changes'), message: t('dashboard.your_edits_have_not_been_saved'), confirmLabel: t('dashboard.discard_changes'), tone: 'danger' }))) return;
         this.fileEditorUrl = null;
         this.fileEditorDirty = false;
       },
@@ -3200,20 +3207,20 @@
           if (!this.fileEditUrl(url)) {
             const target = new URL(url), base = new URL(this.server.files_url, location.origin);
             if (target.origin !== base.origin || (!target.pathname.startsWith(base.pathname.replace(/\/$/, '') + '/') && target.pathname !== base.pathname)) {
-              this.toast('The editor could not be opened.', 'danger');
+              this.toast(t('dashboard.the_editor_could_not_be_opened'), 'danger');
               return;
             }
             this.fileEditorUrl = null;
             this.fileEditorDirty = false;
             if (this.fileEditorSaving) {
-              this.toast('File saved', 'ok');
+              this.toast(t('dashboard.file_saved'), 'ok');
               wire.fileChanged(this.fileEditorPath, this.fileEditorRevision)
                 .then((info) => Object.assign(this.server, info))
-                .catch(() => this.toast('File saved, but the restart reminder could not be recorded. Refresh the server page.', 'warn'));
+                .catch(() => this.toast(t('dashboard.file_saved_but_the_restart_reminder'), 'warn'));
               try {
                 this.$refs.filesFrame.contentWindow.location.reload();
               } catch {}
-            } else this.toast('The file could not be edited. See the file manager warning.', 'warn');
+            } else this.toast(t('dashboard.the_file_could_not_be_edited'), 'warn');
             this.fileEditorSaving = false;
             return;
           }
@@ -3241,19 +3248,19 @@
             event.stopImmediatePropagation();
             if (this.fileEditorChecking) return;
             if (!this.fileEditorRevision) {
-              this.toast('Wait for the file revision check before saving.', 'warn');
+              this.toast(t('dashboard.wait_for_the_file_revision_check'), 'warn');
               return;
             }
             this.fileEditorChecking = true;
             try {
               if ((await wire.fileRevision(this.fileEditorPath)) !== this.fileEditorRevision) {
-                this.toast('This file changed elsewhere. Reopen it before saving to avoid overwriting another change.', 'danger');
+                this.toast(t('dashboard.this_file_changed_elsewhere_reopen_it'), 'danger');
                 return;
               }
               button._psVerified = true;
               button.click();
             } catch {
-              this.toast('Could not verify the file. Your editor remains open.', 'danger');
+              this.toast(t('dashboard.could_not_verify_the_file_your'), 'danger');
             } finally {
               this.fileEditorChecking = false;
             }
@@ -3269,7 +3276,7 @@
           }, true);
           doc.addEventListener('livewire:navigated', () => this.fileEditorLoaded(frame));
         } catch {
-          this.toast('The file editor could not be opened.', 'danger');
+          this.toast(t('dashboard.the_file_editor_could_not_be'), 'danger');
         }
       },
       /** Marks links back to the overview inside native pages so the popup can hide them. */
@@ -3296,7 +3303,7 @@
           if (['native', 'files', 'editor', 'account'].includes(kind) && frame.contentDocument) this.cleanNativeFrame(frame.contentDocument);
           window.SimplifyTheme?.frame(frame, kind, this.currentAccentHex());
         } catch {
-          this.toast('The workspace could not be embedded.', 'danger');
+          this.toast(t('dashboard.the_workspace_could_not_be_embedded'), 'danger');
         }
       },
     };

@@ -6,9 +6,10 @@ final class Gemini extends Provider
 {
     public const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/';
     public static function name(): string { return 'Google'; }
-    public static function label(): string { return 'Gemini by Google'; }
+    public static function label(): string { return __('pelican-simplify::explain.providers.gemini.label'); }
     public static function models(): array
     {
+        // @english: model names; ErrorExplainer::models() translates the note in brackets (explain.model_notes).
         return [
             'gemini-3.8-flash' => 'Gemini 3.8 Flash (good answers, under a cent)',
             'gemini-3.5-flash-lite' => 'Gemini 3.5 Flash-Lite (cheapest)',
@@ -17,7 +18,7 @@ final class Gemini extends Provider
     public static function keyPlaceholder(): string { return 'AIza…'; }
     public static function keyHelp(): string
     {
-        return 'Create a key at aistudio.google.com → Get API key. Questions are billed to that Google Cloud project, usually less than a cent each; set a budget there to be safe.';
+        return __('pelican-simplify::explain.providers.gemini.key_help');
     }
     public static function request(string $key, string $model, string $system, array $schema, string $question): array
     {

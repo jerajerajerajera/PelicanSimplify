@@ -13,7 +13,7 @@ abstract class PluginWidgetsPage extends \Filament\Pages\Page
 {
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $slug = 'simplify-widgets';
-    protected static ?string $title = 'Plugin widgets';
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable { return __('pelican-simplify::plugins.pages.plugin_widgets'); }
     protected string $view = 'pelican-simplify::plugin-widgets';
 
     /** The panel whose widgets this page shows (see ExternalPlugins::widgets()). */

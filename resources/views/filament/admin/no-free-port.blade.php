@@ -1,11 +1,11 @@
 {{-- Server step: the chosen node has no free port (allocation), so a server cannot be made there yet. --}}
 <div class="ssc-port-notice" role="alert">
-    <strong>No free port on {{ $node }}</strong>
+    <strong>{{ __('pelican-simplify::maker.ports.no_free_port', ['node' => $node]) }}</strong>
     <span>
         @if($url)
-            Every port on this node is in use. Add a port under <a href="{{ $url }}" target="_top">Nodes → {{ $node }} → Allocations</a>, then click Next again.
+            {{ __('pelican-simplify::maker.ports.add_port') }} <a href="{{ $url }}" target="_top">{{ __('pelican-simplify::maker.ports.allocations_path', ['node' => $node]) }}</a>{{ __('pelican-simplify::maker.ports.then_next') }}
         @else
-            Every port on this node is in use. Ask an admin to add a port, then click Next again.
+            {{ __('pelican-simplify::maker.ports.ask_admin') }}
         @endif
     </span>
 </div>

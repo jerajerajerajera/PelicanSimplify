@@ -34,18 +34,18 @@ final class ServerBanners
         $size=@getimagesizefromstring($bytes);
         $extension=match($size[2]??null){IMAGETYPE_PNG=>'png',IMAGETYPE_JPEG=>'jpg',IMAGETYPE_WEBP=>'webp',default=>null};
         if(strlen($bytes)>UploadLimits::bannerBytes() || !$extension || $size[0]<64 || $size[1]<32 || $size[0]>8192 || $size[1]>8192 || $size[0]*$size[1]>32000000){
-            throw ValidationException::withMessages(['bannerUpload'=>'Choose a JPG, PNG or WebP image up to '.UploadLimits::label(UploadLimits::bannerBytes()).', between 64×32 and 8192×8192 pixels (maximum 32 megapixels).']);
+            throw ValidationException::withMessages(['bannerUpload'=>__('pelican-simplify::dashboard.banners.invalid', ['size' => UploadLimits::label(UploadLimits::bannerBytes())])]);
         }
         return $extension;
     }
     public static function upload(Server $server, $file): array
     {
         Access::permission($server,SubuserPermission::SettingsRename);
-        if(!is_object($file) || !method_exists($file,'getRealPath') || $file->getSize()>UploadLimits::bannerBytes())throw ValidationException::withMessages(['bannerUpload'=>'Choose an image up to '.UploadLimits::label(UploadLimits::bannerBytes()).'.']);
+        if(!is_object($file) || !method_exists($file,'getRealPath') || $file->getSize()>UploadLimits::bannerBytes())throw ValidationException::withMessages(['bannerUpload'=>__('pelican-simplify::dashboard.banners.too_big', ['size' => UploadLimits::label(UploadLimits::bannerBytes())])]);
         $bytes=file_get_contents($file->getRealPath());
         if($bytes===false)throw new \RuntimeException('Could not read banner upload.');
         $extension=self::validateBytes($bytes);$id='upload-'.bin2hex(random_bytes(16));
-        $name=mb_substr(pathinfo(basename($file->getClientOriginalName()),PATHINFO_FILENAME),0,100) ?: 'Custom banner';
+        $name=mb_substr(pathinfo(basename($file->getClientOriginalName()),PATHINFO_FILENAME),0,100) ?: __('pelican-simplify::dashboard.banners.custom');
         $data=['id'=>$id,'name'=>$name,'server_uuid'=>$server->uuid,'extension'=>$extension];$disk=Storage::disk('local');
         if(!$disk->put(self::ROOT.$id.'.'.$extension,$bytes))throw new \RuntimeException('Could not save banner image.');
         if(!$disk->put(self::ROOT.$id.'.json',json_encode($data,JSON_THROW_ON_ERROR))){$disk->delete(self::ROOT.$id.'.'.$extension);throw new \RuntimeException('Could not save banner details.');}

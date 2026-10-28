@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => '새로운 기능',
+        'full_release_notes' => '전체 릴리스 노트',
+        'mark_read' => '읽음으로 표시',
+        'mark_as_unread' => '읽지 않음으로 표시',
+        'clear' => '지우기',
+        'show_less' => '간단히 보기',
+        'pin' => '고정 ',
+        'unpin' => '고정 해제 ',
+        'pin_2' => '고정',
+        'unpin_2' => '고정 해제',
+        'pinned' => '고정됨',
+        'you_are_all_caught_up' => '새 알림이 없습니다.',
+        'archived' => '보관됨',
+        'nothing_archived' => '보관된 항목이 없습니다.',
+        'loading' => '불러오는 중…',
+        'show_more' => '더 보기',
+        'clear_name' => ':title 지우기',
+        'show_all' => '모두 보기(:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => '이 기기에서는 아직 알림이 켜져 있지 않습니다.',
+        'test_notification' => '테스트 알림',
+        'notifications_work_on_this_device' => '이 기기에서 알림이 작동합니다.',
+        'test_sent_it_should_appear_within' => '테스트를 보냈습니다. 몇 초 안에 표시됩니다.',
+        'the_browser_no_longer_accepts_notifications' => '브라우저가 이 기기의 알림을 더 이상 받지 않습니다. 다시 켜 주세요.',
+        'the_push_service_did_not_accept' => '푸시 서비스가 테스트를 받지 않았습니다. 1분 후 다시 시도하세요.',
+    ],
+];

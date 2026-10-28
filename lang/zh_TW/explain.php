@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => '面板無法連接 :host。請檢查面板伺服器能否存取互聯網。',
+        'no_key' => '請先輸入 API 金鑰。',
+        'not_set_up' => '此面板未設定錯誤解釋。',
+        'unknown_log' => '未知記錄。',
+        'read_panel' => '無法讀取面板記錄。',
+        'read_wings' => '無法從 Wings 讀取 Wings 記錄。請在節點可存取時重試。',
+        'read_console' => '無法從 Wings 讀取主控台。請在節點可存取時重試。',
+        'too_many' => '你在短時間內提問太多。請 :count 分鐘後重試。',
+        'daily_limit' => '此面板已達到每日 :count 次解釋的上限，請明天再試。',
+        'no_answer' => ':model 無法解釋這些行。錯誤再次出現時請重試。',
+    ],
+    'test' => [
+        'works' => '此金鑰可用於 :model。',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => '主控台',
+            'empty' => '主控台為空，暫時沒有可解釋的內容。',
+        ],
+        'panel' => [
+            'label' => '面板記錄',
+            'empty' => '面板記錄目前沒有警告或錯誤。',
+        ],
+        'wings' => [
+            'label' => 'Wings 記錄',
+            'empty' => '此節點的 Wings 記錄為空。',
+        ],
+        'plugin' => [
+            'label' => '外掛',
+            'empty' => '此外掛沒有已儲存的記錄行。',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => '請先登錄面板，然後重新開啟此頁面。',
+        'owner_only' => '只有面板所有者（root 管理員）可以使用此頁面。',
+        'expired' => '此地址已過期或已被新地址取代。',
+        'no_key' => '此面板未儲存 :provider API 金鑰。root 管理員可在 Simplify 設定的「錯誤解釋」中新增。',
+        'no_key_terminal' => '面板打不開時，請在面板伺服器上執行 :command。它會詢問金鑰，但不會儲存。',
+        'choose_node' => '請選擇一個節點。',
+        'panel_log' => '面板記錄',
+        'wings_log_of' => ':node 的 Wings 記錄',
+        'wings_log' => 'Wings 記錄',
+        'no_database' => '無法連接資料庫，因此這裡無法查看 Wings 記錄。面板記錄通常會顯示原因。',
+        'lead' => '當面板顯示 500 等錯誤、普通頁面打不開時，請使用此頁面。Simplify 設定中選擇的 AI 會讀取記錄，告訴你是否有問題以及如何修復。',
+        'check_panel' => '檢查面板記錄',
+        'check_wings' => '檢查 :node 的 Wings 記錄',
+        'wait' => '正在檢查記錄，最多可能需要一分鐘。',
+        'attention' => '有需要處理的問題',
+        'in_order' => '一切看起來正常',
+        'noticed' => '發現了什麼嗎？',
+        'checked' => ':model 檢查了 :count 行。地址、電子郵件地址和密碼已事先移除。',
+        'terminal_hint' => '面板打不開時，請在面板伺服器上執行 :command，或執行 :url_command 獲取此頁面的臨時地址。',
+        'broken' => '此頁面無法完成',
+        'title' => '解釋面板錯誤',
+    ],
+    'failures' => [
+        'invalid_key' => ':name API 金鑰無效。管理員可在 Simplify 設定中輸入新金鑰。',
+        'no_credit' => '此金鑰對應的 :name 帳戶已沒有餘額。管理員可在 :name 充值或查看帳單。',
+        'forbidden' => '此 :name API 金鑰無法使用所選模型。管理員可在 Simplify 設定中選擇其他模型。',
+        'no_model' => '所選 :name 模型對此金鑰不可用。管理員可在 Simplify 設定中選擇其他模型。',
+        'busy' => ':name 目前對此金鑰繁忙，請一分鐘後重試。',
+        'unavailable' => ':name 暫時不可用，請一分鐘後重試。',
+        'other_status' => ':name 無法回答這個問題（錯誤 :status），請稍後重試。',
+        'other' => ':name 無法回答這個問題，請稍後重試。',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => '在 console.anthropic.com → API keys 建立金鑰。每次提問都會計費到該 Anthropic 帳戶，通常幾美分或更少；為保險起見請在那裡設定每月上限。',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => '在 aistudio.google.com → Get API key 建立金鑰。提問會計費到該 Google Cloud 專案，通常每次不到一美分；為保險起見請在那裡設定預算。',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => '在 platform.openai.com → API keys 建立金鑰。每次提問都會計費到該 OpenAI 帳戶，通常幾美分或更少；為保險起見請在那裡設定每月預算。',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => '回答最好，幾美分',
+        'about_a_cent' => '約一美分',
+        'cheapest' => '最便宜',
+        'good_answers_under_a_cent' => '回答不錯，不到一美分',
+        'good_answers_about_a_cent' => '回答不錯，約一美分',
+    ],
+];

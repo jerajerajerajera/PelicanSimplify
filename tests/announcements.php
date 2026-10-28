@@ -5,6 +5,7 @@ final class PanelNotifications {public static array $read=[];public static array
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(array $parameters=[],?string $panel=null): string {return '/simplify?server='.$parameters['server'];}}}
 namespace Boy132\Announcements\Models {final class Announcement {public static array $rows=[];public static function query(){return new class{public function get(){return Announcement::$rows;}};}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function report($e){}
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/InGameAnnouncements.php';

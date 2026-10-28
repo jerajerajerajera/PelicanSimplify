@@ -19,6 +19,7 @@ jobs:
       - run: bash tests/run.sh
       - run: npx playwright install --with-deps chromium
       - run: node tests/theme-browser.js
+      - run: SIMPLIFY_LOCALE=ar node tests/rtl-browser.js
   # Installs the plugin in a real Pelican panel and opens its pages, so an error that only shows when the panel loads the code blocks the merge.
   panel-smoke:
     runs-on: ubuntu-latest

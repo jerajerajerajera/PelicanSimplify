@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Paneelista ei saatu yhteyttä kohteeseen :host. Tarkista, että paneelipalvelin saa muodostaa yhteyden internetiin.',
+        'no_key' => 'Anna ensin API-avain.',
+        'not_set_up' => 'Virheselitykset eivät ole käytössä tässä paneelissa.',
+        'unknown_log' => 'Tuntematon loki.',
+        'read_panel' => 'Paneelin lokia ei voitu lukea.',
+        'read_wings' => 'Wings-lokia ei voitu lukea Wingsistä. Yritä uudelleen, kun solmu on tavoitettavissa.',
+        'read_console' => 'Konsolia ei voitu lukea Wingsistä. Yritä uudelleen, kun solmu on tavoitettavissa.',
+        'too_many' => 'Kysyit paljon lyhyessä ajassa. Yritä uudelleen :count minuutin päästä.|Kysyit paljon lyhyessä ajassa. Yritä uudelleen :count minuutin päästä.',
+        'daily_limit' => 'Tämä paneeli on saavuttanut päivittäisen rajansa (:count selitystä). Yritä huomenna uudelleen.',
+        'no_answer' => ':model ei pystynyt selittämään näitä rivejä. Yritä uudelleen, kun virhe ilmenee taas.',
+    ],
+    'test' => [
+        'works' => 'Avain toimii mallin :model kanssa.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsoli',
+            'empty' => 'Konsoli on tyhjä, joten selitettävää ei vielä ole.',
+        ],
+        'panel' => [
+            'label' => 'Paneelin loki',
+            'empty' => 'Paneelin lokissa ei ole tällä hetkellä varoituksia tai virheitä.',
+        ],
+        'wings' => [
+            'label' => 'Wings-loki',
+            'empty' => 'Tämän solmun Wings-loki on tyhjä.',
+        ],
+        'plugin' => [
+            'label' => 'Lisäosa',
+            'empty' => 'Tälle lisäosalle ei ole tallennettuja lokirivejä.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Kirjaudu ensin paneeliin ja avaa sitten tämä sivu uudelleen.',
+        'owner_only' => 'Vain paneelin omistaja (root-ylläpitäjä) voi käyttää tätä sivua.',
+        'expired' => 'Tämä osoite on vanhentunut tai korvattu uudemmalla.',
+        'no_key' => 'Tähän paneeliin ei ole tallennettu :provider-API-avainta. Root-ylläpitäjä lisää sen kohdassa Simplify-asetukset → Virheselitykset.',
+        'no_key_terminal' => 'Jos paneeli ei avaudu, suorita :command paneelipalvelimella. Se kysyy avainta eikä tallenna sitä.',
+        'choose_node' => 'Valitse solmu.',
+        'panel_log' => 'Paneelin loki',
+        'wings_log_of' => 'Wings-loki: :node',
+        'wings_log' => 'Wings-loki',
+        'no_database' => 'Tietokantaan ei saatu yhteyttä, joten Wings-lokit eivät ole saatavilla täällä. Paneelin loki kertoo usein syyn.',
+        'lead' => 'Käytä tätä sivua, kun paneeli näyttää virheen, kuten 500, eivätkä sen tavalliset sivut avaudu. Simplify-asetuksissa valittu tekoäly lukee lokin ja kertoo, onko jokin vialla ja miten sen voi korjata.',
+        'check_panel' => 'Tarkista paneelin loki',
+        'check_wings' => 'Tarkista Wings-loki: :node',
+        'wait' => 'Tarkistetaan lokia. Tämä voi kestää minuutin.',
+        'attention' => 'Jokin vaatii huomiota',
+        'in_order' => 'Kaikki näyttää olevan kunnossa',
+        'noticed' => 'Huomasitko jotain?',
+        'checked' => ':count rivi tarkistettu (:model). Osoitteet, sähköpostiosoitteet ja salasanat poistettiin ensin.|:count riviä tarkistettu (:model). Osoitteet, sähköpostiosoitteet ja salasanat poistettiin ensin.',
+        'terminal_hint' => 'Jos paneeli ei avaudu, suorita :command paneelipalvelimella, tai :url_command saadaksesi väliaikaisen osoitteen tälle sivulle.',
+        'broken' => 'Tätä sivua ei voitu viimeistellä',
+        'title' => 'Selitä paneelin virheet',
+    ],
+    'failures' => [
+        'invalid_key' => ':name-API-avain ei ole kelvollinen. Ylläpitäjä voi antaa uuden Simplify-asetuksissa.',
+        'no_credit' => 'Tämän avaimen takana olevalla :name-tilillä ei ole enää saldoa. Ylläpitäjä voi lisätä saldoa tai tarkistaa laskutuksen palvelussa :name.',
+        'forbidden' => 'Tällä :name-API-avaimella ei saa käyttää valittua mallia. Ylläpitäjä voi valita toisen mallin Simplify-asetuksissa.',
+        'no_model' => 'Valittu :name-malli ei ole saatavilla tälle avaimelle. Ylläpitäjä voi valita toisen mallin Simplify-asetuksissa.',
+        'busy' => ':name on juuri nyt ruuhkautunut tälle avaimelle. Yritä minuutin päästä uudelleen.',
+        'unavailable' => ':name ei ole tilapäisesti käytettävissä. Yritä minuutin päästä uudelleen.',
+        'other_status' => ':name ei pystynyt vastaamaan tähän kysymykseen (virhe :status). Yritä myöhemmin uudelleen.',
+        'other' => ':name ei pystynyt vastaamaan tähän kysymykseen. Yritä myöhemmin uudelleen.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude (Anthropic)',
+            'key_help' => 'Luo avain osoitteessa console.anthropic.com → API keys. Jokainen kysymys laskutetaan kyseiseltä Anthropic-tililtä, yleensä muutama sentti tai vähemmän; aseta sinne kuukausiraja varmuuden vuoksi.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini (Google)',
+            'key_help' => 'Luo avain osoitteessa aistudio.google.com → Get API key. Kysymykset laskutetaan kyseiseltä Google Cloud -projektilta, yleensä alle sentti kappaleelta; aseta sinne budjetti varmuuden vuoksi.',
+        ],
+        'openai' => [
+            'label' => 'GPT (OpenAI)',
+            'key_help' => 'Luo avain osoitteessa platform.openai.com → API keys. Jokainen kysymys laskutetaan kyseiseltä OpenAI-tililtä, yleensä muutama sentti tai vähemmän; aseta sinne kuukausibudjetti varmuuden vuoksi.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'parhaat vastaukset, muutama sentti',
+        'about_a_cent' => 'noin sentti',
+        'cheapest' => 'edullisin',
+        'good_answers_under_a_cent' => 'hyvät vastaukset, alle sentti',
+        'good_answers_about_a_cent' => 'hyvät vastaukset, noin sentti',
+    ],
+];

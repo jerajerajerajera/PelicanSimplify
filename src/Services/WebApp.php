@@ -52,7 +52,7 @@ final class WebApp
             'id' => self::scope(),
             'name' => $name,
             'short_name' => mb_strlen($name) > 12 ? mb_substr($name, 0, 12) : $name,
-            'description' => 'Your game servers on '.$name.'.',
+            'description' => __('pelican-simplify::dashboard.app.description', ['name' => $name]),
             'start_url' => self::startUrl(),
             'scope' => self::scope(),
             'display' => 'standalone',

@@ -11,7 +11,7 @@
             @php
                 $pack = $packs->get((string) $value);
                 $description = $field->getDescription((string) $value);
-                if ($resource && !$description) $description = $value === 'custom' ? 'Choose your own' : ($name === 'cpu_choice' ? ($value === 0 || (string)$value === '0' ? 'Unlimited CPU' : round((float)$value / 100, 2).' CPU cores') : round((float)$value / 1024, 2).' GB storage');
+                if ($resource && !$description) $description = $value === 'custom' ? __('pelican-simplify::maker.choices.choose_your_own') : ($name === 'cpu_choice' ? ($value === 0 || (string)$value === '0' ? __('pelican-simplify::maker.choices.unlimited_cpu') : trans_choice('pelican-simplify::maker.choices.cpu_cores', round((float)$value / 100, 2))) : __('pelican-simplify::maker.choices.gb_storage', ['count' => round((float)$value / 1024, 2)]));
             @endphp
             <label class="ssc-card" wire:key="ssc-{{ $path }}-{{ $value }}">
                 <input class="ssc-card-input" type="radio" name="{{ $path }}" value="{{ $value }}"
@@ -55,7 +55,7 @@
                     @if ($pack)
                         <a class="ssc-card-link" href="https://modrinth.com/modpack/{{ rawurlencode($pack['slug']) }}"
                            target="_blank" rel="noopener noreferrer" x-on:click.stop
-                           aria-label="Read more about {{ $label }} on Modrinth (opens in a new tab)">Read more ↗</a>
+                           aria-label="{{ __('pelican-simplify::maker.choices.read_more_label', ['name' => $label, 'site' => 'Modrinth']) }}">{{ __('pelican-simplify::maker.choices.read_more') }}</a>
                     @endif
                 </span>
             </label>

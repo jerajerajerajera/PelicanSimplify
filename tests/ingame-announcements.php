@@ -19,6 +19,7 @@ final class OverviewGroups {public static array $groups=[];public static functio
 }
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(array $parameters=[],?string $panel=null): string {return '/simplify';}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function report($e){}
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/InGameAnnouncements.php';

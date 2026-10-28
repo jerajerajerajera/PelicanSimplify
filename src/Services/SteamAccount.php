@@ -60,19 +60,19 @@ final class SteamAccount
     public static function save(object $user, string $key): array
     {
         $key = strtoupper(trim($key));
-        if (!preg_match('/^[A-F0-9]{32}$/', $key)) throw ValidationException::withMessages(['key' => 'A Steam Web API key has 32 characters (0-9, A-F).']);
+        if (!preg_match('/^[A-F0-9]{32}$/', $key)) throw ValidationException::withMessages(['key' => __('pelican-simplify::steam.errors.a_steam_web_api_key_has')]);
         try {
             $response = Http::timeout(8)->connectTimeout(3)->get(self::API.'GetAccountList/v1/', ['key' => $key]);
         } catch (Throwable) {
-            throw ValidationException::withMessages(['key' => 'Steam could not be reached. Try again in a moment.']);
+            throw ValidationException::withMessages(['key' => __('pelican-simplify::steam.errors.steam_could_not_be_reached_try')]);
         }
-        if (in_array($response->status(), [401, 403], true)) throw ValidationException::withMessages(['key' => 'Steam did not accept this key.']);
-        if (!$response->successful()) throw ValidationException::withMessages(['key' => 'Steam answered with an error ('.$response->status().'). Try again later.']);
+        if (in_array($response->status(), [401, 403], true)) throw ValidationException::withMessages(['key' => __('pelican-simplify::steam.errors.steam_did_not_accept_this_key')]);
+        if (!$response->successful()) throw ValidationException::withMessages(['key' => __('pelican-simplify::steam.errors.status', ['status' => $response->status()])]);
         // Steam reports whose key this is; with a linked Steam account the two must be the same person.
         $owner = $response->json('response.actor');
         $owner = is_scalar($owner) && preg_match('/^\d{17}$/', (string) $owner) ? (string) $owner : null;
         $linked = self::linkedSteamId($user);
-        if ($linked !== null && $owner !== null && $owner !== $linked) throw ValidationException::withMessages(['key' => 'This key belongs to a different Steam account than the one linked to your profile.']);
+        if ($linked !== null && $owner !== null && $owner !== $linked) throw ValidationException::withMessages(['key' => __('pelican-simplify::steam.errors.this_key_belongs_to_a_different')]);
         $data = ['key' => Crypt::encryptString($key), 'hint' => substr($key, -4), 'saved_at' => now()->toIso8601String(), 'steamid' => $owner, 'auto' => true];
         if (!Storage::disk('local')->put(self::path($user), json_encode($data, JSON_THROW_ON_ERROR))) throw new \RuntimeException('Could not save the Steam key.');
         return self::status($user);
@@ -90,23 +90,23 @@ final class SteamAccount
     public static function createToken(object $user, int $appId, string $memo): string
     {
         $data = self::read($user);
-        if ($data === null) throw ValidationException::withMessages(['token' => 'Connect your Steam key first (profile → Steam).']);
+        if ($data === null) throw ValidationException::withMessages(['token' => __('pelican-simplify::steam.errors.connect_your_steam_key_first_profile')]);
         try {
             $key = Crypt::decryptString($data['key']);
         } catch (Throwable) {
             self::remove($user);
-            throw ValidationException::withMessages(['token' => 'Your saved Steam key could not be read. Connect your Steam account again.']);
+            throw ValidationException::withMessages(['token' => __('pelican-simplify::steam.errors.your_saved_steam_key_could_not')]);
         }
         try {
             $response = Http::asForm()->timeout(10)->connectTimeout(3)->post(self::API.'CreateAccount/v1/', ['key' => $key, 'appid' => $appId, 'memo' => mb_substr(trim($memo) ?: 'Pelican server', 0, 32)]);
         } catch (Throwable) {
-            throw ValidationException::withMessages(['token' => 'Steam could not be reached. Try again in a moment.']);
+            throw ValidationException::withMessages(['token' => __('pelican-simplify::steam.errors.steam_could_not_be_reached_try')]);
         }
         $token = $response->successful() ? $response->json('response.login_token') : null;
         if (!is_string($token) || !preg_match('/^[A-Za-z0-9]{16,64}$/', $token)) {
             throw ValidationException::withMessages(['token' => in_array($response->status(), [401, 403], true)
-                ? 'Steam refused the request. Your key may have been revoked; connect your Steam account again.'
-                : 'Steam did not create a token. Your account may need a verified phone number, or has reached its token limit.']);
+                ? __('pelican-simplify::steam.errors.refused')
+                : __('pelican-simplify::steam.errors.no_token')]);
         }
         return $token;
     }
@@ -115,7 +115,7 @@ final class SteamAccount
     public static function createTokenForGame(object $user, string $gameName, string $memo): string
     {
         $art = SteamArt::find($gameName);
-        if (!$art) throw ValidationException::withMessages(['token' => 'This game could not be found on Steam. Create a token on steamcommunity.com/dev/managegameservers instead.']);
+        if (!$art) throw ValidationException::withMessages(['token' => __('pelican-simplify::steam.errors.this_game_could_not_be_found')]);
         return self::createToken($user, (int) $art['appid'], $memo);
     }
 

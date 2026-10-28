@@ -24,7 +24,7 @@ $check(mb_strlen(H::summary($long))<=161&&str_ends_with(H::summary($long),'…')
 $check(H::normalize(['slug'=>'../evil','type'=>'theme'])===null,'bad slug skipped');
 $check(H::normalize(['slug'=>'paid','type'=>'plugin','pricing_type'=>'premium'])===null,'premium skipped (nothing to install for free)');
 $check(H::normalize(['slug'=>'odd','type'=>'egg'])===null,'unknown type skipped');
-$check(H::normalize(['slug'=>'x','type'=>'plugin','title'=>'<b>X</b>','author_name'=>''])['title']==='X'&&H::normalize(['slug'=>'x','type'=>'plugin'])['author']==='Unknown maker','text cleaned');
+$check(H::normalize(['slug'=>'x','type'=>'plugin','title'=>'<b>X</b>','author_name'=>''])['title']==='X'&&H::normalize(['slug'=>'x','type'=>'plugin'])['author']==='','text cleaned');
 
 $items=H::build(['list'=>[$nord,['slug'=>'fluffy-theme','type'=>'theme','author_name'=>'boy132','downloads_count'=>40],['slug'=>'deepfield','type'=>'theme','author_name'=>'grvtoofly','downloads_count'=>79],
   ['slug'=>'player-counter','type'=>'plugin','author_name'=>'boy132','downloads_count'=>990],$nord],'details'=>['nord-theme'=>$detail]]);

@@ -20,5 +20,5 @@
 <link rel="apple-touch-icon" href="{{ \Simplify\Panel\Services\WebApp::icon(180) }}">
 @endunless
 <link id="simplify-core-css" rel="stylesheet" href="{{ \Simplify\Panel\Services\BuildInfo::asset('core.css') }}">
-<script>window.simplifyThemeConfig=@js($config);</script>
+<script>window.simplifyThemeConfig=@js($config);window.simplifyLang=@js(\Simplify\Panel\Services\Translations::js());</script>
 <script src="{{ \Simplify\Panel\Services\BuildInfo::asset('core.js') }}"></script>

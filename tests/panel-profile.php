@@ -4,6 +4,7 @@ namespace Illuminate\Support\Facades {
  class Storage {public static array $files=[];public static function disk($d){return new self;}public function get($k){return self::$files[$k]??null;}public function put($k,$v){self::$files[$k]=$v;return true;}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/PanelProfile.php';
 use Simplify\Panel\Services\PanelProfile as P;

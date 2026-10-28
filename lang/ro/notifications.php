@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Ce este nou',
+        'full_release_notes' => 'Notele complete ale versiunii',
+        'mark_read' => 'Marcați ca citit',
+        'mark_as_unread' => 'Marcați ca necitit',
+        'clear' => 'Ștergeți',
+        'show_less' => 'Afișați mai puțin',
+        'pin' => 'Fixați ',
+        'unpin' => 'Anulați fixarea ',
+        'pin_2' => 'Fixați',
+        'unpin_2' => 'Anulați fixarea',
+        'pinned' => 'Fixat',
+        'you_are_all_caught_up' => 'Sunteți la zi.',
+        'archived' => 'Arhivat',
+        'nothing_archived' => 'Nimic arhivat.',
+        'loading' => 'Se încarcă…',
+        'show_more' => 'Afișați mai mult',
+        'clear_name' => 'Ștergeți :title',
+        'show_all' => 'Afișați toate cele :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Notificările nu sunt încă activate pe acest dispozitiv.',
+        'test_notification' => 'Notificare de test',
+        'notifications_work_on_this_device' => 'Notificările funcționează pe acest dispozitiv.',
+        'test_sent_it_should_appear_within' => 'Test trimis. Ar trebui să apară în câteva secunde.',
+        'the_browser_no_longer_accepts_notifications' => 'Browserul nu mai acceptă notificări pentru acest dispozitiv. Activați-le din nou.',
+        'the_push_service_did_not_accept' => 'Serviciul push nu a acceptat testul. Încercați din nou peste un minut.',
+    ],
+];

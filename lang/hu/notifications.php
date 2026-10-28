@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Újdonságok',
+        'full_release_notes' => 'Teljes kiadási megjegyzések',
+        'mark_read' => 'Olvasottnak jelölés',
+        'mark_as_unread' => 'Olvasatlannak jelölés',
+        'clear' => 'Törlés',
+        'show_less' => 'Kevesebb mutatása',
+        'pin' => 'Kitűzés: ',
+        'unpin' => 'Kitűzés megszüntetése: ',
+        'pin_2' => 'Kitűzés',
+        'unpin_2' => 'Kitűzés megszüntetése',
+        'pinned' => 'Kitűzve',
+        'you_are_all_caught_up' => 'Mindent elolvastál.',
+        'archived' => 'Archivált',
+        'nothing_archived' => 'Nincs semmi archiválva.',
+        'loading' => 'Betöltés…',
+        'show_more' => 'Több mutatása',
+        'clear_name' => 'Törlés: :title',
+        'show_all' => 'Mind a(z) :count mutatása',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Az értesítések még nincsenek bekapcsolva ezen az eszközön.',
+        'test_notification' => 'Tesztértesítés',
+        'notifications_work_on_this_device' => 'Az értesítések működnek ezen az eszközön.',
+        'test_sent_it_should_appear_within' => 'Teszt elküldve. Néhány másodpercen belül meg kell jelennie.',
+        'the_browser_no_longer_accepts_notifications' => 'A böngésző már nem fogad értesítéseket ehhez az eszközhöz. Kapcsold be őket újra.',
+        'the_push_service_did_not_accept' => 'A push szolgáltatás nem fogadta el a tesztet. Próbáld újra egy perc múlva.',
+    ],
+];

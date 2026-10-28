@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Nie udało się połączyć z :host z panelu. Sprawdź, czy serwer panelu może łączyć się z internetem.',
+        'no_key' => 'Najpierw wpisz klucz API.',
+        'not_set_up' => 'Wyjaśnienia błędów nie są skonfigurowane w tym panelu.',
+        'unknown_log' => 'Nieznany log.',
+        'read_panel' => 'Nie udało się odczytać logu panelu.',
+        'read_wings' => 'Nie udało się odczytać logu Wings z Wings. Spróbuj ponownie, gdy node będzie osiągalny.',
+        'read_console' => 'Nie udało się odczytać konsoli z Wings. Spróbuj ponownie, gdy node będzie osiągalny.',
+        'too_many' => 'Zadałeś wiele pytań w krótkim czasie. Spróbuj ponownie za :count minutę.|Zadałeś wiele pytań w krótkim czasie. Spróbuj ponownie za :count minuty.|Zadałeś wiele pytań w krótkim czasie. Spróbuj ponownie za :count minut.',
+        'daily_limit' => 'Ten panel osiągnął dzienny limit wyjaśnień (:count). Spróbuj ponownie jutro.',
+        'no_answer' => ':model nie potrafił wyjaśnić tych linii. Spróbuj ponownie, gdy błąd pojawi się znowu.',
+    ],
+    'test' => [
+        'works' => 'Klucz działa z :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsola',
+            'empty' => 'Konsola jest pusta, więc nie ma jeszcze czego wyjaśniać.',
+        ],
+        'panel' => [
+            'label' => 'Log panelu',
+            'empty' => 'Log panelu nie ma teraz ostrzeżeń ani błędów.',
+        ],
+        'wings' => [
+            'label' => 'Log Wings',
+            'empty' => 'Log Wings tego node’a jest pusty.',
+        ],
+        'plugin' => [
+            'label' => 'Wtyczka',
+            'empty' => 'Brak zapisanych linii logu dla tej wtyczki.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Najpierw zaloguj się do panelu, a potem otwórz tę stronę ponownie.',
+        'owner_only' => 'Tylko właściciel panelu (root administrator) może używać tej strony.',
+        'expired' => 'Ten adres wygasł lub został zastąpiony nowszym.',
+        'no_key' => 'W tym panelu nie zapisano klucza API :provider. Root administrator dodaje go w Ustawieniach Simplify, w sekcji Wyjaśnienia błędów.',
+        'no_key_terminal' => 'Gdy panel się nie otwiera, uruchom :command na serwerze panelu. Pyta o klucz i go nie zapisuje.',
+        'choose_node' => 'Wybierz node.',
+        'panel_log' => 'Log panelu',
+        'wings_log_of' => 'Log Wings node’a :node',
+        'wings_log' => 'Log Wings',
+        'no_database' => 'Nie udało się połączyć z bazą danych, więc logi Wings nie są tu dostępne. Log panelu często pokazuje dlaczego.',
+        'lead' => 'Użyj tej strony, gdy panel pokazuje błąd taki jak 500, a jego zwykłe strony się nie otwierają. AI wybrana w Ustawieniach Simplify czyta log i mówi, czy coś jest nie tak i jak to naprawić.',
+        'check_panel' => 'Sprawdź log panelu',
+        'check_wings' => 'Sprawdź log Wings node’a :node',
+        'wait' => 'Sprawdzanie logu. Może to potrwać do minuty.',
+        'attention' => 'Coś wymaga uwagi',
+        'in_order' => 'Wszystko wygląda w porządku',
+        'noticed' => 'Zauważyłeś coś?',
+        'checked' => ':count linia sprawdzona przez :model. Adresy, adresy e-mail i hasła zostały najpierw usunięte.|:count linie sprawdzone przez :model. Adresy, adresy e-mail i hasła zostały najpierw usunięte.|:count linii sprawdzonych przez :model. Adresy, adresy e-mail i hasła zostały najpierw usunięte.',
+        'terminal_hint' => 'Gdy panel się nie otwiera, uruchom :command na serwerze panelu albo :url_command, aby dostać tymczasowy adres do tej strony.',
+        'broken' => 'Ta strona nie mogła się dokończyć',
+        'title' => 'Wyjaśnij błędy panelu',
+    ],
+    'failures' => [
+        'invalid_key' => 'Klucz API :name jest nieprawidłowy. Administrator może wpisać nowy w Ustawieniach Simplify.',
+        'no_credit' => 'Konto :name powiązane z tym kluczem nie ma już środków. Administrator może doładować konto lub sprawdzić rozliczenia w :name.',
+        'forbidden' => 'Ten klucz API :name nie może używać wybranego modelu. Administrator może wybrać inny model w Ustawieniach Simplify.',
+        'no_model' => 'Wybrany model :name nie jest dostępny dla tego klucza. Administrator może wybrać inny model w Ustawieniach Simplify.',
+        'busy' => ':name jest teraz zajęty dla tego klucza. Spróbuj ponownie za minutę.',
+        'unavailable' => ':name jest chwilowo niedostępny. Spróbuj ponownie za minutę.',
+        'other_status' => ':name nie mógł odpowiedzieć na to pytanie (błąd :status). Spróbuj ponownie później.',
+        'other' => ':name nie mógł odpowiedzieć na to pytanie. Spróbuj ponownie później.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude od Anthropic',
+            'key_help' => 'Utwórz klucz na console.anthropic.com → API keys. Każde pytanie jest rozliczane z tego konta Anthropic, zwykle kilka centów lub mniej; dla bezpieczeństwa ustaw tam miesięczny limit.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini od Google',
+            'key_help' => 'Utwórz klucz na aistudio.google.com → Get API key. Pytania są rozliczane z tego projektu Google Cloud, zwykle mniej niż cent za każde; dla bezpieczeństwa ustaw tam budżet.',
+        ],
+        'openai' => [
+            'label' => 'GPT od OpenAI',
+            'key_help' => 'Utwórz klucz na platform.openai.com → API keys. Każde pytanie jest rozliczane z tego konta OpenAI, zwykle kilka centów lub mniej; dla bezpieczeństwa ustaw tam miesięczny budżet.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'najlepsze odpowiedzi, kilka centów',
+        'about_a_cent' => 'około centa',
+        'cheapest' => 'najtańszy',
+        'good_answers_under_a_cent' => 'dobre odpowiedzi, poniżej centa',
+        'good_answers_about_a_cent' => 'dobre odpowiedzi, około centa',
+    ],
+];

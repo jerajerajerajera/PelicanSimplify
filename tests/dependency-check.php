@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Services/DependencyCheck.php';
 use Simplify\Panel\Services\DependencyCheck as D;
 function check(bool $ok, string $message): void { if (!$ok) throw new RuntimeException($message); echo 'PASS '.$message."\n"; }

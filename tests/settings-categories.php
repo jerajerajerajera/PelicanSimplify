@@ -27,6 +27,7 @@ namespace Simplify\Panel\Services {
  class PerformanceSettings {public const FIELDS=['overview_seconds'=>['Overview','Help',30,10,600],'server_seconds'=>['Server','Help',20,5,600],'restart_seconds'=>['Restart','Help',3,2,60],'health_seconds'=>['Health','Help',30,10,600],'backup_interval_minutes'=>['Backups','Help',360,30,10080],'backup_retention'=>['Points','Help',2,1,100]];}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Services/BrandSettings.php';
  require __DIR__.'/../src/Filament/Admin/Pages/SimplifySettings.php';
  function view($name){return new class{function render(){return '<button>Finish setup</button>';}};}
@@ -44,7 +45,7 @@ require __DIR__.'/../src/Services/BrandSettings.php';
  $page->data=['features'=>['game_creator'=>true,'subdomains'=>false]];if($page->setupSteps()!==['Panel type','How much Simplify?','Features','People & access','Look','Server Maker','Ready'])throw new \RuntimeException('progress bar does not follow the add-on switches');$page->data=[];
  if(!function_exists('e')){function e($v){return htmlspecialchars((string)$v);}}
  $summary=\Simplify\Panel\Filament\Admin\Pages\SimplifySettings::setupSummary(['dashboard'=>true,'theme'=>true],['files','create']);
- if(!str_contains($summary,'Dashboard')||!str_contains($summary,'Files, Create')||!str_contains($summary,'ps-setup-summary'))throw new \RuntimeException('setup summary misses the chosen features and abilities');
+ if(!str_contains($summary,'Simplify dashboard')||!str_contains($summary,'Files, Create servers')||!str_contains($summary,'ps-setup-summary'))throw new \RuntimeException('setup summary misses the chosen features and abilities');
  if(!isset($wizard->options['submitAction'])||$wizard->options['skippable']!==[false])throw new \RuntimeException('wizard final save or validation guard missing');
  \Simplify\Panel\Services\FeatureSettings::$complete=true;
  $schema=$page->form(new \Filament\Schemas\Schema);$tabs=$schema->options['components'][0][0]->options['tabs'][0];

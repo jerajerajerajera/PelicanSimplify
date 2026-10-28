@@ -35,13 +35,13 @@ abstract class Provider
         $code = static::errorCode($body);
         $message = strtolower((string) ($body['error']['message'] ?? ''));
         return match (true) {
-            $status === 401 || str_contains($code, 'authentication') || str_contains($code, 'invalid_api_key') || str_contains($message, 'api key not valid') => 'The '.$name.' API key is not valid. An administrator can enter a new one in Simplify settings.',
-            $status === 402 || str_contains($code, 'insufficient_quota') || str_contains($message, 'credit') || str_contains($message, 'billing') => 'The '.$name.' account behind this key has no credit left. An administrator can add credit or check billing with '.$name.'.',
-            $status === 403 || str_contains($code, 'permission') => 'This '.$name.' API key may not use the chosen model. An administrator can pick another model in Simplify settings.',
-            $status === 404 => 'The chosen '.$name.' model is not available for this key. An administrator can pick another model in Simplify settings.',
-            $status === 429 || str_contains($code, 'rate_limit') || str_contains($code, 'resource_exhausted') => $name.' is busy for this key right now. Try again in a minute.',
-            $status === 529 || str_contains($code, 'overloaded') || $status >= 500 => $name.' is temporarily unavailable. Try again in a minute.',
-            default => $name.' could not answer this question'.($status ? ' (error '.$status.')' : '').'. Try again later.',
+            $status === 401 || str_contains($code, 'authentication') || str_contains($code, 'invalid_api_key') || str_contains($message, 'api key not valid') => __('pelican-simplify::explain.failures.invalid_key', ['name' => $name]),
+            $status === 402 || str_contains($code, 'insufficient_quota') || str_contains($message, 'credit') || str_contains($message, 'billing') => __('pelican-simplify::explain.failures.no_credit', ['name' => $name]),
+            $status === 403 || str_contains($code, 'permission') => __('pelican-simplify::explain.failures.forbidden', ['name' => $name]),
+            $status === 404 => __('pelican-simplify::explain.failures.no_model', ['name' => $name]),
+            $status === 429 || str_contains($code, 'rate_limit') || str_contains($code, 'resource_exhausted') => __('pelican-simplify::explain.failures.busy', ['name' => $name]),
+            $status === 529 || str_contains($code, 'overloaded') || $status >= 500 => __('pelican-simplify::explain.failures.unavailable', ['name' => $name]),
+            default => $status ? __('pelican-simplify::explain.failures.other_status', ['name' => $name, 'status' => $status]) : __('pelican-simplify::explain.failures.other', ['name' => $name]),
         };
     }
 }

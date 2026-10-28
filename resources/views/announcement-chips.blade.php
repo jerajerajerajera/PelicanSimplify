@@ -6,7 +6,7 @@
             <span x-text="item.title"></span>
         </button>
     </template>
-    <div class="ps-dropdown ps-host-pin-open" x-show="hostPin && announcementBars().some((i) => i.key===hostPin)" x-cloak role="dialog" aria-label="Announcement">
+    <div class="ps-dropdown ps-host-pin-open" x-show="hostPin && announcementBars().some((i) => i.key===hostPin)" x-cloak role="dialog" aria-label="{{ __('pelican-simplify::announcements.bar.announcement') }}">
         <template x-for="item in announcementBars().filter((i) => i.key===hostPin)" :key="'open-'+item.key">
             @include('pelican-simplify::announcement-bar')
         </template>

@@ -8,6 +8,7 @@ namespace Illuminate\Support\Facades {
 namespace App\Repositories\Daemon {class DaemonServerRepository {public static string $state='running';public static array $actions=[];public function setServer($s){return $this;}public function getDetails(){return ['state'=>self::$state];}public function power($a){self::$actions[]=$a;return $this;}public function throw(){}}class DaemonFileRepository {public function __construct(){throw new \RuntimeException('A restart reminder must never rewrite files');}}}
 namespace Simplify\Panel\Services {class Access {public static bool $allowed=true;public static function permission($s,$p){if(!self::$allowed)throw new \RuntimeException('403');}public static function owner($s){throw new \RuntimeException('File editors do not require ownership');}}class ManagedSettings {public static function minecraft($s){return true;}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
  function user(){return (object)['id'=>7];}function abort_if($v,$code,$message=''){if($v)throw new \RuntimeException((string)$code);}function abort_unless($v,$code,$message=''){abort_if(!$v,$code,$message);}function app($c){return new $c;}function auth(){return new class{public function setUser($u){}public function user(){return user();}public function forgetUser(){}};}function report($e){}
  require_once __DIR__.'/../src/Services/JsonFile.php';
  require __DIR__.'/../src/Services/PendingChanges.php';use Simplify\Panel\Services\PendingChanges as P;use Illuminate\Support\Facades\Storage;use App\Repositories\Daemon\DaemonServerRepository as D;

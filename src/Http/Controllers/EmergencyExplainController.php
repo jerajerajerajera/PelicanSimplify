@@ -5,6 +5,7 @@ namespace Simplify\Panel\Http\Controllers;
 use Illuminate\Http\Request;
 use Simplify\Panel\Services\EmergencyAccess;
 use Simplify\Panel\Services\ErrorExplainer;
+use Simplify\Panel\Services\Translations;
 
 /**
  * Emergency page for "Explain this error": the panel log and the Wings logs explained when the panel itself breaks.
@@ -19,8 +20,8 @@ final class EmergencyExplainController
     {
         try {
             $user = user();
-            if (!$user) return $this->page(401, '<p>Sign in to the panel first, then open this page again.</p>'.$this->terminalHint());
-            if (!$user->isRootAdmin()) return $this->page(403, '<p>Only the panel owner (a root administrator) can use this page.</p>');
+            if (!$user) return $this->page(401, '<p>'.self::t('sign_in', 'Sign in to the panel first, then open this page again.').'</p>'.$this->terminalHint());
+            if (!$user->isRootAdmin()) return $this->page(403, '<p>'.self::t('owner_only', 'Only the panel owner (a root administrator) can use this page.').'</p>');
             return $this->handle($request, 'simplify.explain.user.'.$user->id, csrf_token());
         } catch (\Throwable $e) {
             return $this->broken($e);
@@ -31,7 +32,7 @@ final class EmergencyExplainController
     public function token(Request $request, string $token)
     {
         try {
-            if (!EmergencyAccess::valid($token)) return $this->page(403, '<p>This address has expired or was replaced by a newer one.</p>'.$this->terminalHint());
+            if (!EmergencyAccess::valid($token)) return $this->page(403, '<p>'.self::t('expired', 'This address has expired or was replaced by a newer one.').'</p>'.$this->terminalHint());
             return $this->handle($request, 'simplify.explain.access', null);
         } catch (\Throwable $e) {
             return $this->broken($e);
@@ -41,17 +42,17 @@ final class EmergencyExplainController
     private function handle(Request $request, string $personal, ?string $csrf)
     {
         $key = ErrorExplainer::savedKey();
-        if (!$key) return $this->page(200, '<p>No '.self::e(ErrorExplainer::providerName()).' API key is saved on this panel. A root administrator adds one in Simplify settings, under Error explanations.</p>'
-            .'<p>When the panel does not open, run <code>php artisan simplify:explain</code> on the panel server. It asks for a key and does not save it.</p>');
+        if (!$key) return $this->page(200, '<p>'.self::t('no_key', 'No :provider API key is saved on this panel. A root administrator adds one in Simplify settings, under Error explanations.', ['provider' => ErrorExplainer::providerName()]).'</p>'
+            .'<p>'.self::t('no_key_terminal', 'When the panel does not open, run :command on the panel server. It asks for a key and does not save it.', [], ['command' => '<code>php artisan simplify:explain</code>']).'</p>');
         [$nodes, $nodeError] = $this->nodes();
         $result = null;
         $asked = null;
         if ($request->isMethod('POST')) {
             $source = $request->filled('node') ? 'wings' : 'panel';
             $node = $source === 'wings' ? ($nodes[(int) $request->input('node')] ?? null) : null;
-            if ($source === 'wings' && !$node) $result = ['ok' => false, 'error' => 'Choose a node.'];
+            if ($source === 'wings' && !$node) $result = ['ok' => false, 'error' => self::plain('choose_node', 'Choose a node.')];
             else $result = ErrorExplainer::ask($key, $source, null, $node, $personal, ErrorExplainer::ASKED_FROM['emergency']);
-            $asked = $source === 'wings' ? 'Wings log'.($node ? ' of '.$node->name : '') : 'Panel log';
+            $asked = $source === 'panel' ? self::plain('panel_log', 'Panel log') : ($node ? self::plain('wings_log_of', 'Wings log of :node', ['node' => $node->name]) : self::plain('wings_log', 'Wings log'));
         }
         return $this->page(200, $this->form($nodes, $nodeError, $csrf).($result ? $this->answer((string) $asked, $result) : ''));
     }
@@ -63,20 +64,20 @@ final class EmergencyExplainController
             return [\App\Models\Node::query()->orderBy('name')->get()->keyBy('id')->all(), null];
         } catch (\Throwable $e) {
             report($e);
-            return [[], 'The database could not be reached, so the Wings logs are not available here. The panel log often shows why.'];
+            return [[], self::plain('no_database', 'The database could not be reached, so the Wings logs are not available here. The panel log often shows why.')];
         }
     }
 
     private function form(array $nodes, ?string $nodeError, ?string $csrf): string
     {
         $hidden = $csrf ? '<input type="hidden" name="_token" value="'.self::e($csrf).'">' : '';
-        $html = '<p class="lead">Use this page when the panel shows an error such as 500 and its normal pages do not open. The AI chosen in Simplify settings reads the log, says whether something is wrong and how to fix it.</p>';
+        $html = '<p class="lead">'.self::t('lead', 'Use this page when the panel shows an error such as 500 and its normal pages do not open. The AI chosen in Simplify settings reads the log, says whether something is wrong and how to fix it.').'</p>';
         $html .= '<form method="post" class="ask" onsubmit="this.classList.add(\'busy\')">'.$hidden;
-        $html .= '<button type="submit" name="source" value="panel">Check the panel log</button>';
+        $html .= '<button type="submit" name="source" value="panel">'.self::t('check_panel', 'Check the panel log').'</button>';
         foreach ($nodes as $id => $node) {
-            $html .= '<button type="submit" name="node" value="'.(int) $id.'" class="secondary">Check Wings log of '.self::e((string) $node->name).'</button>';
+            $html .= '<button type="submit" name="node" value="'.(int) $id.'" class="secondary">'.self::t('check_wings', 'Check Wings log of :node', ['node' => (string) $node->name]).'</button>';
         }
-        $html .= '<p class="wait">Checking the log. This can take up to a minute.</p></form>';
+        $html .= '<p class="wait">'.self::t('wait', 'Checking the log. This can take up to a minute.').'</p></form>';
         if ($nodeError) $html .= '<p class="note">'.self::e($nodeError).'</p>';
         return $html;
     }
@@ -85,22 +86,22 @@ final class EmergencyExplainController
     {
         if (!$result['ok']) return '<section class="result bad" role="alert"><h2>'.self::e($asked).'</h2><p>'.self::e((string) $result['error']).'</p></section>';
         $found = (bool) $result['found'];
-        $html = '<section class="result '.($found ? 'bad' : 'good').'"><h2>'.self::e($asked).': '.($found ? 'Something needs attention' : 'Everything seems in order').'</h2>';
+        $html = '<section class="result '.($found ? 'bad' : 'good').'"><h2>'.self::e($asked).': '.($found ? self::t('attention', 'Something needs attention') : self::t('in_order', 'Everything seems in order')).'</h2>';
         $html .= '<p>'.self::e((string) $result['summary']).'</p>';
-        if ($result['issues']) $html .= $found ? '' : '<p class="note">Noticed something?</p>';
+        if ($result['issues']) $html .= $found ? '' : '<p class="note">'.self::t('noticed', 'Noticed something?').'</p>';
         foreach ($result['issues'] as $issue) {
             $html .= '<details'.($found ? ' open' : '').'><summary>'.self::e($issue['title']).'</summary>';
             if ($issue['cause'] !== '') $html .= '<p>'.self::e($issue['cause']).'</p>';
             if ($issue['steps']) $html .= '<ol>'.implode('', array_map(fn ($step) => '<li>'.self::e($step).'</li>', $issue['steps'])).'</ol>';
             $html .= '</details>';
         }
-        if ($result['model']) $html .= '<p class="note">'.(int) $result['lines'].((int) $result['lines'] === 1 ? ' line' : ' lines').' checked by '.self::e((string) $result['model']).'. Addresses, e-mail addresses and passwords were removed first.</p>';
+        if ($result['model']) $html .= '<p class="note">'.self::e(self::choice('checked', (int) $result['lines'], ['model' => (string) $result['model']])).'</p>';
         return $html.'</section>';
     }
 
     private function terminalHint(): string
     {
-        return '<p>When the panel does not open, run <code>php artisan simplify:explain</code> on the panel server, or <code>php artisan simplify:explain --url</code> for a temporary address to this page.</p>';
+        return '<p>'.self::t('terminal_hint', 'When the panel does not open, run :command on the panel server, or :url_command for a temporary address to this page.', [], ['command' => '<code>php artisan simplify:explain</code>', 'url_command' => '<code>php artisan simplify:explain --url</code>']).'</p>';
     }
 
     /** This page failed too: show what happened instead of a 500. */
@@ -108,13 +109,13 @@ final class EmergencyExplainController
     {
         try { report($e); } catch (\Throwable) {}
         $message = ErrorExplainer::sanitize([get_class($e).': '.$e->getMessage()])[0] ?? get_class($e);
-        return $this->page(200, '<section class="result bad" role="alert"><h2>This page could not finish</h2><p>'.self::e($message).'</p></section>'.$this->terminalHint());
+        return $this->page(200, '<section class="result bad" role="alert"><h2>'.self::t('broken', 'This page could not finish').'</h2><p>'.self::e($message).'</p></section>'.$this->terminalHint());
     }
 
     private function page(int $status, string $body)
     {
-        $html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
-            .'<title>Explain panel errors</title><style>'.self::CSS.'</style></head><body><main><h1>Explain panel errors</h1>'.$body.'</main></body></html>';
+        $html = '<!doctype html><html lang="'.self::e(str_replace('_', '-', self::locale())).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
+            .'<title>'.self::t('title', 'Explain panel errors').'</title><style>'.self::CSS.'</style></head><body><main><h1>'.self::t('title', 'Explain panel errors').'</h1>'.$body.'</main></body></html>';
         return response($html, $status, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'no-store',
@@ -123,6 +124,33 @@ final class EmergencyExplainController
             'X-Frame-Options' => 'DENY',
             'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; script-src-attr 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'",
         ]);
+    }
+
+    /** A text in the reader's language, or the English given when the translations cannot load (this page must always work). */
+    private static function plain(string $key, string $english, array $replace = []): string
+    {
+        try { return Translations::text('explain.emergency.'.$key, $english, $replace); }
+        catch (\Throwable) { return strtr($english, array_combine(array_map(fn ($name) => ':'.$name, array_keys($replace)), array_map('strval', $replace)) ?: []); }
+    }
+
+    /** plain(), escaped for HTML; $html placeholders take code samples as they are. */
+    private static function t(string $key, string $english, array $replace = [], array $html = []): string
+    {
+        $text = self::e(self::plain($key, $english, $replace));
+        foreach ($html as $name => $value) $text = str_replace(':'.$name, $value, $text);
+        return $text;
+    }
+
+    /** One of the 'one|many' forms of a text, by count. */
+    private static function choice(string $key, int $count, array $replace = []): string
+    {
+        try { return trans_choice('pelican-simplify::explain.emergency.'.$key, $count, $replace); }
+        catch (\Throwable) { return self::plain($key, $count === 1 ? ':count line checked by :model.' : ':count lines checked by :model.', ['count' => $count] + $replace); }
+    }
+
+    private static function locale(): string
+    {
+        try { return Translations::locale(); } catch (\Throwable) { return 'en'; }
     }
 
     private static function e(string $text): string

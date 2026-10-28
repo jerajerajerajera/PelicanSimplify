@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Wat is er nieuw',
+        'full_release_notes' => 'Volledige release-notes',
+        'mark_read' => 'Markeer als gelezen',
+        'mark_as_unread' => 'Markeer als ongelezen',
+        'clear' => 'Wissen',
+        'show_less' => 'Minder tonen',
+        'pin' => 'Vastzetten ',
+        'unpin' => 'Losmaken ',
+        'pin_2' => 'Vastzetten',
+        'unpin_2' => 'Losmaken',
+        'pinned' => 'Vastgezet',
+        'you_are_all_caught_up' => 'Je bent helemaal bij.',
+        'archived' => 'Gearchiveerd',
+        'nothing_archived' => 'Niets gearchiveerd.',
+        'loading' => 'Laden…',
+        'show_more' => 'Meer tonen',
+        'clear_name' => ':title wissen',
+        'show_all' => 'Alle :count tonen',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Meldingen staan nog niet aan op dit apparaat.',
+        'test_notification' => 'Testmelding',
+        'notifications_work_on_this_device' => 'Meldingen werken op dit apparaat.',
+        'test_sent_it_should_appear_within' => 'Test verstuurd. Hij zou binnen een paar seconden moeten verschijnen.',
+        'the_browser_no_longer_accepts_notifications' => 'De browser accepteert geen meldingen meer voor dit apparaat. Zet ze opnieuw aan.',
+        'the_push_service_did_not_accept' => 'De pushdienst accepteerde de test niet. Probeer het over een minuut opnieuw.',
+    ],
+];

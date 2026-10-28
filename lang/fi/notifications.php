@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Uutta',
+        'full_release_notes' => 'Täydelliset julkaisutiedot',
+        'mark_read' => 'Merkitse luetuksi',
+        'mark_as_unread' => 'Merkitse lukemattomaksi',
+        'clear' => 'Poista',
+        'show_less' => 'Näytä vähemmän',
+        'pin' => 'Kiinnitä ',
+        'unpin' => 'Irrota ',
+        'pin_2' => 'Kiinnitä',
+        'unpin_2' => 'Irrota',
+        'pinned' => 'Kiinnitetty',
+        'you_are_all_caught_up' => 'Olet lukenut kaiken.',
+        'archived' => 'Arkistoitu',
+        'nothing_archived' => 'Ei mitään arkistossa.',
+        'loading' => 'Ladataan…',
+        'show_more' => 'Näytä lisää',
+        'clear_name' => 'Poista :title',
+        'show_all' => 'Näytä kaikki (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Ilmoitukset eivät ole vielä päällä tällä laitteella.',
+        'test_notification' => 'Testi-ilmoitus',
+        'notifications_work_on_this_device' => 'Ilmoitukset toimivat tällä laitteella.',
+        'test_sent_it_should_appear_within' => 'Testi lähetetty. Sen pitäisi näkyä muutamassa sekunnissa.',
+        'the_browser_no_longer_accepts_notifications' => 'Selain ei enää hyväksy ilmoituksia tälle laitteelle. Ota ne uudelleen käyttöön.',
+        'the_push_service_did_not_accept' => 'Push-palvelu ei hyväksynyt testiä. Yritä uudelleen minuutin päästä.',
+    ],
+];

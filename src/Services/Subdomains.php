@@ -35,7 +35,7 @@ final class Subdomains
             'target'=>['nullable','string','max:253','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/'],
             'port_min'=>'required|integer|min:1|max:65535','port_max'=>'required|integer|min:1|max:65535|gte:port_min',
             'zone_id'=>['nullable','string','regex:/^[a-f0-9]{32}$/'],
-        ],[],['domain'=>'domain','target'=>'game address','port_min'=>'first port','port_max'=>'last port','zone_id'=>'zone ID'])->validate();
+        ],[],['domain'=>'domain','target'=>'game address','port_min'=>'first port','port_max'=>'last port','zone_id'=>__('pelican-simplify::settings.subdomains_form.zone_id')])->validate();
         $next=['domain'=>strtolower((string)($values['domain']??'')),'target'=>strtolower((string)($values['target']??'')),'port_min'=>(int)$values['port_min'],'port_max'=>(int)$values['port_max'],'zone_id'=>(string)($values['zone_id']??'')];
         $token=trim((string)($input['token']??''));
         $saved=JsonFile::read(self::FILE)['token']??'';
@@ -65,7 +65,7 @@ final class Subdomains
     public static function missing(): array
     {
         $s=self::settings();[$token,$zone]=self::credentials();
-        return array_keys(array_filter(['domain'=>$s['domain']==='','game address'=>$s['target']==='','Cloudflare token'=>$token==='','zone ID (press Test)'=>$zone==='']));
+        return array_keys(array_filter(['domain'=>$s['domain']==='','target'=>$s['target']==='','token'=>$token==='','zone'=>$zone==='']));
     }
     /**
      * Checks a token and finds the zone of the domain (example.com for play.example.com too).
@@ -76,20 +76,20 @@ final class Subdomains
         $token=trim($token);
         if($token==='')[$token]=self::credentials();
         $domain=strtolower(trim($domain));
-        if($token==='')return ['ok'=>false,'message'=>'Enter a Cloudflare API token first.','zone_id'=>null];
-        if($domain==='')return ['ok'=>false,'message'=>'Enter the domain first.','zone_id'=>null];
+        if($token==='')return ['ok'=>false,'message'=>__('pelican-simplify::settings.subdomains_test.token_first'),'zone_id'=>null];
+        if($domain==='')return ['ok'=>false,'message'=>__('pelican-simplify::settings.subdomains_test.domain_first'),'zone_id'=>null];
         $send=self::$transport??CloudflareDns::http($token);
         try{
             $labels=explode('.',$domain);
             for($i=0;$i<count($labels)-1;$i++){
                 $name=implode('.',array_slice($labels,$i));
                 $result=$send('GET','/zones?name='.rawurlencode($name),null);
-                if(!($result['success']??false))return ['ok'=>false,'message'=>'Cloudflare refused the token: '.((string)($result['errors'][0]['message']??'unknown error')).'. It needs Zone → DNS → Edit for this zone.','zone_id'=>null];
+                if(!($result['success']??false))return ['ok'=>false,'message'=>__('pelican-simplify::settings.subdomains_test.refused',['error'=>(string)($result['errors'][0]['message']??__('pelican-simplify::settings.subdomains_test.unknown_error'))]),'zone_id'=>null];
                 $zone=$result['result'][0]['id']??null;
-                if(is_string($zone)&&preg_match('/^[a-f0-9]{32}$/',$zone))return ['ok'=>true,'message'=>'Token works. Found the zone '.$name.'.','zone_id'=>$zone];
+                if(is_string($zone)&&preg_match('/^[a-f0-9]{32}$/',$zone))return ['ok'=>true,'message'=>__('pelican-simplify::settings.subdomains_test.works',['zone'=>$name]),'zone_id'=>$zone];
             }
-        }catch(\Throwable $e){report($e);return ['ok'=>false,'message'=>'Could not reach Cloudflare. Try again in a moment.','zone_id'=>null];}
-        return ['ok'=>false,'message'=>'This token cannot see '.$domain.'. Give it access to that zone, or check the domain.','zone_id'=>null];
+        }catch(\Throwable $e){report($e);return ['ok'=>false,'message'=>__('pelican-simplify::settings.subdomains_test.unreachable'),'zone_id'=>null];}
+        return ['ok'=>false,'message'=>__('pelican-simplify::settings.subdomains_test.cannot_see',['domain'=>$domain]),'zone_id'=>null];
     }
     public static function active(): bool { return FeatureSettings::enabled('subdomains')&&self::missing()===[]; }
 
@@ -106,13 +106,13 @@ final class Subdomains
     public static function check(string $name,?string $uuid=null): ?string
     {
         if($name==='')return null;
-        if(strlen($name)>63||!preg_match('/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/',$name))return 'Use lowercase letters, numbers and hyphens (up to 63).';
+        if(strlen($name)>63||!preg_match('/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/',$name))return __('pelican-simplify::maker.subdomains.use_lowercase_letters_numbers_and_hyphens');
         $s=self::settings();
         $own=str_ends_with($s['target'],'.'.$s['domain'])?substr($s['target'],0,-strlen($s['domain'])-1):'';
-        if(in_array($name,self::RESERVED,true)||$name===$own)return 'This name is reserved.';
+        if(in_array($name,self::RESERVED,true)||$name===$own)return __('pelican-simplify::maker.subdomains.this_name_is_reserved');
         foreach(Storage::disk('local')->files(self::STATES) as $path){
             $other=pathinfo($path,PATHINFO_FILENAME);
-            if($other!==$uuid&&(self::read($other)['name']??'')===$name)return 'Another server already uses this name.';
+            if($other!==$uuid&&(self::read($other)['name']??'')===$name)return __('pelican-simplify::maker.subdomains.another_server_already_uses_this_name');
         }
         return null;
     }
@@ -154,11 +154,11 @@ final class Subdomains
     public static function sync(Server $server): string
     {
         $state=self::read($server->uuid);$name=(string)($state['name']??'');$port=(int)($server->allocation?->port??0);
-        if(!self::active())return self::write($server->uuid,['name'=>$name,'status'=>'error','message'=>'Subdomains are not set up yet.']);
+        if(!self::active())return self::write($server->uuid,['name'=>$name,'status'=>'error','message'=>__('pelican-simplify::maker.subdomains.subdomains_are_not_set_up_yet')]);
         $dns=self::client();
         if($name!==''&&!self::forwarded($port)){
             $s=self::settings();$dns->remove($server->uuid);
-            return self::write($server->uuid,['name'=>$name,'status'=>'error','message'=>'Port '.$port.' is not forwarded ('.$s['port_min'].'-'.$s['port_max'].'). Ask an administrator for a port in that range.']);
+            return self::write($server->uuid,['name'=>$name,'status'=>'error','message'=>__('pelican-simplify::maker.subdomains.not_forwarded', ['port'=>$port,'min'=>$s['port_min'],'max'=>$s['port_max']])]);
         }
         $error=$dns->sync($server->uuid,$name,$port,ManagedSettings::minecraft($server));
         if($name===''&&$error===null){Storage::disk('local')->delete(self::STATES.'/'.$server->uuid.'.json');return 'removed';}

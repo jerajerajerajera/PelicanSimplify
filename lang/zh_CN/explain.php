@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => '面板无法连接 :host。请检查面板服务器能否访问互联网。',
+        'no_key' => '请先输入 API 密钥。',
+        'not_set_up' => '此面板未设置错误解释。',
+        'unknown_log' => '未知日志。',
+        'read_panel' => '无法读取面板日志。',
+        'read_wings' => '无法从 Wings 读取 Wings 日志。请在节点可访问时重试。',
+        'read_console' => '无法从 Wings 读取控制台。请在节点可访问时重试。',
+        'too_many' => '你在短时间内提问太多。请 :count 分钟后重试。',
+        'daily_limit' => '此面板已达到每日 :count 次解释的上限，请明天再试。',
+        'no_answer' => ':model 无法解释这些行。错误再次出现时请重试。',
+    ],
+    'test' => [
+        'works' => '此密钥可用于 :model。',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => '控制台',
+            'empty' => '控制台为空，暂时没有可解释的内容。',
+        ],
+        'panel' => [
+            'label' => '面板日志',
+            'empty' => '面板日志目前没有警告或错误。',
+        ],
+        'wings' => [
+            'label' => 'Wings 日志',
+            'empty' => '此节点的 Wings 日志为空。',
+        ],
+        'plugin' => [
+            'label' => '插件',
+            'empty' => '此插件没有已保存的日志行。',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => '请先登录面板，然后重新打开此页面。',
+        'owner_only' => '只有面板所有者（root 管理员）可以使用此页面。',
+        'expired' => '此地址已过期或已被新地址取代。',
+        'no_key' => '此面板未保存 :provider API 密钥。root 管理员可在 Simplify 设置的“错误解释”中添加。',
+        'no_key_terminal' => '面板打不开时，请在面板服务器上运行 :command。它会询问密钥，但不会保存。',
+        'choose_node' => '请选择一个节点。',
+        'panel_log' => '面板日志',
+        'wings_log_of' => ':node 的 Wings 日志',
+        'wings_log' => 'Wings 日志',
+        'no_database' => '无法连接数据库，因此这里无法查看 Wings 日志。面板日志通常会显示原因。',
+        'lead' => '当面板显示 500 等错误、普通页面打不开时，请使用此页面。Simplify 设置中选择的 AI 会读取日志，告诉你是否有问题以及如何修复。',
+        'check_panel' => '检查面板日志',
+        'check_wings' => '检查 :node 的 Wings 日志',
+        'wait' => '正在检查日志，最多可能需要一分钟。',
+        'attention' => '有需要处理的问题',
+        'in_order' => '一切看起来正常',
+        'noticed' => '发现了什么吗？',
+        'checked' => ':model 检查了 :count 行。地址、电子邮件地址和密码已事先移除。',
+        'terminal_hint' => '面板打不开时，请在面板服务器上运行 :command，或运行 :url_command 获取此页面的临时地址。',
+        'broken' => '此页面无法完成',
+        'title' => '解释面板错误',
+    ],
+    'failures' => [
+        'invalid_key' => ':name API 密钥无效。管理员可在 Simplify 设置中输入新密钥。',
+        'no_credit' => '此密钥对应的 :name 账户已没有余额。管理员可在 :name 充值或查看账单。',
+        'forbidden' => '此 :name API 密钥无法使用所选模型。管理员可在 Simplify 设置中选择其他模型。',
+        'no_model' => '所选 :name 模型对此密钥不可用。管理员可在 Simplify 设置中选择其他模型。',
+        'busy' => ':name 目前对此密钥繁忙，请一分钟后重试。',
+        'unavailable' => ':name 暂时不可用，请一分钟后重试。',
+        'other_status' => ':name 无法回答这个问题（错误 :status），请稍后重试。',
+        'other' => ':name 无法回答这个问题，请稍后重试。',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => '在 console.anthropic.com → API keys 创建密钥。每次提问都会计费到该 Anthropic 账户，通常几美分或更少；为保险起见请在那里设置每月上限。',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => '在 aistudio.google.com → Get API key 创建密钥。提问会计费到该 Google Cloud 项目，通常每次不到一美分；为保险起见请在那里设置预算。',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => '在 platform.openai.com → API keys 创建密钥。每次提问都会计费到该 OpenAI 账户，通常几美分或更少；为保险起见请在那里设置每月预算。',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => '回答最好，几美分',
+        'about_a_cent' => '约一美分',
+        'cheapest' => '最便宜',
+        'good_answers_under_a_cent' => '回答不错，不到一美分',
+        'good_answers_about_a_cent' => '回答不错，约一美分',
+    ],
+];

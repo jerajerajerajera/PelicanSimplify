@@ -33,17 +33,16 @@ class SimplifySettings extends Page implements HasForms
     public $logoUpload = null;
     public ?string $bannerServer = null;
     public bool $useUploadedBanner = true;
-    protected static ?string $navigationLabel = 'PelicanSimplify settings';
-    protected static ?string $title = 'PelicanSimplify settings';
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable { return __('pelican-simplify::settings.page.pelicansimplify_settings'); }
     /** With "Only the add-ons" the settings join the Simplify group in Pelican's menu. */
     public static function getNavigationGroup(): ?string { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 'Simplify' : null; }
-    public static function getNavigationLabel(): string { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 'Simplify settings' : static::$navigationLabel; }
+    public static function getNavigationLabel(): string { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? __('pelican-simplify::settings.page.simplify_settings') : __('pelican-simplify::settings.page.pelicansimplify_settings'); }
     public static function getNavigationSort(): ?int { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 9 : null; }
 
     /** The page draws its own header once set up; the first setup keeps Filament's heading. */
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {
-        return $this->needsSetup() ? static::$title : '';
+        return $this->needsSetup() ? $this->getTitle() : '';
     }
     protected static ?string $slug = 'pelican-simplify-settings';
     protected string $view = 'pelican-simplify::admin-settings';
@@ -71,7 +70,7 @@ class SimplifySettings extends Page implements HasForms
         $banner=\Simplify\Panel\Services\ServerBanners::upload($server,$this->bannerUpload);
         if($this->useUploadedBanner)\Simplify\Panel\Services\ServerArtwork::save($server,$banner['id']);
         $this->bannerUpload=null;
-        Notification::make()->success()->title('Banner uploaded')->send();
+        Notification::make()->success()->title(__('pelican-simplify::settings.form.banner_uploaded'))->send();
     }
     public function uploadLogo(): void
     {
@@ -81,14 +80,14 @@ class SimplifySettings extends Page implements HasForms
         AppearanceSettings::setLogo($name);
         $this->logoUpload=null;
         data_set($this->data,'appearance.brand.mode','logo');
-        Notification::make()->success()->title('Logo uploaded')->body('It shows in the top-left corner right away.')->send();
+        Notification::make()->success()->title(__('pelican-simplify::settings.form.logo_uploaded'))->body(__('pelican-simplify::settings.form.it_shows_in_the_top_left'))->send();
     }
     public function removeLogo(): void
     {
         abort_unless(static::canAccess(),403);
         AppearanceSettings::setLogo(null);
         data_set($this->data,'appearance.brand.mode','text');
-        Notification::make()->success()->title('Logo removed')->send();
+        Notification::make()->success()->title(__('pelican-simplify::settings.form.logo_removed'))->send();
     }
     public function brandInfo(): array
     {
@@ -105,7 +104,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(),403);
         \Simplify\Panel\Services\ServerBanners::delete($id);
-        Notification::make()->success()->title('Banner removed')->send();
+        Notification::make()->success()->title(__('pelican-simplify::settings.form.banner_removed'))->send();
     }
     public function refreshRequirements(): void
     {
@@ -127,12 +126,14 @@ class SimplifySettings extends Page implements HasForms
         $this->showDiagnostics = !$this->showDiagnostics;
         if ($this->showDiagnostics) $this->refreshRequirements();
     }
+    /** Checks per group; the group names are ids, shown translated (settings.check_groups). @lang settings.check_groups */
     public function requirementGroups(): array
     {
         $groups = [];
         foreach ($this->requirements as $check) {
-            $name = $check['name'];
-            $group = match (true) {
+            $name = $check['id'] ?? $check['name'];
+            // @english: check ids
+            $group = $check['group'] ?? match (true) {
                 $name === 'Tested Pelican release' => 'Panel services',
                 ($check['blocking'] ?? true) === false => 'Upload capacity',
                 str_starts_with($name, 'PHP') => 'PHP runtime',
@@ -177,7 +178,7 @@ class SimplifySettings extends Page implements HasForms
         $this->embedded = request()->boolean('simplify_embed');
         $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?[...\Simplify\Panel\Services\Subdomains::settings(),'token'=>'','remove_token'=>false]:[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
-    /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
+    /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. Names are tab ids, shown translated. @lang settings.tabs */
     private const CATEGORIES = [
         'General' => 'tabler-layout-dashboard',
         'Appearance' => 'tabler-palette',
@@ -185,7 +186,7 @@ class SimplifySettings extends Page implements HasForms
         'Backups & performance' => 'tabler-gauge',
         'Hosting' => 'tabler-building-store',
     ];
-    /** Optional add-ons, switched on under General → Add-ons; each keeps its own settings tab after the core categories. */
+    /** Optional add-ons, switched on under General → Add-ons; each keeps its own settings tab after the core categories. @lang settings.tabs */
     private const ADDONS = [
         'Easy Minecraft server creator' => 'tabler-server-bolt',
         'Easy server creator' => 'tabler-device-gamepad-2',
@@ -194,7 +195,7 @@ class SimplifySettings extends Page implements HasForms
         'Automatic subdomains' => 'tabler-world-www',
     ];
 
-    /** Add-ons set up later from their own tab, not during the first setup. */
+    /** Add-ons set up later from their own tab, not during the first setup. @lang settings.tabs */
     private const LATER_ADDONS = [
         'Error explanations' => 'tabler-help-circle',
         'Plugin sites' => 'tabler-puzzle',
@@ -223,21 +224,21 @@ class SimplifySettings extends Page implements HasForms
     private static function abilityFields(?string $path): array
     {
         $name = fn (string $key): string => $path ? $path.'.'.$key : $key;
-        $abilities = \Simplify\Panel\Services\RoleAccess::ABILITIES;
-        $limits = ['max_servers' => 'Max. servers', 'max_memory_mb' => 'Total RAM (MB)', 'max_disk_mb' => 'Total disk (MB)', 'max_cpu' => 'CPU per server (%)', 'max_backups' => 'Backups per server'];
+        $abilities = \Simplify\Panel\Services\Translations::rows('settings.abilities', \Simplify\Panel\Services\RoleAccess::ABILITIES);
+        $limits = ['max_servers' => __('pelican-simplify::settings.limits.max_servers'), 'max_memory_mb' => __('pelican-simplify::settings.limits.max_memory_mb'), 'max_disk_mb' => __('pelican-simplify::settings.limits.max_disk_mb'), 'max_cpu' => __('pelican-simplify::settings.limits.max_cpu'), 'max_backups' => __('pelican-simplify::settings.limits.max_backups')];
         $limitFields = [];
         foreach (\Simplify\Panel\Services\RoleAccess::LIMITS as $key => [$default, $min, $max]) {
             $limitFields[] = TextInput::make($name($key))->label($limits[$key])->integer()->minValue($min)->maxValue($max)->required()->default($default);
         }
         return [
-            \Filament\Forms\Components\CheckboxList::make($name('abilities'))->label('Can')->columns(2)->bulkToggleable()
+            \Filament\Forms\Components\CheckboxList::make($name('abilities'))->label(__('pelican-simplify::settings.form.can'))->columns(2)->bulkToggleable()
                 ->options(array_map(fn (array $a): string => $a[0], $abilities))
                 ->descriptions(array_map(fn (array $a): string => $a[1], $abilities)),
             \Filament\Schemas\Components\Grid::make(5)->schema($limitFields),
         ];
     }
 
-    /** Which Simplify releases the plugin manager offers; stored as the simplify_beta and simplify_snapshot switches. */
+    /** Which Simplify releases the plugin manager offers; stored as the simplify_beta and simplify_snapshot switches. @lang settings.channels */
     private const UPDATE_CHANNELS = ['stable' => 'Stable', 'beta' => 'Beta', 'snapshot' => 'Snapshot'];
 
     private static function featureToggle(string $key, bool $live = false): Toggle
@@ -245,21 +246,34 @@ class SimplifySettings extends Page implements HasForms
         $definition = \Simplify\Panel\Services\FeatureSettings::definitions()[$key] ?? [$key, null];
         $overlap = class_exists(\Simplify\Panel\Services\ExternalPlugins::class) ? \Simplify\Panel\Services\ExternalPlugins::overlapFor($key) : null;
         // The saved choice is kept; it applies again once the overlapping plugin is disabled.
-        $help = $overlap ? 'Off while the '.$overlap['name'].' plugin is enabled. '.$overlap['reason'] : $definition[1];
-        $toggle = Toggle::make('features.'.$key)->label($definition[0])->helperText($help);
+        $help = $overlap ? __('pelican-simplify::settings.form.off_while_plugin', ['name' => $overlap['name']]).' '.$overlap['reason'] : \Simplify\Panel\Services\Translations::text('settings.features.'.$key.'.help', (string) $definition[1]);
+        $toggle = Toggle::make('features.'.$key)->label(\Simplify\Panel\Services\Translations::text('settings.features.'.$key.'.label', (string) $definition[0]))->helperText($help);
         return $live ? $toggle->live() : $toggle;
     }
 
-    /** Full Simplify or only the add-ons; stored as the addons_only switch. */
+    /**
+     * Tabs and wizard steps take their key from the label; this keeps the English key (?section=egg-updates::data::tab)
+     * and shows the label in the user's language.
+     */
+    private static function keepKey(object $component, string $english, string $type): object
+    {
+        $path = $type === 'tab' ? 'settings.tabs.' : 'settings.steps.';
+        return $component->label(\Simplify\Panel\Services\Translations::text($path.\Simplify\Panel\Services\Translations::key($english), $english))->key(function ($component) use ($english, $type): string {
+            $statePath = $component->getStatePath();
+            return \Illuminate\Support\Str::slug(\Illuminate\Support\Str::transliterate($english, strict: true)).'::'.(filled($statePath) ? $statePath.'::'.$type : $type);
+        }, isInheritable: false);
+    }
+
+    /** Full Simplify or only the add-ons; stored as the addons_only switch. @lang settings.experiences */
     private const EXPERIENCES = [
         'full' => ['Full Simplify', 'Simplify becomes the panel for you and your players: dashboard and server pages in place of Pelican\'s, host mode, themes and all add-ons.'],
         'addons' => ['Only the add-ons', 'Pelican keeps its own dashboard, server pages and look. The add-ons you switch on appear in Pelican\'s own menu, under Simplify.'],
     ];
     private static function experienceSection(): Section
     {
-        return Section::make('How much Simplify?')->description('Use Simplify as your whole panel, or keep Pelican as it is and only add the tools you want. You can switch at any time; nothing is lost.')->schema([
+        return Section::make(__('pelican-simplify::settings.steps.how_much_simplify'))->description(__('pelican-simplify::settings.form.use_simplify_as_your_whole_panel'))->schema([
             \Filament\Forms\Components\Radio::make('experience')->hiddenLabel()->required()->live()
-                ->options(array_map(fn (array $e) => $e[0], self::EXPERIENCES))->descriptions(array_map(fn (array $e) => $e[1], self::EXPERIENCES)),
+                ->options(array_map(fn (array $e) => $e[0], \Simplify\Panel\Services\Translations::rows('settings.experiences', self::EXPERIENCES)))->descriptions(array_map(fn (array $e) => $e[1], \Simplify\Panel\Services\Translations::rows('settings.experiences', self::EXPERIENCES))),
         ]);
     }
     private static function full(Get $get): bool { return $get('experience') !== 'addons'; }
@@ -267,7 +281,7 @@ class SimplifySettings extends Page implements HasForms
 
     public function form(Schema $schema): Schema
     {
-        $performance = \Simplify\Panel\Services\PerformanceSettings::FIELDS;
+        $performance = \Simplify\Panel\Services\Translations::rows('settings.performance', \Simplify\Panel\Services\PerformanceSettings::FIELDS);
         $numberField = static fn (string $key) => TextInput::make('performance.'.$key)->label($performance[$key][0])->helperText($performance[$key][1])
             ->integer()->minValue($performance[$key][3])->maxValue($performance[$key][4])->required();
 
@@ -275,117 +289,117 @@ class SimplifySettings extends Page implements HasForms
             'General' => [
                 ...$this->panelTypeSections(false),
                 self::experienceSection(),
-                self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.')->visible(fn (Get $get) => self::full($get)),
-                self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.')->visible(fn (Get $get) => self::full($get)),
-                self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. Each add-on has its own settings tab at the bottom of the menu.'),
-                Section::make('Pages from other plugins')->visible(fn (Get $get) => self::full($get))->description('Pages that other installed plugins add to the admin panel, to servers or to every account. Ticked pages show up in Simplify: admin and server pages under "External" (Admin tools, host mode and the server page), account pages in the account menu, widgets as tiles and buttons on the overview and in the console. They always stay available in Pelican\'s own panel.')->schema([
+                self::featureSection(__('pelican-simplify::settings.form.simplify_interface'), 'Interface', __('pelican-simplify::settings.form.simplify_interface_help'))->visible(fn (Get $get) => self::full($get)),
+                self::featureSection(__('pelican-simplify::settings.form.server_workspaces'), 'Server features', __('pelican-simplify::settings.form.server_workspaces_help'))->visible(fn (Get $get) => self::full($get)),
+                self::featureSection(__('pelican-simplify::settings.form.addons'), 'Add-ons', __('pelican-simplify::settings.form.addons_help')),
+                Section::make(__('pelican-simplify::settings.sections.pages_from_other_plugins'))->visible(fn (Get $get) => self::full($get))->description(__('pelican-simplify::settings.form.pages_that_other_installed_plugins_add'))->schema([
                     \Filament\Forms\Components\CheckboxList::make('external_shown')->hiddenLabel()->options(fn () => self::externalCatalog())->bulkToggleable()->columns(1)
                         ->visible(fn () => self::externalCatalog() !== []),
-                    \Filament\Schemas\Components\Text::make('No other plugins add pages right now.')->visible(fn () => self::externalCatalog() === []),
+                    \Filament\Schemas\Components\Text::make(__('pelican-simplify::settings.form.no_other_plugins_add_pages'))->visible(fn () => self::externalCatalog() === []),
                 ]),
             ],
             'Appearance' => [
-                self::featureSection('Theme', 'Appearance'),
-                Section::make('Colours')->columns(2)->schema([
-                    ColorPicker::make('appearance.accent_color')->view('pelican-simplify::filament.admin.accent-picker')->label('Panel accent color')->hex()->required()->rules(['regex:/^#[0-9a-fA-F]{6}$/'])->helperText('Used throughout the shared interface and by every server when separate colors are off.')->columnSpanFull(),
-                    Toggle::make('appearance.individual_colors')->label('Use separate server colors')->helperText('On assigns a color to every server without one. Off makes all servers use the panel accent; saved colors are retained.')->columnSpanFull(),
-                    Toggle::make('appearance.seasonal')->label('Seasonal touches')->helperText('A few small Halloween decorations for everyone from 25 October to 2 November. Each person can still turn them off under Customize overview.')->columnSpanFull(),
+                self::featureSection(__('pelican-simplify::settings.form.theme'), 'Appearance'),
+                Section::make(__('pelican-simplify::settings.sections.colours'))->columns(2)->schema([
+                    ColorPicker::make('appearance.accent_color')->view('pelican-simplify::filament.admin.accent-picker')->label(__('pelican-simplify::settings.form.panel_accent_color'))->hex()->required()->rules(['regex:/^#[0-9a-fA-F]{6}$/'])->helperText(__('pelican-simplify::settings.form.used_throughout_the_shared_interface_and'))->columnSpanFull(),
+                    Toggle::make('appearance.individual_colors')->label(__('pelican-simplify::settings.form.use_separate_server_colors'))->helperText(__('pelican-simplify::settings.form.on_assigns_a_color_to_every'))->columnSpanFull(),
+                    Toggle::make('appearance.seasonal')->label(__('pelican-simplify::settings.form.seasonal_touches'))->helperText(__('pelican-simplify::settings.form.a_few_small_halloween_decorations_for'))->columnSpanFull(),
                 ]),
-                Section::make('Panel name & logo')->description('How your panel name looks in the top-left corner. The default is your name with the accent color fading in toward the right.')->columns(2)->schema([
+                Section::make(__('pelican-simplify::settings.sections.panel_name_logo'))->description(__('pelican-simplify::settings.form.how_your_panel_name_looks_in'))->columns(2)->schema([
                     \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.brand-editor')->columnSpanFull(),
-                    Select::make('appearance.brand.mode')->label('Show')->options(['text'=>'Styled text','logo'=>'Uploaded logo'])->selectablePlaceholder(false)->required()->live()
-                        ->helperText(fn()=>AppearanceSettings::all()['brand']['logo']?null:'Upload a logo above to use one.')
+                    Select::make('appearance.brand.mode')->label(__('pelican-simplify::settings.form.show'))->options(['text'=>__('pelican-simplify::settings.form.styled_text'),'logo'=>__('pelican-simplify::settings.form.uploaded_logo')])->selectablePlaceholder(false)->required()->live()
+                        ->helperText(fn()=>AppearanceSettings::all()['brand']['logo']?null:__('pelican-simplify::settings.form.upload_a_logo_above'))
                         ->disableOptionWhen(fn(string $value)=>$value==='logo'&&!AppearanceSettings::all()['brand']['logo']),
-                    TextInput::make('appearance.brand.text')->label('Text')->maxLength(40)->placeholder(fn()=>(string)config('app.name','Pelican'))->helperText('Empty uses the panel name.'),
-                    Select::make('appearance.brand.font')->label('Font')->options(array_map(fn($font)=>$font[0],\Simplify\Panel\Services\BrandSettings::FONTS))->selectablePlaceholder(false)->required(),
-                    Select::make('appearance.brand.weight')->label('Weight')->options([400=>'Regular',500=>'Medium',600=>'Semibold',700=>'Bold',800=>'Extra bold',900=>'Black'])->selectablePlaceholder(false)->required(),
-                    Select::make('appearance.brand.color_style')->label('Color')->options(['gradient'=>'Fade between two colors','solid'=>'One color'])->selectablePlaceholder(false)->required()->live(),
-                    TextInput::make('appearance.brand.spacing')->label('Letter spacing')->integer()->minValue(-5)->maxValue(30)->suffix('/100 em')->required(),
-                    ColorPicker::make('appearance.brand.color1')->label(fn(Get $get)=>$get('appearance.brand.color_style')==='solid'?'Text color':'Start color')->hex()->rules(['nullable','regex:/^#[0-9a-fA-F]{6}$/'])->helperText('Empty follows the light/dark theme.'),
-                    ColorPicker::make('appearance.brand.color2')->label('End color')->hex()->rules(['nullable','regex:/^#[0-9a-fA-F]{6}$/'])->helperText('Empty uses the panel accent.')->visible(fn(Get $get)=>$get('appearance.brand.color_style')!=='solid'),
-                    Toggle::make('appearance.brand.uppercase')->label('Capital letters'),
-                    Toggle::make('appearance.brand.suffix')->label('Show "× Pelican" after the name'),
-                    TextInput::make('appearance.brand.logo_height')->label('Logo height')->integer()->minValue(16)->maxValue(64)->suffix('px')->required(),
-                    Toggle::make('appearance.brand.logo_text')->label('Show the text next to the logo'),
+                    TextInput::make('appearance.brand.text')->label(__('pelican-simplify::settings.form.text'))->maxLength(40)->placeholder(fn()=>(string)config('app.name','Pelican'))->helperText(__('pelican-simplify::settings.form.empty_uses_the_panel_name')),
+                    Select::make('appearance.brand.font')->label(__('pelican-simplify::settings.form.font'))->options(\Simplify\Panel\Services\Translations::labels('settings.fonts', array_map(fn($font)=>$font[0],\Simplify\Panel\Services\BrandSettings::FONTS)))->selectablePlaceholder(false)->required(),
+                    Select::make('appearance.brand.weight')->label(__('pelican-simplify::settings.form.weight'))->options([400=>__('pelican-simplify::settings.form.regular'),500=>__('pelican-simplify::settings.form.medium'),600=>__('pelican-simplify::settings.form.semibold'),700=>__('pelican-simplify::settings.form.bold'),800=>__('pelican-simplify::settings.form.extra_bold'),900=>__('pelican-simplify::settings.form.black')])->selectablePlaceholder(false)->required(),
+                    Select::make('appearance.brand.color_style')->label(__('pelican-simplify::settings.form.color'))->options(['gradient'=>__('pelican-simplify::settings.form.fade_between_two_colors'),'solid'=>__('pelican-simplify::settings.form.one_color')])->selectablePlaceholder(false)->required()->live(),
+                    TextInput::make('appearance.brand.spacing')->label(__('pelican-simplify::settings.form.letter_spacing'))->integer()->minValue(-5)->maxValue(30)->suffix('/100 em')->required(),
+                    ColorPicker::make('appearance.brand.color1')->label(fn(Get $get)=>$get('appearance.brand.color_style')==='solid'?__('pelican-simplify::settings.form.text_color'):__('pelican-simplify::settings.form.start_color'))->hex()->rules(['nullable','regex:/^#[0-9a-fA-F]{6}$/'])->helperText(__('pelican-simplify::settings.form.empty_follows_the_light_dark_theme')),
+                    ColorPicker::make('appearance.brand.color2')->label(__('pelican-simplify::settings.form.end_color'))->hex()->rules(['nullable','regex:/^#[0-9a-fA-F]{6}$/'])->helperText(__('pelican-simplify::settings.form.empty_uses_the_panel_accent'))->visible(fn(Get $get)=>$get('appearance.brand.color_style')!=='solid'),
+                    Toggle::make('appearance.brand.uppercase')->label(__('pelican-simplify::settings.form.capital_letters')),
+                    Toggle::make('appearance.brand.suffix')->label(__('pelican-simplify::settings.form.show_pelican_after_the_name')),
+                    TextInput::make('appearance.brand.logo_height')->label(__('pelican-simplify::settings.form.logo_height'))->integer()->minValue(16)->maxValue(64)->suffix('px')->required(),
+                    Toggle::make('appearance.brand.logo_text')->label(__('pelican-simplify::settings.form.show_the_text_next_to_the')),
                 ]),
             ],
             'Users & access' => [
-                self::featureSection('Visibility', 'Access and visibility', 'Who sees which servers, and who may share them.')->visible(fn (Get $get) => self::full($get)),
-                Section::make('Everyone')->description('Applies to every signed-in user. Administrators can always do everything. Pelican\'s own server permissions (owner, subusers) still decide which servers someone can manage.')
+                self::featureSection(__('pelican-simplify::settings.form.visibility'), 'Access and visibility', __('pelican-simplify::settings.form.visibility_help'))->visible(fn (Get $get) => self::full($get)),
+                Section::make(__('pelican-simplify::settings.sections.everyone'))->description(__('pelican-simplify::settings.form.applies_to_every_signed_in_user'))
                     ->schema(self::abilityFields('roles.everyone')),
-                Section::make('Roles')->description('Roles and their permissions are managed on the People & roles page (Admin tools → People), because "Let Simplify manage people & roles" is on.')
+                Section::make(__('pelican-simplify::settings.sections.roles'))->description(__('pelican-simplify::settings.form.roles_and_their_permissions_are_managed'))
                     ->visible(fn () => \Simplify\Panel\Services\FeatureSettings::enabled('people_manager')),
-                Section::make('Roles')->description('Members of a Pelican role get these abilities on top of Everyone, and the role\'s limits replace Everyone\'s. With several roles, abilities combine and the highest limit wins.')->visible(fn () => !\Simplify\Panel\Services\FeatureSettings::enabled('people_manager'))->schema([
-                    Repeater::make('roles.roles')->hiddenLabel()->defaultItems(0)->collapsible()->addActionLabel('Add role')
-                        ->itemLabel(fn (array $state): ?string => isset($state['role_id']) ? (Role::query()->whereKey($state['role_id'])->value('name') ?? 'Role') : 'New role')
+                Section::make(__('pelican-simplify::settings.sections.roles'))->description(__('pelican-simplify::settings.form.members_of_a_pelican_role_get'))->visible(fn () => !\Simplify\Panel\Services\FeatureSettings::enabled('people_manager'))->schema([
+                    Repeater::make('roles.roles')->hiddenLabel()->defaultItems(0)->collapsible()->addActionLabel(__('pelican-simplify::settings.form.add_role'))
+                        ->itemLabel(fn (array $state): ?string => isset($state['role_id']) ? (Role::query()->whereKey($state['role_id'])->value('name') ?? __('pelican-simplify::settings.form.role')) : __('pelican-simplify::settings.form.new_role'))
                         ->schema([
-                            Select::make('role_id')->label('Pelican role')->required()->distinct()->searchable()->options(fn () => Role::query()->orderBy('name')->pluck('name', 'id')->all()),
+                            Select::make('role_id')->label(__('pelican-simplify::settings.form.pelican_role'))->required()->distinct()->searchable()->options(fn () => Role::query()->orderBy('name')->pluck('name', 'id')->all()),
                             ...self::abilityFields(null),
                         ]),
                 ]),
                 ...(CreatorAccess::legacyUserGrants() > 0 ? [
-                    Section::make('Individual user grants from an earlier version')->description(CreatorAccess::legacyUserGrants().' user(s) still have a personal creator grant or limit. They keep working; move these users into a role and remove the old grants below.')->schema([
-                        Toggle::make('clear_legacy_user_grants')->label('Remove the old individual grants when saving'),
+                    Section::make(__('pelican-simplify::settings.sections.legacy_grants'))->description(trans_choice('pelican-simplify::settings.form.legacy_grants_help', CreatorAccess::legacyUserGrants()))->schema([
+                        Toggle::make('clear_legacy_user_grants')->label(__('pelican-simplify::settings.form.remove_the_old_individual_grants_when')),
                     ]),
                 ] : []),
             ],
             'Backups & performance' => [
-                Section::make('Automatic backups')->columns(2)->description('Defaults for new servers. Existing servers keep their own policy; change it from the server\'s Backups workspace.')->schema([
+                Section::make(__('pelican-simplify::settings.sections.automatic_backups'))->columns(2)->description(__('pelican-simplify::settings.form.defaults_for_new_servers_existing_servers'))->schema([
                     self::featureToggle('automatic_backups'),
-                    Toggle::make('performance.backup_only_when_used')->label('Skip backups while a server has not run')->helperText('An offline server that has not started since its last backup is not backed up again.'),
+                    Toggle::make('performance.backup_only_when_used')->label(__('pelican-simplify::settings.form.skip_backups_while_a_server_has'))->helperText(__('pelican-simplify::settings.form.an_offline_server_that_has_not')),
                     ...array_map($numberField, ['backup_interval_minutes', 'backup_retention']),
                 ]),
-                Section::make('Refresh rates')->columns(2)->description('Lower values feel livelier but cost more requests to the panel and Wings. Hidden browser tabs and open popups never refresh.')
+                Section::make(__('pelican-simplify::settings.sections.refresh_rates'))->columns(2)->description(__('pelican-simplify::settings.form.lower_values_feel_livelier_but_cost'))
                     ->schema(array_map($numberField, ['overview_seconds', 'server_seconds', 'restart_seconds', 'health_seconds'])),
             ],
             ...(class_exists(\Simplify\Panel\Services\PanelProfile::class) ? ['Hosting' => $this->hostingSections()] : []),
             'Easy Minecraft server creator' => [
-                Section::make('Self-service creation')->columns(2)->description('Where users may create Minecraft servers (also used by the game creator). Who may create servers is set per role under Users & access ("Create servers").')->schema([
-                    Select::make('node_ids')->label('Hosting machines')->multiple()->searchable()->options(fn () => Node::query()->pluck('name', 'id')->all())->helperText('Nodes used for self-service creation. Users do not choose ports or nodes.'),
-                    Toggle::make('minecraft_enabled')->label('Allow Minecraft'),
+                Section::make(__('pelican-simplify::settings.sections.self_service_creation'))->columns(2)->description(__('pelican-simplify::settings.form.where_users_may_create_minecraft_servers'))->schema([
+                    Select::make('node_ids')->label(__('pelican-simplify::settings.form.hosting_machines'))->multiple()->searchable()->options(fn () => Node::query()->pluck('name', 'id')->all())->helperText(__('pelican-simplify::settings.form.nodes_used_for_self_service_creation')),
+                    Toggle::make('minecraft_enabled')->label(__('pelican-simplify::settings.form.allow_minecraft')),
                 ]),
-                Section::make('Starting resources')->description('CPU, RAM and disk for each Minecraft type. Applies to new servers within the user\'s limits; existing servers keep theirs.')
+                Section::make(__('pelican-simplify::settings.sections.starting_resources'))->description(__('pelican-simplify::settings.form.cpu_ram_and_disk_for_each'))
                     ->schema(array_map(fn (string $type, string $label) => Section::make($label)->columns(3)->schema([
-                        TextInput::make('creation_defaults.'.$type.'.cpu')->label('CPU (%)')->integer()->minValue(1)->maxValue(1600)->required()->helperText('100% is one core; 200% is two cores.'),
-                        TextInput::make('creation_defaults.'.$type.'.ram_gb')->label('RAM (GB)')->integer()->minValue(1)->maxValue(128)->required(),
-                        TextInput::make('creation_defaults.'.$type.'.disk_mb')->label('Disk (MB)')->integer()->minValue(1024)->maxValue(10485760)->required(),
-                    ]), ['vanilla', 'plus', 'loader', 'modded', 'bedrock', 'proxy'], ['Vanilla', 'Plugins', 'Mods', 'Modpacks', 'Bedrock', 'Proxy'])),
+                        TextInput::make('creation_defaults.'.$type.'.cpu')->label(__('pelican-simplify::settings.form.cpu'))->integer()->minValue(1)->maxValue(1600)->required()->helperText(__('pelican-simplify::settings.form.cpu_cores_help')),
+                        TextInput::make('creation_defaults.'.$type.'.ram_gb')->label(__('pelican-simplify::settings.form.ram_gb'))->integer()->minValue(1)->maxValue(128)->required(),
+                        TextInput::make('creation_defaults.'.$type.'.disk_mb')->label(__('pelican-simplify::settings.form.disk_mb'))->integer()->minValue(1024)->maxValue(10485760)->required(),
+                    ]), ['vanilla', 'plus', 'loader', 'modded', 'bedrock', 'proxy'], [__('pelican-simplify::settings.form.types.vanilla'), __('pelican-simplify::settings.form.types.plus'), __('pelican-simplify::settings.form.types.loader'), __('pelican-simplify::settings.form.types.modded'), __('pelican-simplify::settings.form.types.bedrock'), __('pelican-simplify::settings.form.types.proxy')])),
             ],
             'Easy server creator' => [
-                Section::make('Games for self-service')->description('Games users may create with the game creator. Administrators can pick any game, including the 170+ games from the official Pelican egg index.')->schema([
-                    Select::make('other_egg_ids')->label('Approved games')->multiple()->searchable()->options(fn () => Egg::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->helperText('A game installed from the egg index through the creator is added here automatically.'),
+                Section::make(__('pelican-simplify::settings.sections.games_for_self_service'))->description(__('pelican-simplify::settings.form.games_users_may_create_with_the'))->schema([
+                    Select::make('other_egg_ids')->label(__('pelican-simplify::settings.form.approved_games'))->multiple()->searchable()->options(fn () => Egg::query()->orderBy('name')->pluck('name', 'id')->all())
+                        ->helperText(__('pelican-simplify::settings.form.a_game_installed_from_the_egg')),
                 ]),
-                Section::make('Artwork')->extraAttributes(['class' => 'ps-setting-list'])->schema([self::featureToggle('steam_art')]),
-                Section::make('Installing new games')->description('Administrators can always install a game that is not on the panel yet: its egg is downloaded from the official Pelican egg repositories, checked and imported when they continue in the creator. To let other people do this, give their role the "Install new games" ability under Users & access. Root admins get a notification for every game installed this way.'),
+                Section::make(__('pelican-simplify::settings.sections.artwork'))->extraAttributes(['class' => 'ps-setting-list'])->schema([self::featureToggle('steam_art')]),
+                Section::make(__('pelican-simplify::settings.sections.installing_new_games'))->description(__('pelican-simplify::settings.form.administrators_can_always_install_a_game')),
             ],
             'People & roles' => [
-                Section::make('How it works')->description('With "Let Simplify manage people & roles" on (General → Add-ons), Admin tools and host mode open one People & roles page instead of Pelican\'s Users and Roles pages.')->schema([
-                    \Filament\Schemas\Components\Text::make('People: invite someone by username and email; they get an email to choose their own password (nobody else ever sees it). Assign roles, send a password reset link, or remove people who own no servers.'),
-                    \Filament\Schemas\Components\Text::make('Roles: each role combines Simplify permissions and limits (what members may do on their servers) with optional admin panel access. They are Pelican roles, so Pelican and other plugins keep working with them.'),
-                    \Filament\Schemas\Components\Text::make('Safety: only root admins manage people and roles, the Root Admin role is locked, you cannot remove your own root access, and the last root admin can never be removed or deleted.'),
+                Section::make(__('pelican-simplify::settings.sections.how_it_works'))->description(__('pelican-simplify::settings.form.with_let_simplify_manage_people_roles'))->schema([
+                    \Filament\Schemas\Components\Text::make(__('pelican-simplify::settings.form.how_people')),
+                    \Filament\Schemas\Components\Text::make(__('pelican-simplify::settings.form.how_roles')),
+                    \Filament\Schemas\Components\Text::make(__('pelican-simplify::settings.form.how_safety')),
                 ]),
             ],
             'Plugin manager' => [
-                Section::make('Plugin updates')->description('Applies to every installed plugin with a published update, Simplify included. Updates can also be started by hand from Admin tools → Plugins. Needs the plugin manager add-on.')->schema([self::featureToggle('auto_update_plugins'), Select::make('update_channel')->label('Simplify versions')->options(self::UPDATE_CHANNELS)->selectablePlaceholder(false)->required()
-                    ->helperText('Stable: only stable releases. Beta: also beta versions, which test the next stable release with all its new features. Snapshot: also development builds with the latest changes, published often. You always get the newest build of your choice or a more stable one, made for your Pelican version. Switching back keeps your current version until a newer one is out.')]),
+                Section::make(__('pelican-simplify::settings.sections.plugin_updates'))->description(__('pelican-simplify::settings.form.applies_to_every_installed_plugin_with'))->schema([self::featureToggle('auto_update_plugins'), Select::make('update_channel')->label(__('pelican-simplify::settings.form.simplify_versions'))->options(\Simplify\Panel\Services\Translations::labels('settings.channels', self::UPDATE_CHANNELS))->selectablePlaceholder(false)->required()
+                    ->helperText(__('pelican-simplify::settings.form.stable_only_stable_releases_beta_also'))]),
             ],
             'Automatic subdomains' => [
-                Section::make('Addresses')->columns(2)->description('A server named "oak" gets oak.<domain>: a CNAME to the game address and, for Minecraft, an SRV record with its port, so Java players can leave the port out. Both are DNS only (not proxied), because Cloudflare\'s proxy does not carry game traffic.')->schema([
-                    TextInput::make('subdomains.domain')->label('Domain')->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => 'Enter a host name such as example.com.'])->placeholder('example.com')->maxLength(200)->helperText('The Cloudflare zone the subdomains are created in.'),
-                    TextInput::make('subdomains.target')->label('Game address')->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => 'Enter a host name such as example.com.'])->placeholder('play.example.com')->maxLength(253)->helperText('An existing DNS-only record that points to the public IP where your game ports arrive.'),
-                    TextInput::make('subdomains.port_min')->label('First forwarded port')->integer()->minValue(1)->maxValue(65535)->required(),
-                    TextInput::make('subdomains.port_max')->label('Last forwarded port')->integer()->minValue(1)->maxValue(65535)->required()->gte('subdomains.port_min')->helperText('Only servers with a port in this range get a subdomain. New servers get a port from this range when one is free.'),
+                Section::make(__('pelican-simplify::settings.sections.addresses'))->columns(2)->description(__('pelican-simplify::settings.form.a_server_named_oak_gets_oak'))->schema([
+                    TextInput::make('subdomains.domain')->label(__('pelican-simplify::settings.form.domain'))->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => __('pelican-simplify::settings.form.enter_a_host_name')])->placeholder('example.com')->maxLength(200)->helperText(__('pelican-simplify::settings.form.the_cloudflare_zone_the_subdomains_are')),
+                    TextInput::make('subdomains.target')->label(__('pelican-simplify::settings.form.game_address'))->dehydrateStateUsing(fn ($state) => strtolower(trim((string) $state)))->rules(['nullable','regex:/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$/'])->validationMessages(['regex' => __('pelican-simplify::settings.form.enter_a_host_name')])->placeholder('play.example.com')->maxLength(253)->helperText(__('pelican-simplify::settings.form.an_existing_dns_only_record_that')),
+                    TextInput::make('subdomains.port_min')->label(__('pelican-simplify::settings.form.first_forwarded_port'))->integer()->minValue(1)->maxValue(65535)->required(),
+                    TextInput::make('subdomains.port_max')->label(__('pelican-simplify::settings.form.last_forwarded_port'))->integer()->minValue(1)->maxValue(65535)->required()->gte('subdomains.port_min')->helperText(__('pelican-simplify::settings.form.only_servers_with_a_port_in')),
                 ]),
-                Section::make('Cloudflare token')->columns(2)->description('In Cloudflare, create an API token with only Zone → DNS → Edit for this domain, paste it here and press Test: Simplify checks the token and finds the zone itself. The token is stored encrypted and never shown again.')->schema([
-                    TextInput::make('subdomains.token')->label('API token')->password()->autocomplete(false)->maxLength(200)->columnSpanFull()
-                        ->placeholder(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token'] ? 'A token is saved. Leave empty to keep it.' : 'Paste the token from Cloudflare'),
-                    TextInput::make('subdomains.zone_id')->label('Zone ID')->maxLength(32)->placeholder('Filled in by Test')->helperText('Found with Test. You can also copy it from the zone\'s overview page in Cloudflare.'),
-                    Toggle::make('subdomains.remove_token')->label('Remove the saved token when saving')->visible(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token']),
+                Section::make(__('pelican-simplify::settings.sections.cloudflare_token'))->columns(2)->description(__('pelican-simplify::settings.subdomains_form.token_help'))->schema([
+                    TextInput::make('subdomains.token')->label(__('pelican-simplify::settings.subdomains_form.api_token'))->password()->autocomplete(false)->maxLength(200)->columnSpanFull()
+                        ->placeholder(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token'] ? __('pelican-simplify::settings.subdomains_form.token_saved') : __('pelican-simplify::settings.subdomains_form.token_paste')),
+                    TextInput::make('subdomains.zone_id')->label(__('pelican-simplify::settings.subdomains_form.zone_id'))->maxLength(32)->placeholder(__('pelican-simplify::settings.subdomains_form.zone_placeholder'))->helperText(__('pelican-simplify::settings.subdomains_form.zone_help')),
+                    Toggle::make('subdomains.remove_token')->label(__('pelican-simplify::settings.subdomains_form.remove_token'))->visible(fn () => \Simplify\Panel\Services\Subdomains::settings()['has_token']),
                     \Filament\Schemas\Components\Actions::make([
-                        \Filament\Actions\Action::make('testSubdomains')->button()->label('Test')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testSubdomains()),
+                        \Filament\Actions\Action::make('testSubdomains')->button()->label(__('pelican-simplify::settings.subdomains_form.test'))->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testSubdomains()),
                     ])->columnSpanFull(),
-                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? 'Still missing: '.implode(', ', $missing).'.' : 'Ready: new subdomains are connected automatically.')->columnSpanFull(),
+                    \Filament\Schemas\Components\Text::make(fn () => ($missing = \Simplify\Panel\Services\Subdomains::missing()) ? __('pelican-simplify::settings.form.still_missing', ['items' => implode(', ', array_map(fn (string $item) => __('pelican-simplify::settings.subdomains_missing.'.$item), $missing))]) : __('pelican-simplify::settings.form.subdomains_ready'))->columnSpanFull(),
                 ]),
             ],
         ];
@@ -399,8 +413,8 @@ class SimplifySettings extends Page implements HasForms
         if ($this->needsSetup()) {
             return $schema->statePath('data')->components([
                 \Filament\Schemas\Components\Wizard::make($this->setupWizardSteps($categories, $addons))->skippable(false)->columnSpanFull()
-                    ->nextAction(fn (\Filament\Actions\Action $action) => $action->label('Next')->color('gray')->extraAttributes(['class' => 'ssc-next-button']))
-                    ->previousAction(fn (\Filament\Actions\Action $action) => $action->label('Back')->color('gray')->extraAttributes(['class' => 'ssc-back-button']))
+                    ->nextAction(fn (\Filament\Actions\Action $action) => $action->label(__('pelican-simplify::settings.form.next'))->color('gray')->extraAttributes(['class' => 'ssc-next-button']))
+                    ->previousAction(fn (\Filament\Actions\Action $action) => $action->label(__('pelican-simplify::settings.form.back'))->color('gray')->extraAttributes(['class' => 'ssc-back-button']))
                     ->submitAction(new \Illuminate\Support\HtmlString(view('pelican-simplify::setup-submit')->render())),
             ]);
         }
@@ -409,9 +423,9 @@ class SimplifySettings extends Page implements HasForms
         $categories = [...array_slice($categories, 0, 2, true), ...$banners, ...array_slice($categories, 2, null, true)];
         $icons['Server banners'] = 'tabler-photo';
         $categories['Egg updates'] = [
-            Section::make('Egg updates')->description('Simplify checks every egg for a new version every six hours and lets root admins know in the notifications. Running servers keep running and pick up the new egg at their next start.')->schema([
-                Select::make('egg_updates.mode')->label('Updates')->options(\Simplify\Panel\Services\EggUpdates::MODES)->selectablePlaceholder(false)->required()
-                    ->helperText('Eggs that servers use are only updated by you, or after a test server installed and started with the new version. The previous version is always kept.'),
+            Section::make(__('pelican-simplify::settings.sections.egg_updates'))->description(__('pelican-simplify::settings.form.simplify_checks_every_egg_for_a'))->schema([
+                Select::make('egg_updates.mode')->label(__('pelican-simplify::settings.form.updates'))->options(\Simplify\Panel\Services\Translations::labels('settings.egg_modes', \Simplify\Panel\Services\EggUpdates::MODES))->selectablePlaceholder(false)->required()
+                    ->helperText(__('pelican-simplify::settings.form.eggs_that_servers_use_are_only')),
             ]),
             \Filament\Schemas\Components\View::make('pelican-simplify::egg-updates'),
         ];
@@ -423,7 +437,7 @@ class SimplifySettings extends Page implements HasForms
         $categories = [...$categories, ...$addons];
         // "Only the add-ons" keeps Pelican's look and pages: the tabs that only serve the full panel step aside.
         $fullOnly = ['Appearance', 'Server banners', 'Backups & performance'];
-        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->visible(match (true) { in_array($label, $fullOnly, true) => fn (Get $get) => self::full($get), $label === 'Hosting' => fn (Get $get) => self::hosting($get), default => true })->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
+        $tabList = array_map(fn (string $label, array $content) => self::keepKey(\Filament\Schemas\Components\Tabs\Tab::make($label), $label, 'tab')->visible(match (true) { in_array($label, $fullOnly, true) => fn (Get $get) => self::full($get), $label === 'Hosting' => fn (Get $get) => self::hosting($get), default => true })->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? __('pelican-simplify::settings.step_hints.add_on') : null)->schema($content), array_keys($categories), array_values($categories));
         // Pelican's own settings close the list: each tab shows Pelican's page on that tab, so all settings live in one place.
         $pelican = \Simplify\Panel\Services\PelicanSettingsTabs::all();
         $this->pelicanTabs = count($pelican);
@@ -431,7 +445,7 @@ class SimplifySettings extends Page implements HasForms
             $tabList[] = \Filament\Schemas\Components\Tabs\Tab::make($tab['label'])->key('pelican-'.$tab['key'])->id('pelican-'.$tab['key'])->icon($tab['icon'])
                 ->schema([\Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.pelican-settings-frame')->viewData(['url' => $tab['url'], 'label' => $tab['label'], 'key' => 'pelican-'.$tab['key']])]);
         }
-        $tabs = \Filament\Schemas\Components\Tabs::make('Simplify settings')->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs($tabList);
+        $tabs = \Filament\Schemas\Components\Tabs::make(__('pelican-simplify::settings.page.simplify_settings'))->columnSpanFull()->extraAttributes(['class' => 'ps-settings-tabs'])->tabs($tabList);
         if (method_exists($tabs, 'vertical')) $tabs->vertical();
         if (method_exists($tabs, 'persistTabInQueryString')) $tabs->persistTabInQueryString('section');
         return $schema->statePath('data')->components([$tabs]);
@@ -442,21 +456,21 @@ class SimplifySettings extends Page implements HasForms
         $explainer = \Simplify\Panel\Services\ErrorExplainer::class;
         $provider = fn (Get $get) => $explainer::provider((string) $get('explainer.provider'));
         return [
-            Section::make('Explain this error')->columns(2)->description('Adds an "Explain" button to the console of every server. It sends the last 100 console lines to the AI you pick below and shows in plain words whether something is wrong and what to try. IP addresses, e-mail addresses, passwords and tokens are removed from the lines first. Without an API key the button does not show.')->schema([
-                Select::make('explainer.provider')->label('AI')->options($explainer::providers())->selectablePlaceholder(false)->required()->live()
+            Section::make(__('pelican-simplify::settings.sections.explain_this_error'))->columns(2)->description(__('pelican-simplify::settings.form.adds_an_explain_button_to_the'))->schema([
+                Select::make('explainer.provider')->label(__('pelican-simplify::settings.form.ai'))->options($explainer::providers())->selectablePlaceholder(false)->required()->live()
                     ->afterStateUpdated(function (Set $set, ?string $state) use ($explainer) { $set('explainer.model', array_key_first($explainer::models($state))); $set('explainer.key', ''); $set('explainer.remove_key', false); }),
-                Select::make('explainer.model')->label('Model')->options(fn (Get $get) => $explainer::models((string) $get('explainer.provider')))->selectablePlaceholder(false)->required(),
-                TextInput::make('explainer.key')->label(fn (Get $get) => $provider($get)::name().' API key')->password()->autocomplete(false)->maxLength(300)->columnSpanFull()
-                    ->placeholder(fn (Get $get) => ($explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false) ? 'A key is saved. Leave empty to keep it.' : $provider($get)::keyPlaceholder())
-                    ->helperText(fn (Get $get) => $provider($get)::keyHelp().' Simplify stores the key encrypted and never shows it again.'),
-                Select::make('explainer.audience')->label('Who can use it')->options($explainer::AUDIENCES)->selectablePlaceholder(false)->required()
-                    ->helperText('Each person can ask '.$explainer::PER_USER.' questions per 10 minutes, the whole panel '.$explainer::PER_DAY.' per day.'),
-                Toggle::make('explainer.remove_key')->label(fn (Get $get) => 'Remove the saved '.$provider($get)::name().' key when saving')->helperText('Turns error explanations off while this AI is chosen.')->visible(fn (Get $get) => $explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false)->columnSpanFull(),
+                Select::make('explainer.model')->label(__('pelican-simplify::settings.form.model'))->options(fn (Get $get) => $explainer::models((string) $get('explainer.provider')))->selectablePlaceholder(false)->required(),
+                TextInput::make('explainer.key')->label(fn (Get $get) => __('pelican-simplify::settings.form.api_key', ['provider' => $provider($get)::name()]))->password()->autocomplete(false)->maxLength(300)->columnSpanFull()
+                    ->placeholder(fn (Get $get) => ($explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false) ? __('pelican-simplify::settings.form.key_saved') : $provider($get)::keyPlaceholder())
+                    ->helperText(fn (Get $get) => $provider($get)::keyHelp().' '.__('pelican-simplify::settings.form.key_stored')),
+                Select::make('explainer.audience')->label(__('pelican-simplify::settings.form.who_can_use_it'))->options(\Simplify\Panel\Services\Translations::labels('settings.explain_audiences', $explainer::AUDIENCES))->selectablePlaceholder(false)->required()
+                    ->helperText(__('pelican-simplify::settings.form.explain_limits', ['per_user' => $explainer::PER_USER, 'per_day' => $explainer::PER_DAY])),
+                Toggle::make('explainer.remove_key')->label(fn (Get $get) => __('pelican-simplify::settings.form.remove_saved_key', ['provider' => $provider($get)::name()]))->helperText(__('pelican-simplify::settings.form.turns_error_explanations_off_while_this'))->visible(fn (Get $get) => $explainer::settings()['saved_keys'][(string) $get('explainer.provider')] ?? false)->columnSpanFull(),
                 \Filament\Schemas\Components\Actions::make([
-                    \Filament\Actions\Action::make('testErrorExplainer')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testErrorExplainer()),
+                    \Filament\Actions\Action::make('testErrorExplainer')->button()->label(__('pelican-simplify::settings.form.test_key'))->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testErrorExplainer()),
                 ])->columnSpanFull(),
             ]),
-            Section::make('When the panel itself breaks')->description(fn () => 'If the panel shows an error such as 500, open '.route('simplify.explain').' to check the panel and Wings logs: that plain page works without the normal panel pages. If you cannot sign in, run "php artisan simplify:explain" in the panel folder on the server, or "php artisan simplify:explain --url" for a temporary address to that page.')->schema([]),
+            Section::make(__('pelican-simplify::settings.sections.when_the_panel_breaks'))->description(fn () => __('pelican-simplify::settings.form.when_the_panel_breaks_help', ['url' => route('simplify.explain')]))->schema([]),
         ];
     }
     /** Plugin search on server pages: Modrinth, Hangar and SpigotMC need nothing; CurseForge needs a key of this panel. */
@@ -464,13 +478,13 @@ class SimplifySettings extends Page implements HasForms
     {
         $saved = \Simplify\Panel\Services\CurseForge::panelHasKey();
         return [
-            Section::make('CurseForge')->description('Plugins and mods are found on Modrinth, Hangar and SpigotMC without any setup. CurseForge only lets apps search with an API key: create a free one at console.curseforge.com (sign in, then API keys) and paste it here. Everyone who may install plugins can then search CurseForge too; the key itself stays on this panel.')->schema([
-                TextInput::make('curseforge.key')->label('CurseForge API key')->password()->autocomplete(false)->maxLength(200)
-                    ->placeholder($saved ? 'A key is saved. Leave empty to keep it.' : 'Paste your CurseForge API key'),
-                Toggle::make('curseforge.user_keys')->label('Let people add their own CurseForge key')->helperText('For bigger hosts: each person can enter their own key on the Plugins page of a server. Their own key is used instead of the one above.'),
-                Toggle::make('curseforge.remove_key')->label('Remove the saved CurseForge key when saving')->helperText('Plugin search then leaves CurseForge out.')->visible($saved),
+            Section::make('CurseForge')->description(__('pelican-simplify::settings.form.plugins_and_mods_are_found_on'))->schema([
+                TextInput::make('curseforge.key')->label(__('pelican-simplify::settings.form.curseforge_api_key'))->password()->autocomplete(false)->maxLength(200)
+                    ->placeholder($saved ? __('pelican-simplify::settings.form.key_saved') : __('pelican-simplify::settings.form.paste_curseforge_key')),
+                Toggle::make('curseforge.user_keys')->label(__('pelican-simplify::settings.form.let_people_add_their_own_curseforge'))->helperText(__('pelican-simplify::settings.form.for_bigger_hosts_each_person_can')),
+                Toggle::make('curseforge.remove_key')->label(__('pelican-simplify::settings.form.remove_the_saved_curseforge_key_when'))->helperText(__('pelican-simplify::settings.form.plugin_search_then_leaves_curseforge_out'))->visible($saved),
                 \Filament\Schemas\Components\Actions::make([
-                    \Filament\Actions\Action::make('testCurseForge')->button()->label('Test key')->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testCurseForge()),
+                    \Filament\Actions\Action::make('testCurseForge')->button()->label(__('pelican-simplify::settings.form.test_key'))->icon('tabler-plug-connected')->color('gray')->action(fn () => $this->testCurseForge()),
                 ]),
             ]),
         ];
@@ -480,30 +494,30 @@ class SimplifySettings extends Page implements HasForms
     {
         $on = fn (Get $get): bool => (bool) $get('features.website_embed');
         return [
-            Section::make('Not switched on')->description('Switch on Website embed under General → Add-ons and save. Until then nothing is public.')->visible(fn (Get $get) => !$on($get))->schema([]),
-            Section::make('Look')->columns(2)->description('Websites can still change each option in their own code. The list follows the visitor\'s light or dark mode unless you choose one.')->schema([
-                Select::make('embed.style')->label('Style')->options(['auto' => 'Follow the website visitor', 'light' => 'Light', 'dark' => 'Dark'])->selectablePlaceholder(false)->required(),
-                Select::make('embed.corners')->label('Corners')->options(['round' => 'Round', 'square' => 'Square'])->selectablePlaceholder(false)->required(),
-                ColorPicker::make('embed.accent')->label('Accent colour')->regex('/^#[0-9a-fA-F]{6}$/')->helperText('Empty uses the panel accent colour.'),
+            Section::make(__('pelican-simplify::settings.sections.not_switched_on'))->description(__('pelican-simplify::settings.form.switch_on_website_embed_under_general'))->visible(fn (Get $get) => !$on($get))->schema([]),
+            Section::make(__('pelican-simplify::settings.sections.look'))->columns(2)->description(__('pelican-simplify::settings.form.websites_can_still_change_each_option'))->schema([
+                Select::make('embed.style')->label(__('pelican-simplify::settings.form.style'))->options(['auto' => __('pelican-simplify::settings.form.follow_the_website_visitor'), 'light' => __('pelican-simplify::settings.form.light'), 'dark' => __('pelican-simplify::settings.form.dark')])->selectablePlaceholder(false)->required(),
+                Select::make('embed.corners')->label(__('pelican-simplify::settings.form.corners'))->options(['round' => __('pelican-simplify::settings.form.round'), 'square' => __('pelican-simplify::settings.form.square')])->selectablePlaceholder(false)->required(),
+                ColorPicker::make('embed.accent')->label(__('pelican-simplify::settings.form.accent_colour'))->regex('/^#[0-9a-fA-F]{6}$/')->helperText(__('pelican-simplify::settings.form.empty_uses_the_panel_accent_colour')),
                 \Filament\Schemas\Components\Grid::make(1)->schema([
-                    Toggle::make('embed.players')->label('Show players'),
-                    Toggle::make('embed.modpack')->label('Show modpack and version, with a link to it'),
-                    Toggle::make('embed.join')->label('Show the join address with a copy button')->helperText('Only public addresses: never a home network or Tailscale address.'),
+                    Toggle::make('embed.players')->label(__('pelican-simplify::settings.form.show_players')),
+                    Toggle::make('embed.modpack')->label(__('pelican-simplify::settings.form.show_modpack_and_version_with_a')),
+                    Toggle::make('embed.join')->label(__('pelican-simplify::settings.form.show_the_join_address_with_a'))->helperText(__('pelican-simplify::settings.form.only_public_addresses_never_a_home')),
                 ]),
             ]),
-            Section::make('Servers on your website')->description('Owners can also switch this on in their server\'s menu under "Show on the website".')->schema([
+            Section::make(__('pelican-simplify::settings.sections.servers_on_your_website'))->description(__('pelican-simplify::settings.form.owners_can_also_switch_this_on'))->schema([
                 \Filament\Forms\Components\CheckboxList::make('embed.servers')->hiddenLabel()->options(fn () => Server::query()->orderBy('name')->limit(500)->pluck('name', 'uuid')->all())
-                    ->searchable()->bulkToggleable()->columns(2)->noSearchResultsMessage('No servers found.'),
+                    ->searchable()->bulkToggleable()->columns(2)->noSearchResultsMessage(__('pelican-simplify::settings.form.no_servers_found')),
             ]),
-            Section::make('Code for your website')->columns(2)->description('Paste one of these into any page of your website. Save first: changes here reach websites within a minute. Use one code per page, for example all Minecraft servers on one page and a single server on another.')->schema([
-                Select::make('embed_code.show')->label('What this code shows')->live()->selectablePlaceholder(false)
-                    ->options(fn () => ['all' => 'Every server on the website', 'server' => 'One server', 'game' => 'One game'] + ($this->embedGroups() !== [] ? ['group' => 'One of your server groups'] : [])),
-                Select::make('embed_code.server')->label('Server')->live()->options(fn (Get $get) => $this->embedChosen($get)->mapWithKeys(fn (Server $s) => [(string) $s->uuid_short => $s->name])->all())
-                    ->placeholder('Pick a server')->helperText('The page link below is a status page for this server.')->visible(fn (Get $get) => $get('embed_code.show') === 'server'),
-                Select::make('embed_code.game')->label('Game')->live()->options(fn (Get $get) => $this->embedChosen($get)->map(fn (Server $s) => \Simplify\Panel\Services\WebsiteEmbed::game($s))->unique()->sort()->mapWithKeys(fn (string $g) => [$g => $g])->all())
-                    ->placeholder('Pick a game')->visible(fn (Get $get) => $get('embed_code.show') === 'game'),
-                Select::make('embed_code.group')->label('Server group')->live()->options(fn () => array_column($this->embedGroups(), 'name', 'id'))
-                    ->placeholder('Pick a group')->helperText('Takes the servers in this group that are on the website now. Copy the code again after you change the group.')->visible(fn (Get $get) => $get('embed_code.show') === 'group'),
+            Section::make(__('pelican-simplify::settings.sections.code_for_your_website'))->columns(2)->description(__('pelican-simplify::settings.form.paste_one_of_these_into_any'))->schema([
+                Select::make('embed_code.show')->label(__('pelican-simplify::settings.form.what_this_code_shows'))->live()->selectablePlaceholder(false)
+                    ->options(fn () => ['all' => __('pelican-simplify::settings.form.embed_all'), 'server' => __('pelican-simplify::settings.form.embed_server'), 'game' => __('pelican-simplify::settings.form.embed_game')] + ($this->embedGroups() !== [] ? ['group' => __('pelican-simplify::settings.form.embed_group')] : [])),
+                Select::make('embed_code.server')->label(__('pelican-simplify::settings.form.server'))->live()->options(fn (Get $get) => $this->embedChosen($get)->mapWithKeys(fn (Server $s) => [(string) $s->uuid_short => $s->name])->all())
+                    ->placeholder(__('pelican-simplify::settings.form.pick_a_server'))->helperText(__('pelican-simplify::settings.form.the_page_link_below_is_a'))->visible(fn (Get $get) => $get('embed_code.show') === 'server'),
+                Select::make('embed_code.game')->label(__('pelican-simplify::settings.form.game'))->live()->options(fn (Get $get) => $this->embedChosen($get)->map(fn (Server $s) => \Simplify\Panel\Services\WebsiteEmbed::game($s))->unique()->sort()->mapWithKeys(fn (string $g) => [$g => $g])->all())
+                    ->placeholder(__('pelican-simplify::settings.form.pick_a_game'))->visible(fn (Get $get) => $get('embed_code.show') === 'game'),
+                Select::make('embed_code.group')->label(__('pelican-simplify::settings.form.server_group'))->live()->options(fn () => array_column($this->embedGroups(), 'name', 'id'))
+                    ->placeholder(__('pelican-simplify::settings.form.pick_a_group'))->helperText(__('pelican-simplify::settings.form.takes_the_servers_in_this_group'))->visible(fn (Get $get) => $get('embed_code.show') === 'group'),
                 \Filament\Schemas\Components\View::make('pelican-simplify::filament.admin.website-embed')->columnSpanFull()->viewData(fn (Get $get) => ['show' => $this->embedShow($get) ?? [], 'waiting' => $this->embedShow($get) === null]),
             ]),
         ];
@@ -516,14 +530,14 @@ class SimplifySettings extends Page implements HasForms
     {
         if (!class_exists(\Simplify\Panel\Services\PanelProfile::class)) return [];
         $profile = \Simplify\Panel\Services\PanelProfile::class;
-        $radio = \Filament\Forms\Components\Radio::make('profile.type')->hiddenLabel()->options($profile::TYPES)->required()->live()
+        $radio = \Filament\Forms\Components\Radio::make('profile.type')->hiddenLabel()->options(\Simplify\Panel\Services\Translations::labels('settings.panel_types', $profile::TYPES))->required()->live()
             ->descriptions([
-                'friends' => 'Your own servers and the people you play with. Everyone sees the servers they may use and can change their resources.',
-                'hosting' => 'Customers who pay for their servers. They only see their own servers, plans come from your billing system, updates wait for you, and the panel shows your name only.',
+                'friends' => __('pelican-simplify::settings.panel_type.friends_help'),
+                'hosting' => __('pelican-simplify::settings.panel_type.hosting_help'),
             ]);
         if ($setup) $radio->afterStateUpdated(fn (Set $set, ?string $state) => $this->applyPanelType($set, (string) $state));
-        return [Section::make($setup ? 'Who is this panel for?' : 'Panel type')
-            ->description($setup ? 'This fills in sensible choices for the next steps. You can still change each of them.' : 'Switching only shows or hides the Hosting tab after saving. Other settings stay as they are.')
+        return [Section::make($setup ? __('pelican-simplify::settings.panel_type.who') : __('pelican-simplify::settings.steps.panel_type'))
+            ->description($setup ? __('pelican-simplify::settings.panel_type.setup_help') : __('pelican-simplify::settings.panel_type.switch_help'))
             ->schema([$radio])];
     }
     /** Fills the later setup steps with the defaults of a panel type. */
@@ -540,17 +554,17 @@ class SimplifySettings extends Page implements HasForms
     {
         $link = fn (string $key, string $label, bool $template = false) => TextInput::make('profile.'.$key)->label($label)->maxLength(500)->placeholder('https://')
             ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail) use ($template) {
-                if ($value !== null && $value !== '' && \Simplify\Panel\Services\PanelProfile::url($value, $template) === null) $fail('Enter a full link that starts with https://.');
+                if ($value !== null && $value !== '' && \Simplify\Panel\Services\PanelProfile::url($value, $template) === null) $fail(__('pelican-simplify::settings.hosting.full_link'));
             });
         return [
-            Section::make('Billing')->columns(2)->description('Works with any billing system, such as WHMCS, Paymenter or HostBill. Customers get these buttons instead of creating servers or changing resources themselves. Empty links are not shown.')->schema([
-                $link('client_area', 'Client area')->helperText('Shown in the account menu, for invoices and account details.'),
-                $link('order', 'Order a new server')->helperText('Shown where people would otherwise create a server.'),
-                $link('upgrade', 'Upgrade a server', true)->columnSpanFull()->helperText('Shown on each server. {external_id}, {uuid}, {short_id} and {server_id} are replaced with that server\'s values, for example https://billing.example.com/upgrade?service={external_id}.'),
+            Section::make(__('pelican-simplify::settings.hosting.billing'))->columns(2)->description(__('pelican-simplify::settings.hosting.billing_help'))->schema([
+                $link('client_area', __('pelican-simplify::settings.hosting.client_area'))->helperText(__('pelican-simplify::settings.hosting.client_area_help')),
+                $link('order', __('pelican-simplify::settings.hosting.order'))->helperText(__('pelican-simplify::settings.hosting.order_help')),
+                $link('upgrade', __('pelican-simplify::settings.hosting.upgrade'), true)->columnSpanFull()->helperText(__('pelican-simplify::settings.hosting.upgrade_help')),
             ]),
-            Section::make('Support')->columns(2)->description('Shown in the account menu and under "Explain this error", so customers know where to go when something is wrong.')->schema([
-                $link('support', 'Support link')->helperText('A ticket page, help desk or Discord invite.'),
-                TextInput::make('profile.support_label')->label('Button text')->maxLength(40)->placeholder('Open a ticket'),
+            Section::make(__('pelican-simplify::settings.hosting.support'))->columns(2)->description(__('pelican-simplify::settings.hosting.support_help'))->schema([
+                $link('support', __('pelican-simplify::settings.hosting.support_link'))->helperText(__('pelican-simplify::settings.hosting.support_link_help')),
+                TextInput::make('profile.support_label')->label(__('pelican-simplify::settings.hosting.button_text'))->maxLength(40)->placeholder(__('pelican-simplify::settings.hosting.open_a_ticket')),
             ]),
         ];
     }
@@ -597,7 +611,7 @@ class SimplifySettings extends Page implements HasForms
         abort_unless(user()?->isRootAdmin(), 403);
         \Simplify\Panel\Services\EggUpdates::check();
         $count = count(\Simplify\Panel\Services\EggUpdates::available());
-        Notification::make()->title($count === 0 ? 'All eggs are up to date' : ($count === 1 ? '1 egg update available' : $count.' egg updates available'))->success()->send();
+        Notification::make()->title(trans_choice('pelican-simplify::settings.form.egg_updates_available', $count))->success()->send();
     }
 
     /** One egg, or every listed one with $id null. */
@@ -611,8 +625,8 @@ class SimplifySettings extends Page implements HasForms
             $result = \Simplify\Panel\Services\EggUpdates::update($egg);
             $result['ok'] ? $done++ : $failed[] = $result['message'];
         }
-        if ($failed !== []) Notification::make()->title($done > 0 ? $done.' updated, '.count($failed).' failed' : 'Update failed')->body(implode(' ', $failed))->danger()->send();
-        else Notification::make()->title($done === 1 ? 'Egg updated' : $done.' eggs updated')->body('Running servers keep running. The previous version is kept and can be put back.')->success()->send();
+        if ($failed !== []) Notification::make()->title($done > 0 ? __('pelican-simplify::settings.form.eggs_updated_failed', ['done' => $done, 'failed' => count($failed)]) : __('pelican-simplify::settings.form.update_failed'))->body(implode(' ', $failed))->danger()->send();
+        else Notification::make()->title(trans_choice('pelican-simplify::settings.form.eggs_updated', $done))->body(__('pelican-simplify::settings.form.running_servers_keep_running_the_previous'))->success()->send();
     }
 
     /** Test the update on a test server and update only when it installs and starts. */
@@ -620,7 +634,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(user()?->isRootAdmin(), 403);
         $result = \Simplify\Panel\Services\EggUpdateTest::start(Egg::query()->findOrFail($id));
-        Notification::make()->title($result['message'])->body('This takes a few minutes. You get a notification when it is done.')->success()->send();
+        Notification::make()->title($result['message'])->body(__('pelican-simplify::settings.form.this_takes_a_few_minutes_you'))->success()->send();
     }
 
     public function restoreEgg(int $id): void
@@ -641,7 +655,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $result = \Simplify\Panel\Services\CurseForge::test((string) data_get($this->data, 'curseforge.key', ''));
-        Notification::make()->title($result['ok'] ? 'CurseForge key works' : 'CurseForge key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
+        Notification::make()->title($result['ok'] ? __('pelican-simplify::settings.form.curseforge_key_works') : __('pelican-simplify::settings.form.curseforge_key_not_working'))->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     /** Tries the typed key, or the saved one, with the chosen model (Test key button). */
     /** Checks the typed (or saved) Cloudflare token and fills in the zone ID of the domain. */
@@ -650,15 +664,15 @@ class SimplifySettings extends Page implements HasForms
         abort_unless(static::canAccess(), 403);
         $result = \Simplify\Panel\Services\Subdomains::test((string) data_get($this->data, 'subdomains.token', ''), (string) data_get($this->data, 'subdomains.domain', ''));
         if ($result['zone_id']) data_set($this->data, 'subdomains.zone_id', $result['zone_id']);
-        Notification::make()->title($result['ok'] ? 'Cloudflare token works' : 'Cloudflare token not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
+        Notification::make()->title($result['ok'] ? __('pelican-simplify::settings.subdomains_test.title_ok') : __('pelican-simplify::settings.subdomains_test.title_failed'))->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
     public function testErrorExplainer(): void
     {
         abort_unless(static::canAccess(), 403);
         $result = \Simplify\Panel\Services\ErrorExplainer::test((string) data_get($this->data, 'explainer.key', ''), (string) data_get($this->data, 'explainer.model', ''), (string) data_get($this->data, 'explainer.provider', ''));
-        Notification::make()->title($result['ok'] ? 'API key works' : 'API key not working')->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
+        Notification::make()->title($result['ok'] ? __('pelican-simplify::settings.form.api_key_works') : __('pelican-simplify::settings.form.api_key_not_working'))->body($result['message'])->{$result['ok'] ? 'success' : 'danger'}()->send();
     }
-    /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. */
+    /** Add-on pages that need a value before the add-on works; they are wizard steps only while the add-on is switched on. @lang settings.steps */
     private const ADDON_STEPS = [
         'Server Maker' => ['tab' => 'Easy Minecraft server creator', 'features' => ['easy_creator', 'game_creator']],
         'Addresses' => ['tab' => 'Automatic subdomains', 'features' => ['subdomains']],
@@ -687,17 +701,17 @@ class SimplifySettings extends Page implements HasForms
      */
     private function setupWizardSteps(array $categories, array $addons): array
     {
-        $step = fn (string $label, string $hint, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->description($hint)->schema($content);
+        $step = fn (string $label, string $hint, array $content) => self::keepKey(\Filament\Schemas\Components\Wizard\Step::make($label), $label, 'wizard-step')->description(\Simplify\Panel\Services\Translations::text('settings.step_hints.'.\Simplify\Panel\Services\Translations::key($hint), $hint))->schema($content);
         $full = fn (Get $get) => self::full($get);
         $steps = [
             $step('Panel type', 'Needed', $this->panelTypeSections(true)),
             $step('How much Simplify?', 'Needed', [self::experienceSection()]),
             $step('Features', 'Needed', [
-                self::featureSection('What Simplify replaces', 'Interface', 'The Simplify dashboard, console and server pages in place of Pelican\'s own. Each can be turned off again later.'),
-                self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
+                self::featureSection(__('pelican-simplify::settings.form.what_simplify_replaces'), 'Interface', __('pelican-simplify::settings.form.what_simplify_replaces_help')),
+                self::featureSection(__('pelican-simplify::settings.form.setup_addons'), 'Add-ons', __('pelican-simplify::settings.form.setup_addons_help'), true),
             ])->visible($full),
             $step('Add-ons', 'Needed', [
-                self::featureSection('Add-ons', 'Add-ons', 'Pick the add-ons you want. They appear in Pelican\'s own menu, under Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
+                self::featureSection(__('pelican-simplify::settings.form.setup_addons'), 'Add-ons', __('pelican-simplify::settings.form.setup_addons_only_help'), true),
             ])->visible(fn (Get $get) => !self::full($get)),
             $step('People & access', 'Needed', $categories['Users & access'])->visible($full),
             $step('Look', 'Optional', $categories['Appearance'])->visible($full),
@@ -709,7 +723,7 @@ class SimplifySettings extends Page implements HasForms
         }
         if (isset($categories['Website'])) $steps[] = $step('Website', 'Optional', $categories['Website']);
         $steps[] = $step('Ready', 'Finish', [
-            Section::make('Ready to finish')->description('Check what you chose. Everything not asked here (server workspaces, backups, refresh rates, each add-on\'s details) keeps a sensible default and has its own tab in Simplify settings, under Admin tools → Panel.')->schema([
+            Section::make(__('pelican-simplify::settings.sections.ready_to_finish'))->description(__('pelican-simplify::settings.form.check_what_you_chose_everything_not'))->schema([
                 \Filament\Schemas\Components\Text::make(fn (Get $get) => new \Illuminate\Support\HtmlString(self::setupSummary((array) $get('features'), (array) ($get('roles.everyone.abilities') ?? []), !self::full($get))))->columnSpanFull(),
             ]),
         ]);
@@ -720,13 +734,13 @@ class SimplifySettings extends Page implements HasForms
     public static function setupSummary(array $features, array $everyone, bool $addonsOnly = false): string
     {
         $definitions = \Simplify\Panel\Services\FeatureSettings::definitions();
-        $names = fn (string $group) => array_values(array_map(fn ($item) => $item[0], array_filter($definitions, fn ($item, $key) => ($item[3] ?? '') === $group && !empty($features[$key]), ARRAY_FILTER_USE_BOTH)));
-        $abilities = \Simplify\Panel\Services\RoleAccess::ABILITIES;
+        $names = fn (string $group) => array_values(array_map(fn ($item) => $item[0], array_filter(\Simplify\Panel\Services\Translations::rows('settings.features', $definitions), fn ($item, $key) => ($item[3] ?? '') === $group && !empty($features[$key]), ARRAY_FILTER_USE_BOTH)));
+        $abilities = \Simplify\Panel\Services\Translations::rows('settings.abilities', \Simplify\Panel\Services\RoleAccess::ABILITIES);
         $can = array_values(array_map(fn ($key) => $abilities[$key][0] ?? $key, array_filter($everyone, fn ($key) => isset($abilities[$key]))));
         $rows = [
-            ['Simplify replaces', $addonsOnly ? ['Nothing: Pelican\'s own pages and look stay (only the add-ons)'] : ($names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay'])],
-            ['Add-ons on', $names('Add-ons') ?: ['None']],
-            ...($addonsOnly ? [] : [['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']]]),
+            [__('pelican-simplify::settings.summary.simplify_replaces'), $addonsOnly ? [__('pelican-simplify::settings.summary.nothing_addons_only')] : ($names('Interface') ?: [__('pelican-simplify::settings.summary.nothing_yet')])],
+            [__('pelican-simplify::settings.summary.addons_on'), $names('Add-ons') ?: [__('pelican-simplify::settings.summary.none')]],
+            ...($addonsOnly ? [] : [[__('pelican-simplify::settings.summary.everyone_may'), $can ?: [__('pelican-simplify::settings.summary.only_pelican_permissions')]]]),
         ];
         return '<dl class="ps-setup-summary">'.implode('', array_map(fn ($row) => '<dt>'.e($row[0]).'</dt><dd>'.e(implode(', ', $row[1])).'</dd>', $rows)).'</dl>';
     }
@@ -739,7 +753,7 @@ class SimplifySettings extends Page implements HasForms
         if ($this->needsSetup() && !$this->requirementsReady()) {
             $this->setupStarted = false;
             $this->showDiagnostics = true;
-            Notification::make()->title('Setup blocked')->body('Fix the failed dependency checks and check again.')->danger()->send();
+            Notification::make()->title(__('pelican-simplify::settings.form.setup_blocked'))->body(__('pelican-simplify::settings.form.fix_the_failed_dependency_checks_and'))->danger()->send();
             return;
         }
         $firstSetup = $this->needsSetup();
@@ -763,7 +777,7 @@ class SimplifySettings extends Page implements HasForms
         $roles['roles'] = array_values(array_filter($roles['roles'] ?? [], fn ($role) => in_array((int) ($role['role_id'] ?? 0), $existingRoles, true)));
         $creates = in_array('create', $roles['everyone']['abilities'] ?? [], true) || array_filter($roles['roles'], fn ($role) => in_array('create', $role['abilities'] ?? [], true));
         if ($creates && (!$data['node_ids'] || (!$data['minecraft_enabled'] && !$data['other_egg_ids']))) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['data.node_ids' => 'Users may create servers: choose a hosting machine and at least one game under Easy Minecraft server creator.']);
+            throw \Illuminate\Validation\ValidationException::withMessages(['data.node_ids' => __('pelican-simplify::settings.form.creators_need_machine')]);
         }
         if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
         if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
@@ -805,7 +819,7 @@ class SimplifySettings extends Page implements HasForms
         // After the switches, so a just-enabled add-on can store which servers are shown.
         if (isset($embedState)) $this->saveEmbed($embedState);
         $this->rerunSetup = false;
-        Notification::make()->title('PelicanSimplify settings saved')->success()->send();
+        Notification::make()->title(__('pelican-simplify::settings.form.pelicansimplify_settings_saved'))->success()->send();
         if ($firstSetup) {
             $this->redirect(\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') ? \Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(panel: 'app') : \Simplify\Panel\Services\LegacyNavigation::nativeUrl());
         } else {

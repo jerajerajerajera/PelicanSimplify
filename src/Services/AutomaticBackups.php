@@ -110,7 +110,7 @@ final class AutomaticBackups
             // existing recovery point. Prune only completed successful backups.
             $backupServer = clone $s;
             $backupServer->backup_limit = $s->backups()->nonFailed()->count() + 1;
-            app(\App\Services\Backups\InitiateBackupService::class)->setIsScheduled(true)->setIsLocked(false)->handle($backupServer, 'Automatic · '.now()->format('Y-m-d H:i'));
+            app(\App\Services\Backups\InitiateBackupService::class)->setIsScheduled(true)->setIsLocked(false)->handle($backupServer, __('pelican-simplify::dashboard.backups.automatic_name').' · '.now()->format('Y-m-d H:i'));
         });
     }
 }

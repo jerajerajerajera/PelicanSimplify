@@ -13,6 +13,38 @@
   const media = matchMedia('(prefers-color-scheme: dark)');
   let options = window.simplifyThemeConfig || {};
   let preference = 'system';
+  // Texts from lang/<locale>/js.php in the user's Pelican language (English fills the gaps). Keys use dots
+  // ('common.cancel'), placeholders Laravel's :name, and tc() Laravel's plural forms ('{0} none|{1} one|[2,*] :count').
+  const fill = (text, params) => {
+    for (const name of Object.keys(params).sort((a, b) => b.length - a.length)) text = text.split(':' + name).join(String(params[name]));
+    return text;
+  };
+  const lookup = (key) => {
+    const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), window.simplifyLang);
+    return typeof found === 'string' ? found : key;
+  };
+  const t = (key, params = {}) => fill(lookup(key), params);
+  const choice = (raw, count, params = {}) => {
+    const forms = String(raw).split('|');
+    let text = null;
+    for (const form of forms) {
+      const exact = form.match(/^\s*\{(\d+)\}\s*/);
+      const range = form.match(/^\s*\[(\d+|\*),\s*(\d+|\*)\]\s*/);
+      if (exact && Number(exact[1]) === count) text = form.slice(exact[0].length);
+      else if (range && (range[1] === '*' || count >= Number(range[1])) && (range[2] === '*' || count <= Number(range[2]))) text = form.slice(range[0].length);
+      if (text !== null) break;
+    }
+    if (text === null) {
+      const plain = forms.map((form) => form.replace(/^\s*(\{\d+\}|\[(\d+|\*),\s*(\d+|\*)\])\s*/, ''));
+      // The order of Laravel's plural forms: two (one|many), three (one|few|many), four (Slovenian) or six (Arabic).
+      const order = { 2: { one: 0 }, 3: { one: 0, few: 1 }, 4: { one: 0, two: 1, few: 2 }, 6: { zero: 0, one: 1, two: 2, few: 3, many: 4 } }[plain.length] || {};
+      let category = count === 1 ? 'one' : 'other';
+      try { category = new Intl.PluralRules((root.lang || 'en').replace('_', '-')).select(count); } catch { /* English rule */ }
+      text = plain[plain.length === 1 ? 0 : order[category] ?? plain.length - 1];
+    }
+    return fill(text, { count, ...params });
+  };
+  const tc = (key, count, params = {}) => choice(lookup(key), count, params);
   try {
     const saved = localStorage.getItem(KEY);
     if (CHOICES.includes(saved)) preference = saved;
@@ -303,20 +335,20 @@
         '<div class="ps-modal-body"><p class="ps-help" data-message></p></div>' +
         '<footer class="ps-modal-foot"><button type="button" class="ps-btn" data-cancel></button><button type="button" class="ps-btn" data-confirm></button></footer>' +
         '</section>';
-      wrap.querySelector('h2').textContent = opts.title || 'Are you sure?';
+      wrap.querySelector('h2').textContent = opts.title || t('common.are_you_sure');
       const message = wrap.querySelector('[data-message]');
       if (opts.message) message.textContent = opts.message;
       else message.remove();
       const cancel = wrap.querySelector('[data-cancel]');
       const confirm = wrap.querySelector('[data-confirm]');
-      cancel.textContent = opts.cancelLabel || 'Cancel';
-      confirm.textContent = opts.confirmLabel || 'Confirm';
+      cancel.textContent = opts.cancelLabel || t('common.cancel');
+      confirm.textContent = opts.confirmLabel || t('common.confirm');
       confirm.classList.add(opts.tone === 'danger' ? 'is-danger' : 'is-primary');
       let field = null;
       if (opts.input || opts.requireText) {
         const label = document.createElement('label');
         label.className = 'ps-field';
-        label.textContent = opts.inputLabel || (opts.requireText ? 'Type “' + opts.requireText + '” to confirm' : '');
+        label.textContent = opts.inputLabel || (opts.requireText ? t('common.type_to_confirm', { text: opts.requireText }) : '');
         field = document.createElement('input');
         field.placeholder = opts.placeholder || opts.requireText || '';
         field.autocomplete = 'off';
@@ -359,6 +391,12 @@
 
   window.Simplify = {
     ui: true,
+    t,
+    tc,
+    fill: (text, params = {}) => fill(String(text), params),
+    choice,
+    // A server's state from Pelican or Wings (running, install failed) as words in the panel's language.
+    status: (state) => { const key = 'status.' + String(state || 'offline').replace(/ /g, '_'); const text = lookup(key); return text === key ? String(state) : text; },
     toast,
     confirm: dialog,
     prompt: (opts) => dialog({ ...opts, input: true }),
@@ -471,7 +509,7 @@
         field.innerHTML = '<svg aria-hidden="true"><use href="#ps-search"/></svg>';
         const input = pdoc.createElement('input');
         input.type = 'search';
-        input.placeholder = search.placeholder || 'Search';
+        input.placeholder = search.placeholder || t('common.search');
         input.setAttribute('aria-label', input.placeholder);
         input.value = search.value;
         input.addEventListener('input', () => {
@@ -495,7 +533,7 @@
         else bar.append(btn);
       }
       if (filters) {
-        const btn = button(filters, label(filters) || 'Filter', false);
+        const btn = button(filters, label(filters) || t('common.filter'), false);
         btn.querySelectorAll('.fi-icon-btn-badge-ctn').forEach((el) => el.remove());
         btn.addEventListener('click', () => openFilters(filters));
         bar.append(btn);
@@ -546,13 +584,13 @@
     });
   };
   document.addEventListener('livewire:init', hookLivewire);
-  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = 'Save changes', onSave, onDiscard = null, discardMessage = 'Your changes since the last save are lost.' }) => {
+  const saveBar = ({ mount, scope = mount, within = null, fixed = false, label = t('common.save_changes'), onSave, onDiscard = null, discardMessage = t('common.discard_message') }) => {
     hookLivewire();
     const bar = document.createElement('div');
     bar.className = 'ps-savebar' + (fixed ? ' is-fixed' : '');
     bar.setAttribute('role', 'region');
-    bar.setAttribute('aria-label', 'Save changes');
-    bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">Unsaved changes</span></span>'
+    bar.setAttribute('aria-label', t('common.save_changes'));
+    bar.innerHTML = '<span class="ps-savebar-status" role="status"><i aria-hidden="true"></i><span class="ps-savebar-text">' + t('common.unsaved_changes') + '</span></span>'
       + (onDiscard ? '<button type="button" class="ps-savebar-discard">Discard</button>' : '')
       + '<button type="button" class="ps-savebar-save"><svg class="ps-savebar-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg><span class="ps-savebar-label"></span></button>';
     const text = bar.querySelector('.ps-savebar-text');
@@ -568,7 +606,7 @@
         bar.classList.toggle('is-dirty', on);
         button.disabled = !on;
         button.removeAttribute('aria-disabled');
-        text.textContent = 'Unsaved changes';
+        text.textContent = t('common.unsaved_changes');
       },
       saving() {
         bar.classList.add('is-saving');
@@ -581,14 +619,14 @@
         // Nothing left to save: the check is a status, not a button.
         button.disabled = true;
         button.setAttribute('aria-disabled', 'true');
-        text.textContent = 'All changes saved';
+        text.textContent = t('common.all_changes_saved');
         clearTimeout(timer);
         timer = setTimeout(() => bar.classList.remove('is-saved'), 1600);
       },
       failed() {
         bar.classList.remove('is-saving');
         button.disabled = false;
-        text.textContent = 'Not saved — check the highlighted fields';
+        text.textContent = t('common.not_saved_fields');
       },
       // Waits for the Livewire request that saving starts.
       expectSave() {
@@ -601,7 +639,7 @@
       onSave(api);
     });
     bar.querySelector('.ps-savebar-discard')?.addEventListener('click', () => {
-      dialog({ title: 'Discard changes?', message: discardMessage, confirmLabel: 'Discard', tone: 'danger' }).then((ok) => ok && onDiscard(api));
+      dialog({ title: t('common.discard_title'), message: discardMessage, confirmLabel: t('common.discard'), tone: 'danger' }).then((ok) => ok && onDiscard(api));
     });
     // Changed means: the values differ from the last saved state. Switching tabs, focusing or clicking
     // around never counts, and putting a value back hides the bar again.
@@ -718,7 +756,7 @@
         window.dispatchEvent(new CustomEvent('simplify:installable'));
         return choice?.outcome === 'accepted';
       }
-      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: 'Add to Home Screen', message: 'Tap the Share button in Safari, then choose "Add to Home Screen". The panel then opens as its own app.', confirmLabel: 'OK', cancelLabel: 'Close' });
+      if (webApp.installable() === 'ios') await window.Simplify.confirm({ title: t('common.home_screen_title'), message: t('common.home_screen_message'), confirmLabel: t('common.ok'), cancelLabel: t('common.close') });
       return false;
     },
   };

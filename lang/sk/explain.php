@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => ':host nie je z panela dostupný. Skontrolujte, či sa server panela môže pripojiť na internet.',
+        'no_key' => 'Najprv zadajte kľúč API.',
+        'not_set_up' => 'Vysvetľovanie chýb nie je na tomto paneli nastavené.',
+        'unknown_log' => 'Neznámy log.',
+        'read_panel' => 'Log panela sa nepodarilo prečítať.',
+        'read_wings' => 'Log Wings sa z Wings nepodarilo prečítať. Skúste to znova, keď bude node dostupný.',
+        'read_console' => 'Konzolu sa z Wings nepodarilo prečítať. Skúste to znova, keď bude node dostupný.',
+        'too_many' => 'Za krátky čas ste položili veľa otázok. Skúste to znova o :count minútu.|Za krátky čas ste položili veľa otázok. Skúste to znova o :count minúty.|Za krátky čas ste položili veľa otázok. Skúste to znova o :count minút.',
+        'daily_limit' => 'Tento panel dosiahol denný limit vysvetlení (:count). Skúste to zajtra.',
+        'no_answer' => ':model tieto riadky nedokázal vysvetliť. Skúste to znova, keď sa chyba objaví znova.',
+    ],
+    'test' => [
+        'works' => 'Kľúč funguje s :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konzola',
+            'empty' => 'Konzola je prázdna, zatiaľ nie je čo vysvetľovať.',
+        ],
+        'panel' => [
+            'label' => 'Log panela',
+            'empty' => 'Log panela teraz neobsahuje žiadne varovania ani chyby.',
+        ],
+        'wings' => [
+            'label' => 'Log Wings',
+            'empty' => 'Log Wings tohto node je prázdny.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Pre tento plugin nie sú uložené žiadne riadky logu.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Najprv sa prihláste do panela a potom túto stránku otvorte znova.',
+        'owner_only' => 'Túto stránku môže používať len vlastník panela (root správca).',
+        'expired' => 'Táto adresa vypršala alebo bola nahradená novšou.',
+        'no_key' => 'Na tomto paneli nie je uložený kľúč API :provider. Root správca ho pridá v Nastaveniach Simplify, v časti Vysvetľovanie chýb.',
+        'no_key_terminal' => 'Ak sa panel neotvorí, spustite :command na serveri panela. Príkaz si vyžiada kľúč a neuloží ho.',
+        'choose_node' => 'Vyberte node.',
+        'panel_log' => 'Log panela',
+        'wings_log_of' => 'Log Wings pre :node',
+        'wings_log' => 'Log Wings',
+        'no_database' => 'K databáze sa nepodarilo pripojiť, takže logy Wings tu nie sú k dispozícii. Príčinu často ukáže log panela.',
+        'lead' => 'Túto stránku použite, keď panel ukazuje chybu ako 500 a jeho bežné stránky sa neotvoria. AI vybraná v Nastaveniach Simplify prečíta log a povie vám, či je problém a ako ho opraviť.',
+        'check_panel' => 'Skontrolovať log panela',
+        'check_wings' => 'Skontrolovať log Wings pre :node',
+        'wait' => 'Kontrola logu. Môže to trvať až minútu.',
+        'attention' => 'Niečo si vyžaduje pozornosť',
+        'in_order' => 'Vyzerá to, že je všetko v poriadku',
+        'noticed' => 'Všimli ste si niečo?',
+        'checked' => ':count riadok skontroloval :model. Adresy, e-mailové adresy a heslá boli vopred odstránené.|:count riadky skontroloval :model. Adresy, e-mailové adresy a heslá boli vopred odstránené.|:count riadkov skontroloval :model. Adresy, e-mailové adresy a heslá boli vopred odstránené.',
+        'terminal_hint' => 'Ak sa panel neotvorí, spustite :command na serveri panela alebo :url_command, aby ste získali dočasnú adresu tejto stránky.',
+        'broken' => 'Túto stránku sa nepodarilo celú načítať',
+        'title' => 'Vysvetliť chyby panela',
+    ],
+    'failures' => [
+        'invalid_key' => 'Kľúč API :name je neplatný. Správca môže zadať nový v Nastaveniach Simplify.',
+        'no_credit' => 'Účtu :name za týmto kľúčom došiel kredit. Správca môže dobiť kredit alebo skontrolovať platby u :name.',
+        'forbidden' => 'Tento kľúč API :name nesmie používať vybraný model. Správca môže vybrať iný model v Nastaveniach Simplify.',
+        'no_model' => 'Vybraný model :name nie je pre tento kľúč dostupný. Správca môže vybrať iný model v Nastaveniach Simplify.',
+        'busy' => ':name je pre tento kľúč práve vyťažený. Skúste to o minútu.',
+        'unavailable' => ':name je dočasne nedostupný. Skúste to o minútu.',
+        'other_status' => ':name na túto otázku nedokázal odpovedať (chyba :status). Skúste to neskôr.',
+        'other' => ':name na túto otázku nedokázal odpovedať. Skúste to neskôr.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude od Anthropic',
+            'key_help' => 'Vytvorte kľúč na console.anthropic.com → API keys. Každá otázka sa účtuje tomuto účtu Anthropic, zvyčajne pár centov alebo menej; pre istotu tam nastavte mesačný limit.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini od Google',
+            'key_help' => 'Vytvorte kľúč na aistudio.google.com → Get API key. Otázky sa účtujú tomuto projektu Google Cloud, zvyčajne menej ako cent za každú; pre istotu tam nastavte rozpočet.',
+        ],
+        'openai' => [
+            'label' => 'GPT od OpenAI',
+            'key_help' => 'Vytvorte kľúč na platform.openai.com → API keys. Každá otázka sa účtuje tomuto účtu OpenAI, zvyčajne pár centov alebo menej; pre istotu tam nastavte mesačný rozpočet.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'najlepšie odpovede, pár centov',
+        'about_a_cent' => 'približne cent',
+        'cheapest' => 'najlacnejší',
+        'good_answers_under_a_cent' => 'dobré odpovede, pod cent',
+        'good_answers_about_a_cent' => 'dobré odpovede, približne cent',
+    ],
+];

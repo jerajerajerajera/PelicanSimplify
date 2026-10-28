@@ -18,6 +18,7 @@ namespace Simplify\Panel\Services {
  class ManagedSettings {public static function minecraft($s){return str_contains(strtolower((string)$s->egg->name),'paper');}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require_once __DIR__.'/../src/Services/JsonFile.php';
 require __DIR__.'/../src/Services/CloudflareDns.php';
 require __DIR__.'/../src/Services/Subdomains.php';

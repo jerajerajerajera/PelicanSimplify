@@ -3,9 +3,9 @@
     <div class="ps-alert is-warn ps-conflict-card" role="alert">
         <x-tabler-alert-triangle class="ps-ico" aria-hidden="true" />
         <div>
-            <strong>Simplify's dashboard is switched off: {{ collect($conflicts)->pluck('name')->join(', ', ' and ') }} {{ count($conflicts) === 1 ? 'is' : 'are' }} installed</strong>
+            <strong>{{ trans_choice('pelican-simplify::plugins.conflicts.switched_off', count($conflicts), ['plugins' => collect($conflicts)->pluck('name')->join(', ', ' '.__('pelican-simplify::plugins.conflicts.and').' ')]) }}</strong>
             @foreach($conflicts as $conflict)<small>{{ $conflict['name'] }}: {{ $conflict['reason'] }}</small>@endforeach
-            <small>Everyone gets Pelican's own panel for now. Disable or remove {{ count($conflicts) === 1 ? 'that plugin' : 'those plugins' }} to turn Simplify back on; your Simplify settings are kept.</small>
+            <small>{{ trans_choice('pelican-simplify::plugins.conflicts.switched_off_help', count($conflicts)) }}</small>
         </div>
     </div>
 @endif
@@ -14,7 +14,7 @@
     <div class="ps-alert is-info ps-conflict-card" role="status">
         <x-tabler-puzzle class="ps-ico" aria-hidden="true" />
         <div>
-            <strong>{{ collect($overlaps)->pluck('name')->join(', ', ' and ') }} {{ count($overlaps) === 1 ? 'does' : 'do' }} part of what Simplify does</strong>
+            <strong>{{ trans_choice('pelican-simplify::plugins.conflicts.overlap', count($overlaps), ['plugins' => collect($overlaps)->pluck('name')->join(', ', ' '.__('pelican-simplify::plugins.conflicts.and').' ')]) }}</strong>
             @foreach($overlaps as $overlap)<small>{{ $overlap['name'] }}: {{ $overlap['reason'] }}</small>@endforeach
         </div>
     </div>

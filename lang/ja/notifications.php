@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => '新機能',
+        'full_release_notes' => 'リリースノート全文',
+        'mark_read' => '既読にする',
+        'mark_as_unread' => '未読にする',
+        'clear' => '消去',
+        'show_less' => '折りたたむ',
+        'pin' => 'ピン留め ',
+        'unpin' => 'ピン留め解除 ',
+        'pin_2' => 'ピン留め',
+        'unpin_2' => 'ピン留め解除',
+        'pinned' => 'ピン留め済み',
+        'you_are_all_caught_up' => '新しいものはありません。',
+        'archived' => 'アーカイブ',
+        'nothing_archived' => 'アーカイブはありません。',
+        'loading' => '読み込み中…',
+        'show_more' => 'もっと見る',
+        'clear_name' => ':title を消去',
+        'show_all' => ':count 件すべて表示',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'このデバイスではまだ通知がオンになっていません。',
+        'test_notification' => 'テスト通知',
+        'notifications_work_on_this_device' => 'このデバイスで通知が動作しています。',
+        'test_sent_it_should_appear_within' => 'テストを送信しました。数秒以内に表示されるはずです。',
+        'the_browser_no_longer_accepts_notifications' => 'ブラウザーがこのデバイスへの通知を受け付けなくなりました。もう一度オンにしてください。',
+        'the_push_service_did_not_accept' => 'プッシュサービスがテストを受け付けませんでした。1分後にもう一度お試しください。',
+    ],
+];

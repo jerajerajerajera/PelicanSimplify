@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => '新功能',
+        'full_release_notes' => '完整发布说明',
+        'mark_read' => '标为已读',
+        'mark_as_unread' => '标为未读',
+        'clear' => '清除',
+        'show_less' => '收起',
+        'pin' => '置顶 ',
+        'unpin' => '取消置顶 ',
+        'pin_2' => '置顶',
+        'unpin_2' => '取消置顶',
+        'pinned' => '已置顶',
+        'you_are_all_caught_up' => '没有新消息。',
+        'archived' => '已归档',
+        'nothing_archived' => '没有已归档的内容。',
+        'loading' => '加载中…',
+        'show_more' => '显示更多',
+        'clear_name' => '清除 :title',
+        'show_all' => '显示全部 :count 条',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => '此设备尚未开启通知。',
+        'test_notification' => '测试通知',
+        'notifications_work_on_this_device' => '此设备的通知工作正常。',
+        'test_sent_it_should_appear_within' => '已发送测试，几秒内应会出现。',
+        'the_browser_no_longer_accepts_notifications' => '浏览器不再接受此设备的通知，请重新开启。',
+        'the_push_service_did_not_accept' => '推送服务未接受此测试，请一分钟后重试。',
+    ],
+];

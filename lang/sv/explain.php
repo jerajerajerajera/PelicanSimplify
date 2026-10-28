@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Kunde inte nå :host från panelen. Kontrollera att panelservern får ansluta till internet.',
+        'no_key' => 'Ange en API-nyckel först.',
+        'not_set_up' => 'Felförklaringar är inte konfigurerade på den här panelen.',
+        'unknown_log' => 'Okänd logg.',
+        'read_panel' => 'Kunde inte läsa panelloggen.',
+        'read_wings' => 'Kunde inte läsa Wings-loggen från Wings. Försök igen när noden går att nå.',
+        'read_console' => 'Kunde inte läsa konsolen från Wings. Försök igen när noden går att nå.',
+        'too_many' => 'Du har ställt många frågor på kort tid. Försök igen om :count minut.|Du har ställt många frågor på kort tid. Försök igen om :count minuter.',
+        'daily_limit' => 'Den här panelen har nått sin dagliga gräns på :count förklaringar. Försök igen i morgon.',
+        'no_answer' => ':model kunde inte förklara de här raderna. Försök igen när felet dyker upp igen.',
+    ],
+    'test' => [
+        'works' => 'Nyckeln fungerar med :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsol',
+            'empty' => 'Konsolen är tom, så det finns inget att förklara ännu.',
+        ],
+        'panel' => [
+            'label' => 'Panellogg',
+            'empty' => 'Panelloggen har inga varningar eller fel just nu.',
+        ],
+        'wings' => [
+            'label' => 'Wings-logg',
+            'empty' => 'Wings-loggen för den här noden är tom.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Det finns inga sparade loggrader för det här pluginet.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Logga in på panelen först och öppna sedan den här sidan igen.',
+        'owner_only' => 'Bara panelens ägare (en root-administratör) kan använda den här sidan.',
+        'expired' => 'Den här adressen har gått ut eller ersatts av en nyare.',
+        'no_key' => 'Ingen :provider-API-nyckel är sparad på den här panelen. En root-administratör lägger till en i Simplify-inställningar under Felförklaringar.',
+        'no_key_terminal' => 'När panelen inte öppnas, kör :command på panelservern. Den frågar efter en nyckel och sparar den inte.',
+        'choose_node' => 'Välj en nod.',
+        'panel_log' => 'Panellogg',
+        'wings_log_of' => 'Wings-logg för :node',
+        'wings_log' => 'Wings-logg',
+        'no_database' => 'Databasen kunde inte nås, så Wings-loggarna är inte tillgängliga här. Panelloggen visar ofta varför.',
+        'lead' => 'Använd den här sidan när panelen visar ett fel som 500 och dess vanliga sidor inte öppnas. Den AI som valts i Simplify-inställningar läser loggen och säger om något är fel och hur det åtgärdas.',
+        'check_panel' => 'Kontrollera panelloggen',
+        'check_wings' => 'Kontrollera Wings-loggen för :node',
+        'wait' => 'Kontrollerar loggen. Det kan ta upp till en minut.',
+        'attention' => 'Något behöver åtgärdas',
+        'in_order' => 'Allt verkar vara i ordning',
+        'noticed' => 'Märkt något?',
+        'checked' => ':count rad kontrollerad av :model. Adresser, e-postadresser och lösenord togs bort först.|:count rader kontrollerade av :model. Adresser, e-postadresser och lösenord togs bort först.',
+        'terminal_hint' => 'När panelen inte öppnas, kör :command på panelservern, eller :url_command för en tillfällig adress till den här sidan.',
+        'broken' => 'Den här sidan kunde inte slutföras',
+        'title' => 'Förklara panelfel',
+    ],
+    'failures' => [
+        'invalid_key' => 'API-nyckeln för :name är inte giltig. En administratör kan ange en ny i Simplify-inställningar.',
+        'no_credit' => ':name-kontot bakom den här nyckeln har ingen kredit kvar. En administratör kan fylla på kredit eller kontrollera faktureringen hos :name.',
+        'forbidden' => 'Den här :name-API-nyckeln får inte använda den valda modellen. En administratör kan välja en annan modell i Simplify-inställningar.',
+        'no_model' => 'Den valda :name-modellen är inte tillgänglig för den här nyckeln. En administratör kan välja en annan modell i Simplify-inställningar.',
+        'busy' => ':name är upptagen för den här nyckeln just nu. Försök igen om en minut.',
+        'unavailable' => ':name är tillfälligt otillgänglig. Försök igen om en minut.',
+        'other_status' => ':name kunde inte besvara frågan (fel :status). Försök igen senare.',
+        'other' => ':name kunde inte besvara frågan. Försök igen senare.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude från Anthropic',
+            'key_help' => 'Skapa en nyckel på console.anthropic.com → API keys. Varje fråga debiteras det Anthropic-kontot, oftast några cent eller mindre; ställ in en månadsgräns där för säkerhets skull.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini från Google',
+            'key_help' => 'Skapa en nyckel på aistudio.google.com → Get API key. Frågor debiteras det Google Cloud-projektet, oftast mindre än en cent styck; ställ in en budget där för säkerhets skull.',
+        ],
+        'openai' => [
+            'label' => 'GPT från OpenAI',
+            'key_help' => 'Skapa en nyckel på platform.openai.com → API keys. Varje fråga debiteras det OpenAI-kontot, oftast några cent eller mindre; ställ in en månadsbudget där för säkerhets skull.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'bästa svaren, några cent',
+        'about_a_cent' => 'ungefär en cent',
+        'cheapest' => 'billigast',
+        'good_answers_under_a_cent' => 'bra svar, under en cent',
+        'good_answers_about_a_cent' => 'bra svar, ungefär en cent',
+    ],
+];

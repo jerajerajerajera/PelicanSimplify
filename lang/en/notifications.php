@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'What\'s new',
+        'full_release_notes' => 'Full release notes',
+        'mark_read' => 'Mark read',
+        'mark_as_unread' => 'Mark as unread',
+        'clear' => 'Clear',
+        'show_less' => 'Show less',
+        'pin' => 'Pin ',
+        'unpin' => 'Unpin ',
+        'pin_2' => 'Pin',
+        'unpin_2' => 'Unpin',
+        'pinned' => 'Pinned',
+        'you_are_all_caught_up' => 'You are all caught up.',
+        'archived' => 'Archived',
+        'nothing_archived' => 'Nothing archived.',
+        'loading' => 'Loading…',
+        'show_more' => 'Show more',
+        'clear_name' => 'Clear :title',
+        'show_all' => 'Show all :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Notifications are not on for this device yet.',
+        'test_notification' => 'Test notification',
+        'notifications_work_on_this_device' => 'Notifications work on this device.',
+        'test_sent_it_should_appear_within' => 'Test sent. It should appear within a few seconds.',
+        'the_browser_no_longer_accepts_notifications' => 'The browser no longer accepts notifications for this device. Turn them on again.',
+        'the_push_service_did_not_accept' => 'The push service did not accept the test. Try again in a minute.',
+    ],
+];

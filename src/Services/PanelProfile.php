@@ -67,7 +67,7 @@ final class PanelProfile
     {
         $s=self::settings();
         if($s['type']!=='hosting')return null;
-        return ['client_area'=>$s['client_area'],'order'=>$s['order'],'support'=>$s['support'],'support_label'=>$s['support_label']!==''?$s['support_label']:'Open a ticket'];
+        return ['client_area'=>$s['client_area'],'order'=>$s['order'],'support'=>$s['support'],'support_label'=>$s['support_label']!==''?$s['support_label']:__('pelican-simplify::settings.hosting.open_a_ticket')];
     }
     /** The upgrade link for one server, or null when there is none. */
     public static function upgradeUrl(object $server): ?string

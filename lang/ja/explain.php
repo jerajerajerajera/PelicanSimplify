@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'パネルから :host に接続できませんでした。パネルのサーバーがインターネットに接続できるか確認してください。',
+        'no_key' => '先に API キーを入力してください。',
+        'not_set_up' => 'このパネルではエラーの説明が設定されていません。',
+        'unknown_log' => '不明なログです。',
+        'read_panel' => 'パネルのログを読み取れませんでした。',
+        'read_wings' => 'Wings から Wings のログを読み取れませんでした。ノードに接続できるときにもう一度お試しください。',
+        'read_console' => 'Wings からコンソールを読み取れませんでした。ノードに接続できるときにもう一度お試しください。',
+        'too_many' => '短時間に多くの質問をしました。:count 分後にもう一度お試しください。',
+        'daily_limit' => 'このパネルは1日の上限である :count 件の説明に達しました。明日もう一度お試しください。',
+        'no_answer' => ':model はこれらの行を説明できませんでした。エラーが再び表示されたらもう一度お試しください。',
+    ],
+    'test' => [
+        'works' => 'このキーは :model で使えます。',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'コンソール',
+            'empty' => 'コンソールが空なので、まだ説明するものがありません。',
+        ],
+        'panel' => [
+            'label' => 'パネルのログ',
+            'empty' => '現在、パネルのログに警告やエラーはありません。',
+        ],
+        'wings' => [
+            'label' => 'Wings のログ',
+            'empty' => 'このノードの Wings のログは空です。',
+        ],
+        'plugin' => [
+            'label' => 'プラグイン',
+            'empty' => 'このプラグインの保存済みログ行はありません。',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => '先にパネルにログインしてから、このページをもう一度開いてください。',
+        'owner_only' => 'このページを使えるのはパネルの所有者(root 管理者)だけです。',
+        'expired' => 'このアドレスは期限切れか、新しいアドレスに置き換えられました。',
+        'no_key' => 'このパネルには :provider の API キーが保存されていません。root 管理者が Simplify 設定 の「エラーの説明」で追加します。',
+        'no_key_terminal' => 'パネルが開かないときは、パネルのサーバーで :command を実行してください。キーを尋ねますが、保存はしません。',
+        'choose_node' => 'ノードを選んでください。',
+        'panel_log' => 'パネルのログ',
+        'wings_log_of' => ':node の Wings のログ',
+        'wings_log' => 'Wings のログ',
+        'no_database' => 'データベースに接続できなかったため、ここでは Wings のログを表示できません。原因はパネルのログに出ていることがよくあります。',
+        'lead' => 'パネルに 500 などのエラーが表示され、通常のページが開かないときにこのページを使ってください。Simplify 設定で選んだ AI がログを読み、問題があるかどうかと直し方を伝えます。',
+        'check_panel' => 'パネルのログを確認',
+        'check_wings' => ':node の Wings のログを確認',
+        'wait' => 'ログを確認しています。最大1分ほどかかります。',
+        'attention' => '対応が必要な項目があります',
+        'in_order' => 'すべて問題なさそうです',
+        'noticed' => '何か気づきましたか?',
+        'checked' => ':model が :count 行を確認しました。アドレス、メールアドレス、パスワードは事前に削除されています。',
+        'terminal_hint' => 'パネルが開かないときは、パネルのサーバーで :command を実行するか、このページへの一時アドレスを得るには :url_command を実行してください。',
+        'broken' => 'このページを完了できませんでした',
+        'title' => 'パネルのエラーを説明',
+    ],
+    'failures' => [
+        'invalid_key' => ':name の API キーが無効です。管理者が Simplify 設定で新しいキーを入力できます。',
+        'no_credit' => 'このキーの :name アカウントにクレジットが残っていません。管理者が :name でクレジットを追加するか、請求を確認できます。',
+        'forbidden' => 'この :name の API キーでは選択したモデルを使えません。管理者が Simplify 設定で別のモデルを選べます。',
+        'no_model' => '選択した :name のモデルはこのキーでは利用できません。管理者が Simplify 設定で別のモデルを選べます。',
+        'busy' => ':name は現在このキーで混み合っています。1分後にもう一度お試しください。',
+        'unavailable' => ':name は一時的に利用できません。1分後にもう一度お試しください。',
+        'other_status' => ':name はこの質問に答えられませんでした(エラー :status)。後でもう一度お試しください。',
+        'other' => ':name はこの質問に答えられませんでした。後でもう一度お試しください。',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => 'console.anthropic.com → API keys でキーを作成してください。質問ごとにその Anthropic アカウントに課金されます。通常は数セント以下です。念のため、そこで月額上限を設定してください。',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => 'aistudio.google.com → Get API key でキーを作成してください。質問はその Google Cloud プロジェクトに課金されます。通常は1件あたり1セント未満です。念のため、そこで予算を設定してください。',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => 'platform.openai.com → API keys でキーを作成してください。質問ごとにその OpenAI アカウントに課金されます。通常は数セント以下です。念のため、そこで月額予算を設定してください。',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => '最良の回答、数セント',
+        'about_a_cent' => '約1セント',
+        'cheapest' => '最安',
+        'good_answers_under_a_cent' => '良い回答、1セント未満',
+        'good_answers_about_a_cent' => '良い回答、約1セント',
+    ],
+];

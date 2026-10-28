@@ -19,23 +19,23 @@ final class ServerProperties
             return [];
         }
         if ($requireAsync && in_array(config('queue.default'), ['sync', 'null'], true)) {
-            throw ValidationException::withMessages(['data.properties_enabled' => 'Configure an asynchronous Pelican queue worker first, or disable these settings and remove the icon.']);
+            throw ValidationException::withMessages(['data.properties_enabled' => __('pelican-simplify::maker.properties.configure_an_asynchronous_pelican_queue_worker')]);
         }
         if ($state['skip_scripts'] ?? false) {
-            throw ValidationException::withMessages(['data.skip_scripts' => 'Installation scripts must run to apply server properties after installation.']);
+            throw ValidationException::withMessages(['data.skip_scripts' => __('pelican-simplify::maker.properties.installation_scripts_must_run_to_apply')]);
         }
         $values = [];
         if ($state['properties_enabled'] ?? false) {
             foreach (['max_players' => [1, 1000], 'view_distance' => [2, 32], 'spawn_protection' => [0, 1000]] as $key => [$min, $max]) {
                 $number = filter_var($state[$key] ?? null, FILTER_VALIDATE_INT);
                 if ($number === false || $number < $min || $number > $max) {
-                    throw ValidationException::withMessages(['data.' . $key => 'Enter a number between ' . $min . ' and ' . $max . '.']);
+                    throw ValidationException::withMessages(['data.' . $key => __('pelican-simplify::maker.properties.number_between', ['min' => $min, 'max' => $max])]);
                 }
                 $values[str_replace('_', '-', $key)] = (string) $number;
             }
             foreach (['difficulty' => ['peaceful', 'easy', 'normal', 'hard'], 'gamemode' => ['survival', 'creative', 'adventure', 'spectator']] as $key => $allowed) {
                 if (!in_array($state[$key] ?? '', $allowed, true)) {
-                    throw ValidationException::withMessages(['data.' . $key => 'Choose a valid ' . $key . '.']);
+                    throw ValidationException::withMessages(['data.' . $key => __('pelican-simplify::maker.properties.choose_valid_'.$key)]);
                 }
                 $values[$key] = (string) $state[$key];
             }
@@ -50,7 +50,7 @@ final class ServerProperties
             }
             $motd = (string) ($state['motd'] ?? '');
             if (mb_strlen($motd) > 512) {
-                throw ValidationException::withMessages(['data.motd' => 'MOTD can contain at most 512 characters.']);
+                throw ValidationException::withMessages(['data.motd' => __('pelican-simplify::maker.properties.motd_can_contain_at_most_512')]);
             }
             $values['motd'] = $motd;
         }
@@ -58,12 +58,12 @@ final class ServerProperties
         $upload = $state['server_icon'] ?? null;
         if ($upload) {
             if (!$upload instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                throw ValidationException::withMessages(['data.server_icon' => 'Upload the icon again.']);
+                throw ValidationException::withMessages(['data.server_icon' => __('pelican-simplify::maker.properties.upload_the_icon_again')]);
             }
             $content = file_get_contents($upload->getRealPath());
             $size = $content !== false ? @getimagesizefromstring($content) : false;
             if (!$size || $size[0] !== 64 || $size[1] !== 64 || $size[2] !== IMAGETYPE_PNG || strlen($content) > 102400) {
-                throw ValidationException::withMessages(['data.server_icon' => 'The icon must be a 64 × 64 PNG, up to 100 KB.']);
+                throw ValidationException::withMessages(['data.server_icon' => __('pelican-simplify::maker.properties.the_icon_must_be_a_64')]);
             }
             $icon = base64_encode($content);
         }

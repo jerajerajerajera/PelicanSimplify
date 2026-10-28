@@ -3,6 +3,7 @@
    model, so they are always minimal: no duplicate colours, and a reset only where formatting has to end.
    Minecraft semantics: a colour code clears bold/italic/…, so formats are written after the colour. */
 (() => {
+  const t = (key, params) => (window.Simplify?.t ? window.Simplify.t(key, params) : key);
   const COLORS = [
     ['0', 'Black', '#000000'], ['1', 'Dark blue', '#0000aa'], ['2', 'Dark green', '#00aa00'], ['3', 'Dark aqua', '#00aaaa'],
     ['4', 'Dark red', '#aa0000'], ['5', 'Dark purple', '#aa00aa'], ['6', 'Gold', '#ffaa00'], ['7', 'Gray', '#aaaaaa'],
@@ -97,9 +98,9 @@
   window.psMotdEditor = function (options = {}) {
     return {
       value: options.value ?? '',
-      name: () => String(options.name?.() || 'Minecraft Server'),
+      name: () => String(options.name?.() || t('motd.default_name')),
       icon: () => String(options.icon?.() || ''),
-      colors: COLORS,
+      colors: COLORS.map(([code, name, hex]) => [code, t('motd.colors.' + code), hex]),
       formats: FORMATS,
       lines: [],
       written: null,
@@ -128,7 +129,7 @@
 
       load(value) {
         const lines = parse(value);
-        this.notice = lines.length > LINES ? 'Minecraft shows two lines. The extra lines are joined to line 2 when you edit.' : '';
+        this.notice = lines.length > LINES ? t('motd.extra_lines') : '';
         while (lines.length > LINES) {
           const extra = lines.pop(), last = lines[lines.length - 1];
           if (extra.chars.length) {
@@ -156,7 +157,7 @@
       commit(lines) {
         const value = serialize(lines[1]?.chars.length ? lines : lines.slice(0, 1));
         if (chars(value).length > MAX) {
-          this.notice = 'The MOTD can contain at most ' + MAX + ' characters, including colour codes.';
+          this.notice = t('motd.too_long', { max: MAX });
           return false;
         }
         this.notice = '';
@@ -286,7 +287,7 @@
       editCodes(event) {
         const value = String(event.target.value).replace(/&(?=[0-9a-fk-or])/gi, '§');
         if (chars(value).length > MAX) {
-          this.notice = 'The MOTD can contain at most ' + MAX + ' characters, including colour codes.';
+          this.notice = t('motd.too_long', { max: MAX });
           event.target.value = this.written;
           return;
         }

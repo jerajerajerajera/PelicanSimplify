@@ -6,13 +6,13 @@
     @endphp
     <div class="ssc-pack-search">
         <x-filament::input.wrapper>
-            <x-filament::input type="search" placeholder="Search modpacks…" aria-label="Search modpacks"
+            <x-filament::input type="search" placeholder="{{ __('pelican-simplify::maker.modpack.search_modpacks') }}" aria-label="{{ __('pelican-simplify::maker.modpack.search_modpacks_2') }}"
                 wire:model.live.debounce.800ms="{{ $searchPath }}" />
         </x-filament::input.wrapper>
-        <p class="ssc-search-help">{{ trim((string) $get('modpack_search')) === '' ? 'Three popular picks to get started. Search to discover more.' : 'Choose a pack from the results. Your current selection stays in the list.' }}</p>
-        <p wire:loading wire:target="{{ $searchPath }}" class="ssc-search-help" role="status">Searching…</p>
+        <p class="ssc-search-help">{{ trim((string) $get('modpack_search')) === '' ? __('pelican-simplify::maker.modpack.popular_picks') : __('pelican-simplify::maker.modpack.choose_from_results') }}</p>
+        <p wire:loading wire:target="{{ $searchPath }}" class="ssc-search-help" role="status">{{ __('pelican-simplify::maker.modpack.searching') }}</p>
     </div>
-    <div class="ssc-cards ssc-featured-options" role="radiogroup" aria-label="Choose a modpack">
+    <div class="ssc-cards ssc-featured-options" role="radiogroup" aria-label="{{ __('pelican-simplify::maker.modpack.choose_a_modpack') }}">
         @foreach ($getOptions() as $value => $label)
             @php($pack = $packs->get((string) $value))
             @if ($pack)
@@ -34,7 +34,7 @@
                         <span class="ssc-card-description">{{ $pack['description'] }}</span>
                         @if ($pack['url'])
                             <a class="ssc-card-link" href="{{ $pack['url'] }}" target="_blank" rel="noopener noreferrer" x-on:click.stop
-                               aria-label="Read more about {{ $label }} on {{ $pack['source'] }}">Read more ↗</a>
+                               aria-label="{{ __('pelican-simplify::maker.modpack.read_more_label', ['name' => $label, 'site' => $pack['source']]) }}">{{ __('pelican-simplify::maker.modpack.read_more') }}</a>
                         @endif
                     </span>
                 </label>
@@ -42,9 +42,9 @@
         @endforeach
     </div>
     @if (count($getOptions()) === 0)
-        <p class="ssc-search-help">No packs found. Try another name; catalogues may be temporarily unavailable.</p>
+        <p class="ssc-search-help">{{ __('pelican-simplify::maker.modpack.no_packs_found_try_another_name') }}</p>
     @endif
     @if ($getState() && !\Simplify\Panel\Services\ModpackCatalog::egg($getState()))
-        <p class="ssc-summary-notice">The matching egg will be imported automatically when you continue. Your account needs the Import egg permission.</p>
+        <p class="ssc-summary-notice">{{ __('pelican-simplify::maker.modpack.the_matching_egg_will_be_imported') }}</p>
     @endif
 </x-dynamic-component>

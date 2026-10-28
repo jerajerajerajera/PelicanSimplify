@@ -12,6 +12,7 @@ namespace App\Models {class Server {}class Node {public static bool $down=false;
     return new class{public function orderBy($c){return $this;}public function get(){return new class{public function keyBy($k){return $this;}public function all(){return [3=>(object)['id'=>3,'name'=>'Beelink <home>']];}};}};}}}
 namespace App\Repositories\Daemon {final class DaemonSystemRepository {public static $node;public function setNode($n){self::$node=$n;return $this;}public function getDiagnostics($l,$e,$g){return new class{public function throw(){return $this;}public function body(){return "Latest Wings logs\nERROR failed to start container";}};}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 $GLOBALS['user']=null;
 function user(){return $GLOBALS['user'];}
 function csrf_token(){return 'csrf-123';}

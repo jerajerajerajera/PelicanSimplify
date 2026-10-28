@@ -28,6 +28,7 @@ final class ErrorExplainer
     public const PER_DAY = 200;
     /** Glob of the panel log files; storage/logs/*.log when null. */
     public static ?string $panelLogs = null;
+    // @english: the answer format and instructions are for the model; answerLanguage() asks for the reader's language.
     private const SCHEMA = ['type' => 'object', 'additionalProperties' => false, 'required' => ['found', 'summary', 'issues'], 'properties' => [
         'found' => ['type' => 'boolean', 'description' => 'True only when the log shows a real problem: a crash, a failed start or install, something that stops a feature, a player or the server from working. False for a normal log, also when it has harmless warnings.'],
         'summary' => ['type' => 'string', 'description' => 'One or two short sentences in plain words: what went wrong, or when found is false, that everything seems in order.'],
@@ -39,6 +40,7 @@ final class ErrorExplainer
             ],
         ]],
     ]];
+    // @english
     private const SYSTEM = "You help people who run game servers (often Minecraft, sometimes other games) on a Pelican panel. "
         ."You get the last lines of a server's console, or for panel administrators the panel's own log or the Wings daemon log. First check whether anything is actually wrong, then explain it for someone who is not a developer: short, friendly sentences, no jargon without a short explanation. "
         ."Point at the line or the mod, plugin, file or setting that causes a problem when the log shows it. Suggest steps that can be done from a game panel: change a setting, remove or update a mod, restore a backup, give the server more memory, accept the EULA, check a file. For panel and Wings logs, steps an administrator can take on the panel or node machine are fine too. "
@@ -52,10 +54,10 @@ final class ErrorExplainer
     {
         return self::PROVIDERS[$id] ?? self::PROVIDERS[array_key_first(self::PROVIDERS)];
     }
-    /** model id => label for one provider. */
+    /** model id => label for one provider; the note in brackets ("cheapest") in the reader's language. */
     public static function models(?string $provider): array
     {
-        return self::provider($provider)::models();
+        return array_map(fn (string $label) => preg_replace_callback('/\(([^)]+)\)$/', fn ($note) => '('.Translations::text('explain.model_notes.'.Translations::key($note[1]), $note[1]).')', $label), self::provider($provider)::models());
     }
     /** provider id => label for Simplify settings. */
     public static function providers(): array
@@ -115,6 +117,7 @@ final class ErrorExplainer
     /** Removes what should not leave the panel: addresses, e-mail addresses, tokens and passwords. */
     public static function sanitize(array $lines): array
     {
+        // @english: placeholders the model sees
         $patterns = [
             '/\b(password|passwd|secret|token|api[_-]?key|authorization)(\s*[:=]\s*)\S+/i' => '$1$2[hidden]',
             '/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i' => '[hidden email]',
@@ -134,6 +137,7 @@ final class ErrorExplainer
     /** The question for these lines, the same for every provider. */
     public static function question(array $lines, string $context = ''): string
     {
+        // @english
         return ($context !== '' ? $context."\n" : '')."Log, oldest line first:\n<log>\n".implode("\n", $lines)."\n</log>\nIs everything working, or is something wrong here?";
     }
     /** The request to a provider for these lines: ['url', 'headers', 'body']. */
@@ -175,7 +179,7 @@ final class ErrorExplainer
             $response = Http::withHeaders($request['headers'])
                 ->acceptJson()->asJson()->connectTimeout(5)->timeout(90)->post($request['url'], $request['body']);
         } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => 'Could not reach '.parse_url($request['url'], PHP_URL_HOST).' from the panel. Check that the panel server may connect to the internet.'];
+            return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.unreachable', ['host' => parse_url($request['url'], PHP_URL_HOST)])];
         }
         $body = (array) ($response->json() ?? []);
         if (!$response->successful()) return ['ok' => false, 'error' => $class::failure($response->status(), $body)];
@@ -187,14 +191,15 @@ final class ErrorExplainer
         abort_unless(user()?->isRootAdmin(), 403);
         $provider = isset(self::PROVIDERS[$provider]) ? $provider : self::settings()['provider'];
         $key = trim((string) $key) ?: self::key($provider);
-        if (!$key) return ['ok' => false, 'message' => 'Enter an API key first.'];
+        if (!$key) return ['ok' => false, 'message' => __('pelican-simplify::explain.errors.no_key')];
         $models = self::models($provider);
         $model = isset($models[$model]) ? $model : (self::settings()['provider'] === $provider ? self::settings()['model'] : array_key_first($models));
         $result = self::call($provider, self::provider($provider)::testRequest($key, $model));
-        return $result['ok'] ? ['ok' => true, 'message' => 'The key works with '.self::modelName($provider, $model).'.'] : ['ok' => false, 'message' => preg_replace('/ An administrator .*$/', '', $result['error'])];
+        return $result['ok'] ? ['ok' => true, 'message' => __('pelican-simplify::explain.test.works', ['model' => self::modelName($provider, $model)])] : ['ok' => false, 'message' => preg_replace('/ An administrator .*$/', '', $result['error'])];
     }
 
     /** Where the lines come from: label for the popup, how the question introduces them, text when there are none. */
+    // @english: the second text introduces the lines to the model; labels and empty texts are shown translated (explain.sources).
     public const SOURCES = [
         'console' => ['Console', null, 'The console is empty, so there is nothing to explain yet.'],
         'panel' => ['Panel log', 'Pelican panel log (Laravel), warnings and errors only, newest last.', 'The panel log has no warnings or errors right now.'],
@@ -254,6 +259,7 @@ final class ErrorExplainer
         return array_slice(array_values(array_filter($lines, fn ($line) => trim($line, " \t=-") !== '')), -self::LINES);
     }
     /** Where the question comes from, so the model knows whether the panel itself is up. */
+    // @english
     public const ASKED_FROM = [
         'panel' => 'The panel itself is up: an administrator is using it to ask this.',
         'emergency' => "Asked from Simplify's emergency page, which works without the normal panel pages: the panel may be partly broken, for example showing error 500.",
@@ -284,18 +290,27 @@ final class ErrorExplainer
         try { return $callback(); } catch (\Throwable $e) { report($e); return $fallback; }
     }
 
+    /** Asks for the answer in the reader's language; the instructions to the model stay English. */
+    private static function answerLanguage(): string
+    {
+        $locale = str_replace('_', '-', Translations::locale());
+        if ($locale === '' || str_starts_with($locale, 'en')) return '';
+        $name = class_exists(\Locale::class) ? \Locale::getDisplayLanguage($locale, 'en') : $locale;
+        // @english
+        return 'Write the summary, the titles, the causes and the steps in '.$name.' ('.$locale.').';
+    }
     /** Explains a log for the signed-in user; answers stay cached a few minutes for the same lines. */
     public static function explain(?Server $s, string $source = 'console'): array
     {
         $user = user();
-        if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
+        if (!in_array($source, self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.not_set_up')];
         return self::ask($key, $source, $s, null, 'simplify.explain.user.'.$user->id, $source === 'console' ? '' : self::ASKED_FROM['panel']);
     }
     /** Explains the saved log lines of a plugin Simplify switched off, for people who may read this server's console. */
     public static function explainPlugin(Server $s, array $lines): array
     {
         $user = user();
-        if (!in_array('console', self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => 'Error explanations are not set up on this panel.'];
+        if (!in_array('console', self::sourcesFor($user, $s), true) || !($key = self::key())) return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.not_set_up')];
         return self::ask($key, 'plugin', $s, null, 'simplify.explain.user.'.$user->id, '', self::LINES, array_values(array_filter($lines, 'is_string')));
     }
     /**
@@ -305,27 +320,29 @@ final class ErrorExplainer
      */
     public static function ask(string $key, string $source, ?Server $s = null, $node = null, ?string $personal = null, string $asked = '', int $limit = self::LINES, ?array $given = null): array
     {
-        if (!isset(self::SOURCES[$source])) return ['ok' => false, 'error' => 'Unknown log.'];
+        if (!isset(self::SOURCES[$source])) return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.unknown_log')];
         try { $lines = array_slice(self::sanitize($given ?? self::lines($s, $source, $node)), -max(1, min(self::LINES, $limit))); }
-        catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => $source === 'panel' ? 'Could not read the panel log.' : 'Could not read the '.($source === 'wings' ? 'Wings log' : 'console').' from Wings. Try again when the node is reachable.']; }
-        if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => self::SOURCES[$source][2], 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
+        catch (\Throwable $e) { report($e); return ['ok' => false, 'error' => match ($source) { 'panel' => __('pelican-simplify::explain.errors.read_panel'), 'wings' => __('pelican-simplify::explain.errors.read_wings'), default => __('pelican-simplify::explain.errors.read_console') }]; }
+        if ($lines === []) return ['ok' => true, 'found' => false, 'summary' => Translations::text('explain.sources.'.$source.'.empty', self::SOURCES[$source][2]), 'issues' => [], 'lines' => 0, 'model' => null, 'source' => $source];
         $settings = self::settings();
-        $cacheKey = 'simplify.explain.'.sha1($settings['provider'].$settings['model'].$source.implode("\n", $lines));
+        $cacheKey = 'simplify.explain.'.sha1($settings['provider'].$settings['model'].$source.self::answerLanguage().implode("\n", $lines));
         if (is_array($cached = self::guarded(fn () => Cache::get($cacheKey)))) return ['ok' => true, ...$cached];
-        if ($personal && self::guarded(fn () => RateLimiter::tooManyAttempts($personal, self::PER_USER), false)) return ['ok' => false, 'error' => 'You asked a lot of questions in a short time. Try again in '.max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)).' minute(s).'];
-        if (self::guarded(fn () => RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY), false)) return ['ok' => false, 'error' => 'This panel reached its daily limit of '.self::PER_DAY.' explanations. Try again tomorrow.'];
+        if ($personal && self::guarded(fn () => RateLimiter::tooManyAttempts($personal, self::PER_USER), false)) return ['ok' => false, 'error' => trans_choice('pelican-simplify::explain.errors.too_many', max(1, (int) ceil(RateLimiter::availableIn($personal) / 60)))];
+        if (self::guarded(fn () => RateLimiter::tooManyAttempts('simplify.explain.panel', self::PER_DAY), false)) return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.daily_limit', ['count' => self::PER_DAY])];
         self::guarded(function () use ($personal): void {
             if ($personal) RateLimiter::hit($personal, 600);
             RateLimiter::hit('simplify.explain.panel', 86400);
         });
+        // @english
         $context = self::SOURCES[$source][1] ?? ($s?->egg?->name ? 'Game or software: '.$s->egg->name : '');
         // The time lets the model see that a warning from hours ago is not a problem now.
-        $context = trim($context.($asked !== '' ? ' '.$asked : '')."\nCurrent time on the panel: ".date('Y-m-d H:i:s T'));
+        // @english
+        $context = trim($context.($asked !== '' ? ' '.$asked : '')."\nCurrent time on the panel: ".date('Y-m-d H:i:s T')."\n".self::answerLanguage());
         $provider = $settings['provider'];
         $result = self::call($provider, self::request($provider, $key, $settings['model'], $lines, $context));
         if (!$result['ok']) return $result;
         $answer = self::answer($result['body'], $provider);
-        if (!$answer) return ['ok' => false, 'error' => self::modelName($provider, $settings['model']).' could not explain these lines. Try again after the error shows up again.'];
+        if (!$answer) return ['ok' => false, 'error' => __('pelican-simplify::explain.errors.no_answer', ['model' => self::modelName($provider, $settings['model'])])];
         $answer += ['lines' => count($lines), 'model' => self::modelName($provider, $settings['model']), 'source' => $source];
         self::guarded(fn () => Cache::put($cacheKey, $answer, now()->addMinutes(10)));
         return ['ok' => true, ...$answer];

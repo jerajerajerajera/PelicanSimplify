@@ -9,6 +9,7 @@ class Storage {public static array $files=[];public static function disk($d){ret
 class Cache {public static function remember($k,$t,$f){return $f();}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function app($c){return new $c;}function user(){return (object)['id'=>7];}function report($e){}
 function abort_unless($ok,$code,$message=''){if(!$ok)throw new \RuntimeException((string)$code);}function abort_if($ok,$code,$message=''){abort_unless(!$ok,$code,$message);}
 require __DIR__.'/../src/Services/JsonFile.php';require __DIR__.'/../src/Services/InstallProgress.php';

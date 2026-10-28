@@ -9,6 +9,7 @@ class Http {public static array $sent=[];public static int $status=201;public st
 }
 namespace Simplify\Panel\Filament\App\Pages {final class Dashboard {public static function getUrl(array $parameters=[],?string $panel=null): string {return 'https://panel.example/simplify';}}}
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 function report($e){}
 function url($path='/'){return 'https://panel.example';}
 function config($key){return null;}

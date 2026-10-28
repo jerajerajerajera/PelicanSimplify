@@ -58,15 +58,15 @@ final class Packages
     }
     private static function target(Server $s,string $version): array
     {
-        $ctx=self::context($s);abort_unless($ctx['loader'],422,'This server software does not support installable mods or plugins.');
-        $version=$ctx['version']?:$version;abort_unless(preg_match('/^[0-9a-zA-Z._-]{1,40}$/',$version),422,'Enter the exact Minecraft version first.');
+        $ctx=self::context($s);abort_unless($ctx['loader'],422,__('pelican-simplify::dashboard.packages.this_server_software_does_not_support'));
+        $version=$ctx['version']?:$version;abort_unless(preg_match('/^[0-9a-zA-Z._-]{1,40}$/',$version),422,__('pelican-simplify::dashboard.packages.enter_the_exact_minecraft_version_first'));
         return [...$ctx,'version'=>$version];
     }
     public static function search(Server $s,string $q,string $version): array
     {
         Access::permission($s,SubuserPermission::FileRead);$ctx=self::target($s,$version);
         $results=PluginSources::fetchAll(PluginSources::searchUrls($q,$ctx['loader'],$ctx['kind'],CurseForge::hasKey()));
-        abort_if(array_filter($results)===[],503,'The plugin sites did not answer. Try again in a moment.');
+        abort_if(array_filter($results)===[],503,__('pelican-simplify::dashboard.packages.the_plugin_sites_did_not_answer'));
         return ['context'=>$ctx,'items'=>PluginSources::merge($results,$q,$ctx['version'],$ctx['kind']),'offline'=>array_keys(array_filter($results,fn($r)=>$r===null))];
     }
     /** What "Install" would download for each search result: version, site and whether it is made for this version. */
@@ -86,7 +86,7 @@ final class Packages
             $name=(string)($f['name']??'');if(!preg_match('/\.jar(\.disabled)?$/i',$name))continue;
             $on=!str_ends_with(strtolower($name),'.disabled');$t=$byFile[preg_replace('/\.disabled$/i','',$name)]??null;
             [$title,$v]=PluginSources::fromFilename($name);
-            $items[]=['file'=>$name,'enabled'=>$on,'title'=>$t['title']??$title,'version'=>$t['version']??$v,'source'=>$t['source']??'','label'=>$t?(PluginSources::LABELS[$t['source']]??'').(!empty($t['via'])?' via '.$t['via']:''):'Added by hand',
+            $items[]=['file'=>$name,'enabled'=>$on,'title'=>$t['title']??$title,'version'=>$t['version']??$v,'source'=>$t['source']??'','label'=>$t?(PluginSources::LABELS[$t['source']]??'').(!empty($t['via'])?' '.__('pelican-simplify::dashboard.packages.via', ['site' => $t['via']]):''):__('pelican-simplify::dashboard.packages.added_by_hand'),
                 'key'=>$t['key']??'','icon'=>$t['icon']??'','auto_off'=>!$on?($t['auto_off']??''):'','watch'=>$on&&!empty($t['watch']),'page'=>$t['page']??'','size'=>(int)($f['size']??0)];
         }
         usort($items,fn($a,$b)=>strcasecmp($a['title'],$b['title']));
@@ -112,15 +112,15 @@ final class Packages
         Access::permission($s,SubuserPermission::FileRead);
         Access::permission($s,SubuserPermission::FileCreate);Access::permission($s,SubuserPermission::FileUpdate);Access::offline($s);
         if(preg_match('/^[a-zA-Z0-9_-]{1,128}$/',$key))$key='modrinth:'.$key;
-        abort_unless(PluginSources::parseKey($key),422,'Unknown plugin.');
+        abort_unless(PluginSources::parseKey($key),422,__('pelican-simplify::dashboard.packages.unknown_plugin'));
         $ctx=self::target($s,$version);
         $release=PluginSources::resolve($key,$ctx['version'],$ctx['loader'],$ctx['kind']);
-        abort_unless($release['installable']??false,422,$release['reason']??'This plugin cannot be installed automatically.');
-        abort_unless($release['fits']||$anyway,409,'There is no release for Minecraft '.$ctx['version'].'.');
-        abort_unless(PluginSources::downloadable($release['url'],$release['filename']),422,'Unsupported package download.');
+        abort_unless($release['installable']??false,422,$release['reason']??__('pelican-simplify::dashboard.packages.this_plugin_cannot_be_installed_automatically'));
+        abort_unless($release['fits']||$anyway,409,__('pelican-simplify::js.dashboard.no_release_for', ['version' => $ctx['version']]));
+        abort_unless(PluginSources::downloadable($release['url'],$release['filename']),422,__('pelican-simplify::dashboard.packages.unsupported_package_download'));
         $tracked=self::tracked($s);
         // Modrinth lists dependencies by project; refuse until required ones are installed.
-        foreach($release['needs']??[] as $dep) abort_unless(isset($tracked['modrinth:'.$dep]),422,'Install required dependency '.$dep.' first.');
+        foreach($release['needs']??[] as $dep) abort_unless(isset($tracked['modrinth:'.$dep]),422,__('pelican-simplify::dashboard.packages.install_dependency', ['name' => $dep]));
         $files=app(DaemonFileRepository::class)->setServer($s);
         $old=$tracked[$key]['filename']??null;
         if ($old!==null && $old!==$release['filename']) self::archive($s,$ctx['directory'],[$old]);
@@ -176,7 +176,7 @@ final class Packages
         Access::permission($s,SubuserPermission::FileRead);
         $base=preg_replace('/\.disabled$/','',$filename);
         foreach(self::tracked($s) as $t) if($t['filename']===$base&&!empty($t['auto_off_lines'])) return ErrorExplainer::explainPlugin($s,$t['auto_off_lines']);
-        return ['ok'=>false,'error'=>'There are no saved log lines for this plugin.'];
+        return ['ok'=>false,'error'=>__('pelican-simplify::explain.sources.plugin.empty')];
     }
     /** Moves files to the backup folder instead of deleting them. */
     private static function archive(Server $s,string $directory,array $names): void

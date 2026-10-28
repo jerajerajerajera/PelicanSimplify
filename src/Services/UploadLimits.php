@@ -32,14 +32,16 @@ final class UploadLimits
     public static function label(int $bytes): string { return rtrim(rtrim(number_format($bytes/1048576,2,'.',''),'0'),'.').' MB'; }
     public static function checks(): array
     {
-        $limits=self::current();$runtime=PHP_SAPI==='cli'?'CLI PHP (verify PHP-FPM separately)':'Web PHP';
+        $limits=self::current();$t=static fn(string $key,string $english,array $replace=[]):string=>Translations::text('checks.uploads.'.$key,$english,$replace);
+        $runtime=PHP_SAPI==='cli'?$t('runtime_cli','CLI PHP (verify PHP-FPM separately)'):$t('runtime_web','Web PHP');
+        $enough=$limits['banner_bytes']>=5*1048576;
         return [
-            ['name'=>'Upload capacity · '.self::label($limits['banner_bytes']).' for banners','ok'=>$limits['banner_bytes']>=5*1048576,'blocking'=>false,
-             'detail'=>$runtime.': upload_max_filesize='.$limits['upload'].'; post_max_size='.$limits['post'].'. Banner uploads are capped at the lower PHP/Livewire limit (maximum 5 MB).',
-             'fix'=>$limits['banner_bytes']>=5*1048576?'':'To allow 5 MB banners, set PHP-FPM upload_max_filesize = 10M and post_max_size = 12M, check any Livewire max rule, then reload PHP-FPM.'],
-            ['name'=>'NGINX / proxy upload limit · not verified','ok'=>false,'blocking'=>false,
-             'detail'=>'A proxy may reject uploads before PHP receives them (HTTP 413), even when the checks above pass.',
-             'fix'=>'In the NGINX server block serving this panel, set client_max_body_size 12m; check for lower location overrides and upstream proxy limits. Run sudo nginx -t, then sudo systemctl reload nginx. Verify with a real upload. No server configuration is changed automatically.'],
+            ['id'=>'upload-capacity','name'=>$t('capacity','Upload capacity · :size for banners',['size'=>self::label($limits['banner_bytes'])]),'ok'=>$enough,'blocking'=>false,'group'=>'Upload capacity',
+             'detail'=>$t('capacity_detail',':runtime: upload_max_filesize=:upload; post_max_size=:post. Banner uploads are capped at the lower PHP/Livewire limit (maximum 5 MB).',['runtime'=>$runtime,'upload'=>$limits['upload'],'post'=>$limits['post']]),
+             'fix'=>$enough?'':$t('capacity_fix','To allow 5 MB banners, set PHP-FPM upload_max_filesize = 10M and post_max_size = 12M, check any Livewire max rule, then reload PHP-FPM.')],
+            ['id'=>'proxy-upload-limit','name'=>$t('proxy','NGINX / proxy upload limit · not verified'),'ok'=>false,'blocking'=>false,'group'=>'Upload capacity',
+             'detail'=>$t('proxy_detail','A proxy may reject uploads before PHP receives them (HTTP 413), even when the checks above pass.'),
+             'fix'=>$t('proxy_fix','In the NGINX server block serving this panel, set client_max_body_size 12m; check for lower location overrides and upstream proxy limits. Run sudo nginx -t, then sudo systemctl reload nginx. Verify with a real upload. No server configuration is changed automatically.')],
         ];
     }
 }

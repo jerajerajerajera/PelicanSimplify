@@ -6,9 +6,10 @@ final class Anthropic extends Provider
 {
     public const ENDPOINT = 'https://api.anthropic.com/v1/messages';
     public static function name(): string { return 'Anthropic'; }
-    public static function label(): string { return 'Claude by Anthropic'; }
+    public static function label(): string { return __('pelican-simplify::explain.providers.anthropic.label'); }
     public static function models(): array
     {
+        // @english: model names; ErrorExplainer::models() translates the note in brackets (explain.model_notes).
         return [
             'claude-opus-5-5' => 'Claude Opus 5.5 (best answers, a few cents)',
             'claude-sonnet-5-5' => 'Claude Sonnet 5.5 (about a cent)',
@@ -18,7 +19,7 @@ final class Anthropic extends Provider
     public static function keyPlaceholder(): string { return 'sk-ant-…'; }
     public static function keyHelp(): string
     {
-        return 'Create a key at console.anthropic.com → API keys. Every question is billed to that Anthropic account, usually a few cents or less; set a monthly limit there to be safe.';
+        return __('pelican-simplify::explain.providers.anthropic.key_help');
     }
     public static function request(string $key, string $model, string $system, array $schema, string $question): array
     {

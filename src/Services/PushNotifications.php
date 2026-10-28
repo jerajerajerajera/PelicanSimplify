@@ -69,12 +69,12 @@ final class PushNotifications
     {
         $id=self::id($endpoint);
         $device=current(array_filter(self::read($user)['devices'],fn(array $d):bool=>$d['id']===$id));
-        if(!$device)return ['ok'=>false,'message'=>'Notifications are not on for this device yet.'];
-        $result=self::deliver($user,$device,['title'=>'Test notification','body'=>'Notifications work on this device.','url'=>self::home(),'tag'=>'simplify-test']);
+        if(!$device)return ['ok'=>false,'message'=>__('pelican-simplify::notifications.push.notifications_are_not_on_for_this')];
+        $result=self::deliver($user,$device,['title'=>__('pelican-simplify::notifications.push.test_notification'),'body'=>__('pelican-simplify::notifications.push.notifications_work_on_this_device'),'url'=>self::home(),'tag'=>'simplify-test']);
         return match($result){
-            'sent'=>['ok'=>true,'message'=>'Test sent. It should appear within a few seconds.'],
-            'gone'=>['ok'=>false,'message'=>'The browser no longer accepts notifications for this device. Turn them on again.'],
-            default=>['ok'=>false,'message'=>'The push service did not accept the test. Try again in a minute.'],
+            'sent'=>['ok'=>true,'message'=>__('pelican-simplify::notifications.push.test_sent_it_should_appear_within')],
+            'gone'=>['ok'=>false,'message'=>__('pelican-simplify::notifications.push.the_browser_no_longer_accepts_notifications')],
+            default=>['ok'=>false,'message'=>__('pelican-simplify::notifications.push.the_push_service_did_not_accept')],
         };
     }
 

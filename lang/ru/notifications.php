@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Что нового',
+        'full_release_notes' => 'Полные примечания к выпуску',
+        'mark_read' => 'Отметить прочитанным',
+        'mark_as_unread' => 'Отметить непрочитанным',
+        'clear' => 'Очистить',
+        'show_less' => 'Показать меньше',
+        'pin' => 'Закрепить ',
+        'unpin' => 'Открепить ',
+        'pin_2' => 'Закрепить',
+        'unpin_2' => 'Открепить',
+        'pinned' => 'Закреплено',
+        'you_are_all_caught_up' => 'Всё прочитано.',
+        'archived' => 'Архив',
+        'nothing_archived' => 'В архиве пусто.',
+        'loading' => 'Загрузка…',
+        'show_more' => 'Показать ещё',
+        'clear_name' => 'Очистить :title',
+        'show_all' => 'Показать все (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Уведомления на этом устройстве ещё не включены.',
+        'test_notification' => 'Тестовое уведомление',
+        'notifications_work_on_this_device' => 'Уведомления на этом устройстве работают.',
+        'test_sent_it_should_appear_within' => 'Тест отправлен. Он должен появиться в течение нескольких секунд.',
+        'the_browser_no_longer_accepts_notifications' => 'Браузер больше не принимает уведомления для этого устройства. Включите их снова.',
+        'the_push_service_did_not_accept' => 'Push-сервис не принял тест. Попробуйте ещё раз через минуту.',
+    ],
+];

@@ -40,3 +40,12 @@ const themedCreator=page({...config,panel_theme:{active:true,mode:null,own_css:t
 const plain=page({...config,panel_theme:{active:false,mode:null,own_css:false}});assert(!plain.has('ps-panel-theme'));assert.equal(plain.window.SimplifyTheme.forced(),'');
 console.log('PASS panel themes: palette class, forced mode, chosen accent kept, theme stylesheet keeps Pelican pages');
 console.log('PASS theme preference, accent, console modes, embedded frame detection, legacy opt-out, live sync and shared UI API');
+// Plural forms follow the page language like Laravel's trans_choice: conditions first, then the language's own forms.
+const words=page(config);const{choice}=words.window.Simplify;
+assert.equal(choice('{0} None|{1} One|[2,*] :count servers',0),'None');assert.equal(choice(':count server|:count servers',1),'1 server');assert.equal(choice(':count server|:count servers',0),'0 servers');
+words.root.lang='fr';assert.equal(choice(':count serveur|:count serveurs',0),'0 serveur','French uses the singular for zero');
+words.root.lang='ru';assert.deepEqual([1,3,5,21,22,11].map(n=>choice(':count сервер|:count сервера|:count серверов',n)),['1 сервер','3 сервера','5 серверов','21 сервер','22 сервера','11 серверов']);
+words.root.lang='ar';assert.deepEqual([0,1,2,3,11,100].map(n=>choice('a|b|c|d|e|f',n)),['a','b','c','d','e','f']);
+words.root.lang='ja';assert.equal(choice(':count 台',3),'3 台');
+words.root.lang='pt_BR';assert.equal(choice(':count servidor|:count servidores',0),'0 servidor');
+console.log('PASS plural forms per language: conditions, two, three and six forms, one form');

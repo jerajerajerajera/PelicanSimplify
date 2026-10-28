@@ -21,9 +21,9 @@ final class ResourceLimits
         $disk = filter_var($state['disk_mb'] ?? null, FILTER_VALIDATE_INT);
         $cpu = filter_var($state['cpu'] ?? null, FILTER_VALIDATE_INT);
         $allowed = fn (int|false $value, int $max): bool => $value !== false && $value <= $max && ($value >= 1 || ($unlimited && $value === 0));
-        if (!$allowed($memory, 131072)) throw ValidationException::withMessages(['data.memory_gb' => 'Enter RAM between 1 and 128 GB.']);
-        if (!$allowed($cpu, 1600)) throw ValidationException::withMessages(['data.cpu' => 'Enter a CPU limit between 1 and 1600%.']);
-        if (!$allowed($disk, 10485760)) throw ValidationException::withMessages(['data.disk_mb' => 'Enter a valid storage limit in MB.']);
+        if (!$allowed($memory, 131072)) throw ValidationException::withMessages(['data.memory_gb' => __('pelican-simplify::dashboard.errors.enter_ram_between_1_and_128')]);
+        if (!$allowed($cpu, 1600)) throw ValidationException::withMessages(['data.cpu' => __('pelican-simplify::dashboard.errors.enter_a_cpu_limit_between_1')]);
+        if (!$allowed($disk, 10485760)) throw ValidationException::withMessages(['data.disk_mb' => __('pelican-simplify::dashboard.errors.enter_a_valid_storage_limit_in')]);
         return ['memory' => $memory, 'cpu' => $cpu, 'disk' => $disk];
     }
 

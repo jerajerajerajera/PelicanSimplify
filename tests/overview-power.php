@@ -11,6 +11,7 @@ class Access {public static array $servers=[];public static bool $granted=true;p
 class PendingChanges {public static ?array $pending=null;public static array $requests=[];public static function read($s){return self::$pending;}public static function requestRestart($s,$minutes){self::$requests[]=[$s->uuid,'restart'];}public static function requestStop($s){self::$requests[]=[$s->uuid,'stop'];}}
 }
 namespace {
+require_once __DIR__.'/fixtures/lang.php';
 require __DIR__.'/../src/Filament/App/Pages/Dashboard.php';use Simplify\Panel\Services\Access as A;use Simplify\Panel\Services\PendingChanges as P;use App\Repositories\Daemon\DaemonServerRepository as D;
 function app($class){return new $class;}function report($e){throw $e;}function abort_unless($ok,$code){if(!$ok)throw new \RuntimeException((string)$code);}function abort_if($ok,$code,$message=''){abort_unless(!$ok,$code);}function check($ok,$message){if(!$ok)throw new \RuntimeException($message);echo "PASS $message\n";}
 $server=new \App\Models\Server('owned');A::$servers=['owned'=>$server];$page=new \Simplify\Panel\Filament\App\Pages\Dashboard;$page->overviewPower('owned','start');check(D::$actions===[['owned','start']],'overview targets the authorized server rather than a selected dashboard server');

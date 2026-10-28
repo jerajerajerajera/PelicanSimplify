@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Yenilikler',
+        'full_release_notes' => 'Tüm sürüm notları',
+        'mark_read' => 'Okundu işaretle',
+        'mark_as_unread' => 'Okunmadı işaretle',
+        'clear' => 'Temizle',
+        'show_less' => 'Daha az göster',
+        'pin' => 'Sabitle ',
+        'unpin' => 'Sabitlemeyi kaldır ',
+        'pin_2' => 'Sabitle',
+        'unpin_2' => 'Sabitlemeyi kaldır',
+        'pinned' => 'Sabitlendi',
+        'you_are_all_caught_up' => 'Her şeyi okudun.',
+        'archived' => 'Arşivlendi',
+        'nothing_archived' => 'Arşivde bir şey yok.',
+        'loading' => 'Yükleniyor…',
+        'show_more' => 'Daha fazla göster',
+        'clear_name' => 'Temizle: :title',
+        'show_all' => 'Tümünü göster (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Bu cihazda bildirimler henüz açık değil.',
+        'test_notification' => 'Test bildirimi',
+        'notifications_work_on_this_device' => 'Bildirimler bu cihazda çalışıyor.',
+        'test_sent_it_should_appear_within' => 'Test gönderildi. Birkaç saniye içinde görünmesi gerekir.',
+        'the_browser_no_longer_accepts_notifications' => 'Tarayıcı artık bu cihaz için bildirim kabul etmiyor. Bildirimleri yeniden aç.',
+        'the_push_service_did_not_accept' => 'Push hizmeti testi kabul etmedi. Bir dakika sonra tekrar dene.',
+    ],
+];

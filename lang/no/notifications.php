@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Nytt',
+        'full_release_notes' => 'Fullstendige versjonsnotater',
+        'mark_read' => 'Merk som lest',
+        'mark_as_unread' => 'Merk som ulest',
+        'clear' => 'Fjern',
+        'show_less' => 'Vis mindre',
+        'pin' => 'Fest ',
+        'unpin' => 'Løsne ',
+        'pin_2' => 'Fest',
+        'unpin_2' => 'Løsne',
+        'pinned' => 'Festet',
+        'you_are_all_caught_up' => 'Du har lest alt.',
+        'archived' => 'Arkivert',
+        'nothing_archived' => 'Ingenting arkivert.',
+        'loading' => 'Laster inn…',
+        'show_more' => 'Vis mer',
+        'clear_name' => 'Fjern :title',
+        'show_all' => 'Vis alle :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Varsler er ikke slått på for denne enheten ennå.',
+        'test_notification' => 'Testvarsel',
+        'notifications_work_on_this_device' => 'Varsler fungerer på denne enheten.',
+        'test_sent_it_should_appear_within' => 'Test sendt. Den skal dukke opp i løpet av noen sekunder.',
+        'the_browser_no_longer_accepts_notifications' => 'Nettleseren godtar ikke lenger varsler for denne enheten. Slå dem på igjen.',
+        'the_push_service_did_not_accept' => 'Push-tjenesten godtok ikke testen. Prøv igjen om et minutt.',
+    ],
+];

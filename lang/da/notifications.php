@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Nyheder',
+        'full_release_notes' => 'Fulde udgivelsesnoter',
+        'mark_read' => 'Markér som læst',
+        'mark_as_unread' => 'Markér som ulæst',
+        'clear' => 'Ryd',
+        'show_less' => 'Vis mindre',
+        'pin' => 'Fastgør ',
+        'unpin' => 'Frigør ',
+        'pin_2' => 'Fastgør',
+        'unpin_2' => 'Frigør',
+        'pinned' => 'Fastgjort',
+        'you_are_all_caught_up' => 'Du er helt opdateret.',
+        'archived' => 'Arkiveret',
+        'nothing_archived' => 'Intet arkiveret.',
+        'loading' => 'Indlæser…',
+        'show_more' => 'Vis mere',
+        'clear_name' => 'Ryd :title',
+        'show_all' => 'Vis alle :count',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Notifikationer er endnu ikke slået til på denne enhed.',
+        'test_notification' => 'Testnotifikation',
+        'notifications_work_on_this_device' => 'Notifikationer virker på denne enhed.',
+        'test_sent_it_should_appear_within' => 'Test sendt. Den bør dukke op inden for få sekunder.',
+        'the_browser_no_longer_accepts_notifications' => 'Browseren accepterer ikke længere notifikationer for denne enhed. Slå dem til igen.',
+        'the_push_service_did_not_accept' => 'Push-tjenesten accepterede ikke testen. Prøv igen om et minut.',
+    ],
+];

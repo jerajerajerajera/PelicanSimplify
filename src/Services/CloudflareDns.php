@@ -17,7 +17,7 @@ final class CloudflareDns
         return static function(string $method,string $path,?array $body)use($token): array {
             $request=\Illuminate\Support\Facades\Http::withToken($token)->acceptJson()->timeout(10)->baseUrl('https://api.cloudflare.com/client/v4');
             $response=$method==='GET'?$request->get($path):$request->send($method,$path,$body===null?[]:['json'=>$body]);
-            return (array)($response->json()??['success'=>false,'errors'=>[['message'=>'HTTP '.$response->status()]]]);
+            return (array)($response->json()??['success'=>false,'errors'=>[['message'=>'HTTP '.(string)$response->status()]]]);
         };
     }
     /** Records a server should have; none without a subdomain. */
@@ -50,15 +50,15 @@ final class CloudflareDns
         try {
             $wanted=$this->wanted($uuid,$name,$port,$minecraft);
             foreach($wanted as $w)foreach($this->find(['name.exact'=>$w['name']]) as $other)
-                if(($other['comment']??'')!==self::comment($uuid))return 'A DNS record for '.$w['name'].' already exists and was not created by this panel.';
+                if(($other['comment']??'')!==self::comment($uuid))return __('pelican-simplify::maker.subdomains.record_exists', ['name'=>$w['name']]);
             $base='/zones/'.rawurlencode($this->zoneId).'/dns_records';
             foreach(self::diff($wanted,$this->find(['comment.exact'=>self::comment($uuid)])) as [$op,$r]){
                 $body=array_diff_key($r,['id'=>true]);
                 $result=match($op){'create'=>($this->send)('POST',$base,$body),'update'=>($this->send)('PUT',$base.'/'.rawurlencode($r['id']),$body),'delete'=>($this->send)('DELETE',$base.'/'.rawurlencode($r['id']),null)};
-                if(!($result['success']??false))return 'Cloudflare refused to '.$op.' '.$r['name'].': '.self::error($result);
+                if(!($result['success']??false))return __('pelican-simplify::maker.subdomains.refused', ['name'=>$r['name'],'error'=>self::error($result)]);
             }
             return null;
-        } catch(\Throwable $e) { return 'Cloudflare could not be reached: '.$e->getMessage(); }
+        } catch(\Throwable $e) { return __('pelican-simplify::maker.subdomains.unreachable', ['error'=>$e->getMessage()]); }
     }
     public function remove(string $uuid): ?string { return $this->sync($uuid,'',0,false); }
     private function find(array $query): array

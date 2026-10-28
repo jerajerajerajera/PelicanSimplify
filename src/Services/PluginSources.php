@@ -15,6 +15,7 @@ final class PluginSources
     private const ORDER = ['modrinth' => 0, 'hangar' => 1, 'spigot' => 2, 'curseforge' => 3];
     /** CurseForge: Minecraft, its classes for Bukkit plugins and for mods, and its mod loader numbers. */
     private const CURSEFORGE = ['game' => 432, 'plugins' => 5, 'mods' => 6, 'loaders' => ['forge' => 1, 'fabric' => 4, 'quilt' => 5, 'neoforge' => 6]];
+    // @english
     private const AGENT = 'PelicanSimplify (github.com/jerajerajerajera/PelicanSimplify)';
     /** Hosts Wings may download from: the sites' own file servers and GitHub release assets. */
     private const HOSTS = ['cdn.modrinth.com', 'hangarcdn.papermc.io', 'api.spiget.org', 'github.com', 'edge.forgecdn.net', 'mediafilez.forgecdn.net'];
@@ -183,13 +184,13 @@ final class PluginSources
 
     public static function resolve(string $key, string $minecraft, string $loader, string $kind): array
     {
-        return self::resolveMany([$key], $minecraft, $loader, $kind)[$key] ?? ['installable' => false, 'reason' => 'This plugin was not found.'];
+        return self::resolveMany([$key], $minecraft, $loader, $kind)[$key] ?? ['installable' => false, 'reason' => __('pelican-simplify::dashboard.packages.this_plugin_was_not_found')];
     }
 
     /** Picks the newest release made for this Minecraft version, or the newest release at all with fits=false. */
     public static function choose(string $source, string $id, mixed $data, mixed $latest, string $minecraft, string $kind): array
     {
-        $none = ['installable' => false, 'source' => $source, 'label' => self::LABELS[$source], 'reason' => self::LABELS[$source].' did not answer. Try again in a moment.'];
+        $none = ['installable' => false, 'source' => $source, 'label' => self::LABELS[$source], 'reason' => __('pelican-simplify::dashboard.packages.site_down', ['site' => self::LABELS[$source]])];
         if (!is_array($data)) return $none;
         $exact = $kind !== 'plugins';
         if ($source === 'modrinth') {
@@ -198,7 +199,7 @@ final class PluginSources
             foreach ($versions as $v) if (self::fits($v['game_versions'] ?? [], $minecraft, $exact)) { $pick = $v; break; }
             $fits = $pick !== null;
             $pick ??= $versions[0] ?? null;
-            if (!$pick) return [...$none, 'reason' => 'This project has no downloadable release for your server software.'];
+            if (!$pick) return [...$none, 'reason' => __('pelican-simplify::dashboard.packages.this_project_has_no_downloadable_release')];
             $file = null;
             foreach ($pick['files'] ?? [] as $f) if (str_ends_with(strtolower((string) ($f['filename'] ?? '')), '.jar') && ($file === null || !empty($f['primary']))) $file = $f;
             $needs = [];
@@ -213,7 +214,7 @@ final class PluginSources
             }
             $fits = $pick !== null;
             $pick ??= $versions[0] ?? null;
-            if (!$pick) return [...$none, 'reason' => 'This project has no Paper release on Hangar.'];
+            if (!$pick) return [...$none, 'reason' => __('pelican-simplify::dashboard.packages.this_project_has_no_paper_release')];
             $download = $pick['downloads']['PAPER'] ?? [];
             $names = [];
             foreach ($pick['pluginDependencies']['PAPER'] ?? [] as $d) if (!empty($d['required']) && !empty($d['name'])) $names[] = (string) $d['name'];
@@ -230,11 +231,11 @@ final class PluginSources
             foreach ($files as $f) if (self::fits($f['gameVersions'] ?? [], $minecraft, $exact)) { $pick = $f; break; }
             $fits = $pick !== null;
             $pick ??= $files[0] ?? null;
-            if (!$pick) return [...$none, 'reason' => 'This project has no files on CurseForge.'];
+            if (!$pick) return [...$none, 'reason' => __('pelican-simplify::dashboard.packages.this_project_has_no_files_on')];
             $filename = (string) ($pick['fileName'] ?? '');
             $version = self::fromFilename($filename)[1] ?: (string) ($pick['displayName'] ?? '');
             $result = self::result($source, $version, (string) ($pick['id'] ?? ''), $filename, (string) ($pick['downloadUrl'] ?? ''), $pick['gameVersions'] ?? [], $fits, [], [], null);
-            return $result['installable'] ? $result : [...$result, 'reason' => 'The author only allows downloads on the CurseForge website.'];
+            return $result['installable'] ? $result : [...$result, 'reason' => __('pelican-simplify::dashboard.packages.the_author_only_allows_downloads_on')];
         }
         // SpigotMC: Spiget only offers the newest version, and lists the versions it was tested on.
         $tested = $data['testedVersions'] ?? [];
@@ -252,8 +253,8 @@ final class PluginSources
             'filename' => $filename, 'url' => $url, 'fits' => $fits, 'for' => self::range($versions), 'needs' => $needs, 'need_names' => $needNames, 'reason' => ''];
         if (self::downloadable($url, $filename)) return [...$result, 'installable' => true];
         $release = is_string($external) ? self::releaseApi($external) : null;
-        if ($release) return [...$result, 'github' => $release, 'reason' => 'Looking up the GitHub release…'];
-        return [...$result, 'reason' => 'This plugin can only be downloaded from its own website.'];
+        if ($release) return [...$result, 'github' => $release, 'reason' => __('pelican-simplify::dashboard.packages.looking_up_the_github_release')];
+        return [...$result, 'reason' => __('pelican-simplify::dashboard.packages.this_plugin_can_only_be_downloaded')];
     }
 
     /** "https://github.com/o/r/releases/tag/v1" -> the GitHub API URL of that release (or of the latest one). */
@@ -274,7 +275,7 @@ final class PluginSources
         }
         usort($assets, fn ($a, $b) => strlen((string) $a['name']) <=> strlen((string) $b['name']));
         $asset = $assets[0] ?? null;
-        if (!$asset || !self::downloadable((string) ($asset['browser_download_url'] ?? ''), (string) $asset['name'])) return [...$result, 'reason' => 'The linked GitHub release has no plugin file.'];
+        if (!$asset || !self::downloadable((string) ($asset['browser_download_url'] ?? ''), (string) $asset['name'])) return [...$result, 'reason' => __('pelican-simplify::dashboard.packages.the_linked_github_release_has_no')];
         return [...$result, 'installable' => true, 'via' => 'GitHub', 'filename' => (string) $asset['name'], 'url' => (string) $asset['browser_download_url'], 'version' => $result['version'] ?: ltrim((string) ($release['tag_name'] ?? ''), 'v'), 'reason' => ''];
     }
 

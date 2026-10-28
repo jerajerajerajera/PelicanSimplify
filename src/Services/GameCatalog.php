@@ -79,17 +79,17 @@ final class GameCatalog
         $game = collect(self::index())->firstWhere('id', substr($key, 6));
         if (!$game) return null;
         if (!self::canInstall()) {
-            throw ValidationException::withMessages(['data.game_key' => 'This game is not on the panel yet. Ask an administrator to install it, or to allow your role to install new games.']);
+            throw ValidationException::withMessages(['data.game_key' => __('pelican-simplify::maker.game.this_game_is_not_on_the')]);
         }
         try {
             return Cache::lock('simplify.game-install.'.$game['id'], 120)->block(15, fn (): Egg => self::install($game));
         } catch (LockTimeoutException) {
-            throw ValidationException::withMessages(['data.game_key' => 'This game is being installed by someone else. Wait a moment and continue again.']);
+            throw ValidationException::withMessages(['data.game_key' => __('pelican-simplify::maker.game.this_game_is_being_installed_by')]);
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
             report($exception);
-            throw ValidationException::withMessages(['data.game_key' => 'Could not install this game: '.$exception->getMessage()]);
+            throw ValidationException::withMessages(['data.game_key' => __('pelican-simplify::maker.game.install_failed', ['error' => $exception->getMessage()])]);
         }
     }
 
@@ -123,9 +123,9 @@ final class GameCatalog
     {
         try {
             $by = user();
-            $notification = \Filament\Notifications\Notification::make()->info()->title('Game installed: '.$egg->name)
-                ->body(($by?->username ?? 'Someone').' installed this egg from the Pelican egg index for the server creator. It is now available for self-service.');
-            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin() && $user->id !== $by?->id) as $user) $user->notifyNow($notification->toDatabase());
+            foreach (\App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin() && $user->id !== $by?->id) as $user) Translations::as($user, fn () => $user->notifyNow(\Filament\Notifications\Notification::make()->info()
+                ->title(__('pelican-simplify::maker.game.installed_title', ['name' => $egg->name]))
+                ->body(__('pelican-simplify::maker.game.installed_body', ['by' => $by?->username ?? '?']))->toDatabase()));
         } catch (Throwable $exception) {
             report($exception);
         }

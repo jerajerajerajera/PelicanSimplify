@@ -1,0 +1,34 @@
+# Texts that stay as they are in every language: product names, Minecraft commands.
+say
+Samsung Internet
+* * * * * php schedule:run
+Java
+Dark blue
+Dark green
+Dark aqua
+Dark red
+Dark purple
+Dark gray
+Light purple
+Upload still in progress
+dark
+background: hsl(
+# Feature groups in FeatureSettings::definitions(): ids for the settings sections, never shown.
+Server features
+Access and visibility
+Java 25
+# Sent to other programs, not shown to people.
+Reply with OK.
+Bearer
+open
+User access
+Game creator
+Plugin updates
+Pelican server
+# Headers, SQL and font names.
+frame-ancestors *
+default-src 'none'
+frame-ancestors 'self'
+HTTP
+egg_id, count(*) as total
+Inter Variable

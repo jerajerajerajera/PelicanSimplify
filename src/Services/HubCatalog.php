@@ -20,11 +20,19 @@ final class HubCatalog
     public static function catalog(): array
     {
         $cached=Cache::get(self::CACHE);
-        if(is_array($cached))return $cached;
-        return self::refresh();
+        return self::present(is_array($cached)?$cached:self::refresh());
     }
 
     public static function forget(): void { Cache::forget(self::CACHE); }
+
+    /** The shared list keeps no sentences; the error and a missing maker are read in the viewer's language. */
+    private static function present(array $catalog): array
+    {
+        if(($catalog['error']??null)==='unreachable')$catalog['error']=__('pelican-simplify::plugins.hub.unreachable');
+        $unknown=__('pelican-simplify::plugins.hub.unknown_maker');
+        foreach($catalog['items']??[] as $index=>$item)if(($item['author']??'')==='')$catalog['items'][$index]['author']=$unknown;
+        return $catalog;
+    }
 
     public static function refresh(): array
     {
@@ -33,7 +41,7 @@ final class HubCatalog
             Cache::put(self::CACHE,$catalog,now()->addHour());
         }catch(\Throwable $e){
             report($e);
-            $catalog=['items'=>[],'at'=>null,'error'=>'The Pelican Hub could not be reached. Try again in a few minutes.'];
+            $catalog=['items'=>[],'at'=>null,'error'=>'unreachable'];
             Cache::put(self::CACHE,$catalog,now()->addMinutes(5));
         }
         return $catalog;
@@ -101,7 +109,7 @@ final class HubCatalog
         return [
             'slug'=>$slug,'type'=>$type,
             'title'=>self::text((string)($row['title']??$slug),80),
-            'author'=>self::text((string)($row['author_name']??''),60)?:'Unknown maker',
+            'author'=>self::text((string)($row['author_name']??''),60),
             'summary'=>self::summary($description),
             'based'=>self::basedOn($description),
             'downloads'=>max(0,(int)($row['downloads_count']??0)),

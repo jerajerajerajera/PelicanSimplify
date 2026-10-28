@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Tidak dapat menghubungi :host dari panel. Periksa apakah server panel boleh terhubung ke internet.',
+        'no_key' => 'Masukkan kunci API dulu.',
+        'not_set_up' => 'Penjelasan galat belum disiapkan di panel ini.',
+        'unknown_log' => 'Log tidak dikenal.',
+        'read_panel' => 'Log panel tidak dapat dibaca.',
+        'read_wings' => 'Log Wings tidak dapat dibaca dari Wings. Coba lagi saat node dapat dijangkau.',
+        'read_console' => 'Konsol tidak dapat dibaca dari Wings. Coba lagi saat node dapat dijangkau.',
+        'too_many' => 'Anda mengajukan banyak pertanyaan dalam waktu singkat. Coba lagi dalam :count menit.',
+        'daily_limit' => 'Panel ini mencapai batas harian :count penjelasan. Coba lagi besok.',
+        'no_answer' => ':model tidak dapat menjelaskan baris ini. Coba lagi setelah galat muncul lagi.',
+    ],
+    'test' => [
+        'works' => 'Kunci berfungsi dengan :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsol',
+            'empty' => 'Konsol kosong, jadi belum ada yang perlu dijelaskan.',
+        ],
+        'panel' => [
+            'label' => 'Log panel',
+            'empty' => 'Log panel saat ini tidak berisi peringatan atau galat.',
+        ],
+        'wings' => [
+            'label' => 'Log Wings',
+            'empty' => 'Log Wings dari node ini kosong.',
+        ],
+        'plugin' => [
+            'label' => 'Plugin',
+            'empty' => 'Tidak ada baris log tersimpan untuk plugin ini.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Masuk ke panel dulu, lalu buka halaman ini lagi.',
+        'owner_only' => 'Hanya pemilik panel (root administrator) yang dapat memakai halaman ini.',
+        'expired' => 'Alamat ini sudah kedaluwarsa atau diganti dengan yang lebih baru.',
+        'no_key' => 'Tidak ada kunci API :provider yang tersimpan di panel ini. Root administrator menambahkannya di pengaturan Simplify, di bagian Penjelasan galat.',
+        'no_key_terminal' => 'Jika panel tidak terbuka, jalankan :command di server panel. Perintah ini meminta kunci dan tidak menyimpannya.',
+        'choose_node' => 'Pilih node.',
+        'panel_log' => 'Log panel',
+        'wings_log_of' => 'Log Wings dari :node',
+        'wings_log' => 'Log Wings',
+        'no_database' => 'Database tidak dapat dihubungi, jadi log Wings tidak tersedia di sini. Log panel sering menunjukkan penyebabnya.',
+        'lead' => 'Gunakan halaman ini saat panel menampilkan galat seperti 500 dan halaman normalnya tidak terbuka. AI yang dipilih di pengaturan Simplify membaca log, memberi tahu apakah ada masalah dan cara memperbaikinya.',
+        'check_panel' => 'Periksa log panel',
+        'check_wings' => 'Periksa log Wings dari :node',
+        'wait' => 'Memeriksa log. Ini bisa memakan waktu hingga satu menit.',
+        'attention' => 'Ada yang perlu diperhatikan',
+        'in_order' => 'Semuanya tampak beres',
+        'noticed' => 'Melihat sesuatu?',
+        'checked' => ':count baris diperiksa oleh :model. Alamat, alamat email, dan kata sandi dihapus terlebih dahulu.',
+        'terminal_hint' => 'Jika panel tidak terbuka, jalankan :command di server panel, atau :url_command untuk alamat sementara ke halaman ini.',
+        'broken' => 'Halaman ini tidak dapat selesai',
+        'title' => 'Jelaskan galat panel',
+    ],
+    'failures' => [
+        'invalid_key' => 'Kunci API :name tidak valid. Administrator dapat memasukkan kunci baru di pengaturan Simplify.',
+        'no_credit' => 'Akun :name di balik kunci ini tidak memiliki kredit lagi. Administrator dapat menambah kredit atau memeriksa tagihan di :name.',
+        'forbidden' => 'Kunci API :name ini tidak boleh memakai model yang dipilih. Administrator dapat memilih model lain di pengaturan Simplify.',
+        'no_model' => 'Model :name yang dipilih tidak tersedia untuk kunci ini. Administrator dapat memilih model lain di pengaturan Simplify.',
+        'busy' => ':name sedang sibuk untuk kunci ini. Coba lagi dalam satu menit.',
+        'unavailable' => ':name sementara tidak tersedia. Coba lagi dalam satu menit.',
+        'other_status' => ':name tidak dapat menjawab pertanyaan ini (galat :status). Coba lagi nanti.',
+        'other' => ':name tidak dapat menjawab pertanyaan ini. Coba lagi nanti.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude dari Anthropic',
+            'key_help' => 'Buat kunci di console.anthropic.com → API keys. Setiap pertanyaan ditagihkan ke akun Anthropic itu, biasanya beberapa sen atau kurang; tetapkan batas bulanan di sana agar aman.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini dari Google',
+            'key_help' => 'Buat kunci di aistudio.google.com → Get API key. Pertanyaan ditagihkan ke proyek Google Cloud itu, biasanya kurang dari satu sen per pertanyaan; tetapkan anggaran di sana agar aman.',
+        ],
+        'openai' => [
+            'label' => 'GPT dari OpenAI',
+            'key_help' => 'Buat kunci di platform.openai.com → API keys. Setiap pertanyaan ditagihkan ke akun OpenAI itu, biasanya beberapa sen atau kurang; tetapkan anggaran bulanan di sana agar aman.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'jawaban terbaik, beberapa sen',
+        'about_a_cent' => 'sekitar satu sen',
+        'cheapest' => 'termurah',
+        'good_answers_under_a_cent' => 'jawaban bagus, di bawah satu sen',
+        'good_answers_about_a_cent' => 'jawaban bagus, sekitar satu sen',
+    ],
+];

@@ -2,6 +2,9 @@
 // bundles and simple embedded Filament pages. Used by theme-browser.js; also runnable on its own:
 //   node tests/browser-harness.js 8902   → open http://127.0.0.1:8902/?mode=server&theme=dark
 const fs = require('fs'), http = require('http'), path = require('path');
+// Blade views are read as English (lang/en), like the panel shows them by default.
+const { lang, locale } = require('./lang-en.js');
+const dir = ['ar', 'fa', 'he', 'ur'].includes(locale.split('_')[0]) ? 'rtl' : 'ltr';
 const repo = path.resolve(__dirname, '..');
 const views = path.join(repo, 'resources/views');
 const tools = path.join(repo, 'node_modules');
@@ -66,14 +69,14 @@ const wireMock = `window.__wire={listing:async()=>__boot.servers,hostHealth:asyn
 
 function filamentShell(body, opts = {}) {
   const dark = opts.theme === 'dark';
-  return `<!doctype html><html lang="en" class="fi ${dark ? 'dark' : ''}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${opts.title || 'Harness'}</title>
+  return `<!doctype html><html lang="${locale}" dir="${dir}" class="fi ${dark ? 'dark' : ''}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${opts.title || 'Harness'}</title>
 <style>/* minimal Filament base */*,::before,::after{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#fafafa;color:#18181b}html.dark body{background:#09090b;color:#fafafa}.fi-layout{display:flex;min-height:100vh}.fi-main-ctn{flex:1;display:flex;flex-direction:column;min-width:0}.fi-main{flex:1;margin:0 auto;width:100%;max-width:80rem;padding:2rem}.fi-page{display:grid;gap:2rem}.fi-topbar{height:64px;background:#fff;border-bottom:1px solid #e4e4e7}.fi-footer{padding:16px;text-align:center;font-size:13px;color:#71717a}.fi-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;background:#f59e0b;color:#fff;border:0;font:600 14px Inter,sans-serif}.fi-section{background:#fff;border-radius:12px;box-shadow:0 1px 2px #0001;border:1px solid #e4e4e7;padding:16px}.fi-input-wrp{border:1px solid #d4d4d8;border-radius:8px;background:#fff;display:flex}.fi-input{border:0;background:transparent;padding:8px 10px;font:inherit;width:100%}.fi-ta-ctn{background:#fff;border-radius:12px;border:1px solid #e4e4e7}.fi-ta-row td{padding:10px 14px;border-top:1px solid #e4e4e7}.fi-header{display:flex;justify-content:space-between}</style>
 ${opts.head || ''}</head><body class="fi-body"><div class="fi-layout"><div class="fi-main-ctn">${opts.topbar === false ? '' : '<div class="fi-topbar"></div>'}<main class="fi-main"><div class="fi-page">${body}</div></main><footer class="fi-footer"><p>© 2026 Pelican</p></footer></div></div>${opts.tail || ''}</body></html>`;
 }
 
 function sharedAssets(themeConfig) {
   const v = '?v=h';
-  return `<link id="simplify-core-css" rel="stylesheet" href="/assets/core.css${v}"><script>window.simplifyThemeConfig=${JSON.stringify(themeConfig)};</script><script src="/assets/core.js${v}"></script>`;
+  return `<link id="simplify-core-css" rel="stylesheet" href="/assets/core.css${v}"><script>window.simplifyThemeConfig=${JSON.stringify(themeConfig)};window.simplifyLang=${JSON.stringify(lang)};</script><script src="/assets/core.js${v}"></script>`;
 }
 const themeConfig = (extra = {}) => ({ global_theme: true, legacy_theme: true, console_dark: true, accent_color: '', individual_colors: true, legacy_page: false, ...extra });
 
