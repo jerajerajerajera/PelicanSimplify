@@ -187,7 +187,7 @@ html.ps-frame .fi-modal:not(.fi-modal-slide-over) .fi-modal-window[class*="fi-wi
   overflow-y: auto;
   overscroll-behavior: contain;
   border: 0 !important;
-  border-left: 1px solid var(--ps-line) !important;
+  border-inline-start: 1px solid var(--ps-line) !important;
   border-radius: 0 !important;
   box-shadow: -12px 0 32px rgb(0 0 0 / .18) !important;
   animation: ps-side-panel-in .18s ease-out;
@@ -207,8 +207,8 @@ html.ps-frame .fi-sc-wizard-footer { padding-top: 12px !important; border-top: 1
 
 /* Tabbed pages (profile, user edit): the header actions sit on the tab row instead of their own row. */
 html.ps-frame .fi-page:has(.fi-sc-tabs) { position: relative; }
-html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-header:has(.fi-header-actions-ctn > *) { position: absolute; top: 14px; right: 16px; z-index: 3; margin: 0 !important; }
-html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs:not(.fi-vertical) .fi-tabs { padding-right: 110px !important; }
+html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-header:has(.fi-header-actions-ctn > *) { position: absolute; top: 14px; inset-inline-end: 16px; z-index: 3; margin: 0 !important; }
+html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs:not(.fi-vertical) .fi-tabs { padding-inline-end: 110px !important; }
 html.ps-frame .fi-section:not(.fi-section .fi-section) + .fi-section:not(.fi-section .fi-section) { margin-top: 4px; }
 
 /* Settings popup: the category menu stays in place while the settings beside it scroll. */
@@ -219,7 +219,7 @@ html.ps-frame .fi-section:not(.fi-section .fi-section) + .fi-section:not(.fi-sec
   html.ps-frame .fi-page { padding: 12px !important; }
   html.ps-frame:is([data-ps-frame="files"], [data-ps-frame="editor"]) .fi-page { padding: 8px !important; }
   html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-header:has(.fi-header-actions-ctn > *) { position: static; display: flex !important; justify-content: flex-end; margin: 0 0 8px !important; }
-  html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-right: 0 !important; }
+  html.ps-frame .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-inline-end: 0 !important; }
   html.ps-frame .fi-header-actions-ctn { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
   html.ps-frame .fi-tabs { flex-wrap: nowrap !important; max-width: 100%; overflow-x: auto !important; overscroll-behavior-x: contain; scrollbar-width: none; }
   html.ps-frame .fi-tabs::-webkit-scrollbar { display: none; }
@@ -254,7 +254,7 @@ html.ps-frame[data-ps-frame="native"] .fi-page { padding: 16px !important; }
 /* Toolbar: search on the left, buttons on the right, like the People page. */
 html.ps-frame[data-ps-frame="native"] .fi-ta-header-ctn { border: 0 !important; }
 html.ps-frame[data-ps-frame="native"] .fi-ta-header-toolbar { display: flex !important; align-items: center; gap: 10px !important; padding: 0 0 14px !important; }
-html.ps-frame[data-ps-frame="native"] .fi-ta-header-toolbar > .fi-ta-actions { order: 2; margin-left: auto; gap: 8px !important; flex-wrap: nowrap !important; }
+html.ps-frame[data-ps-frame="native"] .fi-ta-header-toolbar > .fi-ta-actions { order: 2; margin-inline-start: auto; gap: 8px !important; flex-wrap: nowrap !important; }
 html.ps-frame[data-ps-frame="native"] .fi-ta-header-toolbar > :not(.fi-ta-actions) { order: 1; display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; margin: 0 !important; }
 html.ps-frame[data-ps-frame="native"] .fi-ta-search-field { flex: 0 1 420px; width: auto; }
 html.ps-frame[data-ps-frame="native"] .fi-ta-search-field .fi-input-wrp { min-height: 40px; background: var(--ps-surface) !important; border-radius: var(--ps-radius) !important; }
@@ -412,29 +412,29 @@ html.ps-frame[data-ps-head-tools]:not(.ps-tools-open) .fi-ta-ctn:not(:is(.fi-res
 html.ps-frame[data-ps-head-tools] .fi-ta-ctn:not(:is(.fi-resource-relation-managers, .fi-resource-relation-manager, .fi-sc-tabs, .fi-section, .fi-modal, .fi-ta-ctn) *) :is(.fi-ta-header-toolbar > .fi-ta-actions > :is(button, a), .fi-ta-search-field) { display: none !important; }
 html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page { padding: 16px 22px !important; }
 html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:has(.fi-ta-ctn):not(:has(.fi-sc-tabs, .fi-fo-field)) { padding: 0 !important; }
-html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table :is(thead th:first-child, tbody td:first-child) { padding-left: 22px !important; }
-html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table :is(thead th:last-child, tbody td:last-child > *) { padding-right: 18px !important; }
+html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table :is(thead th:first-child, tbody td:first-child) { padding-inline-start: 22px !important; }
+html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table :is(thead th:last-child, tbody td:last-child > *) { padding-inline-end: 18px !important; }
 html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table thead :is(th, .fi-ta-header-cell) { padding-top: 10px !important; }
 html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-pagination { padding: 12px 22px !important; }
-html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-right: 3px !important; }
+html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:has(.fi-sc-tabs) .fi-sc-tabs .fi-tabs { padding-inline-end: 3px !important; }
 @media (max-width: 600px) {
   html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page { padding: 12px !important; }
-  html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table tbody td:first-child { padding-left: 10px !important; }
+  html.ps-frame[data-ps-head-tools][data-ps-frame="native"] .fi-page:not(:has(.fi-sc-tabs, .fi-fo-field)) .fi-ta-table tbody td:first-child { padding-inline-start: 10px !important; }
 }
 
 /* The Simplify side of the header tools: popup head (and host mode head) of the dashboard. */
 .ps-frame-tools { display: flex; flex: 1 1 auto; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .ps-frame-tools[hidden] { display: none; }
 .ps-modal-head:has(> .ps-frame-tools:not([hidden])) > h2 { flex: 0 1 auto; }
-.ps-frame-crumb { flex: 0 1 auto; min-width: 0; margin-right: auto; overflow: hidden; color: var(--ps-muted); font: 600 14px/1.3 var(--ps-font); text-overflow: ellipsis; white-space: nowrap; }
+.ps-frame-crumb { flex: 0 1 auto; min-width: 0; margin-inline-end: auto; overflow: hidden; color: var(--ps-muted); font: 600 14px/1.3 var(--ps-font); text-overflow: ellipsis; white-space: nowrap; }
 .ps-frame-crumb::before { content: "› "; }
-.ps-frame-search { position: relative; flex: 0 1 280px; min-width: 0; margin-right: 4px; }
-.ps-frame-search svg { position: absolute; top: 50%; left: 10px; width: 16px; height: 16px; color: var(--ps-muted); transform: translateY(-50%); pointer-events: none; }
+.ps-frame-search { position: relative; flex: 0 1 280px; min-width: 0; margin-inline-end: 4px; }
+.ps-frame-search svg { position: absolute; top: 50%; inset-inline-start: 10px; width: 16px; height: 16px; color: var(--ps-muted); transform: translateY(-50%); pointer-events: none; }
 .ps-frame-search input { width: 100%; height: var(--ps-h-sm); padding: 0 10px 0 33px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-sm); background: var(--ps-field); color: var(--ps-ink); font: 500 13px/1 var(--ps-font); outline: none; }
 .ps-frame-search input:focus { border-color: var(--ps-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ps-accent) 20%, transparent); }
 .ps-frame-tools .ps-btn svg { width: 16px; height: 16px; }
-.ps-frame-tools .ps-btn.is-primary { margin-left: 4px; }
-.ps-host-head .ps-frame-tools { margin-left: auto; }
+.ps-frame-tools .ps-btn.is-primary { margin-inline-start: 4px; }
+.ps-host-head .ps-frame-tools { margin-inline-start: auto; }
 @media (max-width: 760px) {
   .ps-modal-head:has(> .ps-frame-tools:not([hidden])) { flex-wrap: wrap; row-gap: 8px; padding-bottom: 12px; }
   .ps-modal-head:has(> .ps-frame-tools:not([hidden])) > h2 { flex: 1 1 auto; }

@@ -138,7 +138,7 @@
 input[type="file"].ps-input { padding: 5px; font-size: 13px; }
 .ps-field input[type="file"]::file-selector-button,
 input[type="file"].ps-input::file-selector-button {
-  margin-right: 10px;
+  margin-inline-end: 10px;
   min-height: calc(var(--ps-h) - 12px);
   padding: 0 12px;
   border: 1px solid var(--ps-line);
@@ -177,7 +177,7 @@ input[type="file"].ps-input::file-selector-button {
   content: "";
   position: absolute;
   top: 2px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -277,16 +277,16 @@ input[type="file"].ps-input::file-selector-button {
   background: var(--ps-surface);
   color: var(--ps-ink);
   box-shadow: var(--ps-shadow-lg);
-  text-align: left;
+  text-align: start;
   font: 400 13px/1.45 var(--ps-font);
 }
-.ps-dropdown.is-end { right: 0; top: calc(100% + 8px); }
+.ps-dropdown.is-end { inset-inline-end: 0; top: calc(100% + 8px); }
 .ps-dropdown.is-fixed { position: fixed; }
 .ps-dropdown-title { display: block; margin: 0 0 4px; font-size: 14px; font-weight: 700; }
 .ps-dropdown-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ps-line); }
 .ps-dropdown-section > .ps-label { display: block; margin-bottom: 8px; }
 .ps-label { color: var(--ps-muted); font: 600 11px/1.3 var(--ps-font); }
-.ps-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--ps-h); padding: 0 10px; border: 0; border-radius: var(--ps-radius-sm); background: transparent; color: var(--ps-ink); font: 500 13px/1.3 var(--ps-font); text-align: left; text-decoration: none; cursor: pointer; }
+.ps-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--ps-h); padding: 0 10px; border: 0; border-radius: var(--ps-radius-sm); background: transparent; color: var(--ps-ink); font: 500 13px/1.3 var(--ps-font); text-align: start; text-decoration: none; cursor: pointer; }
 .ps-menu-item:hover, .ps-menu-item:focus-visible { background: var(--ps-raised); outline: none; }
 .ps-menu-item svg { width: 18px; height: 18px; color: var(--ps-muted); }
 .ps-dropdown-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
@@ -331,14 +331,14 @@ input[type="file"].ps-input::file-selector-button {
 .ps-modal-body.is-flush { display: flex; flex-direction: column; padding: 0; overflow: hidden; scrollbar-gutter: auto; }
 .ps-modal-body.is-flush > iframe { display: block; flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; border: 0; background: var(--ps-surface); }
 .ps-modal-foot { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--ps-line); background: color-mix(in srgb, var(--ps-raised) 45%, var(--ps-surface)); }
-.ps-modal-foot > .is-start { margin-right: auto; color: var(--ps-muted); font-size: 12px; }
+.ps-modal-foot > .is-start { margin-inline-end: auto; color: var(--ps-muted); font-size: 12px; }
 .ps-modal.is-sm .ps-modal-body { scrollbar-gutter: auto; }
 @keyframes ps-modal-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) {
   .ps-modal-layer { --ps-modal-gap: 8px; }
   .ps-modal { border-radius: var(--ps-radius-lg); }
   .ps-modal:is(.is-md, .is-lg) { height: calc(100dvh - 2 * var(--ps-modal-gap)); }
-  .ps-modal-head { padding-left: 16px; min-height: 56px; }
+  .ps-modal-head { padding-inline-start: 16px; min-height: 56px; }
   .ps-modal-body { padding: 16px; }
 }
 /* Phones: popups are sheets that slide up from the bottom, with a drag handle and the footer (the save
@@ -365,7 +365,7 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
   position: fixed;
   z-index: var(--ps-z-tooltip);
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   max-width: min(280px, calc(100vw - 24px));
   padding: 7px 10px;
   border-radius: 8px;
@@ -391,7 +391,7 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
   gap: 10px;
   padding: 11px 10px 11px 14px;
   border: 1px solid var(--ps-line);
-  border-left: 3px solid var(--ps-tone);
+  border-inline-start: 3px solid var(--ps-tone);
   border-radius: var(--ps-radius);
   background: var(--ps-surface);
   color: var(--ps-ink);
@@ -410,18 +410,18 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 
 /* Notification centre (bell + dropdown). */
 .ps-notify { position: relative; }
-.ps-notify-count { position: absolute; top: -4px; right: -4px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border: 2px solid var(--ps-surface); border-radius: var(--ps-radius-pill); background: var(--ps-danger); color: #fff; font: 700 10px/1 var(--ps-font); pointer-events: none; }
+.ps-notify-count { position: absolute; top: -4px; inset-inline-end: -4px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border: 2px solid var(--ps-surface); border-radius: var(--ps-radius-pill); background: var(--ps-danger); color: #fff; font: 700 10px/1 var(--ps-font); pointer-events: none; }
 .ps-notify-list { display: grid; gap: 2px; margin: 8px -4px 0; }
-.ps-notify-item { --ps-tone: var(--ps-muted); display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-align: left; }
+.ps-notify-item { --ps-tone: var(--ps-muted); display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-align: start; }
 .ps-notify-item:hover { background: var(--ps-raised); }
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
 .ps-notify-item > * { min-width: 0; overflow-wrap: anywhere; }
 /* ✕ top right: clears one notification to Archived. */
 .ps-notify-item { position: relative; }
-.ps-notify-item > strong { padding-right: 22px; }
-.ps-notify-close { position: absolute; top: 8px; right: 6px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); cursor: pointer; opacity: .7; }
+.ps-notify-item > strong { padding-inline-end: 22px; }
+.ps-notify-close { position: absolute; top: 8px; inset-inline-end: 6px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); cursor: pointer; opacity: .7; }
 .ps-notify-close svg { width: 12px; height: 12px; }
-@media (pointer: coarse) { .ps-notify-close { top: 4px; right: 2px; width: 32px; height: 32px; } }
+@media (pointer: coarse) { .ps-notify-close { top: 4px; inset-inline-end: 2px; width: 32px; height: 32px; } }
 .ps-notify-close:is(:hover, :focus-visible) { background: var(--ps-raised); color: var(--ps-ink); opacity: 1; }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
@@ -440,7 +440,7 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-admin-group .ps-admin-item { min-height: 32px; padding: 4px 8px; font-size: 12.5px; }
 .ps-admin-group .ps-admin-item svg { width: 15px; height: 15px; stroke: var(--ps-tone); }
 .ps-admin-legacy { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--ps-line); }
-.ps-admin-legacy .ps-label { margin-right: 4px; }
+.ps-admin-legacy .ps-label { margin-inline-end: 4px; }
 .ps-admin-health { display: grid; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--ps-line); }
 .ps-admin-health-title { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; border: 0; border-radius: var(--ps-radius); background: none; color: var(--ps-ink); font: 600 13px/1.2 var(--ps-font); cursor: pointer; }
 .ps-admin-health-title:hover, .ps-admin-health-title:focus-visible { background: var(--ps-raised); }
@@ -452,7 +452,7 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-health-check.is-ok { --ps-tone: var(--ps-ok); }
 .ps-health-check.is-warning { --ps-tone: var(--ps-warn); }
 .ps-health-check.is-failed, .ps-health-check.is-crashed { --ps-tone: var(--ps-danger); }
-.ps-admin-item { display: flex; align-items: center; gap: 10px; min-height: var(--ps-h); padding: 6px 10px; border: 1px solid transparent; border-radius: var(--ps-radius); background: transparent; color: var(--ps-ink); font: 550 13px/1.2 var(--ps-font); text-align: left; cursor: pointer; }
+.ps-admin-item { display: flex; align-items: center; gap: 10px; min-height: var(--ps-h); padding: 6px 10px; border: 1px solid transparent; border-radius: var(--ps-radius); background: transparent; color: var(--ps-ink); font: 550 13px/1.2 var(--ps-font); text-align: start; cursor: pointer; }
 .ps-admin-item:hover, .ps-admin-item:focus-visible { border-color: var(--ps-line); background: var(--ps-raised); }
 .ps-admin-item svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--ps-accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .ps-admin-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -479,16 +479,16 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 }
 
 /* Incoming notification: drops down from the bell with a pointer to it, then slides back up. */
-.ps-incoming { position: absolute; top: calc(100% + 12px); right: -6px; z-index: 60; width: min(380px, calc(100vw - 24px)); padding: 10px 12px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 18px 40px -18px rgb(0 0 0 / .35); transform-origin: calc(100% - 24px) 0; }
-.ps-incoming::before { content: ""; position: absolute; top: -7px; right: 18px; width: 12px; height: 12px; border-top: 1px solid var(--ps-line); border-left: 1px solid var(--ps-line); background: var(--ps-surface); transform: rotate(45deg); }
-.ps-incoming .ps-notify-item { padding: 0; border: 0; background: none; text-align: left; }
+.ps-incoming { position: absolute; top: calc(100% + 12px); inset-inline-end: -6px; z-index: 60; width: min(380px, calc(100vw - 24px)); padding: 10px 12px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 18px 40px -18px rgb(0 0 0 / .35); transform-origin: calc(100% - 24px) 0; }
+.ps-incoming::before { content: ""; position: absolute; top: -7px; inset-inline-end: 18px; width: 12px; height: 12px; border-top: 1px solid var(--ps-line); border-left: 1px solid var(--ps-line); background: var(--ps-surface); transform: rotate(45deg); }
+.ps-incoming .ps-notify-item { padding: 0; border: 0; background: none; text-align: start; }
 .ps-incoming-move { transition: transform .42s cubic-bezier(.2, .9, .3, 1.15), opacity .3s ease; }
 .ps-incoming.is-up { opacity: 0; transform: translateY(-14px) scaleY(.6); }
 @media (prefers-reduced-motion: reduce) { .ps-incoming-move { transition: opacity .2s ease; } .ps-incoming.is-up { transform: none; } }
 
 /* Simplify settings button: the Simplify pelican with a small gear, so it reads as Simplify's own settings. */
 .ps-settings-mark { position: relative; display: inline-grid; place-items: center; }
-.ps-settings-mark .ps-settings-gear { position: absolute; right: -6px; bottom: -5px; width: 13px !important; height: 13px !important; padding: 1px; border-radius: 50%; background: var(--ps-bg); stroke-width: 2.2; }
+.ps-settings-mark .ps-settings-gear { position: absolute; inset-inline-end: -6px; bottom: -5px; width: 13px !important; height: 13px !important; padding: 1px; border-radius: 50%; background: var(--ps-bg); stroke-width: 2.2; }
 
 /* Save bar: one floating bar for every form (settings, Pelican edit pages, popups). Hidden until something
    changed; after a successful save the button turns into a check and the bar slides away. */
@@ -517,11 +517,11 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 
 /* Installed web app (home screen): no browser bar, so the page keeps clear of the notch on the sides itself;
    the bottom bars already keep clear of the home indicator (env(safe-area-inset-bottom)). */
-html.ps-standalone body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+html.ps-standalone body { padding-inline-start: env(safe-area-inset-left); padding-inline-end: env(safe-area-inset-right); }
 html.ps-standalone { -webkit-tap-highlight-color: transparent; }
 
 /* Notifications: read ones step back, an admin's pinned ones sit on top, older ones load with Show more. */
-.ps-notify-head .ps-dropdown-title { margin-right: auto; }
+.ps-notify-head .ps-dropdown-title { margin-inline-end: auto; }
 .ps-notify-item.is-read strong { font-weight: 500; }
 .ps-notify-item.is-read > svg { color: var(--ps-muted); }
 .ps-notify-pinned { margin-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--ps-line); }
@@ -532,17 +532,22 @@ html.ps-standalone { -webkit-tap-highlight-color: transparent; }
 .ps-inbox-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ps-inbox-bar > .ps-help { margin: 0 auto 0 0; }
 /* What's new of an update: one line in the bell, all of them on request, and the full notes on GitHub. */
-.ps-notify-notes { grid-column: 2; min-width: 0; overflow-wrap: anywhere; display: grid; gap: 2px; margin-top: 4px; padding: 6px 10px; border-left: 2px solid var(--ps-line); }
+.ps-notify-notes { grid-column: 2; min-width: 0; overflow-wrap: anywhere; display: grid; gap: 2px; margin-top: 4px; padding: 6px 10px; border-inline-start: 2px solid var(--ps-line); }
 .ps-notify-notes > .ps-label { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
-.ps-notify-notes ul { display: grid; gap: 2px; margin: 0; padding-left: 16px; list-style: disc; color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ps-notify-notes ul { display: grid; gap: 2px; margin: 0; padding-inline-start: 16px; list-style: disc; color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
 .ps-notify-notes-more { display: flex; flex-wrap: wrap; gap: 12px; }
 .ps-notify-notes-more:empty { display: none; }
 .ps-notify-notes .ps-text-button { padding: 0; border: 0; background: none; color: var(--ps-accent); font: 600 12px/1.6 var(--ps-font); text-decoration: none; cursor: pointer; }
 .ps-notify-notes .ps-text-button:is(:hover, :focus-visible) { text-decoration: underline; }
 /* Archived (full list only): closed until opened. */
 .ps-notify-archive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--ps-line); }
-.ps-notify-archive-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 0 6px; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); font: 600 12.5px/1.3 var(--ps-font); cursor: pointer; text-align: left; }
+.ps-notify-archive-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 0 6px; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); font: 600 12.5px/1.3 var(--ps-font); cursor: pointer; text-align: start; }
 .ps-notify-archive-toggle:is(:hover, :focus-visible) { background: var(--ps-raised); color: var(--ps-ink); }
 .ps-notify-archive-toggle > svg { width: 14px; height: 14px; transition: transform .15s ease; }
 .ps-notify-archive-toggle[aria-expanded="true"] > svg { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .ps-notify-archive-toggle > svg { transition: none; } }
+
+/* Right-to-left languages (Arabic): arrows that mean "forward" or "back" point the other way. Chevrons that
+   open downward are turned, not mirrored, so they keep pointing down. */
+[dir="rtl"] svg:not(.ps-health-expand, .ps-node-arrow, .ps-host-menu-chevron, :is(.ps-group-up, .ps-group-down, .ps-console-peek) > svg) > use:is([href="#ps-chevron"], [href="#ps-back"], [href="#ps-arrow-right"]) { transform: scaleX(-1); transform-origin: center; transform-box: fill-box; }
+[dir="rtl"] .ps-notify-archive-toggle[aria-expanded="true"] > svg { transform: rotate(-90deg); }

@@ -1,7 +1,11 @@
 // Preloaded for the JavaScript unit tests (node -r): pages get core.js's Simplify.t / tc with the English texts
 // from lang/en/js.php, as the panel gives them, so tests read the same words people see.
+// SIMPLIFY_LOCALE=ar shows another language pack instead (browser harness, right-to-left checks).
 const vm = require('vm'), path = require('path'), { execFileSync } = require('child_process');
-const lang = JSON.parse(execFileSync(process.env.PHP_BIN || 'php', ['-r', 'echo json_encode(require $argv[1]);', path.join(__dirname, '../lang/en/js.php')]));
+const LOCALE = process.env.SIMPLIFY_LOCALE || 'en';
+const php = (file) => JSON.parse(execFileSync(process.env.PHP_BIN || 'php', ['-r', 'echo json_encode(require $argv[1]);', file]));
+const langFile = (locale, group) => path.join(__dirname, '../lang', locale, group + '.php');
+const lang = php(require('fs').existsSync(langFile(LOCALE, 'js')) ? langFile(LOCALE, 'js') : langFile('en', 'js'));
 const fill = (text, params) => Object.keys(params).sort((a, b) => b.length - a.length).reduce((out, name) => out.split(':' + name).join(String(params[name])), text);
 const lookup = (key) => { const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), lang); return typeof found === 'string' ? found : key; };
 const t = (key, params = {}) => fill(lookup(key), params);
@@ -30,14 +34,13 @@ vm.runInContext = function (code, context, ...rest) {
 // (and @js(...) of it a quoted string), so a test can still look for the words on the page.
 const fs = require('fs');
 const groups = {};
-const english = (group, key) => {
-  if (!(group in groups)) {
-    const file = path.join(__dirname, '../lang/en', group + '.php');
-    groups[group] = fs.existsSync(file) ? JSON.parse(execFileSync(process.env.PHP_BIN || 'php', ['-r', 'echo json_encode(require $argv[1]);', file])) : {};
-  }
-  const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), groups[group]);
+const text = (locale, group, key) => {
+  const id = locale + '/' + group;
+  if (!(id in groups)) groups[id] = fs.existsSync(langFile(locale, group)) ? php(langFile(locale, group)) : {};
+  const found = key.split('.').reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), groups[id]);
   return typeof found === 'string' ? found : null;
 };
+const english = (group, key) => text(LOCALE, group, key) ?? text('en', group, key);
 const read = fs.readFileSync;
 fs.readFileSync = function (file, ...rest) {
   const out = read.call(this, file, ...rest);
@@ -46,4 +49,4 @@ fs.readFileSync = function (file, ...rest) {
     .replace(/@js\(__\('pelican-simplify::([a-z0-9_-]+)\.([A-Za-z0-9_.]+)'\)\)/g, (all, group, key) => { const text = english(group, key); return text === null ? all : "'" + text.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; })
     .replace(/\{\{ __\('pelican-simplify::([a-z0-9_-]+)\.([A-Za-z0-9_.]+)'\) \}\}/g, (all, group, key) => english(group, key) ?? all);
 };
-module.exports = { lang };
+module.exports = { lang, locale: LOCALE };
