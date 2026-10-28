@@ -16,3 +16,10 @@ $criticalCpu=$sample;$criticalCpu['stats']['cpu_percent']=97;$r=HostHealth::summ
 $r=HostHealth::summarize([$sample,$missing]);$check($r['metric_states']['memory']==='unavailable');
 $r=HostHealth::summarize([$high]);$check($r['metric_states']['disk']==='critical'&&$r['metric_states']['cpu']==='healthy');
 echo "PASS 12 host health checks: native totals, pressure thresholds, partial/no telemetry, maintenance and multiple hosts\n";
+$check(HostHealth::summarize([])['problem']===null);
+$check(HostHealth::httpProblem(403)==='Wings refused the request (HTTP 403)'&&HostHealth::httpProblem(530)==='Wings is unreachable (HTTP 530)'&&HostHealth::httpProblem(404)==='Wings answered with HTTP 404');
+echo "PASS 2 host health problem checks\n";
+// The refresh button must not re-render the page: a re-render drops the dock's measured width and the tile jumps to full width.
+$dashboard=file_get_contents(__DIR__.'/../src/Filament/App/Pages/Dashboard.php');
+$check((bool)preg_match('/#\[Renderless\]\s*public function refreshHostHealth\(/',$dashboard));
+echo "PASS host health refresh stays renderless\n";

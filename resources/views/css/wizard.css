@@ -49,6 +49,9 @@
 .ssc-summary-item dd { margin: 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
 .ssc-summary-item code { font: 12px var(--ps-mono); }
 .ssc-summary-wide { grid-column: 1 / -1; }
+.ssc-port-notice { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ps-danger) 40%, var(--ps-line)); border-radius: var(--ps-radius); background: color-mix(in srgb, var(--ps-danger) 8%, var(--ps-surface)); font-size: 13px; line-height: 1.5; }
+.ssc-port-notice strong { color: var(--ps-danger); }
+.ssc-port-notice a { color: var(--ps-accent); }
 .ssc-summary-notice { padding: 0 24px 24px; color: var(--ps-warn); font-size: 13px; }
 .ssc-overview-footer { padding: 14px 24px; border-top: 1px solid var(--ps-line); }
 .ssc-advanced-editor[hidden] { display: none !important; }
@@ -110,7 +113,7 @@
 .ps-settings-page { width: 100%; max-width: 1080px; margin: 0 auto; color: var(--ps-ink); }
 .ps-settings-page.is-standalone { max-width: 1200px; padding: 4px 0 32px; }
 .ps-settings-page.is-standalone :is(.ps-settings-form, .ps-banner-library) { padding: 24px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-xl); background: var(--ps-surface); }
-.ps-settings-page.is-embedded { padding: 20px; }
+.ps-settings-page.is-embedded { padding: 20px 20px 16px; }
 .ps-settings-form .fi-sc-tabs-tablist, .ps-settings-form .fi-tabs { flex-wrap: wrap; gap: 6px; }
 .ps-settings-form .fi-sc-tabs { min-width: 0; }
 .ps-settings-form .ssc-progress { margin-bottom: 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); }
@@ -204,6 +207,23 @@
 
 /* Game picker (other games) ------------------------------------------------------------------- */
 .ssc-games { position: relative; display: grid; gap: 12px; }
+/* Game step: Minecraft first, with its server types as big buttons, then the other games. */
+.ssc-minecraft { display: grid; gap: 14px; margin-bottom: 18px; padding: 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-xl); background: linear-gradient(120deg, color-mix(in srgb, #3f9b4b 14%, var(--ps-surface)), var(--ps-surface) 60%); }
+.ssc-minecraft.is-picked { border-color: var(--ps-accent); }
+.ssc-minecraft-head { display: flex; align-items: center; gap: 14px; }
+.ssc-minecraft-head h3 { margin: 0; font-size: 20px; font-weight: 700; }
+.ssc-minecraft-head p { margin: 2px 0 0; color: var(--ps-muted); font-size: 13px; }
+.ssc-minecraft-icon { display: grid; flex: none; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: #3f9b4b; color: #fff; }
+.ssc-minecraft-icon svg { width: 34px; height: 34px; }
+.ssc-minecraft-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ssc-minecraft-type { display: grid; align-content: start; gap: 4px; min-height: 92px; padding: 14px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 90%, transparent); color: var(--ps-ink); text-align: left; cursor: pointer; transition: border-color var(--ps-fast), transform var(--ps-fast); }
+.ssc-minecraft-type:hover:not(:disabled) { border-color: var(--ps-accent); transform: translateY(-1px); }
+.ssc-minecraft-type[aria-pressed="true"] { border-color: var(--ps-accent); background: color-mix(in srgb, var(--ps-accent) 9%, var(--ps-surface)); box-shadow: 0 0 0 1px var(--ps-accent); }
+.ssc-minecraft-type:disabled { cursor: progress; }
+.ssc-minecraft-type strong { font-size: 15px; font-weight: 650; }
+.ssc-minecraft-type small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ssc-games-heading { margin: 0 0 10px; color: var(--ps-muted); font-size: 13px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+@media (max-width: 600px) { .ssc-minecraft { padding: 14px; } .ssc-minecraft-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ssc-minecraft-type { min-height: 0; } }
 .ssc-games-install { position: absolute; inset: -8px; z-index: 5; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 24px; border-radius: var(--ps-radius-lg); background: color-mix(in srgb, var(--ps-surface) 94%, transparent); backdrop-filter: blur(3px); text-align: center; }
 .ssc-games-install strong { font-size: 18px; }
 .ssc-games-install ol { display: grid; gap: 8px; margin: 4px 0; padding: 0; list-style: none; text-align: left; }
@@ -262,10 +282,18 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
 .ps-settings-tabs .fi-tabs-item.fi-active { background: var(--ps-surface) !important; box-shadow: var(--ps-shadow-sm), inset 0 0 0 1px var(--ps-line); }
 .ps-settings-tabs .fi-tabs-item.fi-active > .fi-icon { background: var(--ps-accent); color: #fff; box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item .fi-badge { display: none; }
+/* The tab list has two groups: the panel's own settings, then the add-ons (their tabs carry a badge). */
+.ps-settings-tabs .fi-tabs-item:first-child { margin-top: 22px; position: relative; }
+.ps-settings-tabs .fi-tabs-item:first-child::before { content: "Panel"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 /* Add-on tabs carry a badge; the first one opens an "Add-ons" group. */
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge) { margin-top: 30px; position: relative; }
 .ps-settings-tabs .fi-tabs-item:not(:has(.fi-badge)) + .fi-tabs-item:has(.fi-badge)::before { content: "Add-ons"; position: absolute; top: -22px; left: 10px; color: var(--ps-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { flex: 1; min-width: 0; padding: 22px 26px 8px; }
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { flex: 1; min-width: 0; padding: 22px 26px 8px; }
+/* Pelican's own settings inside Simplify settings: one frame per Pelican tab, saved with Pelican's button. */
+.ps-pelican-frame { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 360px; }
+.ps-pelican-frame > p { margin: 0; color: var(--ps-muted); font-size: 13px; }
+.ps-pelican-frame > iframe { flex: 1; width: 100%; min-height: 0; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+body.ps-pelican-tab .ps-savebar { display: none !important; }
 
 /* Sections: quiet cards with a clear title. */
 .ps-settings-tabs .fi-section { border-radius: var(--ps-radius-lg) !important; box-shadow: none !important; outline: 0 !important; border: 1px solid var(--ps-line) !important; background: var(--ps-surface) !important; }
@@ -357,9 +385,28 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { top: 0; max-height: 100
    never moves; only the settings on the right scroll. */
 .ps-settings-page:not(:has(.ssc-progress)) .ps-settings-form { border-radius: 20px !important; }
 .ps-settings-tabs.fi-vertical { height: var(--ps-settings-height, auto) !important; align-items: stretch !important; background: linear-gradient(to right, var(--ps-nav-bg) 0 269px, var(--ps-line) 269px 270px, transparent 270px) !important; }
-.ps-settings-tabs.fi-vertical > .fi-tabs { position: static; width: 270px; max-height: none; height: 100%; padding: 14px 12px; }
+/* The menu scrolls on its own when the window is short (it never wraps into a second column behind the settings). */
+.ps-settings-tabs.fi-vertical > .fi-tabs { position: static; width: 270px; max-height: none; height: 100%; min-height: 0; padding: 14px 12px; flex-wrap: nowrap !important; overflow: hidden auto; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+.ps-settings-tabs.fi-vertical > .fi-tabs > .fi-tabs-item { flex: none; }
 html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
-.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+/* The settings scroll on their own; room at the bottom keeps the last switch clear of the save bar. */
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: 100%; padding-bottom: 88px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ps-line) transparent; }
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) { display: flex; flex-direction: column; padding-bottom: 8px; overflow: hidden; }
+/* The frame with Pelican's page fills the panel: every wrapper between the panel and the frame passes the height on. */
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active:has(.ps-pelican-frame) :is(.fi-grid, .fi-grid-col, .fi-sc-component) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active > * > * > * > .ps-pelican-frame { flex: 1; height: auto; min-height: 0; }
+/* Embedded in the dashboard popup or the host workspace, the card is sized to the frame: nothing outside it scrolls. */
+html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: hidden; }
+/* In the host workspace the settings sit straight on the page like the rest of host mode: no card, no margin,
+   no menu background; one line between the menu and the settings, full height of the workspace. */
+html.ps-frame[data-ps-host] .ps-settings-page.is-embedded { max-width: none; margin: 0; padding: 0; }
+html.ps-frame[data-ps-host] .ps-settings-page :is(.ps-settings-form, .ps-settings-form :has(.ps-settings-tabs), .fi-sc-tabs, .fi-sc-tabs-tab) { border: 0 !important; border-radius: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0 !important; }
+html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { --ps-nav-bg: transparent; height: 100vh !important; }
+html.ps-frame[data-ps-host] .fi-page:has(.ps-settings-page, .ssc-wizard) { padding: 0 !important; }
+/* The Server Maker too: no card of its own in host mode; its bottom bar takes the page colour. */
+html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker { background: transparent !important; }
+html.ps-frame[data-ps-host] .ssc-wizard.ssc-maker .fi-sc-wizard-footer { background: var(--ps-bg) !important; }
+html.ps-frame[data-ps-host] .ps-settings-tabs :is(.fi-section-header, .fi-section-content-ctn) { background: transparent !important; }
 .ps-settings-tabs .fi-tabs-item { min-height: 40px; padding: 5px 8px !important; border: 1px solid transparent; border-radius: 11px !important; white-space: nowrap; }
 .ps-settings-tabs .fi-tabs-item > .fi-icon { padding: 6px; border-radius: 9px; background: color-mix(in srgb, var(--ps-tone, var(--ps-accent)) 16%, transparent); color: var(--ps-tone, var(--ps-accent)); box-shadow: none; }
 .ps-settings-tabs .fi-tabs-item:hover { background: var(--ps-raised) !important; }
@@ -378,7 +425,11 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 @media (max-width: 900px) {
   .ps-settings-tabs.fi-vertical { height: auto !important; background: none !important; }
   .ps-settings-tabs.fi-vertical > .fi-tabs { width: 100%; height: auto; }
-  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab { height: auto; margin: 0 !important; overflow: visible; }
+  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active { height: auto; margin: 0 !important; overflow: visible; }
+  html.ps-frame:is([data-ps-frame="settings"], [data-ps-host]) body:has(.ps-settings-page.is-embedded .ps-settings-tabs.fi-vertical) { overflow: auto; }
+  html.ps-frame[data-ps-host] .ps-settings-tabs.fi-vertical { height: auto !important; }
+  .ps-settings-tabs.fi-vertical > .fi-tabs { overflow: visible; flex-wrap: wrap !important; }
+  .ps-settings-tabs.fi-vertical > .fi-sc-tabs-tab.fi-active .ps-pelican-frame { min-height: 480px; }
 }
 
 /* Phone layout (creator and first setup): "Step 1 of 4" with a progress bar instead of every step,
@@ -421,6 +472,8 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
 .ps-announcement-main strong { font-size: 14px; }
 .ps-announcement-main p { margin: 0; color: var(--ps-ink); font-size: 13px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
 .ps-announcement-main small { color: var(--ps-muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.ps-announcement-main .ps-announcement-ingame { display: flex; align-items: center; gap: 5px; }
+.ps-announcement-ingame .ps-ico { flex: none; width: 14px; height: 14px; }
 .ps-announcement .ps-badge.is-muted { color: var(--ps-muted); }
 .ps-announcement .ps-person-actions { justify-content: flex-end; min-width: 156px; }
 .ps-announcement-section { display: grid; gap: 8px; }
@@ -430,3 +483,183 @@ html.ps-frame .ps-settings-tabs.fi-vertical > .fi-tabs { max-height: none; }
   .ps-announcement { grid-template-columns: 20px minmax(0, 1fr) auto; }
   .ps-announcement .ps-person-actions { grid-column: 2 / -1; justify-content: flex-start; min-width: 0; }
 }
+
+/* Last setup step: a short summary of the choices made. */
+.ps-setup-summary { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; margin: 0; }
+.ps-setup-summary dt { color: var(--ps-muted); font: 600 12px/1.5 var(--ps-font); }
+.ps-setup-summary dd { margin: 0; color: var(--ps-ink); font: 500 13px/1.5 var(--ps-font); }
+@media (max-width: 600px) { .ps-setup-summary { grid-template-columns: minmax(0, 1fr); gap: 2px; } .ps-setup-summary dd { margin-bottom: 8px; } }
+/* Browse Hub (plugin manager) ------------------------------------------------------------------ */
+.ps-plugins > * { min-width: 0; }
+.ps-plugins-tabs { justify-self: start; }
+.ps-plugins-tabs > button { white-space: nowrap; }
+.ps-hub { display: grid; gap: 16px; min-width: 0; }
+.ps-hub > * { min-width: 0; }
+.ps-hub-loading { display: flex; align-items: center; gap: 10px; padding: 28px 4px; color: var(--ps-muted); }
+.ps-hub-intro small, .ps-hub .ps-alert small { display: block; }
+.ps-hub .ps-alert > div { min-width: 0; }
+.ps-hub-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ps-hub-search { max-width: none; }
+.ps-hub-count { margin-left: 6px; padding: 0 6px; border-radius: var(--ps-radius-pill); background: var(--ps-raised); color: var(--ps-muted); font-size: 11px; }
+.ps-hub-sort { height: 40px; padding: 0 10px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-surface); color: var(--ps-ink); font: 500 13px var(--ps-font); }
+.ps-hub-label { margin: 0 0 8px; color: var(--ps-muted); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.ps-hub-maker-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.ps-hub-maker { display: flex; flex: none; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-pill); background: var(--ps-surface); color: var(--ps-ink); font-family: inherit; text-align: left; cursor: pointer; }
+.ps-hub-maker:hover { border-color: var(--ps-line-strong); }
+.ps-hub-maker[aria-pressed="true"] { border-color: var(--ps-ink); box-shadow: inset 0 0 0 1px var(--ps-ink); }
+.ps-hub-maker strong { display: block; font-size: 14px; }
+.ps-hub-maker small { display: block; color: var(--ps-muted); font-size: 12px; white-space: nowrap; }
+.ps-hub-avatar { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; font-size: 15px; font-weight: 700; }
+.ps-hub-avatar.is-lg { width: 46px; height: 46px; font-size: 19px; }
+.ps-hub-filter { display: flex; align-items: center; gap: 8px; margin: -6px 0 0; }
+.ps-hub-cmd { margin: 8px 0 0; padding: 10px 12px; overflow-x: auto; border-radius: var(--ps-radius-sm); background: var(--ps-console-bg); color: var(--ps-console-ink); font: 12px/1.5 var(--ps-mono); white-space: pre; }
+.ps-hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.ps-hub-card { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); }
+.ps-hub-shot { position: relative; aspect-ratio: 16 / 8.6; background: var(--ps-raised); }
+.ps-hub-shot-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.ps-hub-shot img, .ps-hub-big img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.ps-hub-nav { position: absolute; top: 50%; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: rgb(0 0 0 / .5); color: #fff; cursor: pointer; transform: translateY(-50%); }
+.ps-hub-nav svg { width: 18px; height: 18px; }
+.ps-hub-nav.is-prev { left: 8px; } .ps-hub-nav.is-next { right: 8px; }
+.ps-hub-dots { position: absolute; bottom: 8px; left: 50%; display: flex; gap: 5px; padding: 4px 7px; border-radius: var(--ps-radius-pill); background: rgb(0 0 0 / .45); transform: translateX(-50%); }
+.ps-hub-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgb(255 255 255 / .5); }
+.ps-hub-dots i.is-on { background: #fff; }
+.ps-hub-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ps-hub-by, .ps-hub-maker-card { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ps-hub-by small, .ps-hub-maker-card small { display: block; color: var(--ps-muted); font-size: 12px; }
+.ps-hub-by strong { display: block; font-size: 16px; overflow-wrap: anywhere; }
+.ps-hub-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.ps-hub-title strong { font-size: 15px; }
+.ps-hub-title small { color: var(--ps-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ps-hub-body > p, .ps-hub-dialog-body > p { margin: 0; color: var(--ps-muted); font-size: 13px; line-height: 1.45; }
+.ps-hub-body > .ps-hub-based { margin-top: -4px; font-size: 12px; }
+.ps-hub-based a { color: inherit; text-decoration: underline; }
+.ps-hub-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--ps-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ps-hub-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.ps-hub-meta .ps-ico { width: 14px; height: 14px; }
+.ps-hub-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.ps-hub-actions .ps-btn { flex: 1 1 auto; text-decoration: none; }
+.ps-hub-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--ps-line); color: var(--ps-muted); font-size: 12px; }
+.ps-hub-foot a { color: inherit; text-decoration: underline; }
+.ps-hub-layer { position: fixed; inset: 0; z-index: var(--ps-z-modal); display: flex; align-items: flex-start; justify-content: center; padding: 48px 20px; overflow: auto; background: var(--ps-backdrop); }
+.ps-hub-dialog { width: min(820px, 100%); overflow: hidden; border-radius: var(--ps-radius-xl); background: var(--ps-surface); color: var(--ps-ink); box-shadow: var(--ps-shadow-modal); animation: ps-modal-in var(--ps-slow) var(--ps-ease); }
+.ps-hub-big { aspect-ratio: 16 / 8.6; background: var(--ps-raised); }
+.ps-hub-thumbs { display: flex; gap: 8px; padding: 10px 18px 0; overflow-x: auto; }
+.ps-hub-thumbs button { flex: none; width: 88px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: var(--ps-radius-sm); background: var(--ps-raised); cursor: pointer; }
+.ps-hub-thumbs button[aria-current="true"] { border-color: var(--ps-ink); }
+.ps-hub-thumbs img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; object-position: top left; }
+.ps-hub-dialog-body { display: grid; gap: 14px; padding: 18px; }
+.ps-hub-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ps-hub-dialog-head strong { display: block; font-size: 20px; }
+.ps-hub-dialog-head small { color: var(--ps-muted); font-size: 12px; }
+.ps-hub-maker-card { flex-wrap: wrap; padding: 14px; border-radius: var(--ps-radius-lg); background: var(--ps-raised); }
+.ps-hub-maker-card > span:not(.ps-hub-avatar) { flex: 1 1 180px; min-width: 0; }
+.ps-hub-maker-card strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+.ps-hub-dialog-body .ps-hub-actions .ps-btn { flex: 0 1 auto; }
+@media (max-width: 600px) {
+  .ps-hub-bar > .ps-segmented { order: 2; }
+  .ps-hub-layer { align-items: flex-end; padding: 0; }
+  .ps-hub-dialog { max-height: 92vh; overflow: auto; border-radius: var(--ps-radius-xl) var(--ps-radius-xl) 0 0; animation-name: ps-sheet-in; }
+}
+@media (prefers-reduced-motion: reduce) { .ps-hub-dialog { animation: none; } }
+
+/* Server Maker: one bar that stays at the bottom of the screen. The wizard footer (Back, Next, Create) sticks
+   to the bottom, and the steps and the draft lie on top of it, between the buttons. */
+.ssc-maker { --ssc-bar: 68px; --ssc-bar-left: 148px; --ssc-bar-right: 152px; }
+.ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: 182px; }
+.ssc-maker .fi-sc-wizard-footer { position: sticky !important; bottom: 0; z-index: 5; flex-wrap: nowrap; height: var(--ssc-bar); padding: 0 16px !important; box-shadow: 0 -10px 24px -18px rgb(0 0 0 / .35); }
+.ssc-maker .fi-sc-wizard-footer > :is(:nth-child(3), :nth-child(4)) { margin-left: auto; }
+.ssc-maker :is(.ssc-next-button, .ssc-back-button, .ssc-create-button) { min-height: 42px; }
+.ssc-navbar { position: sticky; bottom: 0; z-index: 6; display: flex; align-items: center; gap: 12px; height: var(--ssc-bar); margin-top: calc(-1 * var(--ssc-bar)); padding: 0 var(--ssc-bar-right) 0 var(--ssc-bar-left); pointer-events: none; }
+.ssc-navbar > * { pointer-events: auto; }
+.ssc-navbar .ssc-progress { position: relative; order: -1; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; justify-content: safe center; gap: 2px; padding: 0; border: 0; background: none; }
+.ssc-navbar .ssc-progress > button { flex: none; padding: 3px 8px 3px 3px; white-space: nowrap; }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) { padding: 3px; }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) .ssc-step-name { display: none; }
+.ssc-step-name { font: inherit; }
+.ssc-navbar .ssc-draft-bar { position: static; flex: none; margin: 0; padding: 3px 4px 3px 12px; background: var(--ps-surface); box-shadow: none; backdrop-filter: none; }
+.ssc-navbar .ssc-progress > :is(.ssc-progress-phone, .ssc-step-menu) { display: none; }
+@media (max-width: 600px) {
+  .ssc-maker { --ssc-bar: 64px; --ssc-bar-left: 88px; --ssc-bar-right: 88px; }
+  .ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: 128px; }
+  .ssc-maker .fi-sc-wizard-footer { padding: 0 10px !important; }
+  .ssc-maker .fi-sc-wizard-footer > * { flex: 0 0 auto; }
+  .ssc-maker :is(.fi-sc-wizard-footer .fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { min-width: 72px; min-height: 44px; padding: 0 12px; }
+  .ssc-navbar { gap: 6px; }
+  .ssc-navbar .ssc-progress { justify-content: center; padding: 0; }
+  .ssc-navbar .ssc-progress > button:not(.ssc-progress-phone) { display: none; }
+  .ssc-navbar .ssc-progress > .ssc-progress-phone { display: flex; }
+  .ssc-navbar .ssc-progress > .ssc-step-menu { display: grid; }
+  .ssc-navbar .ssc-progress::after { content: none; }
+  .ssc-navbar .ssc-progress-phone::after { content: ""; position: absolute; right: 10px; bottom: 0; left: 10px; height: 3px; border-radius: 2px; background: linear-gradient(var(--ps-accent), var(--ps-accent)) 0 0 / calc(var(--ssc-step, 1) / var(--ssc-steps, 1) * 100%) 100% no-repeat, var(--ps-raised); }
+  .ssc-navbar .ssc-progress-phone { display: flex; flex-direction: column; align-items: center; gap: 1px; position: relative; width: 100%; min-width: 0; padding: 2px 4px 9px; border: 0; border-radius: var(--ps-radius); background: none; color: var(--ps-ink); cursor: pointer; }
+  .ssc-navbar .ssc-progress-phone strong { max-width: 100%; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .ssc-navbar .ssc-progress-phone strong::after { content: " ▾"; color: var(--ps-muted); font-size: 10px; }
+  .ssc-navbar .ssc-progress-phone > .ssc-progress-count { display: block; width: auto; height: auto; border-radius: 0; background: none; color: var(--ps-muted); font-size: 11px; font-weight: 500; }
+  .ssc-navbar .ssc-step-menu { position: absolute; bottom: calc(100% + 14px); left: 50%; display: grid; gap: 2px; width: min(260px, 80vw); padding: 6px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius-lg); background: var(--ps-surface); box-shadow: 0 16px 40px -12px rgb(0 0 0 / .35); transform: translateX(-50%); }
+  .ssc-step-menu button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px 6px 6px; border: 0; border-radius: var(--ps-radius); background: none; color: var(--ps-ink); font: 500 14px/1.3 var(--ps-font); text-align: left; cursor: pointer; }
+  .ssc-step-menu button > span { display: grid; flex: none; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ps-raised); font-size: 12px; font-weight: 700; }
+  .ssc-step-menu button.is-complete > span { background: color-mix(in srgb, var(--ps-accent) 20%, var(--ps-surface)); }
+  .ssc-step-menu button.is-current { background: var(--ps-raised); font-weight: 650; }
+  .ssc-step-menu button.is-current > span { background: var(--ps-accent); color: var(--ps-on-accent); }
+  .ssc-step-menu button:disabled { cursor: default; opacity: .45; }
+  .ssc-navbar .ssc-draft-bar { padding: 2px; }
+  .ssc-navbar :is(.ssc-draft-status, .ssc-discard > span) { display: none; }
+  .ssc-navbar .ssc-draft-indicator { width: 32px; height: 32px; }
+}
+
+/* One look for every control in the Server Maker bar: the same height, radius, border and background, with
+   smaller inner buttons (steps, Discard) that keep the same shape. */
+.ssc-maker { --ssc-ctl: 40px; --ssc-inner: 32px; --ssc-inner-radius: calc(var(--ps-radius) - 3px); --ssc-gap: 8px; --ssc-bar: 64px; --ssc-bar-left: calc(16px + 104px + var(--ssc-gap)); --ssc-bar-right: calc(16px + 104px + var(--ssc-gap)); }
+.ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: calc(16px + 140px + var(--ssc-gap)); }
+.ssc-maker .fi-sc-wizard-footer :is(.ssc-next-button, .ssc-back-button, .ssc-create-button) { box-sizing: border-box; min-width: 104px; height: var(--ssc-ctl); min-height: var(--ssc-ctl); padding: 0 18px; border: 1px solid var(--ps-line); border-radius: var(--ps-radius) !important; font-size: 14px; }
+.ssc-maker .fi-sc-wizard-footer .ssc-create-button { min-width: 140px; }
+.ssc-maker .fi-sc-wizard-footer .fi-btn:disabled { border-color: var(--ps-line); background: var(--ps-surface); color: var(--ps-muted); }
+.ssc-navbar { gap: var(--ssc-gap); }
+.ssc-navbar :is(.ssc-progress, .ssc-draft-bar) { box-sizing: border-box; height: var(--ssc-ctl); border: 1px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-surface); }
+.ssc-navbar .ssc-progress { flex: 0 1 auto; margin: 0 auto; padding: 0 3px; gap: 2px; overflow: hidden; }
+.ssc-navbar .ssc-progress > button { height: var(--ssc-inner); min-height: var(--ssc-inner); padding: 0 10px 0 4px; gap: 7px; border: 0; border-radius: var(--ssc-inner-radius); }
+.ssc-navbar .ssc-progress.is-compact > button:not(.is-current) { padding: 0 4px; }
+.ssc-navbar .ssc-progress > button > span { width: 24px; height: 24px; border-radius: calc(var(--ssc-inner-radius) - 2px); }
+.ssc-navbar .ssc-draft-bar { gap: 2px; padding: 0 3px 0 12px; }
+.ssc-navbar .ssc-draft-status { margin-right: 2px; font-size: 13px; }
+.ssc-navbar .ssc-draft-indicator { width: var(--ssc-inner); height: var(--ssc-inner); }
+.ssc-navbar .ssc-discard { height: var(--ssc-inner); min-height: var(--ssc-inner); padding: 0 10px; border: 0; border-radius: var(--ssc-inner-radius) !important; background: none; }
+.ssc-navbar .ssc-discard:hover:not(:disabled) { background: var(--ps-raised); }
+.ssc-navbar .ssc-delete-confirm .ps-btn { width: var(--ssc-inner); height: var(--ssc-inner); min-height: var(--ssc-inner); border-radius: var(--ssc-inner-radius); }
+@media (max-width: 600px) {
+  .ssc-maker { --ssc-gap: 6px; --ssc-bar: 60px; --ssc-bar-left: calc(10px + 72px + var(--ssc-gap)); --ssc-bar-right: calc(10px + 72px + var(--ssc-gap)); }
+  .ssc-maker:has(.fi-sc-wizard-footer > :nth-child(4):not(.fi-hidden)) { --ssc-bar-right: calc(10px + 118px + var(--ssc-gap)); }
+  .ssc-maker .fi-sc-wizard-footer :is(.fi-btn, .ssc-next-button, .ssc-back-button, .ssc-create-button) { min-width: 72px; height: var(--ssc-ctl); min-height: var(--ssc-ctl); padding: 0 12px; }
+  .ssc-maker .fi-sc-wizard-footer .ssc-create-button { min-width: 118px; }
+  .ssc-navbar .ssc-progress { flex: 1 1 auto; padding: 0; overflow: visible; }
+  .ssc-navbar .ssc-progress-phone { height: 100%; justify-content: center; padding: 0 4px; border-radius: var(--ps-radius); }
+  .ssc-navbar .ssc-progress-phone strong { line-height: 1.2; }
+  .ssc-navbar .ssc-progress-phone > .ssc-progress-count { line-height: 1.2; }
+  .ssc-navbar .ssc-progress-phone::after { content: none; }
+  .ssc-navbar .ssc-draft-bar { padding: 0 3px; }
+}
+
+/* Minecraft step: server types as compact cards (icon beside the name and its line), software as one row of
+   buttons. Both still grow with their text; nothing is smaller than it needs to be. */
+.ssc-type-options.ssc-cards { gap: 10px; }
+.ssc-type-options .ssc-card-content { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-content: center; align-items: center; justify-content: start; gap: 2px 12px; min-height: 76px; padding: 12px 14px; text-align: left; }
+.ssc-type-options .ssc-card-content > .ssc-outline-icon { grid-column: 1; grid-row: 1 / span 2; width: 40px; height: 40px; padding: 9px; }
+.ssc-type-options .ssc-card-title { grid-column: 2; font-size: 14px; }
+.ssc-type-options .ssc-card-description { grid-column: 2; max-width: none; }
+.ssc-chip-options.ssc-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+.ssc-chip-options .ssc-card { flex: 0 0 auto; }
+.ssc-chip-options .ssc-card-content { flex-direction: row; min-height: 40px; padding: 0 18px; border-radius: var(--ps-radius); }
+.ssc-chip-options .ssc-card-title { font-size: 14px; font-weight: 600; }
+@media (max-width: 600px) {
+  .ssc-type-options.ssc-cards .ssc-card-content { min-height: 68px; padding: 10px 12px; }
+  .ssc-chip-options.ssc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ssc-chip-options.ssc-cards .ssc-card-content { display: flex; justify-content: center; min-height: 40px; padding: 0 12px; }
+}
+
+/* Simplify settings → Egg updates: a heading row with the check and Update all buttons above the plugin-style list. */
+.ps-egg-updates { display: grid; gap: 12px; }
+.ps-egg-updates h3 { margin: 4px 0 0; font-size: 14px; }
+.ps-egg-updates-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ps-egg-updates-head h3 { margin: 0; }
+.ps-egg-updates-head .ps-help { margin: 0 auto 0 0; }

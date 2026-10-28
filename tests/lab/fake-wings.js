@@ -28,6 +28,8 @@ http.createServer((req, res) => {
     if (rest === '/files/contents') { const f = u.query.file || ''; if (f.endsWith('server.properties')) return send(200, properties, 'text/plain'); return send(404, { error: 'file not found' }); }
     if (rest === '/files/list-directory') return send(200, []);
     if (rest === '/power') return send(204, '');
+    // Console commands ("Also send in game"): logged with what was sent.
+    if (rest === '/commands' && req.method === 'POST') { let body = ''; req.on('data', (c) => { body += c; }); req.on('end', () => { fs.appendFileSync(logFile, '  commands ' + body + '\n'); send(204, ''); }); return; }
     if (rest === '/logs') return send(200, { data: ['[lab] hello'] });
     if (rest === '/install-logs') return send(200, { data: '' });
     return send(200, {});

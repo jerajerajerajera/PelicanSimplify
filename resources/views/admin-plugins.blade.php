@@ -1,9 +1,17 @@
 <x-filament-panels::page>
     @assets
     <link rel="stylesheet" href="{{ \Simplify\Panel\Services\BuildInfo::asset('wizard.css') }}">
+    <script src="{{ \Simplify\Panel\Services\BuildInfo::asset('wizard.js') }}"></script>
     @endassets
-    @php($plugins = $this->plugins())
     <div class="ps-admin-page ps-plugins">
+        <nav class="ps-segmented ps-plugins-tabs" role="tablist" aria-label="Plugins">
+            <button type="button" role="tab" aria-pressed="{{ $tab === 'installed' ? 'true' : 'false' }}" wire:click="$set('tab', 'installed')"><x-tabler-puzzle class="ps-ico" />Installed</button>
+            <button type="button" role="tab" aria-pressed="{{ $tab === 'hub' ? 'true' : 'false' }}" wire:click="$set('tab', 'hub')"><x-tabler-world class="ps-ico" />Browse Hub</button>
+        </nav>
+        @if($tab === 'hub')
+            @include('pelican-simplify::admin-plugins-hub')
+        @else
+        @php($plugins = $this->plugins())
         <header class="ps-plugins-head">
             @include('pelican-simplify::partials-conflict-notice')
             <div class="ps-alert is-info ps-plugin-channel" role="note">
@@ -20,9 +28,9 @@
                     Automatic updates are off: you get a notification for each new version; install it here. A backup is kept and restored if anything fails.
                 @endif
             </p>
-            @php($age = $this->lastCheckAge())
-            @if($age === null || $age > 300)
-                <p class="ps-plugin-error">The automatic update check {{ $age === null ? 'has not run yet' : 'last ran '.\Carbon\CarbonInterval::seconds($age)->cascade()->forHumans(['parts' => 1]).' ago' }}. Pelican's scheduler is probably not running: add the cron job <code>* * * * * php {{ base_path('artisan') }} schedule:run</code> for the web server user. Updates from this page still work.</p>
+            {{-- Any of Simplify's minute commands counts: the update check itself can be busy for a while installing updates. --}}
+            @if(\Simplify\Panel\Services\PushNotifications::schedulerStalled())
+                <p class="ps-plugin-error">Pelican's scheduler has not run in the last five minutes, so automatic update checks are paused. Add the cron job <code>* * * * * php {{ base_path('artisan') }} schedule:run</code> for the web server user. Updates from this page still work.</p>
             @endif
         </header>
         <div class="ps-plugin-list" @if($this->busy) wire:poll.3s @else wire:poll.15s @endif>
@@ -72,5 +80,6 @@
                 <p class="ps-empty">No plugins installed.</p>
             @endforelse
         </div>
+        @endif
     </div>
 </x-filament-panels::page>

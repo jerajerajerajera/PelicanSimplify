@@ -22,7 +22,7 @@ final class PluginUpdater
         Plugin::refreshRows();
         return Plugin::all()->filter(function (Plugin $plugin) use ($fresh): bool {
             try {
-                return $plugin->status->value !== 'not_installed' && ($latest = self::latestVersion($plugin, $fresh)) && version_compare($latest, $plugin->version, '>');
+                return $plugin->status->value !== 'not_installed' && ($latest = self::latestVersion($plugin, $fresh)) && self::isNewer($latest, $plugin->version);
             } catch (\Throwable) {
                 return false;
             }
@@ -51,7 +51,7 @@ final class PluginUpdater
             foreach (self::channelUrls(self::channel()) as $channelUrl) {
                 if ($channelUrl === $url) continue;
                 $candidate = self::read($channelUrl, $plugin, $fresh);
-                if ($candidate && is_string($candidate['version'] ?? null) && (!$entry || version_compare($candidate['version'], (string) ($entry['version'] ?? '0'), '>'))) $entry = $candidate;
+                if ($candidate && is_string($candidate['version'] ?? null) && (!$entry || self::isNewer($candidate['version'], (string) ($entry['version'] ?? '0')))) $entry = $candidate;
             }
         }
         return $entry;
@@ -97,6 +97,17 @@ final class PluginUpdater
         $data = is_array($data[$plugin->id] ?? null) ? $data[$plugin->id] : $data;
         $entry = $data[self::panelVersion()] ?? $data['*'] ?? null;
         return is_array($entry) ? $entry : null;
+    }
+
+    /**
+     * Whether a version is newer than another. PHP's version_compare puts every snapshot below every beta of the same
+     * version, so 0.6.0-snapshot.15 never replaced 0.6.0-beta.12. Snapshots and betas share one numbering, so they
+     * are compared by number; on a tie the beta counts as the newer one.
+     */
+    public static function isNewer(string $version, string $than): bool
+    {
+        $rank = static fn (string $v): string => (string) preg_replace('/-snapshot(?=[.\d]|$)/i', '-beta', $v);
+        return version_compare($rank($version), $rank($than), '>');
     }
 
     /** "stable", "beta" or "snapshot": which Simplify releases this panel follows. */
@@ -150,6 +161,8 @@ final class PluginUpdater
                 if (!$boot->successful()) throw new \RuntimeException('The panel does not start with the new version: '.self::output($boot));
                 $result = ['ok' => true, 'message' => $plugin->name.' updated from '.$from.' to '.$to.'.'];
                 PanelUpdates::forget();
+                // What's new right in the "Plugin updated" notification; usually already read by the update check.
+                try { $result['notes'] = PanelUpdates::notesFor($plugin, $to); } catch (\Throwable) {}
             } catch (\Throwable $exception) {
                 self::restore($directory, $backup);
                 report($exception);
@@ -328,6 +341,7 @@ final class PluginUpdater
             $users = $userId ? \App\Models\User::query()->whereKey($userId)->get() : \App\Models\User::query()->get()->filter(fn ($user) => $user->isRootAdmin());
             $notification = \Filament\Notifications\Notification::make()->title($result['ok'] ? $titles[0] : $titles[1])->body($result['message']);
             $result['ok'] ? $notification->success() : $notification->danger();
+            if (!empty($result['notes']['lines'])) $notification->viewData(['simplify_notes' => $result['notes']['lines'], 'simplify_notes_url' => $result['notes']['url'] ?? null]);
             if (FeatureSettings::enabled('plugin_manager')) $notification->actions([\Filament\Actions\Action::make('open')->label('Open plugins')->url(\Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin'))]);
             // Delivered right away: the result must arrive even when the queue worker is busy or down.
             foreach ($users as $user) $user->notifyNow($notification->toDatabase());

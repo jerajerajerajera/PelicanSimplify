@@ -57,6 +57,10 @@ final class AdminPages
             [$group, $icon] = self::KNOWN[$name] ?? ($plugin ? ['External', 'plugins'] : ['Other', 'legacy']);
             if ($name === 'ServerResource' && $class::canCreate()) $label = 'Create server (legacy)';
             if ($people && $name === 'UserResource') $label = 'People';
+            // Pelican's settings are tabs inside Simplify settings (Admin tools → Panel → Settings).
+            if ($name === 'Settings' && PelicanSettingsTabs::available()) continue;
+            if ($name === 'Settings') $label = 'Pelican settings';
+            if ($name === 'PluginResource') $label = 'Plugin manager';
             $groups[$group][] = ['key' => strtolower($name), 'label' => $label, 'url' => $url, 'icon' => $icon, 'plugin' => $plugin['name'] ?? null];
         }
         $menu = [];
@@ -74,8 +78,8 @@ final class AdminPages
         if (!user()?->isAdmin()) return [];
         $items = [];
         try {
-            if (FeatureSettings::enabled('easy_creator') && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => 'Create server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(['game' => 'minecraft'], panel: 'app'), 'icon' => 'plus'];
-            if (FeatureSettings::enabled('game_creator') && Extensions::canCreate()) $items[] = ['key' => 'gamecreator', 'label' => 'Create other server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(['game' => 'other'], panel: 'app'), 'icon' => 'gamepad'];
+            // One Server Maker for Minecraft and other games.
+            if ((FeatureSettings::enabled('easy_creator') || FeatureSettings::enabled('game_creator')) && Extensions::canCreate()) $items[] = ['key' => 'easycreator', 'label' => 'Create server', 'url' => \Simplify\Panel\Filament\App\Pages\CreateServer::getUrl(panel: 'app'), 'icon' => 'plus'];
             $plugins = \App\Filament\Admin\Resources\Plugins\PluginResource::class;
             if (\Simplify\Panel\Filament\Admin\Pages\ManagePeople::canAccess() && FeatureSettings::enabled('legacy_pages')) {
                 $items[] = ['key' => 'legacyusers', 'label' => 'Users (legacy)', 'url' => \App\Filament\Admin\Resources\Users\UserResource::getUrl('index', ['simplify_legacy' => 1], panel: 'admin'), 'icon' => 'players'];

@@ -43,8 +43,11 @@ final class GameCatalog
         return CreatorAccess::admin() || (CreatorAccess::canCreate() && RoleAccess::can('install_games'));
     }
 
-    /** Cards for the game picker: key, name, description, installed, popularity (higher first). */
-    public static function cards(): array
+    /**
+     * Cards for the game picker: key, name, description, installed, popularity (higher first). With Minecraft
+     * shown above the list, its eggs (Paper, Forge, Bedrock and so on) are left out here.
+     */
+    public static function cards(bool $withoutMinecraft = false): array
     {
         $counts = \App\Models\Server::query()->selectRaw('egg_id, count(*) as total')->groupBy('egg_id')->pluck('total', 'egg_id');
         $rank = static fn (string $name): int => ($at = array_search(mb_strtolower($name), self::POPULAR, true)) === false ? 0 : count(self::POPULAR) - $at;
@@ -54,7 +57,7 @@ final class GameCatalog
             'description' => mb_strimwidth(trim(preg_replace('/\s+/', ' ', (string) $egg->description)), 0, 160, '…'),
             'installed' => true,
             'popular' => (int) ($counts[$egg->id] ?? 0) * 100 + $rank($egg->name),
-        ])->all();
+        ])->reject(fn (array $card): bool => $withoutMinecraft && MinecraftCatalog::isMinecraftEgg($card['name']))->values()->all();
         if (!self::canInstall()) return $cards;
         // Anything already on the panel (approved or not) is never offered for a second import.
         $present = Egg::query()->get(['uuid', 'name']);

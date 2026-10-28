@@ -8,11 +8,11 @@ const items=()=>[
   {key:'own-bbbb',source:'own',category:'success',tone:'ok',title:'Old news',text:'',from:'jera',audience:'everyone',time:'yesterday',until:null,action:null,dismissed:true},
 ];
 let fail=false;const calls=[];
-const wire={dismissAnnouncement:async(key)=>{calls.push(key);if(fail)throw new Error('down');return items().map((i)=>i.key===key?{...i,dismissed:true}:i);},announcements:async()=>items()};
+const wire={dismissAnnouncement:async(key)=>{calls.push(key);if(fail)throw new Error('down');return items().map((i)=>i.key===key?{...i,dismissed:true}:i);},restoreAnnouncement:async(key)=>{calls.push('open '+key);if(fail)throw new Error('down');return items().map((i)=>i.key===key?{...i,dismissed:false}:i);},announcements:async()=>items()};
 const page=()=>{const d=context.window.pelicanSimplify(wire,{server:null,servers:[],user:'jera',announcements:items(),update:{available:true,version:'0.5.1',current:'0.5.0'}});d.initNotices();return d;};
 (async()=>{
   const d=page();
-  assert.deepEqual(d.announcementBars().map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available'],'hidden announcements get no bar');
+  assert.deepEqual(d.announcementBars().map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available'],'unpinned announcements get no bar');
   const bell=d.notifications();
   assert.deepEqual(bell.filter((i)=>i.announcement).map((i)=>i.title),['Maintenance','Simplify 0.5.1 is available','Old news'],'the bell keeps hidden announcements');
   assert.equal(bell.filter((i)=>i.title==='Simplify 0.5.1 is available').length,1,'the Simplify update shows once (as a Panel announcement)');
@@ -26,7 +26,12 @@ const page=()=>{const d=context.window.pelicanSimplify(wire,{server:null,servers
   assert.deepEqual(calls,['own-aaaa'],'hiding is saved with the account');
   assert.deepEqual(d.announcementBars().map((i)=>i.title),['Simplify 0.5.1 is available']);
   assert.equal(d.unreadNotifications(),1);
+  await d.restoreAnnouncement('own-bbbb');
+  assert.deepEqual(calls,['own-aaaa','open own-bbbb'],'pinning again is saved with the account');
+  assert.ok(d.announcementBars().some((i)=>i.title==='Old news'),'a pinned announcement is a bar again');
   fail=true;const e=page();await e.dismissAnnouncement('own-aaaa');
   assert.equal(e.announcementBars().length,2,'a failed save brings the bar back');assert.equal(toasts.at(-1)[1],'warn');
-  console.log('PASS announcements dashboard: bars skip hidden ones, bell keeps them, count, labels, hide saved per account and restored on errors');
+  await e.restoreAnnouncement('own-bbbb');
+  assert.ok(!e.announcementBars().some((i)=>i.key==='own-bbbb'),'a failed pin leaves it unpinned');assert.equal(toasts.at(-1)[0],'The announcement could not be pinned.');
+  console.log('PASS announcements dashboard: bars skip unpinned ones, pin again from the bell, bell keeps them, count, labels, hide saved per account and restored on errors');
 })().catch((e)=>{console.error(e);process.exit(1);});

@@ -126,23 +126,57 @@ const { start } = require('./browser-harness');
     }
     console.log('PASS phone layouts without horizontal scrolling');
 
-    // 7b. Full screen width (Customize overview): only the overview drops its centred column; server pages keep theirs.
+    // 7b. Full screen width: the overview and server pages each have their own switch (Customize overview / Customize server page).
     for (const url of ['/?mode=overview&theme=dark', '/?mode=server&theme=dark']) {
       const wide = await open(url, { width: 2400, height: 1100 });
-      const width = () => wide.evaluate((selector) => document.querySelector(selector).getBoundingClientRect().width / innerWidth, url.includes('server') ? '.ps-server-dashboard' : '.ps-server-stage');
+      const server = url.includes('server');
+      const width = () => wide.evaluate((selector) => document.querySelector(selector).getBoundingClientRect().width / innerWidth, server ? '.ps-server-dashboard' : '.ps-server-stage');
       const before = await width();
       await data(wide, (d) => d.setOverviewPreference('fullWidth', true));
       await wide.waitForTimeout(200);
-      const after = await width();
-      if (url.includes('server')) assert.ok(Math.abs(after - before) < 0.01, 'server page keeps its width: ' + before + ' -> ' + after);
-      else assert.ok(before < 0.7 && after > 0.9, 'overview uses the full width when switched on: ' + before + ' -> ' + after);
+      const overviewOnly = await width();
+      await data(wide, (d) => d.setOverviewPreference('serverFullWidth', true));
+      await wide.waitForTimeout(200);
+      const both = await width();
+      if (server) {
+        assert.ok(Math.abs(overviewOnly - before) < 0.01, 'the overview switch leaves server pages alone: ' + before + ' -> ' + overviewOnly);
+        assert.ok(before < 0.7 && both > 0.9, 'server page uses the full width when switched on: ' + before + ' -> ' + both);
+        assert.equal(await wide.evaluate(() => document.querySelector('[x-ref=overviewAppearance]').getAttribute('aria-label')), 'Customize server page');
+        assert.equal(await wide.evaluate(() => document.querySelector('[x-ref=overviewAppearance]').offsetParent !== null), true, 'Customize button shown on server pages');
+      } else {
+        assert.ok(before < 0.7 && overviewOnly > 0.9, 'overview uses the full width when switched on: ' + before + ' -> ' + overviewOnly);
+        await data(wide, (d) => d.setOverviewPreference('fullWidth', false));
+        await wide.waitForTimeout(200);
+        assert.ok(await width() < 0.7, 'the server page switch leaves the overview alone');
+      }
       await wide.close();
     }
+    // 7b2. Bigger console and the log in the mini console are remembered for the next server page.
+    const remember = await open('/?mode=server&theme=dark');
+    await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
+    // Sections fold: only Layout starts open; opening Console is remembered on this device.
+    assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), false, 'Console section folded by default');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).click();
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).click();
+    await remember.locator('.ps-customize-switch', { hasText: 'Log in the mini console' }).click();
+    assert.equal(await remember.evaluate(() => document.querySelector('.ps-server-workspace').classList.contains('is-focus')), true, 'bigger console right away');
+    await remember.reload();
+    await remember.waitForFunction(() => window.Alpine && document.querySelector('.ps') && !document.querySelector('.ps').hasAttribute('x-cloak'));
+    assert.deepEqual(await data(remember, (d) => [d.consoleFocus, d.consolePeek]), [true, true], 'remembered after a reload');
+    await remember.click('[x-ref=overviewAppearance]');
+    await remember.locator('.ps-customize-head', { hasText: 'Console' }).waitFor({ state: 'visible' });
+    await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    assert.equal(await remember.locator('.ps-customize-switch', { hasText: 'Bigger console' }).isVisible(), true, 'opened Console section remembered');
+    await remember.locator('.ps-console-grow').click();
+    assert.equal(await data(remember, (d) => d.overviewPreferences.serverBiggerConsole), false, 'the console button changes the same preference');
+    await data(remember, (d) => { d.setConsolePeek(false); });
+    await remember.close();
     const narrow = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
     await data(narrow, (d) => d.setOverviewPreference('fullWidth', true));
     assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'full width still fits a phone');
     await narrow.close();
-    console.log('PASS full screen width switch on the overview, server pages unchanged, phones fit');
+    console.log('PASS full screen width switches for the overview and server pages, each on its own, remembered bigger console and mini console log, phones fit');
 
     // 7c. Layout, columns and card width: a column count caps each row; compact cards are smaller; phones show two compact cards per row.
     const columns = await open('/?mode=overview&theme=dark', { width: 1600, height: 1000 });
@@ -180,7 +214,29 @@ const { start } = require('./browser-harness');
     await nodes.evaluate(() => Alpine.$data(document.querySelector('.ps')).setHostMode(true));
     await nodes.waitForSelector('.ps-host iframe[title="Health"]');
     assert.equal(await nodes.locator('.ps-host-server').count(), 4, 'host mode lists every server');
+    // One frame: the admin tree with pages under their section, the servers behind the second tab.
+    assert.equal(await nodes.locator('.ps-host-leaf:visible').count() > 0 || await nodes.locator('.ps-host-group-head:visible').count() > 0, true, 'host mode shows the admin tree');
+    await nodes.click('.ps-host-tabs button:has-text("Servers")');
+    await nodes.locator('.ps-host-server-list').waitFor({ state: 'visible' });
+    assert.equal(await nodes.locator('.ps-host-server:visible').count(), 4, 'the Servers tab lists every server');
+    await nodes.locator('.ps-host-server:visible').first().click();
+    await nodes.waitForSelector('.ps-host-frame.is-server iframe');
+    assert.equal(await nodes.locator('.ps-host-server-name').innerText(), 'Survival', 'the open server is named in the page header');
+    await nodes.click('.ps-host-head-actions button[aria-label="Close server"]');
+    await nodes.locator('.ps-host-frame.is-server').waitFor({ state: 'hidden' });
+    assert.equal(await nodes.locator('.ps-host-frame.is-server').isVisible(), false, 'closing the server shows the admin page again');
+    assert.equal(await nodes.evaluate(() => { const s = document.querySelector('.ps-host-side'), m = document.querySelector('.ps-host-main'); return s.getBoundingClientRect().right <= m.getBoundingClientRect().left + 1 && document.documentElement.scrollHeight <= innerHeight + 1; }), true, 'menu and page side by side, no page scroll');
     await nodes.close();
+    const hostPhone = await open('/?mode=overview&theme=dark', { width: 390, height: 844 });
+    await data(hostPhone, (d) => d.setHostMode(true));
+    await hostPhone.waitForTimeout(300);
+    assert.equal(await hostPhone.locator('.ps-host-side').isVisible(), false, 'phones hide the host menu until asked');
+    await hostPhone.click('.ps-host-menu-toggle');
+    await hostPhone.locator('.ps-host-side').waitFor({ state: 'visible' });
+    await hostPhone.waitForTimeout(400);
+    assert.equal(await hostPhone.evaluate(() => { const r = document.querySelector('.ps-host-side').getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.top >= 0; }), true, 'the host menu opens as a sheet on phones');
+    assert.equal(await hostPhone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'host mode fits a phone');
+    await hostPhone.close();
     console.log('PASS servers grouped per node, compact list rows and host mode');
 
     // 8b. Things only shrink when they would not fit: the list MOTD keeps its width when quick actions
@@ -215,6 +271,44 @@ const { start } = require('./browser-harness');
     assert.ok(longName.lines === 2 && !longName.clipped && longName.size >= 14, 'a long grid name wraps onto two lines before it shrinks: ' + JSON.stringify(longName));
     await fit.close();
     console.log('PASS MOTD only gives way when the row is full, quick actions off/on/hover, normal interface size, two-line names');
+
+    // 8b. Host health: a button in the top bar by default (details drop down, Create server next to it),
+    // or a bar above the servers or at the bottom with Create server at the end of the filter row.
+    const healthPage = await open('/?mode=overview&theme=dark');
+    const where = () => healthPage.evaluate(() => {
+      const shown = (el) => !!el && el.offsetParent !== null;
+      const panel = document.querySelector('.ps-health-panel'), toolbar = document.querySelector('.ps-overview-toolbar');
+      return {
+        pill: shown(document.querySelector('.ps-health-pill')), topCreate: shown(document.querySelector('.ps-top-overview .ps-create-button.is-main')),
+        rowCreate: shown(document.querySelector('.ps-create-buttons .ps-create-button.is-main')), panel: shown(panel),
+        panelAbove: shown(panel) && panel.getBoundingClientRect().bottom <= toolbar.getBoundingClientRect().top,
+      };
+    });
+    // Alpine and the dock observer update on the next frames, so wait for the expected state before asserting.
+    const expectPlace = async (expected, message) => {
+      let actual;
+      for (let i = 0; i < 30; i++) {
+        actual = await where();
+        if (JSON.stringify(actual) === JSON.stringify(expected)) break;
+        await healthPage.waitForTimeout(100);
+      }
+      assert.deepEqual(actual, expected, message + ': ' + JSON.stringify(actual));
+    };
+    await expectPlace({ pill: true, topCreate: true, rowCreate: false, panel: false, panelAbove: false }, 'top bar by default');
+    await healthPage.click('.ps-health-pill');
+    await healthPage.waitForSelector('.ps-health-panel.is-popover', { state: 'visible' });
+    const under = await healthPage.evaluate(() => { const pill = document.querySelector('.ps-health-pill').getBoundingClientRect(), panel = document.querySelector('.ps-health-panel').getBoundingClientRect(); return Math.abs(panel.left - pill.left) < 2 && panel.top >= pill.bottom && panel.top - pill.bottom < 16; });
+    assert.ok(under, 'the details open right under the Healthy button');
+    await healthPage.click('.ps-health-pill');
+    await healthPage.waitForSelector('.ps-health-panel', { state: 'hidden' });
+    await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'above'));
+    await expectPlace({ pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: true }, 'bar above the servers');
+    await data(healthPage, (d) => d.setOverviewPreference('healthPlace', 'bottom'));
+    await expectPlace({ pill: false, topCreate: false, rowCreate: true, panel: true, panelAbove: false }, 'bar at the bottom');
+    const docked = await healthPage.evaluate(() => Math.round(innerHeight - document.querySelector('.ps-health-panel').getBoundingClientRect().bottom));
+    assert.ok(docked < 80, 'the bottom bar stays at the bottom of the screen: ' + docked);
+    await healthPage.close();
+    console.log('PASS host health in the top bar, above the servers or at the bottom, with Create server beside it');
 
     // 9. Network: the subdomain sits in one input row with its domain, and the status uses the shared badge.
     const network = await open('/?mode=server&theme=light');
@@ -350,9 +444,9 @@ const { start } = require('./browser-harness');
         await phone.click('.ps-tab-create > .ps-tab');
         await phone.waitForSelector('.ps-tab-create-menu .ps-menu-item:visible');
         assert.equal(await phone.locator('.ps-tab-create-menu .ps-menu-item:visible').count(), 2);
-        await phone.click('.ps-tab-create-menu .ps-menu-item >> text=Minecraft server');
+        await phone.click('.ps-tab-create-menu .ps-menu-item >> text="Server"');
         await phone.waitForSelector('.ps-modal');
-        assert.equal(await data(phone, (d) => d.createGame), 'minecraft');
+        assert.equal(await data(phone, (d) => d.createGame), 'server', 'one Server Maker for every game');
       }
       await phone.close();
     }
@@ -405,7 +499,7 @@ const { start } = require('./browser-harness');
           return { docked: d.docked(), top: Math.round(modal.top), bottom: Math.round(modal.bottom) === innerHeight, foot: Math.round(foot.bottom) === innerHeight, locked: getComputedStyle(document.documentElement).overflow === 'hidden' };
         });
         assert.deepEqual(sheet, { docked: false, top: 12, bottom: true, foot: true, locked: true }, 'workspace sheet with the save bar at the bottom: ' + JSON.stringify(sheet));
-        const head = await phone.locator('.ps-modal-head').boundingBox();
+        const head = await phone.locator('.ps-modal-layer:not(.ps-explain-layer) .ps-modal-head').boundingBox();
         const touch = await phone.context().newCDPSession(phone);
         const drag = (type, y) => touch.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: head.x + 60, y }] });
         await drag('touchStart', head.y + 20);
@@ -417,6 +511,22 @@ const { start } = require('./browser-harness');
     }
     const desk = await open('/?mode=server&theme=dark');
     assert.deepEqual(await desk.evaluate(() => [!!document.querySelector('.ps-phone-sections').offsetParent, !!document.querySelector('.ps-quick-commands').offsetParent, !!document.querySelector('.ps-widget-grid').offsetParent]), [false, false, true], 'desktop keeps its section menu');
+    // Workspaces opened one after another (closed with ✕ in between) all dock next to the console; the Explain layer stays a popup.
+    for (const label of ['Game settings', 'Player management', 'Backups', 'Files']) {
+      await desk.click(`.ps-widget[aria-label^="${label}"]`);
+      // Docked: the workspace layer sits in the dock with a visible shell (after the layout transition).
+      await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock') && document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0, null, { timeout: 5000 }).catch(() => {});
+      const docked = await desk.evaluate(() => ({ workspace: document.querySelector('[data-ps-workspace]').parentElement.classList.contains('ps-dock'), explain: document.querySelector('.ps-explain-layer').parentElement.classList.contains('ps'), visible: document.querySelector('.ps-dock .ps-modal').getBoundingClientRect().height > 0 }));
+      assert.deepEqual(docked, { workspace: true, explain: true, visible: true }, label + ' docks after closing the previous workspace');
+      await desk.click('.ps-dock .ps-close');
+      await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
+    }
+    // Escape closes a workspace popup.
+    await data(desk, (d) => { d.modal = 'alias'; });
+    await desk.waitForSelector('.ps-modal-layer[data-open="true"] .ps-modal', { state: 'visible' });
+    await desk.waitForFunction(() => document.querySelector('[data-ps-workspace]').contains(document.activeElement)); // focus trapped in the popup
+    await desk.keyboard.press('Escape');
+    await desk.waitForFunction(() => !Alpine.$data(document.querySelector('.ps')).modal);
     await desk.close();
     console.log('PASS phone server page: four tabs, More menu, full-height console, quick commands, sheets');
 
@@ -447,7 +557,7 @@ const { start } = require('./browser-harness');
     // 15. Account-level pages from other plugins (such as Legal Pages) open from the account menu.
     for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
       const account = await open('/?mode=overview&theme=light', viewport);
-      const pluginButton = account.locator('#ps-account-actions [aria-label="Plugin pages"]');
+      const pluginButton = account.locator('#ps-account-actions [aria-label="Pages from other plugins"]');
       assert.equal(await pluginButton.count(), 1);
       await data(account, (d) => { d.boot.plugin_pages = [{ key: 'ext-imprint', label: 'Imprint', url: '/frame/native', plugin: 'Legal Pages' }, { key: 'ext-termsofservice', label: 'Terms of Service', url: '/frame/native', plugin: 'Legal Pages' }]; });
       if (viewport.width < 600) await data(account, (d) => { d.navMenu = true; });
@@ -512,6 +622,20 @@ const { start } = require('./browser-harness');
       const dock = await console_.evaluate(() => document.querySelector('.ps-dock').getBoundingClientRect().height);
       assert.ok(dock <= viewport.height, 'docked workspace fits a low screen: ' + dock);
       await console_.close();
+      // Pinned announcements fold into chips on a low screen, so they do not push the console off the screen.
+      const pinned = await open('/?mode=server&theme=dark&announcements=1', viewport);
+      const pins = await pinned.evaluate(() => { const box = document.querySelector('.ps-console').getBoundingClientRect(); return { chips: document.querySelectorAll('.ps-pins-low .ps-host-pin').length, bars: document.querySelector('.ps-server-dashboard > .ps-announcements-pinned').getBoundingClientRect().height, bottom: Math.round(box.bottom), scroll: document.documentElement.scrollHeight <= innerHeight }; });
+      assert.ok(pins.chips === 3 && pins.bars === 0 && pins.bottom <= viewport.height && pins.scroll, 'announcements fit a low screen: ' + JSON.stringify(pins));
+      await pinned.click('.ps-pins-low .ps-host-pin');
+      await pinned.waitForSelector('.ps-pins-low .ps-host-pin-open .ps-announcement-bar', { state: 'visible' });
+      await pinned.close();
+      // Host mode on a low screen: the block keeps its height, with the menu in view.
+      const host = await open('/?mode=overview&theme=dark', viewport);
+      await data(host, (d) => d.setHostMode(true));
+      await host.waitForSelector('.ps-host', { state: 'visible' });
+      const hostBox = await host.evaluate(() => { const box = document.querySelector('.ps-host').getBoundingClientRect(); const menu = document.querySelector(innerWidth <= 760 ? '.ps-host-menu-toggle' : '.ps-host-side').getBoundingClientRect(); return { height: Math.round(box.height), menu: Math.round(menu.height) }; });
+      assert.ok(hostBox.height >= 250 && hostBox.menu > 0, 'host mode keeps its height on a low screen: ' + JSON.stringify(hostBox));
+      await host.close();
     }
     // Sideways strips show which side hides more items.
     const strip = await open('/?mode=overview&theme=light', { width: 390, height: 844 });
@@ -523,6 +647,38 @@ const { start } = require('./browser-harness');
     assert.ok(name, 'long name on two lines in the phone list');
     await strip.close();
     console.log('PASS phone on its side: page scroll, console and workspace fit, turning back, swipe hints, two-line names');
+
+    // 17. A new server that is installing: only the steps and the installation log; then the ready banner with Start.
+    for (const [viewport, theme] of [[{ width: 1440, height: 900 }, 'light'], [{ width: 360, height: 740 }, 'dark']]) {
+      const inst = await open('/?mode=server&theme=' + theme, viewport);
+      await data(inst, (d) => { Object.assign(d.server, { setup_state: 'installing', install_since: Math.floor(Date.now() / 1000) - 75, install_fresh: true, owner: true }); d.installLines = 3; d.status = 'offline'; });
+      await inst.waitForSelector('.ps-install', { state: 'visible' });
+      for (const hidden of ['.ps-server-info', '.ps-server-stats', '.ps-widget-grid', '.ps-command', '.ps-quick-commands']) assert.equal(await inst.locator(hidden).first().isVisible(), false, hidden + ' hidden while installing');
+      assert.ok(await inst.locator('.ps-console-output').isVisible(), 'installation log visible');
+      assert.deepEqual(await inst.$$eval('.ps-install-step', (steps) => steps.map((step) => step.className.match(/is-(\w+)/)[1])), ['done', 'done', 'active', 'todo']);
+      assert.ok(await inst.locator('.ps-install-kill').isVisible(), 'Kill for the first installation');
+      assert.match(await inst.textContent('.ps-install-time strong'), /^1:1\d$/);
+      const overflow = await inst.evaluate(() => [...document.querySelectorAll('.ps-install, .ps-install *')].filter((el) => el.offsetParent && el.getBoundingClientRect().right > document.querySelector('.ps-install').getBoundingClientRect().right + 1).map((el) => el.className));
+      assert.deepEqual(overflow, [], 'nothing sticks out of the installation card');
+      // A reinstall cannot be killed (it would delete the server's files).
+      await data(inst, (d) => { d.server.install_fresh = false; });
+      await inst.waitForSelector('.ps-install-kill', { state: 'hidden' });
+      // Failed: Try again, Change resources, Explain when available.
+      await data(inst, (d) => { d.server.setup_state = 'install_failed'; d.server.install_killed = true; d.server.can_resources = true; d.server.permissions['settings.reinstall'] = true; });
+      await inst.waitForSelector('.ps-install.is-install_failed');
+      assert.equal((await inst.textContent('.ps-install-title h2')).trim(), 'Installation stopped');
+      await inst.waitForSelector('.ps-install-resources', { state: 'visible' });
+      await inst.waitForSelector('.ps-install-actions .is-primary', { state: 'visible' });
+      // Ready: the normal page with one clear next step; the EULA is asked in the same banner.
+      await data(inst, (d) => { d.server.setup_state = null; d.installReady = true; d.eulaNeeded = true; });
+      await inst.waitForSelector('.ps-ready', { state: 'visible' });
+      await inst.waitForSelector('.ps-server-info', { state: 'visible' });
+      assert.equal((await inst.textContent('.ps-ready-start')).trim(), 'Accept and start');
+      const readyOverflow = await inst.evaluate(() => { const box = document.querySelector('.ps-ready').getBoundingClientRect(); return [...document.querySelectorAll('.ps-ready *')].filter((el) => el.offsetParent && el.getBoundingClientRect().right > box.right + 1).length; });
+      assert.equal(readyOverflow, 0, 'ready banner fits');
+      await inst.close();
+    }
+    console.log('PASS installation view: steps and log only, Kill only for a first installation, stopped and failed states, ready banner with the EULA step, fits on phones');
 
     assert.deepEqual(errors, []);
   } finally {

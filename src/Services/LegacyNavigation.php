@@ -19,6 +19,16 @@ final class LegacyNavigation
     {
         return request()->routeIs('filament.admin.*', self::serverListRoute()) && self::url() !== null;
     }
+    /** Pelican's own page for a server (its console) or, without one, Pelican's server list. */
+    public static function nativeUrl(mixed $uuid = null): string
+    {
+        $server = is_string($uuid) && $uuid !== '' ? Server::query()->where('uuid', $uuid)->first() : null;
+        try {
+            if ($server instanceof Server) return \App\Filament\Server\Pages\Console::getUrl(panel: 'server', tenant: $server);
+        } catch (\Throwable) {
+        }
+        return route(self::serverListRoute());
+    }
     /** Pelican's own server list. Its resource uses the slug "/", so on beta38 and rc.1 the route is "filament.app.resources...index". */
     public static function serverListRoute(): string
     {

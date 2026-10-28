@@ -59,5 +59,7 @@ namespace {
  $GLOBALS['admin']=true;F::save(['friends_mode'=>true,'unknown'=>true],true);$saved=json_decode(Storage::$files[F::FILE],true);check($saved['friends_mode']&&$saved['setup_completed']&&!isset($saved['unknown']),'save completes setup and discards unknown settings');
  $GLOBALS['admin']=false;try{F::save(['friends_mode'=>false]);throw new \RuntimeException('user changed global settings');}catch(\RuntimeException $e){check($e->getMessage()==='403','ordinary user cannot save global settings');}
  configure(['friends_mode'=>'true']);check(!F::enabled('friends_mode'),'stored nonboolean switch does not enable a feature');
+ configure(['addons_only'=>true,'dashboard'=>true,'global_theme'=>true,'plugin_manager'=>true]);check(F::addonsOnly()&&!F::effective()['dashboard']&&!F::enabled('global_theme')&&!F::effective()['host_mode']&&F::enabled('plugin_manager')&&F::all()['dashboard'],'only the add-ons turns the full panel off, keeps the add-ons and the saved choices');
+ configure(['addons_only'=>false,'dashboard'=>true]);check(!F::addonsOnly()&&F::effective()['dashboard'],'full Simplify by default');
  Storage::$files[F::FILE]='broken';$GLOBALS['instances']=[];check(F::enabled('friends_mode'),'damaged settings use stable defaults');
 }

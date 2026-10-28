@@ -237,8 +237,8 @@ input[type="file"].ps-input::file-selector-button {
 .ps-badge > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .ps-badge.is-strong { background: var(--ps-contrast-bg); color: var(--ps-contrast-ink); box-shadow: inset 0 0 0 1px var(--ps-contrast-line); }
 :is(.ps-badge, .ps-alert, .ps-toast).is-ok, .ps-status:is(.running, .healthy) { --ps-tone: var(--ps-ok); }
-:is(.ps-badge, .ps-alert, .ps-toast).is-warn, .ps-status:is(.starting, .stopping, .warning) { --ps-tone: var(--ps-warn); }
-:is(.ps-badge, .ps-alert, .ps-toast).is-danger, .ps-status:is(.offline, .critical) { --ps-tone: var(--ps-danger); }
+:is(.ps-badge, .ps-alert, .ps-toast).is-warn, .ps-status:is(.starting, .stopping, .warning, .installing) { --ps-tone: var(--ps-warn); }
+:is(.ps-badge, .ps-alert, .ps-toast).is-danger, .ps-status:is(.offline, .critical, .install.failed) { --ps-tone: var(--ps-danger); }
 :is(.ps-badge, .ps-alert, .ps-toast).is-info, .ps-status:is(.installing, .restoring) { --ps-tone: var(--ps-info); }
 .ps-badge:is(.is-ok, .is-warn, .is-danger, .is-info), .ps-badge.ps-status:not(.unavailable) { background: color-mix(in srgb, var(--ps-tone) 14%, var(--ps-surface)); }
 .ps-status { text-transform: capitalize; }
@@ -415,6 +415,14 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item { --ps-tone: var(--ps-muted); display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-align: left; }
 .ps-notify-item:hover { background: var(--ps-raised); }
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
+.ps-notify-item > * { min-width: 0; overflow-wrap: anywhere; }
+/* ✕ top right: clears one notification to Archived. */
+.ps-notify-item { position: relative; }
+.ps-notify-item > strong { padding-right: 22px; }
+.ps-notify-close { position: absolute; top: 8px; right: 6px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); cursor: pointer; opacity: .7; }
+.ps-notify-close svg { width: 12px; height: 12px; }
+@media (pointer: coarse) { .ps-notify-close { top: 4px; right: 2px; width: 32px; height: 32px; } }
+.ps-notify-close:is(:hover, :focus-visible) { background: var(--ps-raised); color: var(--ps-ink); opacity: 1; }
 .ps-notify-item strong { font-size: 13px; font-weight: 650; }
 .ps-notify-item small { color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
 .ps-plugin-widgets { flex: none; margin-bottom: 12px; overflow: hidden; border-radius: var(--ps-radius-lg); }
@@ -511,3 +519,30 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
    the bottom bars already keep clear of the home indicator (env(safe-area-inset-bottom)). */
 html.ps-standalone body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 html.ps-standalone { -webkit-tap-highlight-color: transparent; }
+
+/* Notifications: read ones step back, an admin's pinned ones sit on top, older ones load with Show more. */
+.ps-notify-head .ps-dropdown-title { margin-right: auto; }
+.ps-notify-item.is-read strong { font-weight: 500; }
+.ps-notify-item.is-read > svg { color: var(--ps-muted); }
+.ps-notify-pinned { margin-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--ps-line); }
+.ps-notify-pinned > .ps-label { display: flex; align-items: center; gap: 6px; }
+.ps-notify-pinned > .ps-label svg { width: 13px; height: 13px; }
+.ps-notify-pinned .ps-notify-list { margin-top: 4px; }
+.ps-notify-more { justify-content: center; width: 100%; margin-top: 6px; }
+.ps-inbox-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ps-inbox-bar > .ps-help { margin: 0 auto 0 0; }
+/* What's new of an update: one line in the bell, all of them on request, and the full notes on GitHub. */
+.ps-notify-notes { grid-column: 2; min-width: 0; overflow-wrap: anywhere; display: grid; gap: 2px; margin-top: 4px; padding: 6px 10px; border-left: 2px solid var(--ps-line); }
+.ps-notify-notes > .ps-label { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; }
+.ps-notify-notes ul { display: grid; gap: 2px; margin: 0; padding-left: 16px; list-style: disc; color: var(--ps-muted); font-size: 12px; line-height: 1.45; }
+.ps-notify-notes-more { display: flex; flex-wrap: wrap; gap: 12px; }
+.ps-notify-notes-more:empty { display: none; }
+.ps-notify-notes .ps-text-button { padding: 0; border: 0; background: none; color: var(--ps-accent); font: 600 12px/1.6 var(--ps-font); text-decoration: none; cursor: pointer; }
+.ps-notify-notes .ps-text-button:is(:hover, :focus-visible) { text-decoration: underline; }
+/* Archived (full list only): closed until opened. */
+.ps-notify-archive { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--ps-line); }
+.ps-notify-archive-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 0 6px; border: 0; border-radius: var(--ps-radius-sm); background: none; color: var(--ps-muted); font: 600 12.5px/1.3 var(--ps-font); cursor: pointer; text-align: left; }
+.ps-notify-archive-toggle:is(:hover, :focus-visible) { background: var(--ps-raised); color: var(--ps-ink); }
+.ps-notify-archive-toggle > svg { width: 14px; height: 14px; transition: transform .15s ease; }
+.ps-notify-archive-toggle[aria-expanded="true"] > svg { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .ps-notify-archive-toggle > svg { transition: none; } }

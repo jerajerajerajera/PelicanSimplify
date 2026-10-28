@@ -25,7 +25,7 @@ final class UpdateCheck
         return [
             'current' => $current,
             'version' => $latest,
-            'available' => version_compare($latest, $current, '>'),
+            'available' => PluginUpdater::isNewer($latest, $current),
             'url' => FeatureSettings::enabled('plugin_manager') ? \Simplify\Panel\Filament\Admin\Pages\ManagePlugins::getUrl(panel: 'admin') : (Route::has('filament.admin.resources.plugins.index') ? route('filament.admin.resources.plugins.index') : null),
         ];
     }

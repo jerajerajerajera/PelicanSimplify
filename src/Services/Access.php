@@ -15,6 +15,8 @@ final class Access
     public static function overviewQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query=Server::with(['allocation','egg','node'])->withExists(['subusers as simplify_assigned'=>fn($q)=>$q->where('user_id',user()->id)])->orderBy('name');
+        // Test servers of egg updates come and go on their own.
+        if(class_exists(EggUpdateTest::class))EggUpdateTest::hide($query);
         if(!user()->isAdmin()&&!FeatureSettings::enabled('friends_mode')){
             $query->where(fn($q)=>$q->where('owner_id',user()->id)->orWhereHas('subusers',fn($sub)=>$sub->where('user_id',user()->id)));
         }
