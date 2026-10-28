@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Panelden şu adrese ulaşılamadı: :host. Panel sunucusunun internete bağlanabildiğini kontrol et.',
+        'no_key' => 'Önce bir API anahtarı gir.',
+        'not_set_up' => 'Bu panelde hata açıklamaları ayarlanmamış.',
+        'unknown_log' => 'Bilinmeyen günlük.',
+        'read_panel' => 'Panel günlüğü okunamadı.',
+        'read_wings' => 'Wings günlüğü Wings\'ten okunamadı. Node erişilebilir olduğunda tekrar dene.',
+        'read_console' => 'Konsol Wings\'ten okunamadı. Node erişilebilir olduğunda tekrar dene.',
+        'too_many' => 'Kısa sürede çok soru sordun. :count dakika sonra tekrar dene.',
+        'daily_limit' => 'Bu panel günlük :count açıklama sınırına ulaştı. Yarın tekrar dene.',
+        'no_answer' => 'Bu satırlar açıklanamadı (:model). Hata yeniden görününce tekrar dene.',
+    ],
+    'test' => [
+        'works' => 'Anahtar çalışıyor (:model).',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsol',
+            'empty' => 'Konsol boş, bu yüzden henüz açıklanacak bir şey yok.',
+        ],
+        'panel' => [
+            'label' => 'Panel günlüğü',
+            'empty' => 'Panel günlüğünde şu anda uyarı veya hata yok.',
+        ],
+        'wings' => [
+            'label' => 'Wings günlüğü',
+            'empty' => 'Bu node\'un Wings günlüğü boş.',
+        ],
+        'plugin' => [
+            'label' => 'Eklenti',
+            'empty' => 'Bu eklenti için kayıtlı günlük satırı yok.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Önce panele giriş yap, ardından bu sayfayı yeniden aç.',
+        'owner_only' => 'Bu sayfayı yalnızca panel sahibi (bir root yönetici) kullanabilir.',
+        'expired' => 'Bu adresin süresi doldu veya daha yenisiyle değiştirildi.',
+        'no_key' => 'Bu panelde kayıtlı API anahtarı yok (:provider). Bir root yönetici, Simplify ayarlarında Hata açıklamaları altında ekler.',
+        'no_key_terminal' => 'Panel açılmadığında panel sunucusunda şunu çalıştır: :command. Bir anahtar ister ve onu kaydetmez.',
+        'choose_node' => 'Bir node seç.',
+        'panel_log' => 'Panel günlüğü',
+        'wings_log_of' => 'Wings günlüğü: :node',
+        'wings_log' => 'Wings günlüğü',
+        'no_database' => 'Veritabanına ulaşılamadı, bu yüzden Wings günlükleri burada kullanılamıyor. Panel günlüğü çoğu zaman nedenini gösterir.',
+        'lead' => 'Panel 500 gibi bir hata gösterdiğinde ve normal sayfaları açılmadığında bu sayfayı kullan. Simplify ayarlarında seçilen yapay zekâ günlüğü okur, bir sorun olup olmadığını ve nasıl düzeltileceğini söyler.',
+        'check_panel' => 'Panel günlüğünü kontrol et',
+        'check_wings' => 'Wings günlüğünü kontrol et: :node',
+        'wait' => 'Günlük kontrol ediliyor. Bu bir dakikaya kadar sürebilir.',
+        'attention' => 'Bir şey ilgi bekliyor',
+        'in_order' => 'Her şey yolunda görünüyor',
+        'noticed' => 'Bir şey mi fark ettin?',
+        'checked' => 'Kontrol edilen satır: :count (:model). Adresler, e-posta adresleri ve parolalar önce kaldırıldı.',
+        'terminal_hint' => 'Panel açılmadığında panel sunucusunda :command çalıştır ya da bu sayfaya geçici bir adres için :url_command kullan.',
+        'broken' => 'Bu sayfa tamamlanamadı',
+        'title' => 'Panel hatalarını açıkla',
+    ],
+    'failures' => [
+        'invalid_key' => 'API anahtarı geçerli değil (:name). Bir yönetici Simplify ayarlarında yenisini girebilir.',
+        'no_credit' => 'Bu anahtarın arkasındaki hesapta kredi kalmadı (:name). Bir yönetici kredi ekleyebilir veya faturalandırmayı kontrol edebilir.',
+        'forbidden' => 'Bu API anahtarı seçilen modeli kullanamıyor (:name). Bir yönetici Simplify ayarlarında başka bir model seçebilir.',
+        'no_model' => 'Seçilen model bu anahtar için kullanılamıyor (:name). Bir yönetici Simplify ayarlarında başka bir model seçebilir.',
+        'busy' => 'Şu anda bu anahtar için yoğun: :name. Bir dakika sonra tekrar dene.',
+        'unavailable' => 'Geçici olarak kullanılamıyor: :name. Bir dakika sonra tekrar dene.',
+        'other_status' => 'Bu soru yanıtlanamadı (:name, hata :status). Daha sonra tekrar dene.',
+        'other' => 'Bu soru yanıtlanamadı (:name). Daha sonra tekrar dene.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude by Anthropic',
+            'key_help' => 'console.anthropic.com → API keys adresinde bir anahtar oluştur. Her soru o Anthropic hesabına faturalanır, genellikle birkaç sent veya daha az; güvenli olmak için orada aylık bir sınır belirle.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini by Google',
+            'key_help' => 'aistudio.google.com → Get API key adresinde bir anahtar oluştur. Sorular o Google Cloud projesine faturalanır, genellikle her biri bir sentten az; güvenli olmak için orada bir bütçe belirle.',
+        ],
+        'openai' => [
+            'label' => 'GPT by OpenAI',
+            'key_help' => 'platform.openai.com → API keys adresinde bir anahtar oluştur. Her soru o OpenAI hesabına faturalanır, genellikle birkaç sent veya daha az; güvenli olmak için orada aylık bir bütçe belirle.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'en iyi yanıtlar, birkaç sent',
+        'about_a_cent' => 'yaklaşık bir sent',
+        'cheapest' => 'en ucuz',
+        'good_answers_under_a_cent' => 'iyi yanıtlar, bir sentten az',
+        'good_answers_about_a_cent' => 'iyi yanıtlar, yaklaşık bir sent',
+    ],
+];
