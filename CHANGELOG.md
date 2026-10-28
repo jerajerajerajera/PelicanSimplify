@@ -1,5 +1,13 @@
 # Changes
 
+## 0.7.0-snapshot.8 (snapshot channel)
+Simplify in your own language.
+- Simplify follows the language each person picks in their Pelican profile. All 32 of Pelican's languages are included, and missing texts fall back to English.
+- Notifications are written in the language of the person who gets them.
+- Arabic is shown right to left.
+- Server states such as Running and Offline are translated.
+- docs/TRANSLATING.md explains how to fix a text, change texts on your own panel or add a language.
+
 ## 0.7.0-snapshot.7 (snapshot channel)
 Faster pages.
 - The settings page no longer loads the embed preview and the banner pictures until you open those tabs.
