@@ -28,9 +28,9 @@
                     Automatic updates are off: you get a notification for each new version; install it here. A backup is kept and restored if anything fails.
                 @endif
             </p>
-            @php($age = $this->lastCheckAge())
-            @if($age === null || $age > 300)
-                <p class="ps-plugin-error">The automatic update check {{ $age === null ? 'has not run yet' : 'last ran '.\Carbon\CarbonInterval::seconds($age)->cascade()->forHumans(['parts' => 1]).' ago' }}. Pelican's scheduler is probably not running: add the cron job <code>* * * * * php {{ base_path('artisan') }} schedule:run</code> for the web server user. Updates from this page still work.</p>
+            {{-- Any of Simplify's minute commands counts: the update check itself can be busy for a while installing updates. --}}
+            @if(\Simplify\Panel\Services\PushNotifications::schedulerStalled())
+                <p class="ps-plugin-error">Pelican's scheduler has not run in the last five minutes, so automatic update checks are paused. Add the cron job <code>* * * * * php {{ base_path('artisan') }} schedule:run</code> for the web server user. Updates from this page still work.</p>
             @endif
         </header>
         <div class="ps-plugin-list" @if($this->busy) wire:poll.3s @else wire:poll.15s @endif>

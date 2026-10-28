@@ -35,6 +35,8 @@ final class Dashboard extends Page
     public function boot(): void { app()->setLocale('en'); }
     public function mount(): void
     {
+        // "Only the add-ons": Pelican's own server list and console stay the pages everyone uses.
+        if(\Simplify\Panel\Services\FeatureSettings::addonsOnly()){$this->redirect(\Simplify\Panel\Services\LegacyNavigation::nativeUrl(request()->query('server')));return;}
         $uuid=request()->query('server');
         if(is_string($uuid) && $uuid!==''){Access::server($uuid);$this->serverUuid=$uuid;}
     }
@@ -140,7 +142,12 @@ final class Dashboard extends Page
     public function restoreAnnouncement(string $key): array { \Simplify\Panel\Services\Announcements::restore(user(),$key); return \Simplify\Panel\Services\Announcements::forUser(user()); }
     /** App notifications: the panel's public key, this account's devices and choices. */
     #[Renderless]
-    public function pushSettings(?string $endpoint=null): array { return ['key'=>\Simplify\Panel\Services\PushNotifications::publicKey(),'admin'=>(bool)user()->isRootAdmin(),...\Simplify\Panel\Services\PushNotifications::settings(user(),$endpoint)]; }
+    public function pushSettings(?string $endpoint=null): array
+    {
+        $admin=(bool)user()->isRootAdmin();
+        $stalled=\Simplify\Panel\Services\PushNotifications::schedulerStalled();
+        return ['key'=>\Simplify\Panel\Services\PushNotifications::publicKey(),'admin'=>$admin,'scheduler'=>['stalled'=>$stalled,'cron'=>$admin&&$stalled?'* * * * * php '.base_path('artisan').' schedule:run':null],...\Simplify\Panel\Services\PushNotifications::settings(user(),$endpoint)];
+    }
     #[Renderless]
     public function savePushSubscription(array $subscription,string $label=''): array
     {

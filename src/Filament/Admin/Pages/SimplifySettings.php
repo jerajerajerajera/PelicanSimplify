@@ -35,6 +35,10 @@ class SimplifySettings extends Page implements HasForms
     public bool $useUploadedBanner = true;
     protected static ?string $navigationLabel = 'PelicanSimplify settings';
     protected static ?string $title = 'PelicanSimplify settings';
+    /** With "Only the add-ons" the settings join the Simplify group in Pelican's menu. */
+    public static function getNavigationGroup(): ?string { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 'Simplify' : null; }
+    public static function getNavigationLabel(): string { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 'Simplify settings' : static::$navigationLabel; }
+    public static function getNavigationSort(): ?int { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() ? 9 : null; }
 
     /** The page draws its own header once set up; the first setup keeps Filament's heading. */
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
@@ -171,7 +175,7 @@ class SimplifySettings extends Page implements HasForms
     {
         abort_unless(static::canAccess(), 403);
         $this->embedded = request()->boolean('simplify_embed');
-        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
+        $this->form->fill([...CreatorAccess::configuration(),'creation_defaults'=>\Simplify\Panel\Services\CreationDefaults::all(),'appearance'=>AppearanceSettings::all(),'features'=>\Simplify\Panel\Services\FeatureSettings::all(),'experience'=>(\Simplify\Panel\Services\FeatureSettings::all()['addons_only']??false)?'addons':'full','egg_updates'=>class_exists(\Simplify\Panel\Services\EggUpdates::class)?\Simplify\Panel\Services\EggUpdates::settings():[],'update_channel'=>\Simplify\Panel\Services\FeatureSettings::enabled('simplify_snapshot')?'snapshot':(\Simplify\Panel\Services\FeatureSettings::enabled('simplify_beta')?'beta':'stable'),'performance'=>\Simplify\Panel\Services\PerformanceSettings::all(),'roles'=>\Simplify\Panel\Services\RoleAccess::all(),'web'=>\Simplify\Panel\Services\Extensions::webInstalled()?app('simplify.web')->options():[],'external_shown'=>self::externalShown(),'subdomains'=>class_exists(\Simplify\Panel\Services\Subdomains::class)?\Simplify\Panel\Services\Subdomains::settings():[],'curseforge'=>class_exists(\Simplify\Panel\Services\CurseForge::class)?['key'=>'','remove_key'=>false,'user_keys'=>\Simplify\Panel\Services\CurseForge::allowUserKeys()]:[],'embed'=>class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)?[...\Simplify\Panel\Services\WebsiteEmbed::settings(),'servers'=>$this->embedServers()]:[],'embed_code'=>['show'=>'all'],'profile'=>class_exists(\Simplify\Panel\Services\PanelProfile::class)?\Simplify\Panel\Services\PanelProfile::settings():['type'=>'friends'],'explainer'=>class_exists(\Simplify\Panel\Services\ErrorExplainer::class)?[...array_intersect_key(\Simplify\Panel\Services\ErrorExplainer::settings(),array_flip(['provider','model','audience'])),'key'=>'','remove_key'=>false]:[]]);
     }
     /** Settings categories, in order. The first setup walks the same pages; the banner library is added afterwards. */
     private const CATEGORIES = [
@@ -246,6 +250,21 @@ class SimplifySettings extends Page implements HasForms
         return $live ? $toggle->live() : $toggle;
     }
 
+    /** Full Simplify or only the add-ons; stored as the addons_only switch. */
+    private const EXPERIENCES = [
+        'full' => ['Full Simplify', 'Simplify becomes the panel for you and your players: dashboard and server pages in place of Pelican\'s, host mode, themes and all add-ons.'],
+        'addons' => ['Only the add-ons', 'Pelican keeps its own dashboard, server pages and look. The add-ons you switch on appear in Pelican\'s own menu, under Simplify.'],
+    ];
+    private static function experienceSection(): Section
+    {
+        return Section::make('How much Simplify?')->description('Use Simplify as your whole panel, or keep Pelican as it is and only add the tools you want. You can switch at any time; nothing is lost.')->schema([
+            \Filament\Forms\Components\Radio::make('experience')->hiddenLabel()->required()->live()
+                ->options(array_map(fn (array $e) => $e[0], self::EXPERIENCES))->descriptions(array_map(fn (array $e) => $e[1], self::EXPERIENCES)),
+        ]);
+    }
+    private static function full(Get $get): bool { return $get('experience') !== 'addons'; }
+    private static function hosting(Get $get): bool { return $get('profile.type') === 'hosting'; }
+
     public function form(Schema $schema): Schema
     {
         $performance = \Simplify\Panel\Services\PerformanceSettings::FIELDS;
@@ -255,10 +274,11 @@ class SimplifySettings extends Page implements HasForms
         $categories = [
             'General' => [
                 ...$this->panelTypeSections(false),
-                self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.'),
-                self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.'),
+                self::experienceSection(),
+                self::featureSection('Simplify interface', 'Interface', 'What Simplify replaces in Pelican.')->visible(fn (Get $get) => self::full($get)),
+                self::featureSection('Server workspaces', 'Server features', 'Workspaces shown on every server page. Pelican permissions still decide who may use them.')->visible(fn (Get $get) => self::full($get)),
                 self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. Each add-on has its own settings tab at the bottom of the menu.'),
-                Section::make('Pages from other plugins')->description('Pages that other installed plugins add to the admin panel, to servers or to every account. Ticked pages show up in Simplify: admin and server pages under "External" (Admin tools, host mode and the server page), account pages in the account menu, widgets as tiles and buttons on the overview and in the console. They always stay available in Pelican\'s own panel.')->schema([
+                Section::make('Pages from other plugins')->visible(fn (Get $get) => self::full($get))->description('Pages that other installed plugins add to the admin panel, to servers or to every account. Ticked pages show up in Simplify: admin and server pages under "External" (Admin tools, host mode and the server page), account pages in the account menu, widgets as tiles and buttons on the overview and in the console. They always stay available in Pelican\'s own panel.')->schema([
                     \Filament\Forms\Components\CheckboxList::make('external_shown')->hiddenLabel()->options(fn () => self::externalCatalog())->bulkToggleable()->columns(1)
                         ->visible(fn () => self::externalCatalog() !== []),
                     \Filament\Schemas\Components\Text::make('No other plugins add pages right now.')->visible(fn () => self::externalCatalog() === []),
@@ -290,7 +310,7 @@ class SimplifySettings extends Page implements HasForms
                 ]),
             ],
             'Users & access' => [
-                self::featureSection('Visibility', 'Access and visibility', 'Who sees which servers, and who may share them.'),
+                self::featureSection('Visibility', 'Access and visibility', 'Who sees which servers, and who may share them.')->visible(fn (Get $get) => self::full($get)),
                 Section::make('Everyone')->description('Applies to every signed-in user. Administrators can always do everything. Pelican\'s own server permissions (owner, subusers) still decide which servers someone can manage.')
                     ->schema(self::abilityFields('roles.everyone')),
                 Section::make('Roles')->description('Roles and their permissions are managed on the People & roles page (Admin tools → People), because "Let Simplify manage people & roles" is on.')
@@ -381,13 +401,22 @@ class SimplifySettings extends Page implements HasForms
         $banners = ['Server banners' => [\Filament\Schemas\Components\View::make('pelican-simplify::banner-library')]];
         $categories = [...array_slice($categories, 0, 2, true), ...$banners, ...array_slice($categories, 2, null, true)];
         $icons['Server banners'] = 'tabler-photo';
+        $categories['Egg updates'] = [
+            Section::make('Egg updates')->description('Simplify checks every egg for a new version every six hours and lets root admins know in the notifications. Running servers keep running and pick up the new egg at their next start.')->schema([
+                Select::make('egg_updates.mode')->label('Updates')->options(\Simplify\Panel\Services\EggUpdates::MODES)->selectablePlaceholder(false)->required()
+                    ->helperText('Eggs that servers use are only updated by you, or after a test server installed and started with the new version. The previous version is always kept.'),
+            ]),
+            \Filament\Schemas\Components\View::make('pelican-simplify::egg-updates'),
+        ];
+        $icons['Egg updates'] = 'tabler-egg';
         $addons['Error explanations'] = $this->errorExplainerSections();
         if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = $this->pluginSiteSections();
         if (class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $addons['Website embed'] = $this->websiteEmbedSections();
         $icons = [...$icons, ...self::LATER_ADDONS];
         $categories = [...$categories, ...$addons];
-        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content)
-            ->visible($label === 'Hosting' ? fn (Get $get) => $get('profile.type') === 'hosting' : true), array_keys($categories), array_values($categories));
+        // "Only the add-ons" keeps Pelican's look and pages: the tabs that only serve the full panel step aside.
+        $fullOnly = ['Appearance', 'Server banners', 'Backups & performance'];
+        $tabList = array_map(fn (string $label, array $content) => \Filament\Schemas\Components\Tabs\Tab::make($label)->visible(match (true) { in_array($label, $fullOnly, true) => fn (Get $get) => self::full($get), $label === 'Hosting' => fn (Get $get) => self::hosting($get), default => true })->icon($icons[$label] ?? null)->badge(isset(self::ADDONS[$label]) || isset(self::LATER_ADDONS[$label]) ? 'Add-on' : null)->schema($content), array_keys($categories), array_values($categories));
         // Pelican's own settings close the list: each tab shows Pelican's page on that tab, so all settings live in one place.
         $pelican = \Simplify\Panel\Services\PelicanSettingsTabs::all();
         $this->pelicanTabs = count($pelican);
@@ -550,6 +579,57 @@ class SimplifySettings extends Page implements HasForms
             if (\Simplify\Panel\Services\WebsiteListing::visible($server) !== $visible) \Simplify\Panel\Services\WebsiteListing::setVisible($server, $visible);
         }
     }
+    /** Egg updates tab: the listed updates and the eggs Simplify updated before. */
+    public function eggUpdates(): array
+    {
+        return ['available' => \Simplify\Panel\Services\EggUpdates::available(), 'updated' => \Simplify\Panel\Services\EggUpdates::updated(), 'checked' => (int) \Simplify\Panel\Services\EggUpdates::state()['checked_at']];
+    }
+
+    public function checkEggUpdates(): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        \Simplify\Panel\Services\EggUpdates::check();
+        $count = count(\Simplify\Panel\Services\EggUpdates::available());
+        Notification::make()->title($count === 0 ? 'All eggs are up to date' : ($count === 1 ? '1 egg update available' : $count.' egg updates available'))->success()->send();
+    }
+
+    /** One egg, or every listed one with $id null. */
+    public function updateEggs(?int $id = null): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $ids = $id === null ? array_column(\Simplify\Panel\Services\EggUpdates::available(), 'id') : [$id];
+        $failed = [];
+        $done = 0;
+        foreach (Egg::query()->whereIn('id', $ids)->get() as $egg) {
+            $result = \Simplify\Panel\Services\EggUpdates::update($egg);
+            $result['ok'] ? $done++ : $failed[] = $result['message'];
+        }
+        if ($failed !== []) Notification::make()->title($done > 0 ? $done.' updated, '.count($failed).' failed' : 'Update failed')->body(implode(' ', $failed))->danger()->send();
+        else Notification::make()->title($done === 1 ? 'Egg updated' : $done.' eggs updated')->body('Running servers keep running. The previous version is kept and can be put back.')->success()->send();
+    }
+
+    /** Test the update on a test server and update only when it installs and starts. */
+    public function testEgg(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdateTest::start(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->body('This takes a few minutes. You get a notification when it is done.')->success()->send();
+    }
+
+    public function restoreEgg(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdates::restore(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->status($result['ok'] ? 'success' : 'danger')->send();
+    }
+
+    public function moveEggServers(int $id): void
+    {
+        abort_unless(user()?->isRootAdmin(), 403);
+        $result = \Simplify\Panel\Services\EggUpdates::moveServers(Egg::query()->findOrFail($id));
+        Notification::make()->title($result['message'])->status($result['ok'] ? 'success' : 'danger')->send();
+    }
+
     public function testCurseForge(): void
     {
         abort_unless(static::canAccess(), 403);
@@ -570,24 +650,19 @@ class SimplifySettings extends Page implements HasForms
     ];
 
     /**
-     * Labels of the wizard steps that apply now, in order. The progress bar and every conditional wizard step read this
-     * one list, so a step shows exactly when its label is here: Hosting for a hosting company, an add-on's step while
-     * the add-on is on.
+     * Labels of the wizard steps that apply now, in order, for the progress bar: the full panel's questions or the
+     * add-ons, Hosting for a hosting company on the full panel, an add-on's step while the add-on is on.
      */
     public function setupSteps(): array
     {
         $features = (array) ($this->data['features'] ?? []);
-        $steps = ['Panel type', 'Features', 'People & access', 'Look'];
-        if (($this->data['profile']['type'] ?? 'friends') === 'hosting') $steps[] = 'Hosting';
+        $steps = ['Panel type', 'How much Simplify?', ...(($this->data['experience'] ?? 'full') === 'addons' ? ['Add-ons'] : ['Features', 'People & access', 'Look'])];
+        // A hosting company's links only matter to customers of the full panel.
+        if (($this->data['profile']['type'] ?? 'friends') === 'hosting' && ($this->data['experience'] ?? 'full') !== 'addons') $steps[] = 'Hosting';
         foreach (self::ADDON_STEPS as $label => $addon) if (array_filter($addon['features'], fn (string $feature) => !empty($features[$feature]))) $steps[] = $label;
         if (\Simplify\Panel\Services\Extensions::webInstalled()) $steps[] = 'Website';
         $steps[] = 'Ready';
         return $steps;
-    }
-    /** A wizard step that is only there while setupSteps() lists it. */
-    private function conditionalStep(\Filament\Schemas\Components\Wizard\Step $step, string $label): \Filament\Schemas\Components\Wizard\Step
-    {
-        return $step->visible(fn () => in_array($label, $this->setupSteps(), true));
     }
 
     /**
@@ -598,40 +673,45 @@ class SimplifySettings extends Page implements HasForms
     private function setupWizardSteps(array $categories, array $addons): array
     {
         $step = fn (string $label, string $hint, array $content) => \Filament\Schemas\Components\Wizard\Step::make($label)->description($hint)->schema($content);
+        $full = fn (Get $get) => self::full($get);
         $steps = [
             $step('Panel type', 'Needed', $this->panelTypeSections(true)),
+            $step('How much Simplify?', 'Needed', [self::experienceSection()]),
             $step('Features', 'Needed', [
                 self::featureSection('What Simplify replaces', 'Interface', 'The Simplify dashboard, console and server pages in place of Pelican\'s own. Each can be turned off again later.'),
                 self::featureSection('Add-ons', 'Add-ons', 'Optional parts of Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
-            ]),
-            $step('People & access', 'Needed', $categories['Users & access']),
-            $step('Look', 'Optional', $categories['Appearance']),
+            ])->visible($full),
+            $step('Add-ons', 'Needed', [
+                self::featureSection('Add-ons', 'Add-ons', 'Pick the add-ons you want. They appear in Pelican\'s own menu, under Simplify. An add-on that needs a value before it works (hosting machines, a domain) adds a step to this setup.', true),
+            ])->visible(fn (Get $get) => !self::full($get)),
+            $step('People & access', 'Needed', $categories['Users & access'])->visible($full),
+            $step('Look', 'Optional', $categories['Appearance'])->visible($full),
         ];
-        if (isset($categories['Hosting'])) $steps[] = $this->conditionalStep($step('Hosting', 'Hosting company', $categories['Hosting']), 'Hosting');
+        if (isset($categories['Hosting'])) $steps[] = $step('Hosting', 'Hosting company', $categories['Hosting'])->visible(fn (Get $get) => self::hosting($get) && self::full($get));
         foreach (self::ADDON_STEPS as $label => $addon) {
             if (!isset($addons[$addon['tab']])) continue;
-            $steps[] = $this->conditionalStep($step($label, 'Add-on', $addons[$addon['tab']]), $label);
+            $steps[] = $step($label, 'Add-on', $addons[$addon['tab']])->visible(fn (Get $get) => (bool) array_filter($addon['features'], fn (string $feature) => (bool) $get('features.'.$feature)));
         }
         if (isset($categories['Website'])) $steps[] = $step('Website', 'Optional', $categories['Website']);
         $steps[] = $step('Ready', 'Finish', [
             Section::make('Ready to finish')->description('Check what you chose. Everything not asked here (server workspaces, backups, refresh rates, each add-on\'s details) keeps a sensible default and has its own tab in Simplify settings, under Admin tools → Panel.')->schema([
-                \Filament\Schemas\Components\Text::make(fn (Get $get) => new \Illuminate\Support\HtmlString(self::setupSummary((array) $get('features'), (array) ($get('roles.everyone.abilities') ?? []))))->columnSpanFull(),
+                \Filament\Schemas\Components\Text::make(fn (Get $get) => new \Illuminate\Support\HtmlString(self::setupSummary((array) $get('features'), (array) ($get('roles.everyone.abilities') ?? []), !self::full($get))))->columnSpanFull(),
             ]),
         ]);
         return $steps;
     }
 
     /** Plain summary for the last wizard step: what is on, and what everyone may do. */
-    public static function setupSummary(array $features, array $everyone): string
+    public static function setupSummary(array $features, array $everyone, bool $addonsOnly = false): string
     {
         $definitions = \Simplify\Panel\Services\FeatureSettings::definitions();
         $names = fn (string $group) => array_values(array_map(fn ($item) => $item[0], array_filter($definitions, fn ($item, $key) => ($item[3] ?? '') === $group && !empty($features[$key]), ARRAY_FILTER_USE_BOTH)));
         $abilities = \Simplify\Panel\Services\RoleAccess::ABILITIES;
         $can = array_values(array_map(fn ($key) => $abilities[$key][0] ?? $key, array_filter($everyone, fn ($key) => isset($abilities[$key]))));
         $rows = [
-            ['Simplify replaces', $names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay']],
+            ['Simplify replaces', $addonsOnly ? ['Nothing: Pelican\'s own pages and look stay (only the add-ons)'] : ($names('Interface') ?: ['Nothing yet: Pelican\'s own pages stay'])],
             ['Add-ons on', $names('Add-ons') ?: ['None']],
-            ['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']],
+            ...($addonsOnly ? [] : [['Everyone may', $can ?: ['Only what Pelican\'s own permissions allow']]]),
         ];
         return '<dl class="ps-setup-summary">'.implode('', array_map(fn ($row) => '<dt>'.e($row[0]).'</dt><dd>'.e(implode(', ', $row[1])).'</dd>', $rows)).'</dl>';
     }
@@ -660,7 +740,8 @@ class SimplifySettings extends Page implements HasForms
         }
         if (array_key_exists('minecraft_enabled', $state)) $data['minecraft_enabled'] = (bool) $state['minecraft_enabled'];
         if (!empty($state['clear_legacy_user_grants'])) { $data['user_ids'] = []; $data['user_limits'] = []; }
-        $roles = $state['roles'] ?? [];
+        // A wizard that skipped People & access (only the add-ons) keeps the saved roles.
+        $roles = $state['roles'] ?? \Simplify\Panel\Services\RoleAccess::all();
         $existingRoles = Role::query()->pluck('id')->map(fn ($id) => (int) $id)->all();
         // With the People & roles page in charge, role profiles live there; this form only edits Everyone.
         if (\Simplify\Panel\Services\FeatureSettings::enabled('people_manager')) $roles['roles'] = \Simplify\Panel\Services\RoleAccess::all()['roles'];
@@ -671,6 +752,7 @@ class SimplifySettings extends Page implements HasForms
         }
         if (isset($state['creation_defaults'])) \Simplify\Panel\Services\CreationDefaults::save($state['creation_defaults']);
         if (isset($state['performance'])) \Simplify\Panel\Services\PerformanceSettings::save($state['performance']);
+        if (!empty($state['egg_updates']) && class_exists(\Simplify\Panel\Services\EggUpdates::class)) \Simplify\Panel\Services\EggUpdates::save($state['egg_updates']);
         if (!empty($state['embed']) && class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $embedState = $state['embed'];
         if (isset($state['profile']) && class_exists(\Simplify\Panel\Services\PanelProfile::class)) {
             $profile = \Simplify\Panel\Services\PanelProfile::save($state['profile']);
@@ -695,6 +777,7 @@ class SimplifySettings extends Page implements HasForms
         if (isset($state['web']) && \Simplify\Panel\Services\Extensions::webInstalled()) app('simplify.web')->saveOptions($state['web']);
         app(CreatorAccess::class)->reset();
         $features = $state['features'] ?? [];
+        if (isset($state['experience'], self::EXPERIENCES[$state['experience']])) $features['addons_only'] = $state['experience'] === 'addons';
         if (isset($state['update_channel'], self::UPDATE_CHANNELS[$state['update_channel']])) {
             $features['simplify_beta'] = $state['update_channel'] !== 'stable';
             $features['simplify_snapshot'] = $state['update_channel'] === 'snapshot';
@@ -705,7 +788,7 @@ class SimplifySettings extends Page implements HasForms
         $this->rerunSetup = false;
         Notification::make()->title('PelicanSimplify settings saved')->success()->send();
         if ($firstSetup) {
-            $this->redirect(\Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(panel: 'app'));
+            $this->redirect(\Simplify\Panel\Services\FeatureSettings::enabled('dashboard') ? \Simplify\Panel\Filament\App\Pages\Dashboard::getUrl(panel: 'app') : \Simplify\Panel\Services\LegacyNavigation::nativeUrl());
         } else {
             $this->dispatch('simplify-settings-saved');
         }

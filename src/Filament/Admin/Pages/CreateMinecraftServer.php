@@ -63,6 +63,12 @@ class CreateMinecraftServer extends Page implements HasForms
     protected static bool $shouldRegisterNavigation = false;
     protected string $view = 'pelican-simplify::filament.admin.create-server';
 
+    /** "Only the add-ons": listed in Pelican's own menu under Simplify. */
+    public static function shouldRegisterNavigation(): bool { return \Simplify\Panel\Services\FeatureSettings::addonsOnly() && static::canAccess(); }
+    public static function getNavigationGroup(): ?string { return 'Simplify'; }
+    public static function getNavigationLabel(): string { return 'Server Maker'; }
+    public static function getNavigationSort(): ?int { return 1; }
+
     /** @var array<string,mixed> */
     public ?array $data = [];
 

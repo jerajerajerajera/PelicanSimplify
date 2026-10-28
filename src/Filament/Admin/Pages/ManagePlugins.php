@@ -77,7 +77,7 @@ final class ManagePlugins extends Page
                 'author' => $plugin->author,
                 'description' => $plugin->description,
                 'version' => $plugin->version,
-                'latest' => $latest && version_compare($latest, $plugin->version, '>') ? $latest : null,
+                'latest' => $latest && PluginUpdater::isNewer($latest, $plugin->version) ? $latest : null,
                 'status' => $plugin->status->value,
                 'message' => $plugin->status_message,
                 'can_change' => $this->canChange($plugin),
@@ -91,13 +91,6 @@ final class ManagePlugins extends Page
         if ($this->busy && !$busy) $this->js('window.location.reload()');
         $this->busy = $busy;
         return $rows;
-    }
-
-    /** Seconds since the scheduled update check last ran, or null when it never ran. */
-    public function lastCheckAge(): ?int
-    {
-        $at = \Illuminate\Support\Facades\Cache::get('simplify.plugin-check-at');
-        return is_int($at) ? max(0, time() - $at) : null;
     }
 
     public function updatePlugin(string $id): void

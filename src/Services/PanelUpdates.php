@@ -26,7 +26,7 @@ final class PanelUpdates
         }
         // Gone as soon as that Simplify version runs, also when Pelican's own updater installed it.
         $running=(string)BuildInfo::version();
-        $list=array_filter($list,fn(array $item):bool=>!isset($item['version'])||$running===''||version_compare($running,$item['version'],'<'));
+        $list=array_filter($list,fn(array $item):bool=>!isset($item['version'])||$running===''||PluginUpdater::isNewer($item['version'],$running));
         return array_values(array_map(fn(array $item):array=>self::present($item,$now),$list));
     }
 
