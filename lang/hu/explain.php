@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'A panel nem éri el ezt: :host. Ellenőrizd, hogy a panelszerver csatlakozhat-e az internethez.',
+        'no_key' => 'Előbb adj meg egy API-kulcsot.',
+        'not_set_up' => 'A hibamagyarázatok nincsenek beállítva ezen a panelen.',
+        'unknown_log' => 'Ismeretlen napló.',
+        'read_panel' => 'A panel naplója nem olvasható.',
+        'read_wings' => 'A Wings naplója nem olvasható a Wingsből. Próbáld újra, amikor a csomópont elérhető.',
+        'read_console' => 'A konzol nem olvasható a Wingsből. Próbáld újra, amikor a csomópont elérhető.',
+        'too_many' => 'Rövid idő alatt sok kérdést tettél fel. Próbáld újra :count perc múlva.|Rövid idő alatt sok kérdést tettél fel. Próbáld újra :count perc múlva.',
+        'daily_limit' => 'Ez a panel elérte a napi :count magyarázatos korlátját. Próbáld újra holnap.',
+        'no_answer' => 'A(z) :model nem tudta megmagyarázni ezeket a sorokat. Próbáld újra, ha a hiba ismét megjelenik.',
+    ],
+    'test' => [
+        'works' => 'A kulcs működik ezzel: :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konzol',
+            'empty' => 'A konzol üres, így még nincs mit megmagyarázni.',
+        ],
+        'panel' => [
+            'label' => 'Panelnapló',
+            'empty' => 'A panel naplójában jelenleg nincs figyelmeztetés vagy hiba.',
+        ],
+        'wings' => [
+            'label' => 'Wings-napló',
+            'empty' => 'Ennek a csomópontnak a Wings-naplója üres.',
+        ],
+        'plugin' => [
+            'label' => 'Bővítmény',
+            'empty' => 'Ehhez a bővítményhez nincsenek mentett naplósorok.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Előbb jelentkezz be a panelre, majd nyisd meg újra ezt az oldalt.',
+        'owner_only' => 'Csak a panel tulajdonosa (root adminisztrátor) használhatja ezt az oldalt.',
+        'expired' => 'Ez a cím lejárt, vagy egy újabb váltotta fel.',
+        'no_key' => 'Ezen a panelen nincs mentett :provider API-kulcs. Egy root adminisztrátor a Simplify beállításokban, a Hibamagyarázatok részben adhat hozzá egyet.',
+        'no_key_terminal' => 'Ha a panel nem nyílik meg, futtasd ezt a panelszerveren: :command. Kulcsot kér, és nem menti el.',
+        'choose_node' => 'Válassz csomópontot.',
+        'panel_log' => 'Panelnapló',
+        'wings_log_of' => 'Wings-napló (:node)',
+        'wings_log' => 'Wings-napló',
+        'no_database' => 'Az adatbázis nem érhető el, ezért a Wings-naplók itt nem elérhetők. A panelnapló gyakran megmutatja, miért.',
+        'lead' => 'Akkor használd ezt az oldalt, ha a panel például 500-as hibát mutat, és a szokásos oldalai nem nyílnak meg. A Simplify beállításokban kiválasztott AI elolvassa a naplót, és megmondja, van-e hiba, és hogyan javítható.',
+        'check_panel' => 'Panelnapló ellenőrzése',
+        'check_wings' => 'Wings-napló ellenőrzése (:node)',
+        'wait' => 'A napló ellenőrzése. Ez akár egy percig is tarthat.',
+        'attention' => 'Valami figyelmet igényel',
+        'in_order' => 'Úgy tűnik, minden rendben van',
+        'noticed' => 'Észrevettél valamit?',
+        'checked' => ':count sort ellenőrzött a(z) :model. A címeket, e-mail-címeket és jelszavakat előbb eltávolítottuk.|:count sort ellenőrzött a(z) :model. A címeket, e-mail-címeket és jelszavakat előbb eltávolítottuk.',
+        'terminal_hint' => 'Ha a panel nem nyílik meg, futtasd ezt a panelszerveren: :command, vagy ezt: :url_command, hogy ideiglenes címet kapj ehhez az oldalhoz.',
+        'broken' => 'Ez az oldal nem tudott befejeződni',
+        'title' => 'Panelhibák magyarázata',
+    ],
+    'failures' => [
+        'invalid_key' => 'A(z) :name API-kulcs érvénytelen. Egy adminisztrátor újat adhat meg a Simplify beállításokban.',
+        'no_credit' => 'A kulcs mögötti :name fiókon nincs több kredit. Egy adminisztrátor kreditet adhat hozzá, vagy ellenőrizheti a számlázást itt: :name.',
+        'forbidden' => 'Ez a(z) :name API-kulcs nem használhatja a kiválasztott modellt. Egy adminisztrátor másik modellt választhat a Simplify beállításokban.',
+        'no_model' => 'A kiválasztott :name modell nem érhető el ehhez a kulcshoz. Egy adminisztrátor másik modellt választhat a Simplify beállításokban.',
+        'busy' => 'A(z) :name most túlterhelt ennél a kulcsnál. Próbáld újra egy perc múlva.',
+        'unavailable' => 'A(z) :name átmenetileg nem érhető el. Próbáld újra egy perc múlva.',
+        'other_status' => 'A(z) :name nem tudott válaszolni erre a kérdésre (:status hiba). Próbáld újra később.',
+        'other' => 'A(z) :name nem tudott válaszolni erre a kérdésre. Próbáld újra később.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude (Anthropic)',
+            'key_help' => 'Hozz létre kulcsot itt: console.anthropic.com → API keys. Minden kérdést annak az Anthropic-fióknak számláznak, általában néhány centet vagy kevesebbet; a biztonság kedvéért állíts be ott havi korlátot.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini (Google)',
+            'key_help' => 'Hozz létre kulcsot itt: aistudio.google.com → Get API key. A kérdéseket annak a Google Cloud-projektnek számlázzák, általában kérdésenként kevesebb mint egy centet; a biztonság kedvéért állíts be ott keretet.',
+        ],
+        'openai' => [
+            'label' => 'GPT (OpenAI)',
+            'key_help' => 'Hozz létre kulcsot itt: platform.openai.com → API keys. Minden kérdést annak az OpenAI-fióknak számláznak, általában néhány centet vagy kevesebbet; a biztonság kedvéért állíts be ott havi keretet.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'legjobb válaszok, néhány cent',
+        'about_a_cent' => 'kb. egy cent',
+        'cheapest' => 'legolcsóbb',
+        'good_answers_under_a_cent' => 'jó válaszok, egy cent alatt',
+        'good_answers_about_a_cent' => 'jó válaszok, kb. egy cent',
+    ],
+];
