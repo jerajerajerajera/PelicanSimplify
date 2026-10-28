@@ -226,6 +226,48 @@ class SimplifySettings extends Page implements HasForms
         'Website embed' => 'tabler-code',
     ];
 
+    /** Tab icons as names in the dashboard's icon sprite (host mode lists the tabs in its menu tree). */
+    private const MENU_ICONS = [
+        'tabler-layout-dashboard' => 'grid', 'tabler-palette' => 'palette', 'tabler-photo' => 'image', 'tabler-users' => 'players', 'tabler-gauge' => 'gauge',
+        'tabler-building-store' => 'store', 'tabler-world' => 'web', 'tabler-egg' => 'egg', 'tabler-server-bolt' => 'creeper', 'tabler-device-gamepad-2' => 'gamepad',
+        'tabler-users-group' => 'players', 'tabler-plug' => 'plugins', 'tabler-world-www' => 'web', 'tabler-help-circle' => 'question', 'tabler-puzzle' => 'puzzle',
+        'tabler-code' => 'code', 'tabler-home' => 'home', 'tabler-shield' => 'shield', 'tabler-mail' => 'mail', 'tabler-box' => 'cube', 'tabler-brand-oauth' => 'lock', 'tabler-tool' => 'tool',
+    ];
+
+    /**
+     * The tabs of this page in menu order, for host mode's menu tree (which replaces the page's own menu there):
+     * the panel's settings, the add-ons and Pelican's own settings, each with the ?section= value that opens it.
+     * Mirrors form(): the same tabs, order and visibility, read from the saved settings.
+     * @return list<array{key: string, group: string, label: string, icon: string, url: string}>
+     */
+    public static function menu(string $base): array
+    {
+        $full = !(\Simplify\Panel\Services\FeatureSettings::all()['addons_only'] ?? false);
+        $hosting = class_exists(\Simplify\Panel\Services\PanelProfile::class) && \Simplify\Panel\Services\PanelProfile::type() === 'hosting';
+        $panel = ['General' => self::CATEGORIES['General']];
+        if ($full) $panel += ['Appearance' => self::CATEGORIES['Appearance'], 'Server banners' => 'tabler-photo'];
+        $panel['Users & access'] = self::CATEGORIES['Users & access'];
+        if ($full) $panel['Backups & performance'] = self::CATEGORIES['Backups & performance'];
+        if ($hosting) $panel['Hosting'] = self::CATEGORIES['Hosting'];
+        if (\Simplify\Panel\Services\Extensions::webInstalled()) $panel['Website'] = 'tabler-world';
+        $panel['Egg updates'] = 'tabler-egg';
+        $addons = self::ADDONS + ['Error explanations' => self::LATER_ADDONS['Error explanations']];
+        if (class_exists(\Simplify\Panel\Services\CurseForge::class)) $addons['Plugin sites'] = self::LATER_ADDONS['Plugin sites'];
+        if (class_exists(\Simplify\Panel\Services\WebsiteEmbed::class)) $addons['Website embed'] = self::LATER_ADDONS['Website embed'];
+        $link = fn (string $section) => $base.(str_contains($base, '?') ? '&' : '?').http_build_query(['section' => $section]);
+        $items = [];
+        foreach (['panel' => $panel, 'addons' => $addons] as $group => $tabs) {
+            foreach ($tabs as $english => $icon) {
+                $key = \Illuminate\Support\Str::slug(\Illuminate\Support\Str::transliterate($english, strict: true)).'::data::tab';
+                $items[] = ['key' => $key, 'group' => $group, 'label' => \Simplify\Panel\Services\Translations::text('settings.tabs.'.\Simplify\Panel\Services\Translations::key($english), $english), 'icon' => self::MENU_ICONS[$icon] ?? 'gear', 'url' => $link($key)];
+            }
+        }
+        foreach (\Simplify\Panel\Services\PelicanSettingsTabs::all() as $tab) {
+            $items[] = ['key' => 'pelican-'.$tab['key'], 'group' => 'pelican', 'label' => $tab['label'], 'icon' => self::MENU_ICONS[$tab['icon'] ?? ''] ?? 'gear', 'url' => $link('pelican-'.$tab['key'])];
+        }
+        return $items;
+    }
+
     /** Pages other plugins add (empty when the service is not available, as in unit tests). */
     private static function externalCatalog(): array
     {

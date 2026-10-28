@@ -59,6 +59,7 @@
       adminMenu: false,
       hostMode: false,
       hostPage: null,
+      hostSettingsSrc: '',
       hostSection: null,
       hostTab: 'admin',
       hostMenuOpen: false,
@@ -988,7 +989,7 @@
       },
       setHostPage(item) {
         if (!item?.url && this.runAdminAction(item)) return;
-        this.hostPage = item;
+        this.pickHostPage(item);
         this.hostServer = null;
         this.hostMenuOpen = false;
         this.rememberHostPlace();
@@ -1026,12 +1027,21 @@
           { key: 'health', label: t('dashboard.admin_groups.health'), icon: 'heart', color: '#f87171', pages: ['health'] },
           { key: 'legacy', label: t('dashboard.admin_groups.legacy'), icon: 'legacy', color: '#a8a29e', pages: ['serverresource', 'legacyplugins', 'legacyusers', 'legacyroles'] },
         ];
+        // The settings tabs are leaves of the tree here: the settings page hides its own menu in host mode.
+        const menu = this.boot.settings_menu || [];
+        if (menu.length) {
+          const tabs = (group) => menu.filter((tab) => tab.group === group).map((tab) => ({ key: 'settings:' + tab.key, label: tab.label, icon: tab.icon, url: tab.url, settingsTab: tab.key }));
+          plan.splice(plan.findIndex((section) => section.key === 'panel'), 1,
+            { key: 'panel', label: t('dashboard.admin_groups.settings'), icon: 'gear', color: '#94a3b8', pages: [], tabs: tabs('panel'), settings: true },
+            { key: 'addons', label: t('dashboard.admin_groups.addons'), icon: 'plugins', color: '#b48cf2', pages: [], tabs: tabs('addons'), settings: true },
+            { key: 'pelican', label: t('dashboard.admin_groups.pelican_settings'), icon: 'settings', color: '#5b9cf0', pages: ['settings', 'listlogs'], tabs: tabs('pelican'), settings: true });
+        }
         const items = [...this.adminPages().flatMap((group) => group.items), ...(this.boot.host_extras || []), ...this.adminActions()];
-        const known = new Set(plan.flatMap((section) => section.pages));
+        const known = new Set([...plan.flatMap((section) => section.pages), 'simplifysettings']);
         if (this.boot.features?.legacy_pages === false) plan.splice(plan.findIndex((section) => section.key === 'legacy'), 1);
         return plan.map((section) => ({
           ...section,
-          pages: section.key === 'extensions' ? items.filter((item) => !known.has(item.key)) : section.pages.map((key) => items.find((item) => item.key === key)).filter(Boolean),
+          pages: section.key === 'extensions' ? items.filter((item) => !known.has(item.key)) : [...(section.tabs || []), ...section.pages.map((key) => items.find((item) => item.key === key)).filter(Boolean)],
         })).filter((section) => section.pages.length);
       },
       /** Simplify's own tools that open a popup instead of an admin page; listed with the admin pages. */
@@ -1055,10 +1065,34 @@
         const page = section.pages.find((item) => item.url || !item.action) || null;
         if (!page && !restoring) return this.runAdminAction(section.pages[0]);
         this.hostSection = section;
-        this.hostPage = page;
+        this.pickHostPage(page);
         this.hostServer = null;
         this.hostMenuOpen = false;
         this.rememberHostPlace();
+      },
+      /** Shows a page in the host workspace; another settings tab switches the settings page already open instead of reloading it. */
+      pickHostPage(item) {
+        const switched = item?.settingsTab && this.hostPage?.settingsTab && this.focusSettingsTab(item.settingsTab);
+        if (!switched) this.hostSettingsSrc = item?.settingsTab ? this.frameUrl(item.url) : '';
+        this.hostPage = item;
+      },
+      hostFrameSrc() {
+        return this.hostSettingsSrc || this.frameUrl(this.hostPage?.url);
+      },
+      focusSettingsTab(key) {
+        try {
+          const win = document.querySelector('.ps-host-frame:not(.is-server) iframe')?.contentWindow;
+          const tabs = win?.document.querySelector('.ps-settings-tabs');
+          if (!win?.Alpine || !tabs) return false;
+          win.Alpine.$data(tabs).tab = key;
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      /** While a settings tab is open the tree shows the settings groups open and folds the others to their heads. */
+      hostBranchOpen(section) {
+        return section.pages.length > 1 && !!section.settings === !!(this.hostSection?.settings && !this.hostServer);
       },
       hostServerVersion(s) {
         const version = String(s.reported_version || '').trim();
