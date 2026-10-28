@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => '新功能',
+        'full_release_notes' => '完整發布說明',
+        'mark_read' => '標為已讀',
+        'mark_as_unread' => '標為未讀',
+        'clear' => '清除',
+        'show_less' => '收起',
+        'pin' => '置頂 ',
+        'unpin' => '取消置頂 ',
+        'pin_2' => '置頂',
+        'unpin_2' => '取消置頂',
+        'pinned' => '已置頂',
+        'you_are_all_caught_up' => '沒有新訊息。',
+        'archived' => '已歸檔',
+        'nothing_archived' => '沒有已歸檔的內容。',
+        'loading' => '載入中…',
+        'show_more' => '顯示更多',
+        'clear_name' => '清除 :title',
+        'show_all' => '顯示全部 :count 條',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => '此裝置尚未開啟通知。',
+        'test_notification' => '測試通知',
+        'notifications_work_on_this_device' => '此裝置的通知工作正常。',
+        'test_sent_it_should_appear_within' => '已傳送測試，幾秒內應會出現。',
+        'the_browser_no_longer_accepts_notifications' => '瀏覽器不再接受此裝置的通知，請重新開啟。',
+        'the_push_service_did_not_accept' => '推送服務未接受此測試，請一分鐘後重試。',
+    ],
+];
