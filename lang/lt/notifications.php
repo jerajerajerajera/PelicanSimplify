@@ -1,0 +1,31 @@
+<?php
+return [
+    'item' => [
+        'whats_new' => 'Kas naujo',
+        'full_release_notes' => 'Visos leidimo pastabos',
+        'mark_read' => 'Pažymėti kaip skaitytą',
+        'mark_as_unread' => 'Pažymėti kaip neskaitytą',
+        'clear' => 'Išvalyti',
+        'show_less' => 'Rodyti mažiau',
+        'pin' => 'Prisegti ',
+        'unpin' => 'Atsegti ',
+        'pin_2' => 'Prisegti',
+        'unpin_2' => 'Atsegti',
+        'pinned' => 'Prisegta',
+        'you_are_all_caught_up' => 'Viskas perskaityta.',
+        'archived' => 'Archyvas',
+        'nothing_archived' => 'Archyvas tuščias.',
+        'loading' => 'Įkeliama…',
+        'show_more' => 'Rodyti daugiau',
+        'clear_name' => 'Išvalyti: :title',
+        'show_all' => 'Rodyti viską (:count)',
+    ],
+    'push' => [
+        'notifications_are_not_on_for_this' => 'Šiame įrenginyje pranešimai dar neįjungti.',
+        'test_notification' => 'Bandomasis pranešimas',
+        'notifications_work_on_this_device' => 'Šiame įrenginyje pranešimai veikia.',
+        'test_sent_it_should_appear_within' => 'Bandymas išsiųstas. Jis turėtų pasirodyti per kelias sekundes.',
+        'the_browser_no_longer_accepts_notifications' => 'Naršyklė šiam įrenginiui pranešimų nebepriima. Įjunkite juos iš naujo.',
+        'the_push_service_did_not_accept' => 'Push paslauga bandymo nepriėmė. Bandykite dar kartą po minutės.',
+    ],
+];

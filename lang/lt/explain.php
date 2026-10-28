@@ -1,0 +1,90 @@
+<?php
+return [
+    'errors' => [
+        'unreachable' => 'Iš skydelio nepavyko pasiekti :host. Patikrinkite, ar skydelio serveris gali jungtis prie interneto.',
+        'no_key' => 'Pirmiausia įveskite API raktą.',
+        'not_set_up' => 'Klaidų paaiškinimai šiame skydelyje nenustatyti.',
+        'unknown_log' => 'Nežinomas žurnalas.',
+        'read_panel' => 'Nepavyko perskaityti skydelio žurnalo.',
+        'read_wings' => 'Nepavyko perskaityti Wings žurnalo iš Wings. Bandykite dar kartą, kai node bus pasiekiamas.',
+        'read_console' => 'Nepavyko perskaityti konsolės iš Wings. Bandykite dar kartą, kai node bus pasiekiamas.',
+        'too_many' => 'Per trumpą laiką uždavėte daug klausimų. Bandykite dar kartą po :count minutės.|Per trumpą laiką uždavėte daug klausimų. Bandykite dar kartą po :count minučių.|Per trumpą laiką uždavėte daug klausimų. Bandykite dar kartą po :count minučių.',
+        'daily_limit' => 'Šis skydelis pasiekė dienos paaiškinimų ribą (:count). Bandykite rytoj.',
+        'no_answer' => ':model negalėjo paaiškinti šių eilučių. Bandykite dar kartą, kai klaida vėl pasirodys.',
+    ],
+    'test' => [
+        'works' => 'Raktas veikia su :model.',
+    ],
+    'sources' => [
+        'console' => [
+            'label' => 'Konsolė',
+            'empty' => 'Konsolė tuščia, todėl kol kas nėra ką paaiškinti.',
+        ],
+        'panel' => [
+            'label' => 'Skydelio žurnalas',
+            'empty' => 'Skydelio žurnale šiuo metu nėra įspėjimų ar klaidų.',
+        ],
+        'wings' => [
+            'label' => 'Wings žurnalas',
+            'empty' => 'Šio node Wings žurnalas tuščias.',
+        ],
+        'plugin' => [
+            'label' => 'Įskiepis',
+            'empty' => 'Šiam įskiepiui nėra išsaugotų žurnalo eilučių.',
+        ],
+    ],
+    'emergency' => [
+        'sign_in' => 'Pirmiausia prisijunkite prie skydelio, tada vėl atidarykite šį puslapį.',
+        'owner_only' => 'Šį puslapį gali naudoti tik skydelio savininkas (root administratorius).',
+        'expired' => 'Šis adresas nebegalioja arba buvo pakeistas naujesniu.',
+        'no_key' => 'Šiame skydelyje neišsaugotas :provider API raktas. Root administratorius jį prideda Simplify nustatymuose, skiltyje Klaidų paaiškinimai.',
+        'no_key_terminal' => 'Jei skydelis neatsidaro, skydelio serveryje paleiskite :command. Komanda paprašys rakto ir jo neišsaugos.',
+        'choose_node' => 'Pasirinkite node.',
+        'panel_log' => 'Skydelio žurnalas',
+        'wings_log_of' => ':node Wings žurnalas',
+        'wings_log' => 'Wings žurnalas',
+        'no_database' => 'Nepavyko pasiekti duomenų bazės, todėl Wings žurnalai čia nepasiekiami. Priežastį dažnai parodo skydelio žurnalas.',
+        'lead' => 'Naudokite šį puslapį, kai skydelis rodo klaidą, pavyzdžiui, 500, ir įprasti jo puslapiai neatsidaro. Simplify nustatymuose pasirinktas AI perskaito žurnalą ir pasako, ar kas nors negerai ir kaip tai sutaisyti.',
+        'check_panel' => 'Tikrinti skydelio žurnalą',
+        'check_wings' => 'Tikrinti :node Wings žurnalą',
+        'wait' => 'Tikrinamas žurnalas. Tai gali užtrukti iki minutės.',
+        'attention' => 'Kažkam reikia dėmesio',
+        'in_order' => 'Atrodo, kad viskas tvarkoje',
+        'noticed' => 'Pastebėjote ką nors?',
+        'checked' => ':count eilutę patikrino :model. Adresai, el. pašto adresai ir slaptažodžiai buvo pašalinti iš anksto.|:count eilutes patikrino :model. Adresai, el. pašto adresai ir slaptažodžiai buvo pašalinti iš anksto.|:count eilučių patikrino :model. Adresai, el. pašto adresai ir slaptažodžiai buvo pašalinti iš anksto.',
+        'terminal_hint' => 'Jei skydelis neatsidaro, skydelio serveryje paleiskite :command arba :url_command, kad gautumėte laikiną šio puslapio adresą.',
+        'broken' => 'Šio puslapio nepavyko iki galo įkelti',
+        'title' => 'Paaiškinti skydelio klaidas',
+    ],
+    'failures' => [
+        'invalid_key' => ':name API raktas netinkamas. Administratorius gali įvesti naują Simplify nustatymuose.',
+        'no_credit' => ':name paskyroje, susietoje su šiuo raktu, nebeliko kredito. Administratorius gali papildyti kreditą arba patikrinti mokėjimus pas :name.',
+        'forbidden' => 'Šiam :name API raktui negalima naudoti pasirinkto modelio. Administratorius gali pasirinkti kitą modelį Simplify nustatymuose.',
+        'no_model' => 'Pasirinktas :name modelis šiam raktui nepasiekiamas. Administratorius gali pasirinkti kitą modelį Simplify nustatymuose.',
+        'busy' => ':name šiam raktui šiuo metu užimtas. Bandykite po minutės.',
+        'unavailable' => ':name laikinai nepasiekiamas. Bandykite po minutės.',
+        'other_status' => ':name negalėjo atsakyti į šį klausimą (klaida :status). Bandykite vėliau.',
+        'other' => ':name negalėjo atsakyti į šį klausimą. Bandykite vėliau.',
+    ],
+    'providers' => [
+        'anthropic' => [
+            'label' => 'Claude iš Anthropic',
+            'key_help' => 'Sukurkite raktą adresu console.anthropic.com → API keys. Kiekvienas klausimas apmokestinamas toje Anthropic paskyroje, paprastai keli centai ar mažiau; dėl saugumo ten nustatykite mėnesio ribą.',
+        ],
+        'gemini' => [
+            'label' => 'Gemini iš Google',
+            'key_help' => 'Sukurkite raktą adresu aistudio.google.com → Get API key. Klausimai apmokestinami tame Google Cloud projekte, paprastai mažiau nei centas už kiekvieną; dėl saugumo ten nustatykite biudžetą.',
+        ],
+        'openai' => [
+            'label' => 'GPT iš OpenAI',
+            'key_help' => 'Sukurkite raktą adresu platform.openai.com → API keys. Kiekvienas klausimas apmokestinamas toje OpenAI paskyroje, paprastai keli centai ar mažiau; dėl saugumo ten nustatykite mėnesio biudžetą.',
+        ],
+    ],
+    'model_notes' => [
+        'best_answers_a_few_cents' => 'geriausi atsakymai, keli centai',
+        'about_a_cent' => 'apie centą',
+        'cheapest' => 'pigiausias',
+        'good_answers_under_a_cent' => 'geri atsakymai, mažiau nei centas',
+        'good_answers_about_a_cent' => 'geri atsakymai, apie centą',
+    ],
+];
