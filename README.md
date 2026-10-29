@@ -200,7 +200,7 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 
 </details>
 
-## Now in snapshot (0.7.0-snapshot.8)
+## Now in snapshot (0.7.0-snapshot.10)
 
 The snapshot channel already has the first parts of 0.7.0. These are development builds, so expect the odd rough edge. Choose Snapshot under Simplify settings → Plugin manager → "Simplify versions" to try them.
 
@@ -208,6 +208,8 @@ The snapshot channel already has the first parts of 0.7.0. These are development
 - The setup starts with a new question: is this panel for you and your friends, or for a hosting company? A hosting company gets fitting defaults, and customers see Order a server, Client area, support and Upgrade this server links.
 - The Cloudflare token for automatic subdomains can be entered in Simplify settings, with a Test button. Editing .env is no longer needed.
 - Pages load faster: less is loaded up front and pages are sent compressed.
+- You can upload your own app icon. It is used for the installed app and in app notifications.
+- The settings menu is simpler. In host mode the settings are in the admin menu on the left, so there is one menu instead of three.
 
 See the [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) for the details.
 
@@ -233,7 +235,7 @@ Simplify is a large change to how your panel looks and works. Please read this f
 |---|---|---|---|
 | **Stable** (default) | 0.6.0 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
 | **Beta** | 0.6.0-beta.13 | The next stable release, tested before it ships; at the moment the same features as stable | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.7.0-snapshot.8 | The newest development build: stable plus a hosting profile, faster pages and Simplify in your own language | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Snapshot** | 0.7.0-snapshot.10 | The newest development build: stable plus a hosting profile, faster pages, Simplify in your own language and your own app icon | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
 
