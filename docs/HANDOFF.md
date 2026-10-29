@@ -1,6 +1,6 @@
 # PelicanSimplify — handoff
 
-A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 28 October 2026 (stable 0.6.0, beta 0.6.0-beta.13, snapshot 0.7.0-snapshot.8).
+A summary of the project, how we work on it and where things stand, so work can continue in a new conversation or Claude project. Last updated: 29 October 2026 (stable 0.6.0, beta 0.6.0-beta.13, snapshot 0.7.0-snapshot.10).
 
 ## The project in short
 
@@ -20,7 +20,7 @@ Three channels, each on its own branch (decided 20 October 2026):
 | Beta | `beta` | `update-beta.json` | `0.7.0-beta.N`, `0.7.0-rc.N` | `dist/pelican-simplify-beta-latest.zip` |
 | Snapshot | `snapshot` | `update-snapshot.json` | `0.7.0-snapshot.N` | `dist/pelican-simplify-snapshot-latest.zip` |
 
-- **Current:** stable 0.6.0, beta 0.6.0-beta.13 and snapshot 0.7.0-snapshot.8, all for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2. On an untested Pelican release the setup check warns instead of blocking (from 0.4.7 and 0.5.0-beta.4). Beta 0.5.0-beta.3 was tested on fresh panels: beta38 with PHP 8.3, 8.4 and 8.5, rc.1 and rc.2 with PHP 8.4 and 8.5 (the compatibility table in the README and INSTALLATION). Beta has the same features as stable. The 0.7.0 snapshots add a hosting profile (setup step Who is this panel for?, client area and support links for customers), the Cloudflare token for automatic subdomains in Simplify settings, faster pages, and Simplify in all 32 of Pelican's languages.
+- **Current:** stable 0.6.0, beta 0.6.0-beta.13 and snapshot 0.7.0-snapshot.10, all for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2. On an untested Pelican release the setup check warns instead of blocking (from 0.4.7 and 0.5.0-beta.4). Beta 0.5.0-beta.3 was tested on fresh panels: beta38 with PHP 8.3, 8.4 and 8.5, rc.1 and rc.2 with PHP 8.4 and 8.5 (the compatibility table in the README and INSTALLATION). Beta has the same features as stable. The 0.7.0 snapshots add a hosting profile (setup step Who is this panel for?, client area and support links for customers), the Cloudflare token for automatic subdomains in Simplify settings, faster pages, Simplify in all 32 of Pelican's languages, an own app icon and a simpler settings menu.
 - **Documentation on `main`:** the README's "What's new" section (or a "Now in beta" section while a beta has more than stable), channel table, compatibility table, CHANGELOG, ROADMAP and these docs are kept up to date on `main` (documentation only, no version or plugin files). The CHANGELOG on `main` has one summary entry per beta that links to the full beta changelog; when the beta becomes stable, that summary is replaced by the stable entry.
 - **Pelican Hub:** plugin.json's `update_url` must be `https://hub.pelican.dev/plugins/pelican-simplify/update.json` (the Hub refuses a sync otherwise), so Pelican's own updater reads the Hub. Simplify's plugin manager also reads the GitHub files above (`PluginUpdater::channelUrls`) and offers the newest. After a stable release on `main`, the owner clicks "sync" in the Hub.
 - **`main` holds stable releases only.** The Pelican Hub reads the repository, so a beta or snapshot version on `main` would show up there.

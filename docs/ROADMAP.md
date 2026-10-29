@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.6.0, and the beta channel has the same features. The snapshot channel has 0.7.0-snapshot.8 with a hosting profile, faster pages and Simplify in Pelican's languages. All support Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2.
+Planned work, and what is already in the beta or snapshot channel. Scope and order may change. Stable is 0.6.0, and the beta channel has the same features. The snapshot channel has 0.7.0-snapshot.10 with a hosting profile, faster pages, Simplify in Pelican's languages and an own app icon. All support Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2.
 
 ## Easy server creator
 A separate add-on next to the **easy Minecraft server creator**. Done since 0.3.0-beta.20: a searchable index of Pelican's egg sources, automatic egg installation with the *Install new games* ability, and typed game settings with an Advanced block. Still open:
