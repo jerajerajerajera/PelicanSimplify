@@ -593,7 +593,7 @@
         }
         // Announcements (also the Panel's update announcements); unpinned ones stay here until they end.
         for (const item of this.announcements) {
-          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, archived: !!item.archived, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null });
+          items.push({ id: 'announcement-' + item.key, key: item.key, tone: item.tone, title: item.title, text: item.text, time: [item.from, item.time].filter(Boolean).join(' · '), action: item.action || null, announcement: true, dismissed: !!item.dismissed, pinned: !!item.pinned, unread: item.unread ?? !item.dismissed, archived: !!item.archived, notes: Array.isArray(item.notes) ? item.notes : [], notesUrl: item.notes_url || null, logo: item.logo === true });
         }
         for (const notice of this.boot.notices || []) items.push({ action: null, ...notice });
         // Pelican's notifications: the full history once loaded, until then the unread ones from the page load.

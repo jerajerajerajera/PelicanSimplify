@@ -24,6 +24,8 @@ final class PanelUpdates
             $list=self::seen(self::simplify());
             self::refreshAfterResponse();
         }
+        // PelicanSimplify's last message (SimplifyReplaced) always comes first.
+        $list=[...self::seen([SimplifyReplaced::item()]),...$list];
         // Gone as soon as that Simplify version runs, also when Pelican's own updater installed it.
         $running=(string)BuildInfo::version();
         $list=array_filter($list,fn(array $item):bool=>!isset($item['version'])||$running===''||PluginUpdater::isNewer($item['version'],$running));
@@ -63,7 +65,7 @@ final class PanelUpdates
         if(is_array($action))$action['label']=self::say($action['label']);
         return ['key'=>$item['key'],'source'=>'panel','category'=>'info','tone'=>'info','title'=>self::say($item['title']),'text'=>self::say($item['text']),'from'=>self::say('from'),'audience'=>'admins',
             'at'=>$at,'time'=>Announcements::ago($at,$now),'until'=>null,'action'=>$action,
-            'notes'=>is_array($item['notes']??null)?array_values($item['notes']):[],'notes_url'=>is_string($item['notes_url']??null)?$item['notes_url']:null];
+            'notes'=>is_array($item['notes']??null)?array_values($item['notes']):[],'notes_url'=>is_string($item['notes_url']??null)?$item['notes_url']:null,'logo'=>($item['logo']??false)===true];
     }
 
     /** @return list<array{key: string, title: string, text: string, action: ?array, seen: int}> */
