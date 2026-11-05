@@ -1,6 +1,7 @@
 {{-- One announcement bar (item): the pinned bars above pages, and the open chip in host mode. --}}
 <div class="ps-alert ps-announcement-bar" :class="'is-'+item.tone" role="status">
-    <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
+    <template x-if="item.logo"><img class="ps-item-logo" src="{{ \Simplify\Panel\Services\SimplifyReplaced::logo() }}" alt=""></template>
+    <template x-if="!item.logo"><svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg></template>
     <div class="ps-announcement-copy">
         <strong x-text="item.title"></strong>
         <span x-show="item.text" x-text="item.text"></span>

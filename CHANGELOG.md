@@ -1,5 +1,38 @@
 # Changes
 
+## 0.6.1 — stable release, the last version of PelicanSimplify
+This plugin is end of life and will not be updated. Simplify replaces it, and its 2.0 beta test is open now on the Pelican Hub.
+
+<img src="https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/main/resources/images/simplify-logo.svg" alt="Simplify" width="48">
+
+- Join the beta test: make an account on hub.pelican.dev, then send your Discord ID to [Jera](https://discord.com/users/167026719063015424) on Discord for an invite.
+- Rather wait for the full release? You can keep using this plugin. Nothing changes until Simplify 2.0 is out.
+- New: one core plugin plus add-ons you pick (Toolkit, Server Maker, Egg Updates, Explain, Hosting), all updated through the Hub.
+- New: an Admin page for every admin, Pelican's lists as clear rows, and one Settings page per server.
+- New: Connections in the account menu for Steam, CurseForge and AI keys, and changes wait until you press Save.
+- Fixed: a click in the server menu no longer reloads the whole page, so the console stays connected.
+- Fixed: on Edit schedule the tasks can be reached and edited again (issue #236).
+- Root admins see a bar with this message. Otherwise 0.6.1 is 0.6.0.
+
+### How to join
+1. Make an account on https://hub.pelican.dev (you sign in with Discord).
+2. Send your Discord ID to [Jera](https://discord.com/users/167026719063015424) on Discord. You get an invite on the Hub.
+3. Then follow [UPGRADE.md](https://github.com/jerajerajerajera/PelicanSimplify/blob/main/UPGRADE.md).
+Do not uninstall PelicanSimplify first: that removes its settings. Simplify takes it over.
+
+### What's in Simplify 2.0
+- Simplify (core): the server overview as cards, rows or a list, with live numbers, filters and groups; a server page that fits the window with the live console; announcements, app notifications, subdomains, your servers on your own website, your own name, logo and colours, and 32 languages.
+- Toolkit: plugins and mods (Modrinth, Hangar, SpigotMC, CurseForge), Minecraft settings, players, scheduled restarts and automatic backups.
+- Server Maker: make a server in a few steps, also for users with an allowance.
+- Egg Updates: Test first, Update, Move servers and Put back, right in Pelican's Eggs list.
+- Explain: an Explain button next to errors, including Pelican's own errors and Health checks; works with Ollama.
+- Hosting: links to your billing system, client area and order page.
+
+### Fixed in Simplify compared with PelicanSimplify
+- A click in the server menu loads only the page next to it; the console and its connection stay.
+- Edit schedule: the tasks are reachable, with their buttons in view, also on a phone (#236).
+- Updates come only from the Pelican Hub, with a beta channel, instead of GitHub update files.
+
 ## 0.6.0 — stable release (Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2)
 The first stable release since 0.5.2. It brings everything from the 0.5.3 and 0.6.0 betas. Full details in the [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md).
 - **Simplify Server Maker:** one creator for Minecraft (Vanilla, plugins, mods, modpacks and Bedrock) and 170+ other games. New servers show how far their installation is, and the Minecraft EULA is accepted up front.

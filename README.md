@@ -2,7 +2,11 @@
 
 Simplify is an all-in-one plugin for [Pelican](https://github.com/pelican/panel) that puts usability first. It is packed with features that make the panel easier to use, starting with one clear overview of your servers and a set of add-ons you switch on when you need them. Pelican and [Wings](https://github.com/pelican/wings) keep doing the work underneath, and the original panel stays available. See the full feature list below.
 
-**Stable 0.6.0 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
+> <img src="resources/images/simplify-logo.svg" alt="Simplify" width="48">
+>
+> **This plugin is end of life and will not be updated.** [Simplify](https://github.com/jerajerajerajera/simplify) replaces it, and Simplify 2.0 is in beta on the [Pelican Hub](https://hub.pelican.dev). To test it, make an account on hub.pelican.dev and send your Discord ID to [Jera](https://discord.com/users/167026719063015424) on Discord; then follow [UPGRADE.md](UPGRADE.md). Rather wait for the full release? You can keep using this plugin.
+
+**Stable 0.6.1 for Pelican 1.0.0-beta38, 1.0.0-rc.1 and 1.0.0-rc.2 · PHP 8.3 to 8.5 (8.4+ on rc.1 and rc.2)** · [Compatibility](#compatibility)
 
 *Screenshots use example servers.*
 
@@ -226,16 +230,16 @@ Simplify is a large change to how your panel looks and works. Please read this f
 ## Getting started
 
 1. In Pelican, go to **Admin → Plugins → Import from URL**.
-2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.6.0/pelican-simplify-v0.6.0.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
+2. Paste the link to the [latest stable plugin ZIP](https://github.com/jerajerajerajera/PelicanSimplify/releases/download/v0.6.1/pelican-simplify-v0.6.1.zip) and click **Install**. All versions are on the [Releases page](https://github.com/jerajerajerajera/PelicanSimplify/releases).
 
    **Beta and snapshot builds:** the newest beta is always at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/beta/dist/pelican-simplify-beta-latest.zip`, the newest snapshot at `https://raw.githubusercontent.com/jerajerajerajera/PelicanSimplify/snapshot/dist/pelican-simplify-snapshot-latest.zip`. Betas test the next stable release with all its new features; snapshots are development builds with the latest changes. Both are less tested; see the channel table below.
 3. Follow the setup checks. Anything missing is shown with how to fix it.
 
 | Channel | Current version | What it has | Changelog |
 |---|---|---|---|
-| **Stable** (default) | 0.6.0 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
+| **Stable** (default) | 0.6.1 | Everything under All features below | [CHANGELOG](CHANGELOG.md) |
 | **Beta** | 0.6.0-beta.13 | The next stable release, tested before it ships; at the moment the same features as stable | [beta changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/beta/CHANGELOG.md) |
-| **Snapshot** | 0.7.0-snapshot.10 | The newest development build: stable plus a hosting profile, faster pages, Simplify in your own language and your own app icon | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
+| **Snapshot** | 0.7.0-snapshot.11 | The newest development build: stable plus a hosting profile, faster pages, Simplify in your own language and your own app icon | [snapshot changelog](https://github.com/jerajerajerajera/PelicanSimplify/blob/snapshot/CHANGELOG.md) |
 
 ### Compatibility
 

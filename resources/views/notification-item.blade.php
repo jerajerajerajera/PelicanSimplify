@@ -1,5 +1,6 @@
 <div class="ps-notify-item" :class="['is-'+item.tone, item.unread === false ? 'is-read' : '']">
-    <svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg>
+    <template x-if="item.logo"><img class="ps-item-logo" src="{{ \Simplify\Panel\Services\SimplifyReplaced::logo() }}" alt=""></template>
+    <template x-if="!item.logo"><svg aria-hidden="true"><use :href="'#ps-'+(item.tone==='ok'?'check':item.tone==='info'?'info':'alert')"/></svg></template>
     <strong x-text="item.title"></strong>
     <button type="button" class="ps-notify-close" x-show="canArchive(item)" x-on:click.stop="archiveNotification(item)" :aria-label="'Clear '+item.title" data-tip="Clear"><svg aria-hidden="true"><use href="#ps-close"/></svg></button>
     <small x-text="item.text" x-show="item.text"></small>
