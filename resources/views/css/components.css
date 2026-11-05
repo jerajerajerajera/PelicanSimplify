@@ -415,6 +415,9 @@ html:has(.ps-modal-layer[data-open="true"]), html.ps-ui-locked { overflow: hidde
 .ps-notify-item { --ps-tone: var(--ps-muted); display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px 10px; padding: 10px; border-radius: var(--ps-radius-sm); color: var(--ps-ink); text-align: left; }
 .ps-notify-item:hover { background: var(--ps-raised); }
 .ps-notify-item > svg { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; color: var(--ps-tone); }
+/* PelicanSimplify's last message carries the Simplify logo instead of the tone icon. */
+.ps-alert > .ps-item-logo { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.ps-notify-item > .ps-item-logo { grid-row: span 2; width: 18px; height: 18px; margin-top: 1px; }
 .ps-notify-item > * { min-width: 0; overflow-wrap: anywhere; }
 /* ✕ top right: clears one notification to Archived. */
 .ps-notify-item { position: relative; }
