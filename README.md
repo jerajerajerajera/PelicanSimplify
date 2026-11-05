@@ -204,9 +204,9 @@ These need PHP and the panel's files to work. If even `php artisan` fails, the e
 
 </details>
 
-## Now in snapshot (0.7.0-snapshot.10)
+## In the last snapshot (0.7.0-snapshot.11)
 
-The snapshot channel already has the first parts of 0.7.0. These are development builds, so expect the odd rough edge. Choose Snapshot under Simplify settings → Plugin manager → "Simplify versions" to try them.
+The snapshot channel has a few things that did not make it into a stable release. 0.7.0-snapshot.11 is the last snapshot, and 0.7.0 will not be released. These are development builds, so expect the odd rough edge. Choose Snapshot under Simplify settings → Plugin manager → "Simplify versions" to try them.
 
 - Simplify follows the language each person picks in their Pelican profile. All 32 of Pelican's languages are included, and missing texts fall back to English. Arabic is shown right to left.
 - The setup starts with a new question: is this panel for you and your friends, or for a hosting company? A hosting company gets fitting defaults, and customers see Order a server, Client area, support and Upgrade this server links.
@@ -262,6 +262,8 @@ Pelican 1.0.0-rc.1 and rc.2 need PHP 8.4 or newer. "Tested" means a fresh panel 
 Coming from the standalone creator? See the [installation notes](docs/INSTALLATION.md). Found a problem? Open an [issue](https://github.com/jerajerajerajera/PelicanSimplify/issues).
 
 ## Coming features
+
+This plugin is end of life, so the plans below will not come to PelicanSimplify. They continue in [Simplify](https://github.com/jerajerajerajera/simplify). The list is kept for reference.
 
 The order and scope may still change. Everything Simplify does not cover yet is still available in the original Pelican panel.
 
